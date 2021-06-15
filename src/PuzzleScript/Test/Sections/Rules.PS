@@ -1,0 +1,12 @@
+======
+RULES
+======
+
+[ > player | no activetile ] -> cancel
+[ > player |  ] -> [ | player ]
+
+[ activetile | player ] -> [ temp | player ]
+[ no temp | player ] -> [activetile | player ]
+[ temp ] -> []
+
+[activetile void ] -> [ void ]

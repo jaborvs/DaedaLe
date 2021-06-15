@@ -1,113 +1,111 @@
 module PuzzleScript::Syntax
 
-
-//lexical Blankline = [^][\ \t]*;
-// Blankline at least 2 newlines (2 separators)
-
-//lexical Newlines = Newline*;
-//lexical Blankline = [\n][\ ]*[\r];
-//lexical Whitespace = [\ ];
-
-//lexical SectionDelimiter = [=]* Newline;
-lexical Pixel = [0-9.];
-//keyword SectionHeader =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'WINCONDITIONS' | 'LEVELS';
-
-//syntax ID
-//	= id: String;
-//	
-//syntax Color
-//   = black: 'black'
-//	|white: 'white'
-//	|lightgray: 'lightgray' | 'lightgrey'
-//	|gray: 'gray' | 'grey'
-//	|darkgray: 'darkgray' | 'darkgrey'
-//	|red: 'red'
-//	|darkred: 'darkred'
-//	|lightred: 'lightred'
-//	|brown: 'brown'
-//	|darkbrown: 'darkbrown'
-//	|lightbrown: 'lightbrown'
-//	|orange: 'orange'
-//	|yellow: 'yellow'
-//	|green: 'green'
-//	|darkgreen: 'darkgreen'
-//	|lightgreen: 'lightgreen'
-//	|blue: 'blue'
-//	|lightblue: 'lightblue'
-//	|darkblue: 'darkblue'
-//	|purple: 'purple'
-//	|pink: 'pink'
-//	|transparent: 'transparent';
-	
-//syntax Sprite = sprite: Pixel*;
-
-keyword Keywords
-	= 'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' 
-	| 'WINCONDITIONS' | 'LEVELS' | 'title' | 'author' 
-	| 'homepage' | 'or' | '\<' | '\>' | '^' | 'v' | 'Some'
-	| 'All' | 'No'|'on' | 'message' | 'and' | 'randomDir';
+lexical LAYOUT = [\t\r\ =];
+layout LAYOUTLIST = LAYOUT* !>> [\t\r\ =];
 
 lexical Newline = [\n];
-
-//syntax Newline = '\r\n';
+syntax Blankline = ^[\n];
 lexical String = [a-z0-9.A-Z]+ !>> [a-z0-9.A-Z] \ Keywords;
-//layout Standard = [\ \t\r]*;
+// ID
+lexical Pixel = [a-zA-Z.!@#$%&*0-9];
+lexical Spriteline = [0-9.]+ !>> [0-9.] \ Keywords;
+lexical Levelline = Pixel+ !>> Pixel \ Keywords;
+lexical LegendPixel = Pixel >> '=';
+lexical LegendString = String >> '=';
+//lexical SectionDelimiter = [=]+ !>> [=];
 
-lexical LAYOUT = [\t\r\ ];
-layout LAYOUTLIST = LAYOUT*  !>> [\t\r\ ] ;
+keyword SectionHeader =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'WINCONDITIONS' | 'LEVELS';
+keyword PreludeKeyword = 'title' | 'author' | 'homepage';
+keyword LegendOperation = 'or' | 'and';
+
+keyword Keywords = SectionHeader | PreludeKeyword | LegendOperation;
 
 start syntax PSGame
- 	= game:Prelude;
-
-//syntax Section
-//	= Prelude
-//	| SectionDelimiter? SectionHeader SectionDelimiter? SectionContent
-//	;
-//	
-//syntax SectionContent
-//	= empty_section: ;
+ 	= game: Prelude? ObjectS? Legend? ;
  	
 syntax Prelude
-	= prelude: {PreludeData Newline}*
-	// | empty_prelude: Newline*
+	= prelude: {PreludeData Newline}+
 	;
 	
 syntax PreludeData
-	= title: 'title' String*
-	| author: 'author' String*
-	| homepage: 'homepage' String*
-	| empty_pd:
+	= prelude_data: PreludeKeyword String*
+	| prelude_empty:
 	;
 
-//syntax Objects
-//	= objects: SectionDelimiter? 'Objects' Newline SectionDelimiter? Newline* ObjectData*
-//	|empty_objects:
+syntax Objects
+	= objects: 'OBJECTS' Newline* {ObjectData Newline}*
+	;
+
+syntax ObjectData
+	= object_data: String* Newline String* Newline {Spriteline Newline}*
+	;
+
+syntax Legend
+	= legend: 'LEGEND' Newline* {LegendData Newline*}*
+	;
+	
+syntax LegendData
+	= legend_data:
+	;
+	
+// ugly hack for "temporary" fix
+syntax LegendData
+	= legend_data: LegendPixel String 
+	| legend_combined: LegendPixel String 'and' {String 'and'}+
+	| legend_alias: LegendString String 'or' {String 'or'}+
+	// | legend_empty: 
+	;
+
+// original code minus the "elegant" fix	
+//syntax LegendData
+//	= legend_data: Pixel '=' String
+//	| combined: Pixel '=' {String 'and'}+
+//	| aliases: String '=' {String 'or'}+
 //	;
-//	
-//syntax ObjectData
-//	= objectdata: String Newline String* Newline {Sprite Newline}*
-//	;
-//
-//syntax Legend
-//	= empty:
-//	;
-//
-//syntax Sounds
-//	= empty:
-//	;
-//
-//syntax Layers
-//	= empty:
-//	;
-//
-//syntax Rules
-//	= empty:
-//	;
-//	
-//syntax WinConditions
-//	= empty:
-//	;
-//	
-//syntax Levels
-//	= empty:
-//	;
+
+
+//ambiguious
+syntax Sounds
+	= sounds: 'SOUNDS' {SoundData Newline*}*
+	;
+	
+syntax SoundData
+	= sound_data: String+
+	;
+
+syntax Layers
+	= empty:
+	;
+
+syntax LayerData
+	= legend_data: {String ','}*
+	;
+
+
+syntax Rules
+	= empty:
+	;
+
+lexical Rule = ![\n]*;
+
+syntax RuleData
+	= rule_data: Rule
+	;
+
+	
+syntax WinConditions
+	= empty:
+	;
+
+syntax ConditionData
+	= condition_data: String*
+	;
+
+	
+syntax Levels
+	= empty:
+	;
+
+syntax LevelData
+	= level_data: {Levelline Newline}*
+	;
