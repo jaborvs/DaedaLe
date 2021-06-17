@@ -1,18 +1,16 @@
 module PuzzleScript::Syntax
 
-lexical LAYOUT = [\t\r\ =];
-layout LAYOUTLIST = LAYOUT* !>> [\t\r\ =];
+lexical LAYOUT = [\t\r\ ];
+layout LAYOUTLIST = LAYOUT* !>> [\t\r\ ];
 
 lexical Newline = [\n];
-syntax Blankline = ^[\n];
-lexical String = [a-z0-9.A-Z]+ !>> [a-z0-9.A-Z] \ Keywords;
-// ID
+lexical Newlines = Newline* !>> [\n];
+lexical ID = [a-z0-9.A-Z]+ !>> [a-z0-9.A-Z] \ Keywords;
+lexical SpecialChars = [.!@#$%&*];
 lexical Pixel = [a-zA-Z.!@#$%&*0-9];
+lexical LegendKey = [a-zA-Z.!@#$%&*0-9]+ !>> [a-zA-Z.!@#$%&*0-9];
 lexical Spriteline = [0-9.]+ !>> [0-9.] \ Keywords;
 lexical Levelline = Pixel+ !>> Pixel \ Keywords;
-lexical LegendPixel = Pixel >> '=';
-lexical LegendString = String >> '=';
-//lexical SectionDelimiter = [=]+ !>> [=];
 
 keyword SectionHeader =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'WINCONDITIONS' | 'LEVELS';
 keyword PreludeKeyword = 'title' | 'author' | 'homepage';
@@ -21,91 +19,81 @@ keyword LegendOperation = 'or' | 'and';
 keyword Keywords = SectionHeader | PreludeKeyword | LegendOperation;
 
 start syntax PSGame
- 	= game: Prelude? ObjectS? Legend? ;
+ 	= game:
+ 	;
  	
 syntax Prelude
-	= prelude: {PreludeData Newline}+
+	= prelude: (PreludeData Newlines)*
 	;
 	
 syntax PreludeData
-	= prelude_data: PreludeKeyword String*
-	| prelude_empty:
+	= prelude_data: PreludeKeyword ID*
 	;
 
 syntax Objects
-	= objects: 'OBJECTS' Newline* {ObjectData Newline}*
+	= objects: ObjectData*
 	;
+	
+syntax Sprite 
+    =  Spriteline Newline
+       Spriteline Newline
+       Spriteline Newline 
+       Spriteline Newline
+       Spriteline Newlines
+    ;
 
 syntax ObjectData
-	= object_data: String* Newline String* Newline {Spriteline Newline}*
+	= object_data: ID* Newline ID* Newline Sprite
 	;
 
 syntax Legend
-	= legend: 'LEGEND' Newline* {LegendData Newline*}*
+	= legend: LegendData*
 	;
-	
+
 syntax LegendData
-	= legend_data:
-	;
-	
-// ugly hack for "temporary" fix
-syntax LegendData
-	= legend_data: LegendPixel String 
-	| legend_combined: LegendPixel String 'and' {String 'and'}+
-	| legend_alias: LegendString String 'or' {String 'or'}+
-	// | legend_empty: 
+	= legend_data: LegendKey '=' {ID LegendOperation}* Newlines
 	;
 
-// original code minus the "elegant" fix	
-//syntax LegendData
-//	= legend_data: Pixel '=' String
-//	| combined: Pixel '=' {String 'and'}+
-//	| aliases: String '=' {String 'or'}+
-//	;
-
-
-//ambiguious
+// ambiguity
 syntax Sounds
-	= sounds: 'SOUNDS' {SoundData Newline*}*
+	= sounds: SoundData*
 	;
 	
 syntax SoundData
-	= sound_data: String+
+	= sound_data: ID*
 	;
 
 syntax Layers
-	= empty:
+	= layers: LayerData*
 	;
 
 syntax LayerData
-	= legend_data: {String ','}*
+	= layer_data: {ID ','}* Newlines
 	;
 
-
+//not working
 syntax Rules
-	= empty:
+	= rules: Rule*
 	;
 
-lexical Rule = ![\n]*;
+lexical Rule = ![\n]* >> [\n];
 
 syntax RuleData
-	= rule_data: Rule
+	= rule_data: Rule Newlines
 	;
-
 	
 syntax WinConditions
-	= empty:
+	= conditions: ConditionData*
 	;
 
 syntax ConditionData
-	= condition_data: String*
+	= condition_data: ID* Newlines
 	;
 
-	
 syntax Levels
-	= empty:
+	= levels: LevelData* 
 	;
 
 syntax LevelData
-	= level_data: {Levelline Newline}*
+	= level_data: {Levelline Newline}* Newlines
 	;
