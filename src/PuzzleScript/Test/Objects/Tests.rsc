@@ -48,11 +48,11 @@ void main(){
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Objects/LayerData.PS|
 	);
 	
-	//println("Rule");
-	//parse(
-	//	#RuleData, 
-	//	|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Objects/RuleData.PS|
-	//);
+	println("Rule");
+	parse(
+		#RuleData, 
+		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Objects/RuleData.PS|
+	);
 	
 	println("Condition");
 	parse(
