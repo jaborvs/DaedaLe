@@ -22,6 +22,11 @@ void main(){
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Objects/ObjectData2.PS|
 	);
 	
+	parse(
+		#ObjectData, 
+		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Objects/ObjectData3.PS|
+	);
+	
 	println("Legend");
 	parse(
 		#LegendData, 
