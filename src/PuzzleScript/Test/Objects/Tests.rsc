@@ -3,6 +3,9 @@ module PuzzleScript::Test::Objects::Tests
 import PuzzleScript::Syntax;
 import ParseTree;
 import IO;
+import vis::Figure;
+import vis::ParseTree;
+import vis::Render;
 
 void main(){
 	println("Prelude");
