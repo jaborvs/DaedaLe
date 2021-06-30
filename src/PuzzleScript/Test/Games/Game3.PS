@@ -1,4 +1,4 @@
-title EYE EYE EYE
+title Match 3 Block Push
 author increpare
 homepage www.puzzlescript.net
 
@@ -39,13 +39,14 @@ Black Orange White Blue
 .333.
 .3.3.
 
-EyeBall
-White Blue Red
-.000.
-00100
-01110
-20102
-.202.
+Crate
+Orange Yellow
+00000
+0...0
+0...0
+0...0
+00000
+
 
 =======
 LEGEND
@@ -54,14 +55,16 @@ LEGEND
 . = Background
 # = Wall
 P = Player
-O = EyeBall
+* = Crate
+@ = Crate and Target
+O = Target
 
 
 =======
 SOUNDS
 =======
 
-SFX0 67117309
+Crate MOVE 36772507
 
 ================
 COLLISIONLAYERS
@@ -69,19 +72,21 @@ COLLISIONLAYERS
 
 Background
 Target
-Player, Wall, EyeBall
+Player, Wall, Crate
 
 ======
 RULES
 ======
 
-[ Eyeball | ... | Player ] -> [ > Eyeball | ... | Player ] SFX0
+[ >  Player | Crate ] -> [  >  Player | > Crate  ]
+
+late [ Crate | Crate | Crate ] -> [ | |]
 
 ==============
 WINCONDITIONS
 ==============
 
-(there's no way to win against a floating eyeball :S )
+All Crate on Target
 
 =======
 LEVELS
@@ -89,8 +94,17 @@ LEVELS
 
 #########
 #.......#
-#....O..#
+#.*.*.@.#
+#.P...O.#
+#...*.*.#
+#.......#
+#########
+
+.#######.
+.#.....#.
+.#O##..##
+##.##.*.#
+#.*..**.#
+#.OOO.#.#
 #.P.....#
-#.......#
-#.......#
 #########

@@ -51,7 +51,6 @@ syntax Section
  	
 syntax Prelude
 	= prelude: PreludeData+
-	| empty: Newlines
 	;
 	
 syntax PreludeData
@@ -136,7 +135,7 @@ syntax ConditionData
 	;
 
 syntax Levels
-	= levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? {LevelData Newlines}+
+	= levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? {LevelData Newlines}+ Newlines?
 	;
 	
 syntax Message

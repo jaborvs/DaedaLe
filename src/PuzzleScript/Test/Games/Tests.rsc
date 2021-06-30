@@ -11,8 +11,7 @@ void main(){
 	println("Game 1");
 	parse(
 		#PSGame,
-		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|,
-		allowAmbiguity=true
+		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|
 	);
 	
 	println("Game 2");
