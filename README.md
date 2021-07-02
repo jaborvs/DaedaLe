@@ -2,4 +2,4 @@
 
 
 ## Current Shortcomings
-* Comment parsing is ambigious
+* Parsing comments at the end of the file causes a parse error

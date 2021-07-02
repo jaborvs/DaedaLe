@@ -10,37 +10,44 @@ import vis::Render;
 void main(){
 	println("Comment");
 	parse(
-		#Sounds,
+		#Section,
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Comments/Test1.PS|
 	);
 	
 	println("Inline");
 	parse(
-		#Sounds,
+		#Section,
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Comments/Test2.PS|
 	);
 	
 	println("Multi line comment");
 	parse(
-		#Sounds,
+		#Section,
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Comments/Test3.PS|
 	);
 	
-	print("Nested in code");
+	println("Nested in code");
 	parse(
-		#Sounds,
+		#Section,
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Comments/Test4.PS|
 	);
 	
-	print("Nested in other comment");
+	println("Nested in other comment");
 	parse(
-		#Sounds,
+		#Section,
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Comments/Test5.PS|
 	);
 	
-	print("All");
+	println("All");
 	parse(
-		#Sounds,
+		#Section,
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Comments/Test6.PS|
 	);
+	
+	// currently does not work because the grammar does not accept a game that ends with comments
+	//println("Just comments");
+	//parse(
+	//	#Section,
+	//	|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Comments/Test7.PS|
+	//);
 }

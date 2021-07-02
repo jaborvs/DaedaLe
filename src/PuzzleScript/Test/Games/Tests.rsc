@@ -32,11 +32,11 @@ void main(){
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game4.PS|
 	);
 	
-	//println("Game 5");
-	//parse(
-	//	#PSGame,
-	//	|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game5.PS|
-	//);
+	println("Game 5");
+	parse(
+		#PSGame,
+		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game5.PS|
+	);
 	
 	println("Game 5b");
 	parse(

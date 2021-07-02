@@ -2,11 +2,13 @@ module PuzzleScript::Syntax
 
 lexical LAYOUT 
 	= [\t\r\ ]
-	| @category="Comment" "(" ![)]+ ")" Newlines?
+	| @category="Comment" ^ Comment Newlines
+	> @category="Comment" Comment //nested in code
 	;
 layout LAYOUTLIST = LAYOUT* !>> [\t\r\ )];
 
-//lexical Comment = [(]![)]+[)] !>> [)];
+
+lexical Comment = @category="Comment" "(" (![()]|Comment)+ ")";
 lexical Newline = [\n];
 lexical Newlines = Newline+ !>> [\n];
 lexical ID = @category="ID" id: [a-z0-9.A-Z]+ !>> [a-z0-9.A-Z] \ Keywords;
@@ -51,11 +53,11 @@ syntax Section
  	
 syntax Prelude
 	= prelude: PreludeData+
+	| empty: Newlines
 	;
 	
 syntax PreludeData
-	= prelude_data: PreludeKeyword String*
-	| prelude_empty: Newlines
+	= prelude_data: PreludeKeyword String* Newlines
 	;
 
 syntax Objects
@@ -97,7 +99,6 @@ syntax Layers
 
 syntax LayerData
 	= layer_data: {ID ','}+ Newlines
-	| layer_empty: Newlines
 	;
 
 syntax Rules
@@ -131,7 +132,6 @@ syntax WinConditions
 
 syntax ConditionData
 	= condition_data: ID+ Newlines
-	| condition_empty: Newlines
 	;
 
 syntax Levels
