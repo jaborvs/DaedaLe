@@ -1,8 +1,4 @@
 Manifest-Version: 0.0.1
-Main-Function: main
-Courses: courses
-Project-Name: AutomatedPuzzleScript
-Require-Libraries: 
-Main-Module: Plugin
 Source: src
+Project-Name: salix
 

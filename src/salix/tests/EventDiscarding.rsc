@@ -19,8 +19,8 @@ alias Model = tuple[str txt, bool deleted];
 App[str] theApp()
   = webApp(
       makeApp("root", init, view, update),
-      |project://AutomatedPuzzleScript/src/salix/tests/index.html|, 
-      |project://AutomatedPuzzleScript/src|);
+      |project://salix/src/salix/tests/index.html|, 
+      |project://salix/src|);
 
 Model init() = <"0", false>;
 
