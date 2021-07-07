@@ -1,17 +1,17 @@
 module PuzzleScript::Test::Implode::Tests
 
-import PuzzleScript::AST;
 import PuzzleScript::Syntax;
+import PuzzleScript::AST;
 import ParseTree;
 
 void main(){
-	Prelude prelude = parse(
-		#Prelude,
+	PSGame game = parse(
+		#PSGame,
 		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Implode/Test1.PS|
 	);
 	
-	PRELUDE pr = implode(
-		#PRELUDE,
-		prelude
+	Game g = implode(
+		#Game,
+		game
 	);
 }
