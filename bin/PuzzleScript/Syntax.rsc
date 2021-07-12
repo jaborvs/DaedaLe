@@ -7,17 +7,16 @@ lexical LAYOUT
 	;
 layout LAYOUTLIST = LAYOUT* !>> [\t\r\ )];
 
-
+lexical SectionDelimiter = [=]+ Newlines;
+lexical Newlines = Newline+ !>> [\n];
 lexical Comment = @category="Comment" "(" (![()]|Comment)+ ")";
 lexical Newline = [\n];
-//lexical Newlines = Newline+ !>> [\n];
 lexical ID = [a-z0-9.A-Z]+ !>> [a-z0-9.A-Z] \ Keywords;
 lexical SpecialChars = [.!@#$%&*];
 lexical Pixel = [a-zA-Z.!@#$%&*0-9];
 lexical LegendKey = [a-zA-Z.!@#$%&*0-9]+ !>> [a-zA-Z.!@#$%&*0-9] \ Keywords;
 lexical Spriteline = [0-9.]+ !>> [0-9.] \ Keywords;
 lexical Levelline = Pixel+ !>> Pixel \ Keywords;
-//lexical SectionDelimiter = [=]+ Newlines;
 lexical String = ![\n]+ >> [\n];
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
@@ -34,14 +33,6 @@ keyword Orientiation = 'vertical' | 'horizontal';
 keyword No = 'no';
 
 keyword Keywords = SectionKeyword | PreludeKeyword | LegendOperation;
-
-syntax Newlines
-	= lines: Newline+ !>> [\n]
-	;
-	
-syntax SectionDelimiter
-	= delimiter: [=]+ Newlines
-	;
 
 start syntax PSGame
  	= game: Prelude Section+
@@ -85,8 +76,6 @@ syntax Sprite
        Spriteline Newline
        Spriteline Newline
     ;
-
-
 
 syntax Legend
 	= legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+

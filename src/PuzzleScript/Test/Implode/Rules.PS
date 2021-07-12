@@ -1,0 +1,20 @@
+======
+RULES
+======
+
+( multi line
+ comment
+ 
+)
+
+late [ PinkBlock | PinkBlock | PinkBlock ] -> [ | | ]
+late [ BlueBlock | BlueBlock | BlueBlock ] -> [ | | ]
+[ PurpleBlock | PurpleBlock | PurpleBlock ] -> [ | | ]
+[ > player | no activetile ] -> cancel
+[ > player |  ] -> [ | player ]
+
+[ activetile | player ] -> [ temp | player ]
+[ no temp | player ] -> [activetile | player ]
+[ temp ] -> []
+
+[activetile void ] -> [ void ]
