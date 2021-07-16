@@ -18,6 +18,8 @@ lexical LegendKey = [a-zA-Z.!@#$%&*0-9]+ !>> [a-zA-Z.!@#$%&*0-9] \ Keywords;
 lexical Spriteline = [0-9.]+ !>> [0-9.] \ Keywords;
 lexical Levelline = Pixel+ !>> Pixel \ Keywords;
 lexical String = ![\n]+ >> [\n];
+lexical SoundIndex = [0-9]|'10';
+lexical Directional = [\>\<^v] !>> [a-z0-9.A-Z];
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
 keyword PreludeKeyword 
@@ -25,14 +27,15 @@ keyword PreludeKeyword
 	| 'debug' | 'flickscreen' | 'key_repeat_interval' | 'noaction' | 'norepeat_action' | 'noundo'
 	| 'norestart' | 'realtime_interval' | 'require_player_movement' | 'run_rules_on_level_start' 
 	| 'scanline' | 'text_color' | 'throttle_movement' | 'verbose_logging' | 'youtube ' | 'zoomscreen';
+
 keyword LegendOperation = 'or' | 'and';
+keyword CommandKeyword = 'again' | 'cancel' | 'checkpoint' | 'restart' | 'win';
 
-keyword Directional = 'up' | 'down' | 'right' | 'left' ;
-keyword Moving = 'moving';
-keyword Orientiation = 'vertical' | 'horizontal';
-keyword No = 'no';
+keyword Keywords = SectionKeyword | PreludeKeyword | LegendOperation | CommandKeyword;
 
-keyword Keywords = SectionKeyword | PreludeKeyword | LegendOperation;
+syntax Sound
+	= sound: 'sfx' SoundIndex
+	;
 
 start syntax PSGame
  	= game: Prelude Section+
@@ -85,6 +88,12 @@ syntax LegendData
 	= legend_data: LegendKey '=' {ID LegendOperation}+ Newlines
 	;
 
+// ideal solution, doesn't currently work because of ambiguity issues	
+//syntax LegendData
+//	= legend_data_or: LegendKey '=' {ID 'or'}+ Newlines
+//	> legend_data_and: LegendKey '=' {ID 'and'}+ Newlines
+//	;
+
 syntax Sounds
 	= sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? (SoundData Newlines)+
 	;
@@ -104,26 +113,22 @@ syntax LayerData
 syntax Rules
 	= rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+
 	;
-
-lexical RuleContent 
-	= content: ![\]|]+ >> [\]|] \ Keywords
-	| empty: 
+	
+syntax RuleData
+	= rule_data: ID* RulePart+ '-\>' (Command|RulePart)+ Message? Newlines
 	;
 
+syntax RuleContent
+	= content: (ID|Directional)*
+	;
+	
 syntax RulePart
 	= part: '[' {RuleContent '|'}+ ']'
 	;
-	
-syntax Prefix
-	= prefix: ID*
-	;
 
 syntax Command
-	= command: ID+
-	;
-
-syntax RuleData
-	= rule_data: Prefix RulePart+ '-\>' (RulePart|Command)+ Newlines
+	= command: CommandKeyword
+	| sound: Sound
 	;
 
 syntax WinConditions

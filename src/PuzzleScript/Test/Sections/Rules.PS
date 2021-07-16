@@ -8,7 +8,7 @@ RULES
 )
 
 late [ PinkBlock | PinkBlock | PinkBlock ] -> [ | | ]
-late [ BlueBlock | BlueBlock | BlueBlock ] -> [ | | ]
+late [ BlueBlock | BlueBlock | BlueBlock ] -> [ | | ] SFX0
 [ PurpleBlock | PurpleBlock | PurpleBlock ] -> [ | | ]
 [ > player | no activetile ] -> cancel
 [ > player |  ] -> [ | player ]
@@ -18,3 +18,12 @@ late [ BlueBlock | BlueBlock | BlueBlock ] -> [ | | ]
 [ temp ] -> []
 
 [activetile void ] -> [ void ]
+[ >  Moveable | Moveable ] -> [ > Moveable | > Moveable ]
+
+[ > Block | Grille ] -> [ Block | Grille ]
+
+late [ PinkBlock | PinkBlock | PinkBlock ] -> [ | | ]
+[ Eyeball | ... | Player ] -> [ > Eyeball | ... | Player ] SFX0
+late [ PurpleBlock | PurpleBlock | PurpleBlock ] -> [ | | ]
+late [ OrangeBlock | OrangeBlock | OrangeBlock ] -> [ | | ]
+late [ GreenBlock | GreenBlock | GreenBlock ] -> [ | | ]

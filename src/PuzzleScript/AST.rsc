@@ -10,19 +10,19 @@ data PRELUDE
 	;
 
 data PSGAME
- 	= game(PRELUDE pr, list[SECTION] sect)
+ 	= game(PRELUDE prelude, list[SECTION] sect)
  	| empty(str)
  	;
  	
 data SECTION
  	= objects(OBJECTS objects)
- 	//| legend(LEGEND legend) // issues with retaining separator to differentiate between a combined sprite and just an alias
+ 	| legend(LEGEND legend)
  	| sounds(SOUNDS sounds)
  	| layers(LAYERS layers)
- 	//| rules(RULES rules)
+ 	| rules(RULES rules)
  	| conditions(WINCONDITIONS conditions)
  	| levels(LEVELS levels)
- 	| empty(str, str)
+ 	| empty(str, str name, str, str)
  	;
  	
 data OBJECTS
@@ -43,6 +43,7 @@ data SPRITE
        str, str
       );
       
+// issues with retaining separator to differentiate between a combined sprite and just an alias
 data LEGEND
 	= legend(str, str, str, list[LEGENDDATA])
 	;
@@ -67,15 +68,23 @@ data LAYERDATA
 	= layer_data(list[str] layer, str)
 	;
 	
-//data RULES
-//	= rules(str, str, str, list[RULEDATA] rules)
-//	;
-//	
-//data RULEDATA
-//	= rule_data(list[str] prefix, list[RulePart] rules_right, list[RulePart, str], str)
-//	;
-//	
-//data RULE
+data RULES
+	= rules(str, str, str, list[RULEDATA] rules)
+	;
+
+data RULEDATA
+	= rule_data(list[str] prefix, list[RULEPART] left, list[RULEPART] right, list[str] message, str)
+	;
+
+data RULEPART
+	= part(list[RULECONTENT] contents)
+	| command(str command)
+	| sound(str sound)
+	;
+
+data RULECONTENT
+	= content(list[str])
+	;
 
 data WINCONDITIONS
 	= conditions(str, str, str, list[CONDITIONDATA] conditions)
@@ -86,7 +95,7 @@ data CONDITIONDATA
 	;
 	
 data LEVELS
-	= levels(str, str, str, list[LEVELDATA] levels)
+	= levels(str, str, str, list[LEVELDATA] levels, str)
 	;
 	
 data LEVELDATA
