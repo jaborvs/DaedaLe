@@ -1,16 +1,16 @@
 module PuzzleScript::AST
 
 data PRELUDEDATA 
-	= prelude_data(str key, list[str] values, str)
+	= prelude_data(str key, str string, str)
 	;
 	
 data PRELUDE
-	= prelude(list[PRELUDEDATA] prelude)
+	= prelude(list[PRELUDEDATA] datas)
 	| empty(str)
 	;
 
 data PSGAME
- 	= game(PRELUDE prelude, list[SECTION] sect)
+ 	= game(PRELUDE prelude, list[SECTION] sections)
  	| empty(str)
  	;
  	
@@ -30,17 +30,17 @@ data OBJECTS
 	;
 	
 data OBJECTDATA
-	= object_data(list[str] id, str, list[str] colors, str, list[SPRITE] sprite)
+	= object_data(str id, list[str] legend, str, list[str] colors, str, list[SPRITE] sprite)
 	| object_empty(str)
 	;
 	
 data SPRITE 
     =  sprite( 
-       str, str,
-       str, str,
-       str, str, 
-       str, str,
-       str, str
+       str line0, str,
+       str line1, str,
+       str line2, str, 
+       str line3, str,
+       str line4, str
       );
       
 // issues with retaining separator to differentiate between a combined sprite and just an alias

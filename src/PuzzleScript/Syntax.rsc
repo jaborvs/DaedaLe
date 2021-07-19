@@ -67,7 +67,7 @@ syntax Objects
 	;
 
 syntax ObjectData
-	= object_data: ID+ Newline ID+ Newline Sprite?
+	= object_data: ID ID? Newline ID+ Newline Sprite?
 	| object_empty: Newlines
 	;
 
