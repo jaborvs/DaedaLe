@@ -5,5 +5,7 @@
 * Parsing comments at the end of the file causes a parse error
 
 ## Current WIP
-* Legend ADT - How do we distinguish between OR and AND?
-* Section ADT - currently dumb, like prelude used to be, redo
+
+## Concessions
+* Only the default palette is available, adding multiple palette is trivial but tedious
+* Sounds not checked or played, probably trivial, not very interesting from this project's point of view

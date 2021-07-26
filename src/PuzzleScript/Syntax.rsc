@@ -14,11 +14,11 @@ lexical Newline = [\n];
 lexical ID = [a-z0-9.A-Z]+ !>> [a-z0-9.A-Z] \ Keywords;
 lexical SpecialChars = [.!@#$%&*];
 lexical Pixel = [a-zA-Z.!@#$%&*0-9];
-lexical LegendKey = [a-zA-Z.!@#$%&*0-9]+ !>> [a-zA-Z.!@#$%&*0-9] \ Keywords;
+lexical LegendKey = [a-zA-Z.!@#$%&*]+ !>> [a-zA-Z.!@#$%&*] \ Keywords;
 lexical Spriteline = [0-9.]+ !>> [0-9.] \ Keywords;
 lexical Levelline = Pixel+ !>> Pixel \ Keywords;
 lexical String = ![\n]+ >> [\n];
-lexical SoundIndex = [0-9]|'10';
+lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
 lexical Directional = [\>\<^v] !>> [a-z0-9.A-Z];
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
@@ -28,10 +28,10 @@ keyword PreludeKeyword
 	| 'norestart' | 'realtime_interval' | 'require_player_movement' | 'run_rules_on_level_start' 
 	| 'scanline' | 'text_color' | 'throttle_movement' | 'verbose_logging' | 'youtube ' | 'zoomscreen';
 
-keyword LegendOperation = 'or' | 'and';
+keyword LegendKeyword = 'or' | 'and';
 keyword CommandKeyword = 'again' | 'cancel' | 'checkpoint' | 'restart' | 'win';
 
-keyword Keywords = SectionKeyword | PreludeKeyword | LegendOperation | CommandKeyword;
+keyword Keywords = SectionKeyword | PreludeKeyword | LegendKeyword | CommandKeyword;
 
 syntax Sound
 	= sound: 'sfx' SoundIndex
@@ -67,7 +67,7 @@ syntax Objects
 	;
 
 syntax ObjectData
-	= object_data: ID ID? Newline ID+ Newline Sprite?
+	= object_data: ID LegendKey? Newline ID+ Newline Sprite?
 	| object_empty: Newlines
 	;
 
@@ -83,9 +83,14 @@ syntax Sprite
 syntax Legend
 	= legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+
 	;
+	
+syntax LegendOperation
+	= legend_or: 'or' ID
+	| legend_and: 'and' ID
+	;
 
 syntax LegendData
-	= legend_data: LegendKey '=' {ID LegendOperation}+ Newlines
+	= legend_data: LegendKey '=' ID LegendOperation*  Newlines
 	;
 
 // ideal solution, doesn't currently work because of ambiguity issues	

@@ -1,5 +1,28 @@
 module PuzzleScript::AST
 
+anno loc PRELUDEDATA@location;
+anno loc PRELUDE@location;
+anno loc PSGAME@location;
+anno loc SECTION@location;
+anno loc OBJECTS@location;
+anno loc RULEPART@location;
+anno loc RULECONTENT@location;
+anno loc OBJECTDATA@location;
+anno loc LEGENDDATA@location;
+anno loc SOUNDDATA@location;
+anno loc RULEDATA@location;
+anno loc CONDITIONDATA@location;
+anno loc LEVELDATA@location;
+anno loc LEGEND@location;
+anno loc SOUNDS@location;
+anno loc LAYERS@location;
+anno loc RULES@location;
+anno loc WINCONDITIONS@location;
+anno loc LEVELS@location;
+anno loc SPRITE@location;
+anno loc LEGENDOPERATION@location;
+anno loc LAYERDATA@location;
+
 data PRELUDEDATA 
 	= prelude_data(str key, str string, str)
 	;
@@ -11,6 +34,17 @@ data PRELUDE
 
 data PSGAME
  	= game(PRELUDE prelude, list[SECTION] sections)
+ 	| game(
+ 		PRELUDE prelude, 
+ 		list[OBJECTDATA] objects,
+ 		list[LEGENDDATA] legend,
+ 		list[SOUNDDATA sound] sounds,
+ 		list[LAYERDATA] layers,
+ 		list[RULEDATA] rules,
+ 		list[CONDITIONDATA] conditions,
+ 		list[LEVELDATA] levels,
+ 		list[SECTION] sections
+ 	)	
  	| empty(str)
  	;
  	
@@ -30,7 +64,8 @@ data OBJECTS
 	;
 	
 data OBJECTDATA
-	= object_data(str id, list[str] legend, str, list[str] colors, str, list[SPRITE] sprite)
+	= object_data(str id, list[str] legend, str, list[str] colors, str, list[SPRITE] spr)
+	| object_data(str id, list[str] legend, list[str] colors, list[list[str]] sprite)
 	| object_empty(str)
 	;
 	
@@ -43,13 +78,20 @@ data SPRITE
        str line4, str
       );
       
-// issues with retaining separator to differentiate between a combined sprite and just an alias
 data LEGEND
-	= legend(str, str, str, list[LEGENDDATA])
+	= legend(str, str, str, list[LEGENDDATA] legend)
+	;
+	
+data LEGENDOPERATION
+	= legend_or(str id)
+	| legend_and(str id)
 	;
 
 data LEGENDDATA
-	= legend_data(str legend, list[str] values, str)
+	= legend_data(str legend, str first, list[LEGENDOPERATION] others, str)
+	| legend_alias(str legend, list[str] values)
+	| legend_combined(str legend, list[str] values)
+	| legend_error(str legend, list[str] values)
 	;	
 	
 data SOUNDS
@@ -66,6 +108,7 @@ data LAYERS
 	
 data LAYERDATA
 	= layer_data(list[str] layer, str)
+	| layer_data(list[str] layer)
 	;
 	
 data RULES
@@ -75,7 +118,7 @@ data RULES
 data RULEDATA
 	= rule_data(list[str] prefix, list[RULEPART] left, list[RULEPART] right, list[str] message, str)
 	;
-
+	
 data RULEPART
 	= part(list[RULECONTENT] contents)
 	| command(str command)

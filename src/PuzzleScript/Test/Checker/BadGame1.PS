@@ -1,7 +1,6 @@
 title Simple Block Pushing Game
 author David Skinner
 homepage www.puzzlescript.net
-debug
 
 ========
 OBJECTS
@@ -10,13 +9,13 @@ OBJECTS
 Background
 LIGHTGREEN GREEN
 11111
-01111
+01118
 11101
-11111
+1111111
 10111
 
 
-Target
+Target T
 DarkBlue
 .....
 .000.
@@ -24,7 +23,7 @@ DarkBlue
 .000.
 .....
 
-Wall
+Wall T
 BROWN DARKBROWN
 00010
 11111
@@ -33,7 +32,15 @@ BROWN DARKBROWN
 00010
 
 Player
-Black Orange White Blue
+Black Orange White Blue JOHN
+.000.
+.111.
+22222
+.333.
+.3.3.
+
+Player
+Black Orange White 
 .000.
 .111.
 22222
@@ -56,7 +63,18 @@ LEGEND
 . = Background
 # = Wall
 P = Player
-* = Crate
+* = Crate or Bob and John
+@ = Crate and Target
+O = Target
+
+=======
+LEGEND
+=======
+
+. = Background
+# = Wall
+P = Player
+* = Crate or Bob and John
 @ = Crate and Target
 O = Target
 
@@ -71,7 +89,7 @@ COLLISIONLAYERS
 ================
 
 Background
-Target
+Target, Bark
 Player, Wall, Crate
 
 ======
