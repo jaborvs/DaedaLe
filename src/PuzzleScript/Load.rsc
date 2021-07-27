@@ -83,6 +83,18 @@ LAYERDATA process_layer(LAYERDATA l) {
 	return new_l[@location = l@location];
 }
 
+LEVELDATA process_level(LEVELDATA l) {
+	switch(l) {
+		case message(_): return l;
+		case level_data_raw(list[tuple[str, str]] lines): {
+			LEVELDATA new_l = level_data([x[0] | x <- lines]);
+			return new_l[@location = l@location];
+		}
+	}
+	
+	return l;
+}
+
 PSGAME post(PSGAME game) {
 	// do post processing here
 	list[OBJECTDATA] objects = [];
@@ -125,6 +137,9 @@ PSGAME post(PSGAME game) {
 	//unnest layers
 	processed_layers = [process_layer(l) | LAYERDATA l <- layers];
 	
+	//unest levels
+	processed_levels = [process_level(l) | LEVELDATA l <- levels];
+	
 	PSGAME new_game = PSGAME::game(
 		game.prelude, 
 		processed_objects, 
@@ -133,7 +148,7 @@ PSGAME post(PSGAME game) {
 		processed_layers, 
 		rules, 
 		conditions, 
-		levels, 
+		processed_levels, 
 		game.sections
 	);
 	

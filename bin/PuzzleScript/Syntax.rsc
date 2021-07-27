@@ -153,6 +153,6 @@ syntax Message
 	;
 
 syntax LevelData
-	= level_data: (Levelline Newline)+
+	= level_data_raw: (Levelline Newline)+
 	| message: Message
 	;

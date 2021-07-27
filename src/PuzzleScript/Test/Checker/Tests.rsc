@@ -30,8 +30,8 @@ void main(){
 	//print_msgs(checker);
 	//println();
 	
-	println("Object Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Objects.PS|);
+	println("Level Errors");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Levels.PS|);
 	checker = check_game(game);
 	print_msgs(checker);
 	println();

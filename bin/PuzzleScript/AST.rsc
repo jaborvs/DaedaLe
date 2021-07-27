@@ -143,6 +143,7 @@ data LEVELS
 	;
 	
 data LEVELDATA
-	= level_data(list[tuple[str, str]] level)
+	= level_data_raw(list[tuple[str, str]] lines)
+	| level_data(list[str] level)
 	| message(str message)
 	;

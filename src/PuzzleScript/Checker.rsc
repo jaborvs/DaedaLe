@@ -7,6 +7,11 @@ import String;
 import IO;
 import Type;
 
+alias Reference = tuple[
+	list[str] objs, 
+	Checker c
+];
+
 alias Checker = tuple[
 	list[Msg] msgs,
 	bool debug_flag,
@@ -67,10 +72,13 @@ data Msg
 	| existing_legend(str legend, list[str] current, list[str] new, MsgType t, loc pos)
 	| undefined_object(str name, MsgType t, loc pos)
 	| unlayered_objects(str objects, MsgType t, loc pos)
-	//| duplicate_reference(str name, str ref, MsgType t, loc pos)
 	| existing_section(SECTION section, int dupe, MsgType t, loc pos)
+	| invalid_level_row(MsgType t, loc pos)
+	| ambiguous_pixel(str legend, list[str] objs, MsgType t, loc pos)
 	//warnings
 	| unused_colors(str name, str colors, MsgType t, loc pos)
+	| no_levels(MsgType t, loc pos)
+	| message_too_long(MsgType t, loc pos)
 	;
 		
 Checker new_checker(bool debug_flag, PSGAME game){		
@@ -114,6 +122,46 @@ list[Msg] check_undefined_object(str name, loc pos, Checker c){
 	}
 
 	return msgs;
+}
+
+Reference resolve_reference(str raw_name, Checker c, loc pos){
+	Reference r;
+	
+	list[str] objs = [];	
+	str name = toLowerCase(raw_name);
+	
+	if (name in c.references && c.references[name] == [name]) return <[name], c>;
+	
+	if (name in c.combinations) {
+		for (str n <- c.combinations[name]) {
+			r = resolve_reference(n, c, pos);
+			objs += r.objs;
+			c = r.c;
+		}
+	} else if (name in c.references) {
+		for (str n <- c.references[name]) {
+			r = resolve_reference(n, c, pos);
+			objs += r.objs;
+			c = r.c;
+		}
+	} else {
+		c.msgs += [undefined_object(raw_name, error(), pos)];
+	}
+	
+	return <dup(objs), c>;
+}
+
+Reference resolve_references(list[str] names, Checker c, loc pos) {
+	list[str] objs = [];
+	Reference r;
+	
+	for (str name <- names) {
+		r = resolve_reference(name, c, pos);
+		objs += r.objs;
+		c = r.c;
+	}
+	
+	return <dup(objs), c>;
 }
 
 // errors
@@ -183,54 +231,6 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 	return c;
 }
 
-Checker check_sound(SOUNDDATA s, Checker c){
-	
-	
-	return c;
-}
-
-alias Reference = tuple[list[str] objs, Checker c];
-
-Reference resolve_reference(str raw_name, Checker c, loc pos){
-	Reference r;
-	
-	list[str] objs = [];
-	str name = toLowerCase(raw_name);
-	
-	if (name in c.references && c.references[name] == [name]) return <[name], c>;
-	
-	if (name in c.combinations) {
-		for (str n <- c.combinations[name]) {
-			r = resolve_reference(n, c, pos);
-			objs += r.objs;
-			c = r.c;
-		}
-	} else if (name in c.references) {
-		for (str n <- c.references[name]) {
-			r = resolve_reference(n, c, pos);
-			objs += r.objs;
-			c = r.c;
-		}
-	} else {
-		c.msgs += [undefined_object(raw_name, error(), pos)];
-	}
-	
-	return <dup(objs), c>;
-}
-
-Reference resolve_references(list[str] names, Checker c, loc pos) {
-	list[str] objs = [];
-	Reference r;
-	
-	for (str name <- names) {
-		r = resolve_reference(name, c, pos);
-		objs += r.objs;
-		c = r.c;
-	}
-	
-	return <dup(objs), c>;
-}
-
 // errors
 //	existing_legend
 // 	undefined_object
@@ -298,6 +298,12 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 	return c;
 }
 
+Checker check_sound(SOUNDDATA s, Checker c){
+	
+	
+	return c;
+}
+
 // errors
 //	undefined_object
 Checker check_layer(LAYERDATA l, Checker c){
@@ -305,6 +311,49 @@ Checker check_layer(LAYERDATA l, Checker c){
 	c = r.c;
 	c.layer_list += r.objs;
 	
+	return c;
+}
+
+
+
+Checker check_rule(RULEDATA r, Checker c){
+	
+	return c;
+}
+
+Checker check_condition(CONDITIONDATA w, Checker c){
+	
+	return c;
+}
+
+//errors
+//	invalid_level_row
+//	invalid_legend
+Checker check_level(LEVELDATA l, Checker c){
+	switch(l) {
+		case message(str msg): if (size(msg) > 12) c.msgs += [message_too_long(warn(), l@location)];
+		case level_data(_): {
+			int length = size(l.level[0]);
+			bool invalid = false;
+			
+			for (str line <- l.level){
+				if (size(line) != length) invalid = true;
+				
+				list[str] char_list = split("", line);
+				for (str legend <- char_list) {
+					Reference r = resolve_reference(legend, c, l@location);
+					c = r.c;
+					
+					if (toLowerCase(legend) in c.references && size(r.objs) > 1) {
+						c.msgs += [ambiguous_pixel(legend, r.objs, error(), l@location)];
+					}
+					
+				}
+			}
+			if (invalid) c.msgs += [invalid_level_row(error(), l@location)];
+		}
+	}
+
 	return c;
 }
 
@@ -340,6 +389,20 @@ Checker check_game(PSGAME g, bool debug=false) {
 		c.msgs += [unlayered_objects(intercalate(", ", unlayered), error(), g@location)];
 	}
 	
+	for (RULEDATA r <- g.rules) {
+		c = check_rule(r, c);
+	}
+	
+	for (CONDITIONDATA w <- g.conditions) {
+		c = check_condition(w, c);
+	}
+	
+	for (LEVELDATA l <- g.levels) {
+		c = check_level(l, c);
+	}
+	
+	if (size(g.levels) == 0) c.msgs += no_levels(warn(), g@location);
+	
 	return c;
 }
 
@@ -365,9 +428,6 @@ public str println(Msg m: invalid_color(str name, str color, MsgType t, loc pos)
 public str println(Msg m: self_reference(str name, MsgType t, loc pos))
 	= "Reference <name> is referencing itself";
 	
-//public str println(Msg m: invalid_layer(str name, list[str] layer, MsgType t, loc pos)) 
-//	= "";
-	
 public str println(Msg m: undefined_reference(str name, MsgType t, loc pos)) 
 	= "Reference <name> not defined. <pos>";
 	
@@ -376,9 +436,6 @@ public str println(Msg m: existing_legend(str legend, list[str] current, list[st
 	
 public str println(Msg m: undefined_object(str name, MsgType t, loc pos)) 
 	= "Object <name> is used but never defined. <pos>";
-
-//public str println(Msg m: duplicate_reference(str name, str ref, MsgType t, loc pos)) 
-//	= "References <ref> for object <name> already exists at <pos>";
 	
 public str println(Msg m: unused_colors(str name, str colors, MsgType t, loc pos)) 
 	= "Colors <colors> not used in <name>. <pos>";
@@ -391,8 +448,21 @@ public str println(Msg m: invalid_name(str name, MsgType t, loc pos))
 	
 public str println(Msg m: unlayered_objects(str objects, MsgType t, loc pos))
 	= "Object(s) defined but not added to layer";
+	
+public str println(Msg m: invalid_level_row(MsgType t, loc pos))
+	= "All rows of level must be the same lenght. <pos>";
+
+public str println(Msg m: ambiguous_pixel(str legend, list[str] objs, MsgType t, loc pos))
+	= "Cannot use property <legend> (defined with \'or\') in a level. <pos>";
+	
+public str println(Msg m: no_levels(MsgType t, loc pos))
+	= "No levels defined. <pos>";
+	
+public str println(Msg m: message_too_long(MsgType t, loc pos))
+	= "Message too long to fit on screen. <pos>";
 
 public default str println(Msg m) = "Undefined message converter";
+
 
 void print_msgs(Checker checker){
 	list[Msg] error_list = [x | Msg x <- checker.msgs, x.t == error()];
