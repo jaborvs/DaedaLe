@@ -1,12 +1,13 @@
 title Simple Block Pushing Game
 author David Skinner
 homepage www.puzzlescript.net
+debug
 
 ========
 OBJECTS
 ========
 
-Background r
+Background
 LIGHTGREEN GREEN
 11111
 01111
@@ -15,7 +16,7 @@ LIGHTGREEN GREEN
 10111
 
 
-Target r (existing reference)
+Target
 DarkBlue
 .....
 .000.
@@ -23,7 +24,7 @@ DarkBlue
 .000.
 .....
 
-Wall Test
+Wall
 BROWN DARKBROWN
 00010
 11111
@@ -57,20 +58,10 @@ LEGEND
 P = Player
 * = Crate
 @ = Crate and Target
-
-(undefined)
-O = Target and Elbow 
-
-(self reference)
-Crate = Crate 
-
-(invalid name)
-John@Bonk = Target 
-Gerald = Crate or Player
-
-(mixed legend)
-Jack = Gerald and Wall
-Jark = Target or Crate and Player
+O = Target
+Albert = Background
+B = Target or Albert
+C = B or Albert
 
 =======
 SOUNDS

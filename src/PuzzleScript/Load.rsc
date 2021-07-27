@@ -125,7 +125,7 @@ PSGAME post(PSGAME game) {
 	//unnest layers
 	processed_layers = [process_layer(l) | LAYERDATA l <- layers];
 	
-	return PSGAME::game(
+	PSGAME new_game = PSGAME::game(
 		game.prelude, 
 		processed_objects, 
 		processed_legends, 
@@ -136,4 +136,6 @@ PSGAME post(PSGAME game) {
 		levels, 
 		game.sections
 	);
+	
+	return new_game[@location = game@location];
 }

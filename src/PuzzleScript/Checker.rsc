@@ -13,6 +13,7 @@ alias Checker = tuple[
 	map[str, list[str]] references,
 	list[str] objects,
 	map[str, list[str]] combinations,
+	list[str] layer_list,
 	PSGAME game
 ];
 
@@ -61,10 +62,11 @@ data Msg
 	| mixed_legend(str name, list[str] values, MsgType t, loc pos)
 	| self_reference(str name, MsgType t, loc pos)
 	| existing_object(str name, MsgType t, loc pos)
-	| sprite_length(str name, str line, MsgType t, loc pos)
+	| invalid_sprite(str name, str line, MsgType t, loc pos)
 	| undefined_reference(str name, MsgType t, loc pos)
 	| existing_legend(str legend, list[str] current, list[str] new, MsgType t, loc pos)
 	| undefined_object(str name, MsgType t, loc pos)
+	| unlayered_objects(str objects, MsgType t, loc pos)
 	//| duplicate_reference(str name, str ref, MsgType t, loc pos)
 	| existing_section(SECTION section, int dupe, MsgType t, loc pos)
 	//warnings
@@ -72,7 +74,7 @@ data Msg
 	;
 		
 Checker new_checker(bool debug_flag, PSGAME game){		
-	return <[], debug_flag, (), [], (), game>;
+	return <[], debug_flag, (), [], (), [], game>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -81,13 +83,6 @@ str get_prelude(list[PRELUDEDATA] values, str key, str default_str){
 	if (size(v) > 0) return v[0].string;
 	
 	return default_str;
-}
-
-//get all the objects from a reference
-list[str] get_object(str ref, Checker c){
-	list[str] objs = [];
-	
-	return objs;
 }
 
 bool check_invalid_name(str name){
@@ -121,9 +116,17 @@ list[Msg] check_undefined_object(str name, loc pos, Checker c){
 	return msgs;
 }
 
+// errors
+//	invalid_name
+//	existing_object
+//	existing_legend
+//	invalid_color
+//	invalid_sprite
+//  invalid_index
+// warnings
+//	unused_colors
 Checker check_object(OBJECTDATA obj, Checker c) {
 	int max_index = 0;
-	
 	str id = toLowerCase(obj.id);	
 	
 	if (!check_invalid_name(id)) c.msgs += [invalid_name(id, error(), obj@location)];
@@ -159,7 +162,7 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 		list[str] char_list = split("", line);
 		
 		// check if the sprite is of valid length
-		if (size(char_list) != 5) c.msgs += [sprite_length(obj.id, line, error(), obj@location)];
+		if (size(char_list) != 5) c.msgs += [invalid_sprite(obj.id, line, error(), obj@location)];
 	
 		// check if all pixels have the correct index
 		for(str pixel <- char_list){
@@ -186,6 +189,48 @@ Checker check_sound(SOUNDDATA s, Checker c){
 	return c;
 }
 
+alias Reference = tuple[list[str] objs, Checker c];
+
+Reference resolve_reference(str raw_name, Checker c, loc pos){
+	Reference r;
+	
+	list[str] objs = [];
+	str name = toLowerCase(raw_name);
+	
+	if (name in c.references && c.references[name] == [name]) return <[name], c>;
+	
+	if (name in c.combinations) {
+		for (str n <- c.combinations[name]) {
+			r = resolve_reference(n, c, pos);
+			objs += r.objs;
+			c = r.c;
+		}
+	} else if (name in c.references) {
+		for (str n <- c.references[name]) {
+			r = resolve_reference(n, c, pos);
+			objs += r.objs;
+			c = r.c;
+		}
+	} else {
+		c.msgs += [undefined_object(raw_name, error(), pos)];
+	}
+	
+	return <dup(objs), c>;
+}
+
+Reference resolve_references(list[str] names, Checker c, loc pos) {
+	list[str] objs = [];
+	Reference r;
+	
+	for (str name <- names) {
+		r = resolve_reference(name, c, pos);
+		objs += r.objs;
+		c = r.c;
+	}
+	
+	return <dup(objs), c>;
+}
+
 // errors
 //	existing_legend
 // 	undefined_object
@@ -197,10 +242,12 @@ Checker check_sound(SOUNDDATA s, Checker c){
 //  
 Checker check_legend(LEGENDDATA l, Checker c) {
 	if (!check_invalid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l@location)];
-
 	c.msgs += check_existing_legend(l.legend, l.values, l@location, c);
 	
-	list[str] values = [toLowerCase(v) | v <- l.values];
+	Reference r = resolve_references(l.values, c, l@location);
+	list[str] values = r[0];
+	c = r[1];
+	
 	str legend = toLowerCase(l.legend);
 	
 	if (check_invalid_name(l.legend)) c.objects += [legend];
@@ -251,14 +298,19 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 	return c;
 }
 
+// errors
+//	undefined_object
 Checker check_layer(LAYERDATA l, Checker c){
-	for (str obj <- l.layer){
-		if (!(obj in c.references || obj in c.combinations)) c.msgs += [undefined_reference(obj, error(), l@location)];
-	}
+	Reference r = resolve_references(l.layer, c, l@location);
+	c = r.c;
+	c.layer_list += r.objs;
 	
 	return c;
 }
 
+// errors
+//	existing_section
+//	unlayered_objects
 Checker check_game(PSGAME g, bool debug=false) {
 	Checker c = new_checker(debug, g);
 	
@@ -279,6 +331,15 @@ Checker check_game(PSGAME g, bool debug=false) {
 		c = check_sound(s, c);
 	}
 	
+	for (LAYERDATA l <- g.layers) {
+		c = check_layer(l, c);
+	}
+	
+	list[str] unlayered = [x.id | OBJECTDATA x <- g.objects, !(toLowerCase(x.id) in c.layer_list)];
+	if (size(unlayered) > 0) {
+		c.msgs += [unlayered_objects(intercalate(", ", unlayered), error(), g@location)];
+	}
+	
 	return c;
 }
 
@@ -289,7 +350,7 @@ public str println(Msg m: invalid_index(str name, int index, MsgType t, loc pos)
 public str println(Msg m: existing_object(str name, MsgType t, loc pos)) 
 	= "Object <name> already exists. <pos>";
 
-public str println(Msg m: sprite_length(str name, str line, MsgType t, loc pos)) 
+public str println(Msg m: invalid_sprite(str name, str line, MsgType t, loc pos)) 
 	= "Sprite for <name> is not the correct length <size(line)>/5. <pos>";
 	
 public str println(Msg m: mixed_legend(str name, list[str] values, MsgType t, loc pos)) 
@@ -327,6 +388,9 @@ public str println(Msg m: existing_section(SECTION section, int dupe, MsgType t,
 
 public str println(Msg m: invalid_name(str name, MsgType t, loc pos))
 	= "Invalid name <name>, please only use a-z characters. <pos>";
+	
+public str println(Msg m: unlayered_objects(str objects, MsgType t, loc pos))
+	= "Object(s) defined but not added to layer";
 
 public default str println(Msg m) = "Undefined message converter";
 

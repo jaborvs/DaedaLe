@@ -22,6 +22,7 @@ anno loc LEVELS@location;
 anno loc SPRITE@location;
 anno loc LEGENDOPERATION@location;
 anno loc LAYERDATA@location;
+anno loc PSGAME@location;
 
 data PRELUDEDATA 
 	= prelude_data(str key, str string, str)
