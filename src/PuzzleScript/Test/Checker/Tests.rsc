@@ -9,23 +9,29 @@ void main(){
 	PSGAME game;
 	Checker checker;
 
-//	println("Resolve Reference");
-//	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/Game1ResolveLegend.PS|);
-//	checker = check_game(game);
-//	println(checker.objects);
-//	println(checker.references);
-//	println(checker.combinations);
-//	print_msgs(checker);
-//	println();
-//
-//	println("Legend Errors");
-//	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Legend.PS|);
-//	checker = check_game(game);
-//	print_msgs(checker);
-//	println();
+	//println("Resolve Reference");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/Game1ResolveLegend.PS|);
+	//checker = check_game(game);
+	//println(checker.objects);
+	//println(checker.references);
+	//println(checker.combinations);
+	//print_msgs(checker);
+	//println();
+
+	//println("Legend Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Legend.PS|);
+	//checker = check_game(game);
+	//print_msgs(checker);
+	//println();
 	
-	println("Layer Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Layers.PS|);
+	//println("Layer Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Layers.PS|);
+	//checker = check_game(game);
+	//print_msgs(checker);
+	//println();
+	
+	println("Object Errors");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Objects.PS|);
 	checker = check_game(game);
 	print_msgs(checker);
 	println();
