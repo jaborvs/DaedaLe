@@ -30,9 +30,16 @@ void main(){
 	//print_msgs(checker);
 	//println();
 	
-	println("Level Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Levels.PS|);
+	//println("Level Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Levels.PS|);
+	//checker = check_game(game);
+	//print_msgs(checker);
+	//println();
+	
+	println("Sound Errors");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Sounds.PS|);
 	checker = check_game(game);
+	println(checker.sound_events);
 	print_msgs(checker);
 	println();
 }

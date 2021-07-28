@@ -100,7 +100,7 @@ data SOUNDS
 	;
 	
 data SOUNDDATA
-	= sound_data(list[str])
+	= sound_data(list[str] sound)
 	;
 
 data LAYERS

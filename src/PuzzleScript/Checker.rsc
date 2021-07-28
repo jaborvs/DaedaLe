@@ -6,6 +6,7 @@ import List;
 import String;
 import IO;
 import Type;
+import PuzzleScript::Messages;
 
 alias Reference = tuple[
 	list[str] objs, 
@@ -19,6 +20,7 @@ alias Checker = tuple[
 	list[str] objects,
 	map[str, list[str]] combinations,
 	list[str] layer_list,
+	map[str, list[int]] sound_events,
 	PSGAME game
 ];
 
@@ -49,40 +51,28 @@ map[str, str] COLORS = (
 	"pink"			: "#FFAAFF"
 );
 
-data MsgType
-	= error()
-	| warn()
-	| info()
-	;
+str default_mask = "@None@";
 
-// , MsgType t, loc pos
-data Msg
-	// errors
-	= invalid_index(str name, int index, MsgType t, loc pos)
-	| invalid_name(str name, MsgType t, loc pos)
-	| invalid_layer(str name, list[str] layer, MsgType t, loc pos)
-	| invalid_color(str name, str color, MsgType t, loc pos)
-	| invalid_legend(str name, MsgType t, loc pos)
-	| mixed_legend(str name, list[str] values, str l_type, str o_type, MsgType t, loc pos)
-	| mixed_legend(str name, list[str] values, MsgType t, loc pos)
-	| self_reference(str name, MsgType t, loc pos)
-	| existing_object(str name, MsgType t, loc pos)
-	| invalid_sprite(str name, str line, MsgType t, loc pos)
-	| undefined_reference(str name, MsgType t, loc pos)
-	| existing_legend(str legend, list[str] current, list[str] new, MsgType t, loc pos)
-	| undefined_object(str name, MsgType t, loc pos)
-	| unlayered_objects(str objects, MsgType t, loc pos)
-	| existing_section(SECTION section, int dupe, MsgType t, loc pos)
-	| invalid_level_row(MsgType t, loc pos)
-	| ambiguous_pixel(str legend, list[str] objs, MsgType t, loc pos)
-	//warnings
-	| unused_colors(str name, str colors, MsgType t, loc pos)
-	| no_levels(MsgType t, loc pos)
-	| message_too_long(MsgType t, loc pos)
-	;
+list[str] directional_sound_masks = ["move", "cantmove"];
+list[str] sound_masks = ["create", "destroy", "action"] + directional_sound_masks;
+list[str] directional_keywords = ["left", "right", "down", "up"];
+list[str] unsorted_keywords = [
+	"checkpoint","objects", "collisionlayers", "legend", "sounds", "rules", "...",
+	"winconditions", "levels","|","[","]", "late","rigid", 
+	"^","v","\>","\<", "no", "randomdir","random", "horizontal", "vertical","any", "all", 
+	"no", "some", "moving","stationary","parallel","perpendicular","action","message"
+];
+
+list[str] keywords = directional_keywords + unsorted_keywords;
+
+list[str] sound_events = [
+	"titlescreen", "startgame", "cancel", "endgame", "startlevel", "undo", "restart", 
+	"endlevel", "showmessage", "closemessage", 
+	"sfx0", "sfx1", "sfx2", "sfx3", "sfx4", "sfx5", "sfx6", "sfx7", "sfx8", "sfx9", "sfx10"
+];
 		
 Checker new_checker(bool debug_flag, PSGAME game){		
-	return <[], debug_flag, (), [], (), [], game>;
+	return <[], debug_flag, (), [], (), [], (), game>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -93,15 +83,15 @@ str get_prelude(list[PRELUDEDATA] values, str key, str default_str){
 	return default_str;
 }
 
-bool check_invalid_name(str name){
-	return /^<x:[a-z]+>$/i := name;
+bool check_valid_name(str name){
+	return /^<x:[a-z]+>$/i := name && !(toLowerCase(name) in keywords);
 }
 
-bool check_invalid_legend(str name){
+bool check_valid_legend(str name){
 	if (size(name) > 1){
-		return check_invalid_name(name);
+		return check_valid_name(name);
 	} else {
-		return /^<x:[a-z.!@#$%&*]+>$/i := name;
+		return /^<x:[a-z.!@#$%&*]+>$/i := name && !(toLowerCase(name) in keywords);
 	}
 }
 
@@ -177,7 +167,7 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 	int max_index = 0;
 	str id = toLowerCase(obj.id);	
 	
-	if (!check_invalid_name(id)) c.msgs += [invalid_name(id, error(), obj@location)];
+	if (!check_valid_name(id)) c.msgs += [invalid_name(id, error(), obj@location)];
 
 	// check for duplicate object names
 	if (id in c.objects) {
@@ -241,7 +231,7 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 //  self_reference
 //  
 Checker check_legend(LEGENDDATA l, Checker c) {
-	if (!check_invalid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l@location)];
+	if (!check_valid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l@location)];
 	c.msgs += check_existing_legend(l.legend, l.values, l@location, c);
 	
 	Reference r = resolve_references(l.values, c, l@location);
@@ -250,7 +240,7 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 	
 	str legend = toLowerCase(l.legend);
 	
-	if (check_invalid_name(l.legend)) c.objects += [legend];
+	if (check_valid_name(l.legend)) c.objects += [legend];
 	for (str v <- values){
 		if (!(v in c.objects)) c.msgs += [undefined_object(v, error(), l@location)];
 	}
@@ -298,8 +288,114 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 	return c;
 }
 
-Checker check_sound(SOUNDDATA s, Checker c){
+bool check_valid_sound(str sound){
+	try
+		int s = toInt(sound);
+	catch IllegalArgument: return false;
 	
+	return s > 0;
+}
+
+// errors
+//	invalid_sound
+//	invalid_sound_length
+//	existing_sound_object
+//	existing_mask
+//	existing_sound_seed
+//  mask_not_directional
+//	invalid_sound_verb
+// 	undefined_sound_object
+// 	undefined_sound_mask
+// 	undefined_sound_seed
+// warnings
+//	existing_sound
+Checker check_sound(SOUNDDATA s, Checker c){
+	int seed;
+	
+	if (size(s.sound) == 2 && toLowerCase(s.sound[0]) in sound_events) {
+		if (!check_valid_sound(s.sound[1])) {
+			c.msgs += [invalid_sound_seed(s.sound[1], error(), s@location)];
+			seed = -1;
+		} else {
+			seed = toInt(s.sound[1]);
+		}
+		
+		if (toLowerCase(s.sound[0]) in c.sound_events) {
+			c.msgs += [existing_sound(s.sound[0], warn(), s@location)];
+			c.sound_events[toLowerCase(s.sound[0])] += [seed];
+		} else {
+			c.sound_events[toLowerCase(s.sound[0])] = [seed];
+		}
+		
+		return c;
+	} else if (size(s.sound) < 3) {
+		c.msgs += [invalid_sound_length(error(), s@location)];
+		return c;
+	}
+	
+	list[str] objects = [];
+	str mask = default_mask;
+	seed = -1;
+	list[str] directions = [];
+	
+	for (str verb <- s.sound) {
+		str v = toLowerCase(verb);
+		if (v in c.objects) {
+			if (size(objects) == 0) {
+				Reference r = resolve_reference(verb, c, s@location);
+				c = r.c;
+				objects = r.objs;
+			} else {
+				c.msgs += [existing_sound_object(error, s@location)];
+			}
+		} else if (v in sound_masks) {
+			if (mask == default_mask) {
+				mask = v;
+			} else {
+				c.msgs += [existing_mask(v, mask, error(), s@location)];
+			}
+			
+		} else if (v in directional_keywords){
+			if (!(mask in directional_sound_masks)) {
+				c.msgs += [mask_not_directional(mask, error(), s@location)];
+			} else {
+				directions += [v];
+			}
+		} else if (check_valid_sound(v)) {
+			if (seed != -1){
+				c.msgs += [existing_sound_seed(toString(seed), v, error(), s@location)];
+			} else {
+				seed = toInt(v);
+			}
+		} else {
+			c.msgs += [invalid_sound_verb(verb, error(), s@location)];
+		}
+	}
+	
+	if (size(objects) < 1) c.msgs += [undefined_sound_objects(error(), s@location)];
+	if (mask == default_mask) c.msgs += [undefined_sound_mask(error(), s@location)];
+	if (seed < 0) c.msgs += [undefined_sound_seed(error(), s@location)];
+	
+	//object_mask_direction
+	for (str obj <- objects){
+		list[str] events = [];
+		if (mask in directional_sound_masks && size(directions) > 0){
+			for (str dir <- directions){
+				events += ["<obj>_<mask>_<dir>"];
+			}
+		} else {
+			events += ["<obj>_<mask>"];
+		}
+		
+		for (str e <- events){
+			if (e in c.sound_events) {
+				c.msgs += [existing_sound(e, warn(), s@location)];
+				c.sound_events[e] += [seed];
+			} else {
+				c.sound_events[e] = [seed];
+			}
+		}
+	}
 	
 	return c;
 }
@@ -328,7 +424,11 @@ Checker check_condition(CONDITIONDATA w, Checker c){
 
 //errors
 //	invalid_level_row
-//	invalid_legend
+//	invalid_name
+//	ambiguous pixel
+//	unefined_object
+//warnings
+//	message_too_long
 Checker check_level(LEVELDATA l, Checker c){
 	switch(l) {
 		case message(str msg): if (size(msg) > 12) c.msgs += [message_too_long(warn(), l@location)];
@@ -360,6 +460,8 @@ Checker check_level(LEVELDATA l, Checker c){
 // errors
 //	existing_section
 //	unlayered_objects
+// warning
+//	no_levels
 Checker check_game(PSGAME g, bool debug=false) {
 	Checker c = new_checker(debug, g);
 	
@@ -405,64 +507,6 @@ Checker check_game(PSGAME g, bool debug=false) {
 	
 	return c;
 }
-
-//public str println(Msg m: ) = ;
-public str println(Msg m: invalid_index(str name, int index, MsgType t, loc pos)) 
-	= "Color number <index> from color palette of <name> doesn\'t exist. <pos>";
-
-public str println(Msg m: existing_object(str name, MsgType t, loc pos)) 
-	= "Object <name> already exists. <pos>";
-
-public str println(Msg m: invalid_sprite(str name, str line, MsgType t, loc pos)) 
-	= "Sprite for <name> is not the correct length <size(line)>/5. <pos>";
-	
-public str println(Msg m: mixed_legend(str name, list[str] values, MsgType t, loc pos)) 
-	= "Legend <name> has both \'and\' and \'or\' symbols. <pos>";
-	
-public str println(Msg m: mixed_legend(str name, list[str] values, str l_type, str o_type, MsgType t, loc pos))
-	= "Legend <name> is a <l_type> and cannot use <o_type>. <pos>";
-	
-public str println(Msg m: invalid_color(str name, str color, MsgType t, loc pos)) 
-	= "Color <color> for object <name> not found in palette. <pos>";
-	
-public str println(Msg m: self_reference(str name, MsgType t, loc pos))
-	= "Reference <name> is referencing itself";
-	
-public str println(Msg m: undefined_reference(str name, MsgType t, loc pos)) 
-	= "Reference <name> not defined. <pos>";
-	
-public str println(Msg m: existing_legend(str legend, list[str] current, list[str] new, MsgType t, loc pos)) 
-	= "Legend <legend> is already defined for <current> cannot overwrite with <new>. <pos>";
-	
-public str println(Msg m: undefined_object(str name, MsgType t, loc pos)) 
-	= "Object <name> is used but never defined. <pos>";
-	
-public str println(Msg m: unused_colors(str name, str colors, MsgType t, loc pos)) 
-	= "Colors <colors> not used in <name>. <pos>";
-	
-public str println(Msg m: existing_section(SECTION section, int dupe, MsgType t, loc pos)) 
-	= "Existing section <section> found. <pos>";
-
-public str println(Msg m: invalid_name(str name, MsgType t, loc pos))
-	= "Invalid name <name>, please only use a-z characters. <pos>";
-	
-public str println(Msg m: unlayered_objects(str objects, MsgType t, loc pos))
-	= "Object(s) defined but not added to layer";
-	
-public str println(Msg m: invalid_level_row(MsgType t, loc pos))
-	= "All rows of level must be the same lenght. <pos>";
-
-public str println(Msg m: ambiguous_pixel(str legend, list[str] objs, MsgType t, loc pos))
-	= "Cannot use property <legend> (defined with \'or\') in a level. <pos>";
-	
-public str println(Msg m: no_levels(MsgType t, loc pos))
-	= "No levels defined. <pos>";
-	
-public str println(Msg m: message_too_long(MsgType t, loc pos))
-	= "Message too long to fit on screen. <pos>";
-
-public default str println(Msg m) = "Undefined message converter";
-
 
 void print_msgs(Checker checker){
 	list[Msg] error_list = [x | Msg x <- checker.msgs, x.t == error()];

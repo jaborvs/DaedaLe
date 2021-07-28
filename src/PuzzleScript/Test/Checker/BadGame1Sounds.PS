@@ -1,6 +1,7 @@
-title Match 3 Block Push
-author increpare
+title Simple Block Pushing Game
+author David Skinner
 homepage www.puzzlescript.net
+debug
 
 ========
 OBJECTS
@@ -23,7 +24,6 @@ DarkBlue
 .000.
 .....
 
-
 Wall
 BROWN DARKBROWN
 00010
@@ -41,7 +41,7 @@ Black Orange White Blue
 .3.3.
 
 Crate
-Orange Yellow
+Orange
 00000
 0...0
 0...0
@@ -60,12 +60,29 @@ P = Player
 @ = Crate and Target
 O = Target
 
-
 =======
 SOUNDS
 =======
 
 Crate MOVE 36772507
+SFX0 28219707 (touch water)
+SFX1 45545307 (golding)
+SFX2 42491507 (make lady gold :/ )
+StartGame 8892900
+EndLevel 28067900
+EndGame 28067900
+CloseMessage 44855507
+PLAYER mOve left right 44855507
+player move left 3423423 (existing event)
+sfx2 61646464 (existing sfx)
+sfx5 jzbehzebzh (bad seed)
+player 564546565 (no mask)
+bonk move up 23423423 (bad object)
+move up 23423423 (no object)
+player move move up 12312312 (existing mask)
+player bonk move up 1231231 (invalid_sound_verb)
+tico (bad sound lenght)
+
 
 ================
 COLLISIONLAYERS
@@ -81,31 +98,30 @@ RULES
 
 [ >  Player | Crate ] -> [  >  Player | > Crate  ]
 
-late [ Crate | Crate | Crate ] -> [ | |]
-
 ==============
 WINCONDITIONS
 ==============
 
-All Crate on Target
+All Target on Crate
 
 =======
 LEVELS
 =======
 
-#########
-#.......#
-#.*.*.@.#
-#.P...O.#
-#...*.*.#
-#.......#
-#########
 
-.#######.
-.#.....#.
-.#O##..##
-##.##.*.#
-#.*..**.#
-#.OOO.#.#
-#.P.....#
-#########
+####..
+#.O#..
+#..###
+#@P..#
+#..*.#
+#..###
+####..
+
+
+######
+#....#
+#.#P.#
+#.*@.#
+#.O@.#
+#....#
+######
