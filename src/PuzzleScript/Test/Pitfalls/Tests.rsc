@@ -1,0 +1,1 @@
+module PuzzleScript::Test::Pitfalls::Tests

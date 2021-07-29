@@ -8,11 +8,6 @@ import IO;
 import Type;
 import PuzzleScript::Messages;
 
-alias Reference = tuple[
-	list[str] objs, 
-	Checker c
-];
-
 alias Checker = tuple[
 	list[Msg] msgs,
 	bool debug_flag,
@@ -21,8 +16,22 @@ alias Checker = tuple[
 	map[str, list[str]] combinations,
 	list[str] layer_list,
 	map[str, list[int]] sound_events,
+	list[Condition] conditions,
 	PSGAME game
 ];
+
+alias Reference = tuple[
+	list[str] objs, 
+	Checker c
+];
+
+data Condition
+	= some_objects(list[str] objects)
+	| no_objects(list[str] objects)
+	| all_objects_on(list[str] objects, list[str] on)
+	| some_objects_on(list[str] objects, list[str] on)
+	| no_objects_on(list[str] objects, list[str] on)
+	;
 
 map[str, str] COLORS = (
 	"black"   		: "#000000",
@@ -56,14 +65,16 @@ str default_mask = "@None@";
 list[str] directional_sound_masks = ["move", "cantmove"];
 list[str] sound_masks = ["create", "destroy", "action"] + directional_sound_masks;
 list[str] directional_keywords = ["left", "right", "down", "up"];
+list[str] condition_keywords = ["all", "some", "no"];
+
 list[str] unsorted_keywords = [
 	"checkpoint","objects", "collisionlayers", "legend", "sounds", "rules", "...",
 	"winconditions", "levels","|","[","]", "late","rigid", 
-	"^","v","\>","\<", "no", "randomdir","random", "horizontal", "vertical","any", "all", 
-	"no", "some", "moving","stationary","parallel","perpendicular","action","message"
+	"^","v","\>","\<", "no", "randomdir","random", "horizontal", "vertical","any",
+	"moving","stationary","parallel","perpendicular","action","message"
 ];
 
-list[str] keywords = directional_keywords + unsorted_keywords;
+list[str] keywords = directional_keywords + unsorted_keywords + condition_keywords;
 
 list[str] sound_events = [
 	"titlescreen", "startgame", "cancel", "endgame", "startlevel", "undo", "restart", 
@@ -72,7 +83,7 @@ list[str] sound_events = [
 ];
 		
 Checker new_checker(bool debug_flag, PSGAME game){		
-	return <[], debug_flag, (), [], (), [], (), game>;
+	return <[], debug_flag, (), [], (), [], (), [], game>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -114,7 +125,7 @@ list[Msg] check_undefined_object(str name, loc pos, Checker c){
 	return msgs;
 }
 
-Reference resolve_reference(str raw_name, Checker c, loc pos){
+Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "aggregates"]){
 	Reference r;
 	
 	list[str] objs = [];	
@@ -123,16 +134,24 @@ Reference resolve_reference(str raw_name, Checker c, loc pos){
 	if (name in c.references && c.references[name] == [name]) return <[name], c>;
 	
 	if (name in c.combinations) {
-		for (str n <- c.combinations[name]) {
-			r = resolve_reference(n, c, pos);
-			objs += r.objs;
-			c = r.c;
+		if ("aggregates" in allowed) {
+			for (str n <- c.combinations[name]) {
+				r = resolve_reference(n, c, pos);
+				objs += r.objs;
+				c = r.c;
+			}
+		} else {
+			c.msgs += [invalid_object_type("combinations", name, error(), pos)];
 		}
 	} else if (name in c.references) {
-		for (str n <- c.references[name]) {
-			r = resolve_reference(n, c, pos);
-			objs += r.objs;
-			c = r.c;
+		if ("aggregates" in allowed) {
+			for (str n <- c.references[name]) {
+				r = resolve_reference(n, c, pos);
+				objs += r.objs;
+				c = r.c;
+			}
+		} else {
+			c.msgs += [invalid_object_type("properties", name, error(), pos)];
 		}
 	} else {
 		c.msgs += [undefined_object(raw_name, error(), pos)];
@@ -141,7 +160,7 @@ Reference resolve_reference(str raw_name, Checker c, loc pos){
 	return <dup(objs), c>;
 }
 
-Reference resolve_references(list[str] names, Checker c, loc pos) {
+Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "aggregates"]) {
 	list[str] objs = [];
 	Reference r;
 	
@@ -152,6 +171,14 @@ Reference resolve_references(list[str] names, Checker c, loc pos) {
 	}
 	
 	return <dup(objs), c>;
+}
+
+bool check_valid_sound(str sound){
+	try
+		int s = toInt(sound);
+	catch IllegalArgument: return false;
+	
+	return s > 0;
 }
 
 // errors
@@ -277,7 +304,7 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 			// if our combination makes use of aliases that's a bonk (just gotta make sure it's actually an alias)
 			list[str] mixed = [x | x <- values, x in c.references && size(c.references[x]) > 1];
 			if (size(mixed) > 0) {
-				c.msgs += [mixed_legend(l.legend, mixed, "alias", "combination", error(), l@location)];
+				c.msgs += [mixed_legend(l.legend, mixed, "combination", "alias", error(), l@location)];
 			} else {
 				c.combinations[legend] = values;
 			}
@@ -286,14 +313,6 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 	}
 
 	return c;
-}
-
-bool check_valid_sound(str sound){
-	try
-		int s = toInt(sound);
-	catch IllegalArgument: return false;
-	
-	return s > 0;
 }
 
 // errors
@@ -410,14 +429,79 @@ Checker check_layer(LAYERDATA l, Checker c){
 	return c;
 }
 
-
-
 Checker check_rule(RULEDATA r, Checker c){
 	
 	return c;
 }
 
+// errors
+//	invalid_condition_length
+//	undefined_object
+//	invalid_condition
+//	invalid_condition_verb
+// 	impossible_condition_unstackable
+//	impossible_condition_duplicates
+// warnings
 Checker check_condition(CONDITIONDATA w, Checker c){
+	if (!(size(w.condition) in [2, 4])){
+		c.msgs += [invalid_condition_length(error(), w@location)];
+		return c;
+	}
+	
+	bool has_on = size(w.condition) == 4;
+	Reference r = resolve_reference(w.condition[1], c, w@location);
+	list[str] objs = r.objs;
+	c = r.c; 
+	
+	list[str] on = [];
+	if (has_on) {
+		Reference r = resolve_reference(w.condition[3], c, w@location);
+		on = r.objs;
+		c = r.c; 
+	}
+	
+	for (str obj <- objs + on) {
+		if (toLowerCase(obj) in c.combinations) c.msgs += [invalid_object_type("combinations", obj, error(), w@location)];
+	}
+	
+	
+	list[str] dupes = [x | str x <- objs, x in on];
+	if (size(dupes) > 0){
+		c.msgs += [impossible_condition_duplicates(dupes, error(), w@location)];
+	}
+	
+	for (LAYERDATA l <- c.game.layers){
+		list[str] mixed = [x | str x <- l.layer, toLowerCase(x) in objs && toLowerCase(x) in on];
+		if (size(mixed) > 0){
+			c.msgs += [impossible_condition_unstackable(mixed, error(), w@location)];
+		}
+	}
+	
+	switch(toLowerCase(w.condition[0])) {
+		case /all/: {
+			if (has_on) {
+				c.conditions += [all_objects_on(objs, on)];
+			} else {
+				c.msgs += [invalid_condition(error(), w@location)];
+			}
+		}
+		case /some/: {
+			if (has_on) {
+				c.conditions += [some_objects_on(objs, on)];
+			} else {
+				c.conditions += [some_objects(objs)];
+			}
+		}
+		case /no/: {
+			if (has_on) {
+				c.conditions += [no_objects_on(objs, on)];
+			} else {
+				c.conditions += [no_objects(objs)];
+			}
+		}
+		
+		default: c.msgs += invalid_condition_verb(w.condition[0], error(), w@location);
+	}
 	
 	return c;
 }

@@ -36,10 +36,17 @@ void main(){
 	//print_msgs(checker);
 	//println();
 	
-	println("Sound Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Sounds.PS|);
+	//println("Sound Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Sounds.PS|);
+	//checker = check_game(game);
+	//println(checker.sound_events);
+	//print_msgs(checker);
+	//println();
+	
+	println("Condition Errors");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Conditions.PS|);
 	checker = check_game(game);
-	println(checker.sound_events);
+	println(checker.conditions);
 	print_msgs(checker);
 	println();
 }

@@ -24,6 +24,10 @@ data Msg
 	| invalid_sprite(str name, str line, MsgType t, loc pos)
 	| invalid_level_row(MsgType t, loc pos)
 	| invalid_sound_length(MsgType t, loc pos)
+	| invalid_condition_length(MsgType t, loc pos)
+	| invalid_condition(MsgType t, loc pos)
+	| invalid_condition_verb(str condition, MsgType t, loc pos)
+	| invalid_object_type(str word, str obj, MsgType t, loc pos)
 	| mixed_legend(str name, list[str] values, str l_type, str o_type, MsgType t, loc pos)
 	| mixed_legend(str name, list[str] values, MsgType t, loc pos)
 	| existing_object(str name, MsgType t, loc pos)
@@ -42,6 +46,8 @@ data Msg
 	| reserved_keyword(str k, MsgType t, loc pos)
 	| self_reference(str name, MsgType t, loc pos)
 	| mask_not_directional(str mask, MsgType t, loc pos)
+	| impossible_condition_duplicates(list[str] dup_objects, MsgType t, loc pos)
+	| impossible_condition_unstackable(list[str] lay_objects, MsgType t, loc pos)
 	//warnings
 	| unused_colors(str name, str colors, MsgType t, loc pos)
 	| no_levels(MsgType t, loc pos)
@@ -111,7 +117,7 @@ public str println(Msg m: invalid_sound_seed(str sound, MsgType t, loc pos))
 	= "Invalid sound seed <sound>. <pos>";
 	
 public str println(Msg m: invalid_sound_length(MsgType t, loc pos))
-	= "Unsufficient amount of sound verbs. <pos>";
+	= "Invalid amount of sound verbs. <pos>";
 	
 public str println(Msg m: generic(str msg, MsgType t, loc pos))
 	= "<msg> <pos>";
@@ -139,5 +145,23 @@ public str println(Msg m: undefined_sound_objects(MsgType t, loc pos))
 	
 public str println(Msg m: existing_sound(str sound, MsgType t, loc pos))
 	= "Sound event like <sound> already registered. <pos>";
+	
+public str println(Msg m: invalid_condition_length(MsgType t, loc pos))
+	= "Invalid amount of condition verbs. <pos>";
+	
+public str println(Msg m: invalid_condition(MsgType t, loc pos))
+	= "Must use additional objects with \'all\' keyword";
+	
+public str println(Msg m: invalid_condition_verb(str verb, MsgType t, loc pos))
+	= "Invalid win condition verb <verb>. <pos>";
+	
+public str println(Msg m: invalid_object_type(str word, str obj, MsgType t, loc pos))
+	= "Cannot use <word> here. <pos>";
+	
+public str println(Msg m: impossible_condition_duplicates(list[str] dup_objects, MsgType t, loc pos))
+	= "Objects <dup_objects> cannot be \'on\' themselves. <pos>";
+	
+public str println(Msg m: impossible_condition_unstackable(list[str] lay_objects, MsgType t, loc pos))
+	= "Objects <lay_objects> are meant to stack but appear in the same layer. <pos>";
 
 public default str println(Msg m) = "Undefined message converter";
