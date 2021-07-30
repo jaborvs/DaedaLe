@@ -141,7 +141,7 @@ PSGAME post(PSGAME game) {
 	processed_levels = [process_level(l) | LEVELDATA l <- levels];
 	
 	PSGAME new_game = PSGAME::game(
-		game.prelude, 
+		game.pr.datas, 
 		processed_objects, 
 		processed_legends, 
 		processed_sounds, 

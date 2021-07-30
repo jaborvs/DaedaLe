@@ -43,10 +43,16 @@ void main(){
 	//print_msgs(checker);
 	//println();
 	
-	println("Condition Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Conditions.PS|);
+	//println("Condition Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Conditions.PS|);
+	//checker = check_game(game);
+	//println(checker.conditions);
+	//print_msgs(checker);
+	//println();
+	
+	println("Prelude Errors");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Prelude.PS|);
 	checker = check_game(game);
-	println(checker.conditions);
 	print_msgs(checker);
 	println();
 }

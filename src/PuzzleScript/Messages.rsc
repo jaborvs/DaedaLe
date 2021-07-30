@@ -28,19 +28,26 @@ data Msg
 	| invalid_condition(MsgType t, loc pos)
 	| invalid_condition_verb(str condition, MsgType t, loc pos)
 	| invalid_object_type(str word, str obj, MsgType t, loc pos)
+	| invalid_prelude_key(str key, MsgType t, loc pos)
+	| invalid_prelude_value(str key, str v, str tp, MsgType t, loc pos)
+	
 	| mixed_legend(str name, list[str] values, str l_type, str o_type, MsgType t, loc pos)
 	| mixed_legend(str name, list[str] values, MsgType t, loc pos)
+	
 	| existing_object(str name, MsgType t, loc pos)
 	| existing_legend(str legend, list[str] current, list[str] new, MsgType t, loc pos)
 	| existing_section(SECTION section, int dupe, MsgType t, loc pos)
 	| existing_mask(str new_mask, str existing_mask, MsgType t, loc pos)
 	| existing_sound_seed(str new_seed, str existing_seed, MsgType t, loc pos)
 	| existing_sound_object(MsgType t, loc pos)
+	| existing_prelude_key(str key, MsgType t, loc pos)
+	
 	| undefined_reference(str name, MsgType t, loc pos)
 	| undefined_object(str name, MsgType t, loc pos)
 	| undefined_sound_seed(MsgType t, loc pos)
 	| undefined_sound_mask(MsgType t, loc pos)
 	| undefined_sound_objects(MsgType t, loc pos)
+	
 	| unlayered_objects(str objects, MsgType t, loc pos)
 	| ambiguous_pixel(str legend, list[str] objs, MsgType t, loc pos)
 	| reserved_keyword(str k, MsgType t, loc pos)
@@ -48,6 +55,7 @@ data Msg
 	| mask_not_directional(str mask, MsgType t, loc pos)
 	| impossible_condition_duplicates(list[str] dup_objects, MsgType t, loc pos)
 	| impossible_condition_unstackable(list[str] lay_objects, MsgType t, loc pos)
+	| missing_prelude_value(str key, MsgType t, loc pos)
 	//warnings
 	| unused_colors(str name, str colors, MsgType t, loc pos)
 	| no_levels(MsgType t, loc pos)
@@ -163,5 +171,17 @@ public str println(Msg m: impossible_condition_duplicates(list[str] dup_objects,
 	
 public str println(Msg m: impossible_condition_unstackable(list[str] lay_objects, MsgType t, loc pos))
 	= "Objects <lay_objects> are meant to stack but appear in the same layer. <pos>";
+
+public str println(Msg m: invalid_prelude_key(str key, MsgType t, loc pos))
+	= "Invalid prelude keyword <key>. <pos>";
+	
+public str println(Msg m: existing_prelude_key(str key, MsgType t, loc pos))
+	= "Prelude keyword <key> already defined. <pos>";
+	
+public str println(Msg m: missing_prelude_value(str key, MsgType t, loc pos))
+	= "Missing prelude value for key <key>. <pos>";
+	
+public str println(Msg m: invalid_prelude_value(str key, str v, str tp, MsgType t, loc pos))
+	= "Expected <tp> for <key> but found <v>. <pos>";
 
 public default str println(Msg m) = "Undefined message converter";

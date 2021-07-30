@@ -20,6 +20,7 @@ lexical Levelline = Pixel+ !>> Pixel \ Keywords;
 lexical String = ![\n]+ >> [\n];
 lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
 lexical Directional = [\>\<^v] !>> [a-z0-9.A-Z];
+lexical KeywordID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
 keyword PreludeKeyword 
@@ -59,7 +60,7 @@ syntax Prelude
 	;
 	
 syntax PreludeData
-	= prelude_data: PreludeKeyword String* Newlines
+	= prelude_data: KeywordID String* Newlines
 	;
 
 syntax Objects
@@ -120,7 +121,7 @@ syntax Rules
 	;
 	
 syntax RuleData
-	= rule_data: ID* RulePart+ '-\>' (Command|RulePart)+ Message? Newlines
+	= rule_data: ID* RulePart+ '-\>' (Command|RulePart)* Message? Newlines
 	;
 
 syntax RuleContent

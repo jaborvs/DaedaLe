@@ -34,9 +34,9 @@ data PRELUDE
 	;
 
 data PSGAME
- 	= game(PRELUDE prelude, list[SECTION] sections)
+ 	= game(PRELUDE pr, list[SECTION] sections)
  	| game(
- 		PRELUDE prelude, 
+ 		list[PRELUDEDATA] prelude, 
  		list[OBJECTDATA] objects,
  		list[LEGENDDATA] legend,
  		list[SOUNDDATA sound] sounds,

@@ -17,6 +17,7 @@ alias Checker = tuple[
 	list[str] layer_list,
 	map[str, list[int]] sound_events,
 	list[Condition] conditions,
+	map[str, str] prelude,
 	PSGAME game
 ];
 
@@ -81,9 +82,30 @@ list[str] sound_events = [
 	"endlevel", "showmessage", "closemessage", 
 	"sfx0", "sfx1", "sfx2", "sfx3", "sfx4", "sfx5", "sfx6", "sfx7", "sfx8", "sfx9", "sfx10"
 ];
+
+list[str] prelude_with_arguments_str_dim = ["flickscreen","zoomscreen"];
+
+list[str] prelude_with_arguments_str_color = ["background_color","text_color"];
+
+list[str] prelude_with_arguments_str = [
+	"title","author","homepage", "color_palette","youtube"
+] + prelude_with_arguments_str_color + prelude_with_arguments_str_dim;
+
+list[str] prelude_with_arguments_int = [
+	"key_repeat_interval", "realtime_interval","again_interval"
+];
+
+list[str] prelude_with_arguments = prelude_with_arguments_str + prelude_with_arguments_int;
+
+list[str] prelude_without_arguments = [
+	"run_rules_on_level_start","norepeat_action","require_player_movement","debug",
+	"verbose_logging","throttle_movement","noundo","noaction","norestart","scanline"
+];
+
+list[str] prelude = prelude_with_arguments + prelude_without_arguments; 
 		
 Checker new_checker(bool debug_flag, PSGAME game){		
-	return <[], debug_flag, (), [], (), [], (), [], game>;
+	return <[], debug_flag, (), [], (), [], (), [], (), game>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -177,8 +199,59 @@ bool check_valid_sound(str sound){
 	try
 		int s = toInt(sound);
 	catch IllegalArgument: return false;
-	
 	return s > 0;
+}
+
+bool check_valid_real(str v) {
+	try
+		real i = toReal(v);
+	catch IllegalArgument: return false;
+	
+	return i > 0;
+}
+
+// errors
+//	invalid_prelud_key
+//	existing_prelude_key
+//	missing_prelude_value
+//	invalid_prelude_value
+// warnings
+Checker check_prelude(PRELUDEDATA pr, Checker c){
+	str key = toLowerCase(pr.key);
+	if (!(key in prelude)){
+		c.msgs += [invalid_prelude_key(pr.key, error(), pr@location)];
+		return c;
+	}
+	
+	if (key in c.prelude){
+		c.msgs += [existing_prelude_key(pr.key, error(), pr@location)];
+	}
+	
+	if (key in prelude_without_arguments){
+		c.prelude[key] = "None";
+	} else {
+		if (pr.string == ""){
+			c.msgs += [missing_prelude_value(pr.key, error(), pr@location)];
+			return c;
+		}
+		if (key in prelude_with_arguments_int) {
+			if (!(check_valid_real(pr.string))) c.msgs += [invalid_prelude_value(key, pr.string, "real", error(), pr@location)];
+			c.prelude[key] = pr.string;
+		} else {
+			if (key in prelude_with_arguments_str_dim) {
+				if (!(/[0-9]+x[0-9]+/i := pr.string)) c.msgs += [invalid_prelude_value(key, pr.string, "height code", error(), pr@location)];
+				c.prelude[key] = pr.string;
+			} else if (key in prelude_with_arguments_str_color) {
+				// complicated to validate since it can be both an hex code or a color name
+				// so for now we do nothing
+				c.prelude[key] = pr.string;
+			} else {
+				c.prelude[key] = pr.string;
+			}
+		}
+	}
+
+	return c;
 }
 
 // errors
@@ -552,6 +625,10 @@ Checker check_game(PSGAME g, bool debug=false) {
 	map[SECTION, int] dupes = distribution(g.sections);
 	for (SECTION s <- dupes) {
 		if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], error(), s@location)];
+	}
+	
+	for (PRELUDEDATA pr <- g.prelude){
+		c = check_prelude(pr, c);
 	}
 	
 	for (OBJECTDATA obj <- g.objects){
