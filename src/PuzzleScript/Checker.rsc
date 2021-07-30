@@ -66,7 +66,11 @@ str default_mask = "@None@";
 list[str] directional_sound_masks = ["move", "cantmove"];
 list[str] sound_masks = ["create", "destroy", "action"] + directional_sound_masks;
 list[str] directional_keywords = ["left", "right", "down", "up"];
-list[str] condition_keywords = ["all", "some", "no"];
+
+list[str] sound_keywords = sounds_masks + directional_keywords; 
+
+list[str] condition = ["all", "some", "no"];
+list[str] condition_keywords = conditions + "on";
 
 list[str] unsorted_keywords = [
 	"checkpoint","objects", "collisionlayers", "legend", "sounds", "rules", "...",
@@ -74,8 +78,6 @@ list[str] unsorted_keywords = [
 	"^","v","\>","\<", "no", "randomdir","random", "horizontal", "vertical","any",
 	"moving","stationary","parallel","perpendicular","action","message"
 ];
-
-list[str] keywords = directional_keywords + unsorted_keywords + condition_keywords;
 
 list[str] sound_events = [
 	"titlescreen", "startgame", "cancel", "endgame", "startlevel", "undo", "restart", 
@@ -103,6 +105,16 @@ list[str] prelude_without_arguments = [
 ];
 
 list[str] prelude = prelude_with_arguments + prelude_without_arguments; 
+
+list[str] keywords = 
+	directional_keywords + 
+	unsorted_keywords + 
+	condition_keywords + 
+	sound_keywords +
+	prelude +
+	sound_events
+;
+
 		
 Checker new_checker(bool debug_flag, PSGAME game){		
 	return <[], debug_flag, (), [], (), [], (), [], (), game>;
@@ -228,6 +240,7 @@ Checker check_prelude(PRELUDEDATA pr, Checker c){
 	}
 	
 	if (key in prelude_without_arguments){
+		if (pr.string != "") c.msgs += [redundant_prelude_value(pr.key, warn(), pr@location)];
 		c.prelude[key] = "None";
 	} else {
 		if (pr.string == ""){

@@ -61,6 +61,7 @@ data Msg
 	| no_levels(MsgType t, loc pos)
 	| message_too_long(MsgType t, loc pos)
 	| existing_sound(str sound, MsgType t, loc pos)
+	| redundant_prelude_value(str key, MsgType t, loc pos)
 	;
 	
 //public str println(Msg m: ) = ;
@@ -183,5 +184,8 @@ public str println(Msg m: missing_prelude_value(str key, MsgType t, loc pos))
 	
 public str println(Msg m: invalid_prelude_value(str key, str v, str tp, MsgType t, loc pos))
 	= "Expected <tp> for <key> but found <v>. <pos>";
+	
+public str println(Msg m: redundant_prelude_value(str key, MsgType t, loc pos))
+	= "Values passed to <key> but it is unecessary. <pos>";
 
 public default str println(Msg m) = "Undefined message converter";
