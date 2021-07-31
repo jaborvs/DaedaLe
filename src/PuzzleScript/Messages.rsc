@@ -30,7 +30,15 @@ data Msg
 	| invalid_object_type(str word, str obj, MsgType t, loc pos)
 	| invalid_prelude_key(str key, MsgType t, loc pos)
 	| invalid_prelude_value(str key, str v, str tp, MsgType t, loc pos)
-	
+	| invalid_rule_prefix(str prefix, MsgType t, loc pos)
+	| invalid_rule_command(str command, MsgType t, loc pos)
+	| invalid_sound(str sound, MsgType t, loc pos)
+	| invalid_ellipsis_placement(MsgType t, loc pos)
+	| invalid_ellipsis(MsgType t, loc pos)
+	| invalid_rule_part_size(MsgType t, loc pos)
+	| invalid_rule_content_size(MsgType t, loc pos)
+	| invalid_rule_ellipsis_size(MsgType t, loc pos)
+	| undefined_sound(str sound, MsgType t, loc pos)
 	| mixed_legend(str name, list[str] values, str l_type, str o_type, MsgType t, loc pos)
 	| mixed_legend(str name, list[str] values, MsgType t, loc pos)
 	
@@ -187,5 +195,33 @@ public str println(Msg m: invalid_prelude_value(str key, str v, str tp, MsgType 
 	
 public str println(Msg m: redundant_prelude_value(str key, MsgType t, loc pos))
 	= "Values passed to <key> but it is unecessary. <pos>";
+
+public str println(Msg m: invalid_rule_prefix(str prefix, MsgType t, loc pos))
+	= "Rule prefix <prefix> invalid. <pos>";
+
+public str println(Msg m: invalid_rule_command(str command, MsgType t, loc pos))
+	= "Command <command> invalid. <pos>";
+	
+public str println(Msg m: undefined_sound(str sound, MsgType t, loc pos))
+	= "Sound <sound> is used but never defined";
+	
+public str println(Msg m: invalid_sound(str sound, MsgType t, loc pos))
+	= "Invalid sound <sound>. <pos>";
+	
+public str println(Msg m: invalid_ellipsis_placement(MsgType t, loc pos))
+	= "Rule cannot start or end with an ellipsis. <pos>";
+
+public str println(Msg m: invalid_ellipsis(MsgType t, loc pos))
+	= "Cannot have any other verbs or objects with an ellipsis. <pos>";
+
+public str println(Msg m: invalid_rule_part_size(MsgType t, loc pos))
+	= "Left and right side must have an equal amount of bracket matches. <pos>";
+
+public str println(Msg m: invalid_rule_content_size(MsgType t, loc pos))
+	= "Left and right bracket matches must have equal amounts of sections. <pos>";
+
+public str println(Msg m: invalid_rule_ellipsis_size(MsgType t, loc pos))
+	= "Left and right matches must have ellipsis in the same places. <pos>";
+
 
 public default str println(Msg m) = "Undefined message converter";

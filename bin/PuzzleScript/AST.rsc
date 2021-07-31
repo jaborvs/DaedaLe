@@ -127,7 +127,7 @@ data RULEPART
 	;
 
 data RULECONTENT
-	= content(list[str])
+	= content(list[str] content)
 	;
 
 data WINCONDITIONS

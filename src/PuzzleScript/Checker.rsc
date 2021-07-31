@@ -67,16 +67,26 @@ list[str] directional_sound_masks = ["move", "cantmove"];
 list[str] sound_masks = ["create", "destroy", "action"] + directional_sound_masks;
 list[str] directional_keywords = ["left", "right", "down", "up"];
 
-list[str] sound_keywords = sounds_masks + directional_keywords; 
+list[str] sound_keywords = sound_masks + directional_keywords; 
 
-list[str] condition = ["all", "some", "no"];
-list[str] condition_keywords = conditions + "on";
+list[str] conditions = ["all", "some", "no", "any"];
+list[str] condition_keywords = conditions + ["on"];
 
-list[str] unsorted_keywords = [
-	"checkpoint","objects", "collisionlayers", "legend", "sounds", "rules", "...",
-	"winconditions", "levels","|","[","]", "late","rigid", 
-	"^","v","\>","\<", "no", "randomdir","random", "horizontal", "vertical","any",
-	"moving","stationary","parallel","perpendicular","action","message"
+list[str] rulepart_keywords = [
+	"^","v","\>","\<", "...",
+	"moving","stationary","parallel","perpendicular","action",
+	"horizontal", "vertical"
+];
+list[str] rulepart_random = ["randomdir","random"];
+list[str] rule_prefix = ["late", "random", "rigid"] + directional_keywords;
+list[str] rule_commands = ["cancel", "checkpoint", "restart", "win"];
+
+list[str] rule_keywords = rulepart_keywords + rule_prefix + rule_commands + rulepart_random;
+
+
+list[str] section_headers = [
+	"objects", "collisionlayers", "legend", "sounds", "rules",
+	"winconditions", "levels"
 ];
 
 list[str] sound_events = [
@@ -108,11 +118,13 @@ list[str] prelude = prelude_with_arguments + prelude_without_arguments;
 
 list[str] keywords = 
 	directional_keywords + 
-	unsorted_keywords + 
 	condition_keywords + 
 	sound_keywords +
 	prelude +
-	sound_events
+	sound_events +
+	rule_keywords +
+	section_headers +
+	["message"]
 ;
 
 		
@@ -159,7 +171,7 @@ list[Msg] check_undefined_object(str name, loc pos, Checker c){
 	return msgs;
 }
 
-Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "aggregates"]){
+Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]){
 	Reference r;
 	
 	list[str] objs = [];	
@@ -168,7 +180,7 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 	if (name in c.references && c.references[name] == [name]) return <[name], c>;
 	
 	if (name in c.combinations) {
-		if ("aggregates" in allowed) {
+		if ("combinations" in allowed) {
 			for (str n <- c.combinations[name]) {
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
@@ -178,7 +190,7 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 			c.msgs += [invalid_object_type("combinations", name, error(), pos)];
 		}
 	} else if (name in c.references) {
-		if ("aggregates" in allowed) {
+		if ("properties" in allowed) {
 			for (str n <- c.references[name]) {
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
@@ -194,12 +206,12 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 	return <dup(objs), c>;
 }
 
-Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "aggregates"]) {
+Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]) {
 	list[str] objs = [];
 	Reference r;
 	
 	for (str name <- names) {
-		r = resolve_reference(name, c, pos);
+		r = resolve_reference(name, c, pos, allowed=allowed);
 		objs += r.objs;
 		c = r.c;
 	}
@@ -515,7 +527,84 @@ Checker check_layer(LAYERDATA l, Checker c){
 	return c;
 }
 
+Checker check_ruleparts(list[RULEPART] part, Checker c) {
+	for (RULEPART part <- part) {
+		switch(part) {
+			case RULEPART::part(list[RULECONTENT] contents): {
+				for (RULECONTENT cont <- contents) {
+					for (str v <- cont.content) {
+						if (!(toLowerCase(v) in rulepart_keywords)) {
+							Reference r = resolve_reference(v, c, part@location);
+							c = r.c;
+						}
+					}
+					
+					if ("..." in cont.content && cont.content != ["..."]) c.msgs += [invalid_ellipsis(error(), part@location)];
+				}
+				
+				if (contents[0].content == ["..."] && contents[-1].content == ["..."]) c.msgs += [invalid_ellipsis_placement(error(), part@location)];
+			}
+			case RULEPART::command(str command): {
+				if (!(toLowerCase(command) in rule_commands)) c.msgs += [invalid_rule_command(command, error(), part@location)];
+			}
+			case RULEPART::sound(str sound): {
+				if (/'sfx'[0-9]|'10'/ := sound && toLowerCase(sound) in c.sound_events) {
+					sound;
+				} else if (/'sfx'[0-9]|'10'/ := sound) {
+					//correct format but undefined
+					c.msgs += [undefined_sound(sound, error, part@location)];
+				} else {
+					//wrong format
+					c.msgs += [invalid_sound(sound, error, part@location)];
+				}
+			}
+		}
+	}
+	
+	return c;
+}
+
+// errors
+//	invalid_rule_prefix
+//	invalid_rule_command
+//	undefined_sound
+//	undefined_object
+//	invalid_sound
 Checker check_rule(RULEDATA r, Checker c){
+
+	// check left side
+	if (size(r.prefix) > 0){
+		if (!(toLowerCase(r.prefix[0]) in rule_prefix)) c.msgs += [invalid_rule_prefix(r.prefix[0], error(), r@location)];
+	}
+	
+	int msgs = size(c.msgs);
+	c = check_ruleparts(r.right, c);
+	c = check_ruleparts(r.left, c);
+	
+	// if some of the rule is invalid it gets complicated to do more checks, so we return it 
+	// for now until they fixed the rest
+	if (size(c.msgs) > msgs) return c;
+	
+	//check if there are equal amounts of parts on both sides
+	if (size(r.right) != size([x | RULEPART x <- r.left, typeOf(x) == typeOf(part([]))])) c.msgs += [invalid_rule_part_size(error(), r@location)];
+	
+	//check if each part, and its equivalent have the same number of sections
+	for (int i <- [0..size(r.left)]){
+		if (size(r.left[i].contents) != size(r.right[i].contents)) {
+			c.msgs += [invalid_rule_content_size(error(), r@location)];
+			continue;
+		}
+		
+		//check if the equivalent of any part with an ellipsis also has one
+		for (int j <- [0..size(r.left[i].contents)]){
+			list[str] left = r.left[i].contents[j].content;
+			list[str] right = r.right[i].contents[j].content;
+			
+			if (left == ["..."] && right != ["..."]) invalid_rule_ellipsis_size(error(), r@location);
+			if (right == ["..."] && left != ["..."]) invalid_rule_ellipsis_size(error(), r@location);
+			
+		}
+	}
 	
 	return c;
 }
@@ -571,7 +660,7 @@ Checker check_condition(CONDITIONDATA w, Checker c){
 				c.msgs += [invalid_condition(error(), w@location)];
 			}
 		}
-		case /some/: {
+		case /some|any/: {
 			if (has_on) {
 				c.conditions += [some_objects_on(objs, on)];
 			} else {
