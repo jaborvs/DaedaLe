@@ -34,6 +34,9 @@ data Condition
 	| no_objects_on(list[str] objects, list[str] on)
 	;
 
+anno loc Condition@location;
+
+
 map[str, str] COLORS = (
 	"black"   		: "#000000",
 	"white"			: "#FFFFFF",
@@ -65,23 +68,27 @@ str default_mask = "@None@";
 
 list[str] directional_sound_masks = ["move", "cantmove"];
 list[str] sound_masks = ["create", "destroy", "action"] + directional_sound_masks;
-list[str] directional_keywords = ["left", "right", "down", "up"];
-
-list[str] sound_keywords = sound_masks + directional_keywords; 
+list[str] absolute_directions_single = ["left", "right", "down", "up"];
+list[str] sound_keywords = sound_masks + absolute_directions_single; 
 
 list[str] conditions = ["all", "some", "no", "any"];
 list[str] condition_keywords = conditions + ["on"];
 
-list[str] rulepart_keywords = [
-	"^","v","\>","\<", "...",
-	"moving","stationary","parallel","perpendicular","action",
-	"horizontal", "vertical"
-];
 list[str] rulepart_random = ["randomdir","random"];
-list[str] rule_prefix = ["late", "random", "rigid"] + directional_keywords;
-list[str] rule_commands = ["cancel", "checkpoint", "restart", "win"];
+list[str] relative_directions = ["^","v","\>","\<"];
+list[str] absolute_directions = ["horizontal", "vertical"] + absolute_directions_single;
+list[str] rulepart_keywords_other = [
+	"...", "moving","stationary","parallel","perpendicular", "action", "no"
+];
+list[str] rulepart_keywords = 
+	rulepart_random + 
+	absolute_directions + 
+	relative_directions +
+	rulepart_keywords_other;
 
-list[str] rule_keywords = rulepart_keywords + rule_prefix + rule_commands + rulepart_random;
+list[str] rule_prefix = ["late", "random", "rigid"] + absolute_directions;
+list[str] rule_commands = ["cancel", "checkpoint", "restart", "win"];
+list[str] rule_keywords = rulepart_keywords + rule_prefix + rule_commands;
 
 
 list[str] section_headers = [
@@ -117,7 +124,6 @@ list[str] prelude_without_arguments = [
 list[str] prelude = prelude_with_arguments + prelude_without_arguments; 
 
 list[str] keywords = 
-	directional_keywords + 
 	condition_keywords + 
 	sound_keywords +
 	prelude +
@@ -135,20 +141,20 @@ Checker new_checker(bool debug_flag, PSGAME game){
 //get a value from the prelude if it exists, else return the default
 str get_prelude(list[PRELUDEDATA] values, str key, str default_str){
 	v = [x | x <- values, toLowerCase(x.key) == toLowerCase(key)];
-	if (size(v) > 0) return v[0].string;
+	if (!isEmpty(v)) return v[0].string;
 	
 	return default_str;
 }
 
 bool check_valid_name(str name){
-	return /^<x:[a-z]+>$/i := name && !(toLowerCase(name) in keywords);
+	return /^<x:[a-z0-9]+>$/i := name && !(toLowerCase(name) in keywords);
 }
 
 bool check_valid_legend(str name){
 	if (size(name) > 1){
 		return check_valid_name(name);
 	} else {
-		return /^<x:[a-z.!@#$%&*]+>$/i := name && !(toLowerCase(name) in keywords);
+		return /^<x:[a-z0-9.!@#$%&*]+>$/i := name && !(toLowerCase(name) in keywords);
 	}
 }
 
@@ -165,7 +171,7 @@ list[Msg] check_undefined_object(str name, loc pos, Checker c){
 	list[Msg] msgs = [];
 	
 	if (!(toLowerCase(name) in c.objects)){
-		if (size(check_existing_legend(name, [], pos, c)) == 0) msgs += [undefined_object(name, error(), pos)];
+		if (isEmpty(check_existing_legend(name, [], pos, c))) msgs += [undefined_object(name, error(), pos)];
 	}
 
 	return msgs;
@@ -303,9 +309,9 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 	
 	// add references
 	c.references[id] = [id];
-	if (size(obj.legend) > 0) {
+	if (!isEmpty(obj.legend)) {
 		msgs = check_existing_legend(obj.legend[0], [obj.id], obj@location, c);
-		if (size(msgs) > 0){
+		if (!isEmpty(msgs)){
 			c.msgs += msgs;
 		} else {
 			c.references[toLowerCase(obj.legend[0])] = [id];
@@ -320,7 +326,7 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 	}
 
 	// check if it has a sprite
-	if (size(obj.sprite) == 0) return c;
+	if (isEmpty(obj.sprite)) return c;
 	for(str line <- obj.sprite[0]){
 		list[str] char_list = split("", line);
 		
@@ -373,7 +379,7 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 	// if it's just one thing being defined with check it and return
 	if (size(values) == 1) {
 		msgs = check_undefined_object(l.values[0], l@location, c);
-		if (size(msgs) > 0) {
+		if (!isEmpty(msgs)) {
 			c.msgs += msgs;
 		} else {
 			// check if it's a self definition and warn as need be
@@ -392,7 +398,7 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 		case legend_alias(_, _): {
 			// if our alias makes use of combinations that's a bonk
 			list[str] mixed = [x | x <- values, x in c.combinations];
-			if (size(mixed) > 0) {
+			if (!isEmpty(mixed)) {
 				c.msgs += [mixed_legend(l.legend, mixed, "alias", "combination", error(), l@location)];
 			} else {
 				c.references[legend] = values;
@@ -401,7 +407,7 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 		case legend_combined(_, _): {
 			// if our combination makes use of aliases that's a bonk (just gotta make sure it's actually an alias)
 			list[str] mixed = [x | x <- values, x in c.references && size(c.references[x]) > 1];
-			if (size(mixed) > 0) {
+			if (!isEmpty(mixed)) {
 				c.msgs += [mixed_legend(l.legend, mixed, "combination", "alias", error(), l@location)];
 			} else {
 				c.combinations[legend] = values;
@@ -458,7 +464,7 @@ Checker check_sound(SOUNDDATA s, Checker c){
 	for (str verb <- s.sound) {
 		str v = toLowerCase(verb);
 		if (v in c.objects) {
-			if (size(objects) == 0) {
+			if (isEmpty(objects)) {
 				Reference r = resolve_reference(verb, c, s@location);
 				c = r.c;
 				objects = r.objs;
@@ -472,7 +478,7 @@ Checker check_sound(SOUNDDATA s, Checker c){
 				c.msgs += [existing_mask(v, mask, error(), s@location)];
 			}
 			
-		} else if (v in directional_keywords){
+		} else if (v in absolute_directions_single){
 			if (!(mask in directional_sound_masks)) {
 				c.msgs += [mask_not_directional(mask, error(), s@location)];
 			} else {
@@ -489,14 +495,14 @@ Checker check_sound(SOUNDDATA s, Checker c){
 		}
 	}
 	
-	if (size(objects) < 1) c.msgs += [undefined_sound_objects(error(), s@location)];
+	if (isEmpty(objects)) c.msgs += [undefined_sound_objects(error(), s@location)];
 	if (mask == default_mask) c.msgs += [undefined_sound_mask(error(), s@location)];
 	if (seed < 0) c.msgs += [undefined_sound_seed(error(), s@location)];
 	
 	//object_mask_direction
 	for (str obj <- objects){
 		list[str] events = [];
-		if (mask in directional_sound_masks && size(directions) > 0){
+		if (mask in directional_sound_masks && !isEmpty(directions)){
 			for (str dir <- directions){
 				events += ["<obj>_<mask>_<dir>"];
 			}
@@ -527,40 +533,71 @@ Checker check_layer(LAYERDATA l, Checker c){
 	return c;
 }
 
-Checker check_ruleparts(list[RULEPART] part, Checker c) {
-	for (RULEPART part <- part) {
-		switch(part) {
-			case RULEPART::part(list[RULECONTENT] contents): {
-				for (RULECONTENT cont <- contents) {
-					for (str v <- cont.content) {
-						if (!(toLowerCase(v) in rulepart_keywords)) {
-							Reference r = resolve_reference(v, c, part@location);
-							c = r.c;
-						}
-					}
-					
-					if ("..." in cont.content && cont.content != ["..."]) c.msgs += [invalid_ellipsis(error(), part@location)];
-				}
-				
-				if (contents[0].content == ["..."] && contents[-1].content == ["..."]) c.msgs += [invalid_ellipsis_placement(error(), part@location)];
+Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c){
+	// need to add warning if rulepart on the left is empty cause it matches everything
+	for (RULECONTENT cont <- contents) {
+		if ("..." in cont.content) {
+			if (cont.content != ["..."]) c.msgs += [invalid_ellipsis(error(), cont@location)];
+			continue;
+		}
+	
+		list[str] objs = [x | x <- cont.content, !(toLowerCase(x) in rulepart_keywords)];
+		list[str] verbs = [x | x <- cont.content, toLowerCase(x) in rulepart_keywords];
+		
+		if (size(objs) > 1){
+			list[list[str]] references = [];
+			for (str obj <- objs) {
+				Reference r = resolve_reference(obj, c, cont@location);
+				c = r.c;
+				references += [r.objs];
 			}
-			case RULEPART::command(str command): {
-				if (!(toLowerCase(command) in rule_commands)) c.msgs += [invalid_rule_command(command, error(), part@location)];
-			}
-			case RULEPART::sound(str sound): {
-				if (/'sfx'[0-9]|'10'/ := sound && toLowerCase(sound) in c.sound_events) {
-					sound;
-				} else if (/'sfx'[0-9]|'10'/ := sound) {
-					//correct format but undefined
-					c.msgs += [undefined_sound(sound, error, part@location)];
-				} else {
-					//wrong format
-					c.msgs += [invalid_sound(sound, error, part@location)];
+			
+			for (int i <- [0..size(references)-1]){
+				for (int j <- [i+1..size(references)]){
+					c = check_stackable(references[i], references[j], c, cont@location);
 				}
 			}
 		}
+		
+		// if we have a mismatch between verbs and objs we skip
+		// else we check to make sure that only one force is applied to any one object
+		if (size(verbs) > size(objs)) {
+			c.msgs += [invalid_rule_keyword_amount(error(), cont@location)];
+		} else {
+			for (int i <- [0..size(cont.content)]){
+				if (cont.content[i] in verbs && i == size(cont.content) -1) {
+					//leftover force on the end
+					c.msgs += [invalid_rule_keyword_placement(error(), cont@location)];
+				} else if (cont.content[i] in verbs && !(cont.content[i+1] in objs)){
+					//force not followed by object
+					c.msgs += [invalid_rule_keyword_placement(error(), cont@location)];
+				}
+			}
+		}					
 	}
 	
+	return c;
+}
+
+Checker check_rulepart(RULEPART p: command(str command), Checker c){
+	if (!(toLowerCase(command) in rule_commands)) 
+		c.msgs += [invalid_rule_command(command, error(), p@location)];
+	
+	return c;
+}
+
+Checker check_rulepart(RULEPART p: sound(str sound), Checker c){
+	if (/sfx([0-9]|'10')/i := sound && toLowerCase(sound) in c.sound_events) {
+		//correct format and defined, do nothing?
+		sound;
+	} else if (/sfx([0-9]|10)/i := sound) {
+		//correct format but undefined
+		c.msgs += [undefined_sound(sound, error(), p@location)];
+	} else {
+		//wrong format
+		c.msgs += [invalid_sound(sound, error(), p@location)];
+	}
+
 	return c;
 }
 
@@ -570,27 +607,35 @@ Checker check_ruleparts(list[RULEPART] part, Checker c) {
 //	undefined_sound
 //	undefined_object
 //	invalid_sound
+//	invalid_ellipsis_placement
+//	invalid_ellipsis
+//	invalid_rule_part_size
+//	invalid_rule_content_size
+//	invalid_rule_ellipsis_size
 Checker check_rule(RULEDATA r, Checker c){
 
 	// check left side
-	if (size(r.prefix) > 0){
+	if (!isEmpty(r.prefix)){
 		if (!(toLowerCase(r.prefix[0]) in rule_prefix)) c.msgs += [invalid_rule_prefix(r.prefix[0], error(), r@location)];
 	}
 	
 	int msgs = size(c.msgs);
-	c = check_ruleparts(r.right, c);
-	c = check_ruleparts(r.left, c);
+	for (RULEPART p <- r.left + r.right){
+		c = check_rulepart(p, c);
+	}
 	
 	// if some of the rule is invalid it gets complicated to do more checks, so we return it 
 	// for now until they fixed the rest
 	if (size(c.msgs) > msgs) return c;
+	list[RULEPART] part_right = [x | RULEPART x <- r.right, x is part];
+	if (isEmpty(part_right)) return c;
 	
 	//check if there are equal amounts of parts on both sides
-	if (size(r.right) != size([x | RULEPART x <- r.left, typeOf(x) == typeOf(part([]))])) c.msgs += [invalid_rule_part_size(error(), r@location)];
+	if (size(r.left) != size(part_right)) c.msgs += [invalid_rule_part_size(error(), r@location)];
 	
 	//check if each part, and its equivalent have the same number of sections
 	for (int i <- [0..size(r.left)]){
-		if (size(r.left[i].contents) != size(r.right[i].contents)) {
+		if (size(r.left[i].contents) != size(part_right[i].contents)) {
 			c.msgs += [invalid_rule_content_size(error(), r@location)];
 			continue;
 		}
@@ -598,11 +643,22 @@ Checker check_rule(RULEDATA r, Checker c){
 		//check if the equivalent of any part with an ellipsis also has one
 		for (int j <- [0..size(r.left[i].contents)]){
 			list[str] left = r.left[i].contents[j].content;
-			list[str] right = r.right[i].contents[j].content;
+			list[str] right = part_right[i].contents[j].content;
 			
 			if (left == ["..."] && right != ["..."]) invalid_rule_ellipsis_size(error(), r@location);
 			if (right == ["..."] && left != ["..."]) invalid_rule_ellipsis_size(error(), r@location);
 			
+		}
+	}
+	
+	return c;
+}
+
+Checker check_stackable(list[str] objs1, list[str] objs2, Checker c, loc pos){
+	for (LAYERDATA l <- c.game.layers){
+		list[str] lw = [toLowerCase(x) | x <- l.layer];		
+		if (!isEmpty(objs1 & lw) && !isEmpty(objs2 & lw)){
+			c.msgs += [impossible_condition_unstackable(error(), pos)];
 		}
 	}
 	
@@ -628,6 +684,8 @@ Checker check_condition(CONDITIONDATA w, Checker c){
 	list[str] objs = r.objs;
 	c = r.c; 
 	
+	// only one object can defined but it can be an aggregate so we can end up with
+	// multiple objects once we're done resolving references
 	list[str] on = [];
 	if (has_on) {
 		Reference r = resolve_reference(w.condition[3], c, w@location);
@@ -641,41 +699,50 @@ Checker check_condition(CONDITIONDATA w, Checker c){
 	
 	
 	list[str] dupes = [x | str x <- objs, x in on];
-	if (size(dupes) > 0){
+	if (!isEmpty(dupes)){
 		c.msgs += [impossible_condition_duplicates(dupes, error(), w@location)];
 	}
 	
-	for (LAYERDATA l <- c.game.layers){
-		list[str] mixed = [x | str x <- l.layer, toLowerCase(x) in objs && toLowerCase(x) in on];
-		if (size(mixed) > 0){
-			c.msgs += [impossible_condition_unstackable(mixed, error(), w@location)];
-		}
-	}
+	c = check_stackable(objs, on, c, w@location);
 	
+	Condition cond;
+	bool valid = true;
 	switch(toLowerCase(w.condition[0])) {
 		case /all/: {
 			if (has_on) {
-				c.conditions += [all_objects_on(objs, on)];
+				cond = all_objects_on(objs, on);
 			} else {
+				valid = false;
 				c.msgs += [invalid_condition(error(), w@location)];
 			}
 		}
 		case /some|any/: {
 			if (has_on) {
-				c.conditions += [some_objects_on(objs, on)];
+				cond = some_objects_on(objs, on);
 			} else {
-				c.conditions += [some_objects(objs)];
+				cond = some_objects(objs);
 			}
 		}
 		case /no/: {
 			if (has_on) {
-				c.conditions += [no_objects_on(objs, on)];
+				cond = no_objects_on(objs, on);
 			} else {
-				c.conditions += [no_objects(objs)];
+				cond = no_objects(objs);
 			}
 		}
 		
-		default: c.msgs += invalid_condition_verb(w.condition[0], error(), w@location);
+		default: {
+			valid = false;
+			c.msgs += invalid_condition_verb(w.condition[0], error(), w@location);
+		}
+	}
+	
+	if (valid){
+		if (cond in c.conditions) {
+			loc original = c.conditions[indexOf(c.conditions, cond)]@location;
+			c.msgs += [existing_condition(original, warn(), w@location)];
+		}
+		c.conditions += [cond[@location = w@location]];
 	}
 	
 	return c;
@@ -750,7 +817,7 @@ Checker check_game(PSGAME g, bool debug=false) {
 	}
 	
 	list[str] unlayered = [x.id | OBJECTDATA x <- g.objects, !(toLowerCase(x.id) in c.layer_list)];
-	if (size(unlayered) > 0) {
+	if (!isEmpty(unlayered)) {
 		c.msgs += [unlayered_objects(intercalate(", ", unlayered), error(), g@location)];
 	}
 	
@@ -766,7 +833,7 @@ Checker check_game(PSGAME g, bool debug=false) {
 		c = check_level(l, c);
 	}
 	
-	if (size(g.levels) == 0) c.msgs += no_levels(warn(), g@location);
+	if (isEmpty(g.levels)) c.msgs += no_levels(warn(), g@location);
 	
 	return c;
 }
@@ -776,7 +843,7 @@ void print_msgs(Checker checker){
 	list[Msg] warn_list  = [x | Msg x <- checker.msgs, x.t == warn()];
 	list[Msg] info_list  = [x | Msg x <- checker.msgs, x.t == info()];
 	
-	if (size(error_list) > 0) {
+	if (!isEmpty(error_list)) {
 		println("ERRORS");
 		for (Msg msg <- error_list) {
 			print(msg);
@@ -784,7 +851,7 @@ void print_msgs(Checker checker){
 		}
 	}
 	
-	if (size(warn_list) > 0) {
+	if (!isEmpty(warn_list)) {
 		println("WARNINGS");
 		for (Msg msg <- warn_list) {
 			print(msg);
@@ -792,7 +859,7 @@ void print_msgs(Checker checker){
 		}
 	}
 	
-	if (size(info_list) > 0) {
+	if (!isEmpty(info_list)) {
 		println("INFO");
 		for (Msg msg <- info_list) {
 			print(msg);

@@ -50,8 +50,14 @@ void main(){
 	//print_msgs(checker);
 	//println();
 	
-	println("Prelude Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Prelude.PS|);
+	//println("Prelude Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Prelude.PS|);
+	//checker = check_game(game);
+	//print_msgs(checker);
+	//println();
+	
+	println("Rule Errors");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Rules.PS|);
 	checker = check_game(game);
 	print_msgs(checker);
 	println();

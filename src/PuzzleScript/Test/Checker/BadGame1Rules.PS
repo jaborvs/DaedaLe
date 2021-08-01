@@ -24,15 +24,15 @@ DarkBlue
 .000.
 .....
 
-Wall
-BROWN DARKBROWN
-00010
-11111
-01000
-11111
-00010
+Target2
+DarkBlue
+.....
+.000.
+.0.0.
+.000.
+.....
 
-Wall2
+Wall
 BROWN DARKBROWN
 00010
 11111
@@ -56,6 +56,14 @@ Orange
 0...0
 00000
 
+Crate2
+Orange
+00000
+0...0
+0...0
+0...0
+00000
+
 
 =======
 LEGEND
@@ -67,40 +75,46 @@ P = Player
 * = Crate
 @ = Crate and Target
 O = Target
+Eyeball = Crate
 
 =======
 SOUNDS
 =======
 
 Crate MOVE 36772507
+SFX0 1231231
 
 ================
 COLLISIONLAYERS
 ================
 
 Background
-Target
-Player, Wall, Crate
+Target, Target2
+Player, Wall, Crate, Crate2
 
 ======
 RULES
 ======
 
 [ >  Player | Crate ] -> [  >  Player | > Crate  ]
+[ Eyeball | ... | Player ] -> [ > Eyeball | ... | Player ] SFX0
+late [ Crate | Crate | Crate ] -> [ | |]
+[ stationary Player ] -> [randomDir Player]
+[ Player no Target ] -> [ Player random Target ]
+late [ Target Player ] -> [ Player ] message ...
+late [ Target Player ] -> Sfx0
+[ > Player | ... | Crate ] -> [ | ... | Player ]
+Horizontal [ Target >  Player  ] -> [ Target > Player ]
+Vertical [ Target > Player ] -> [ Target > Player ]
+late [ Player Target ] -> cancel
+
+
 
 ==============
 WINCONDITIONS
 ==============
 
-All
-All target on
-All target on target on
 All Target on Crate
-All Target in target
-All Player on Wall Wall2
-Some Crate
-No Background
-Any Crate
 
 =======
 LEVELS

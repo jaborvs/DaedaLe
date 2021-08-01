@@ -37,8 +37,10 @@ data Msg
 	| invalid_ellipsis(MsgType t, loc pos)
 	| invalid_rule_part_size(MsgType t, loc pos)
 	| invalid_rule_content_size(MsgType t, loc pos)
+	| invalid_rule_keyword_amount(MsgType t, loc pos)
+	| invalid_rule_keyword_placement(MsgType t, loc pos)
 	| invalid_rule_ellipsis_size(MsgType t, loc pos)
-	| undefined_sound(str sound, MsgType t, loc pos)
+	
 	| mixed_legend(str name, list[str] values, str l_type, str o_type, MsgType t, loc pos)
 	| mixed_legend(str name, list[str] values, MsgType t, loc pos)
 	
@@ -55,6 +57,7 @@ data Msg
 	| undefined_sound_seed(MsgType t, loc pos)
 	| undefined_sound_mask(MsgType t, loc pos)
 	| undefined_sound_objects(MsgType t, loc pos)
+	| undefined_sound(str sound, MsgType t, loc pos)
 	
 	| unlayered_objects(str objects, MsgType t, loc pos)
 	| ambiguous_pixel(str legend, list[str] objs, MsgType t, loc pos)
@@ -62,13 +65,15 @@ data Msg
 	| self_reference(str name, MsgType t, loc pos)
 	| mask_not_directional(str mask, MsgType t, loc pos)
 	| impossible_condition_duplicates(list[str] dup_objects, MsgType t, loc pos)
-	| impossible_condition_unstackable(list[str] lay_objects, MsgType t, loc pos)
+	| impossible_condition_unstackable(MsgType t, loc pos)
 	| missing_prelude_value(str key, MsgType t, loc pos)
 	//warnings
 	| unused_colors(str name, str colors, MsgType t, loc pos)
 	| no_levels(MsgType t, loc pos)
 	| message_too_long(MsgType t, loc pos)
 	| existing_sound(str sound, MsgType t, loc pos)
+	| existing_condition(loc original, MsgType t, loc pos)
+	| existing_rule(loc original, MsgType t, loc pos)
 	| redundant_prelude_value(str key, MsgType t, loc pos)
 	;
 	
@@ -164,7 +169,7 @@ public str println(Msg m: existing_sound(str sound, MsgType t, loc pos))
 	= "Sound event like <sound> already registered. <pos>";
 	
 public str println(Msg m: invalid_condition_length(MsgType t, loc pos))
-	= "Invalid amount of condition verbs. <pos>";
+	= "Invalid amount of condition verbs, conditions must be either 2 or 4 long. <pos>";
 	
 public str println(Msg m: invalid_condition(MsgType t, loc pos))
 	= "Must use additional objects with \'all\' keyword";
@@ -178,8 +183,8 @@ public str println(Msg m: invalid_object_type(str word, str obj, MsgType t, loc 
 public str println(Msg m: impossible_condition_duplicates(list[str] dup_objects, MsgType t, loc pos))
 	= "Objects <dup_objects> cannot be \'on\' themselves. <pos>";
 	
-public str println(Msg m: impossible_condition_unstackable(list[str] lay_objects, MsgType t, loc pos))
-	= "Objects <lay_objects> are meant to stack but appear in the same layer. <pos>";
+public str println(Msg m: impossible_condition_unstackable(MsgType t, loc pos))
+	= "Objects in section need to be able to stack but appear on the same layer. <pos>";
 
 public str println(Msg m: invalid_prelude_key(str key, MsgType t, loc pos))
 	= "Invalid prelude keyword <key>. <pos>";
@@ -223,5 +228,16 @@ public str println(Msg m: invalid_rule_content_size(MsgType t, loc pos))
 public str println(Msg m: invalid_rule_ellipsis_size(MsgType t, loc pos))
 	= "Left and right matches must have ellipsis in the same places. <pos>";
 
+public str println(Msg m: existing_condition(loc original, MsgType t, loc pos))
+	= "Win condition with these requirements already exists at <original>. <pos>";
+	
+public str println(Msg m: existing_rule(loc original, MsgType t, loc pos))
+	= "Rule with these requirement already exists at <original>. <pos>";
+	
+public str println(Msg m: invalid_rule_keyword_amount(MsgType t, loc pos))
+	= "You can only have a maximum of one keyword per rule section. <pos>";
+	
+public str println(Msg m: invalid_rule_keyword_placement(MsgType t, loc pos))
+	= "Forces must be applied to an object. <pos>";
 
 public default str println(Msg m) = "Undefined message converter";
