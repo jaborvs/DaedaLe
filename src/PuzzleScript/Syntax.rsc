@@ -121,7 +121,7 @@ syntax Rules
 	;
 	
 syntax RuleData
-	= rule_data: ID* RulePart+ '-\>' (Command|RulePart)* Message? Newlines
+	= rule_data: ID? RulePart+ '-\>' (Command|RulePart)* Message? Newlines
 	;
 
 syntax RuleContent

@@ -576,6 +576,10 @@ Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c){
 		}					
 	}
 	
+	if (!isEmpty(contents)) {
+		if ("..." in contents[0].content || "..." in contents[-1].content) c.msgs += [invalid_ellipsis_placement(error(), p@location)];
+	}
+	
 	return c;
 }
 
@@ -631,7 +635,10 @@ Checker check_rule(RULEDATA r, Checker c){
 	if (isEmpty(part_right)) return c;
 	
 	//check if there are equal amounts of parts on both sides
-	if (size(r.left) != size(part_right)) c.msgs += [invalid_rule_part_size(error(), r@location)];
+	if (size(r.left) != size(part_right)) {
+		c.msgs += [invalid_rule_part_size(error(), r@location)];
+		return c;
+	}
 	
 	//check if each part, and its equivalent have the same number of sections
 	for (int i <- [0..size(r.left)]){
