@@ -75,6 +75,7 @@ data Msg
 	| existing_condition(loc original, MsgType t, loc pos)
 	| existing_rule(loc original, MsgType t, loc pos)
 	| redundant_prelude_value(str key, MsgType t, loc pos)
+	| multilayered_object(str obj, MsgType t, loc pos)
 	;
 	
 //public str println(Msg m: ) = ;
@@ -239,5 +240,8 @@ public str println(Msg m: invalid_rule_keyword_amount(MsgType t, loc pos))
 	
 public str println(Msg m: invalid_rule_keyword_placement(MsgType t, loc pos))
 	= "Forces must be applied to an object. <pos>";
+	
+public str println(Msg m: multilayered_object(str obj, MsgType t, loc pos))
+	= "Object <obj> included in multiple collision layers";
 
 public default str println(Msg m) = "Undefined message converter";

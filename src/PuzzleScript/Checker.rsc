@@ -36,7 +36,6 @@ data Condition
 
 anno loc Condition@location;
 
-
 map[str, str] COLORS = (
 	"black"   		: "#000000",
 	"white"			: "#FFFFFF",
@@ -525,9 +524,15 @@ Checker check_sound(SOUNDDATA s, Checker c){
 
 // errors
 //	undefined_object
+// warnings
+//	multilayered_object
 Checker check_layer(LAYERDATA l, Checker c){
 	Reference r = resolve_references(l.layer, c, l@location);
 	c = r.c;
+	for (str obj <- r.objs){
+		if (obj in c.layer_list) c.msgs += [multilayered_object(obj, warn(), l@location)];
+	}
+	
 	c.layer_list += r.objs;
 	
 	return c;
