@@ -2,9 +2,9 @@ module PuzzleScript::Checker
 
 import PuzzleScript::AST;
 import util::Math;
+import IO;
 import List;
 import String;
-import IO;
 import Type;
 import PuzzleScript::Messages;
 
@@ -326,14 +326,13 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 
 	// check if it has a sprite
 	if (isEmpty(obj.sprite)) return c;
-	for(str line <- obj.sprite[0]){
-		list[str] char_list = split("", line);
-		
+	for(list[PIXEL] line <- obj.sprite){		
 		// check if the sprite is of valid length
-		if (size(char_list) != 5) c.msgs += [invalid_sprite(obj.id, line, error(), obj@location)];
+		if (size(line) != 5) c.msgs += [invalid_sprite(obj.id, line, error(), obj@location)];
 	
 		// check if all pixels have the correct index
-		for(str pixel <- char_list){
+		for(PIXEL pix <- line){
+			str pixel = pix.pixel;
 			if (pixel == ".") continue;
 			
 			int converted = toInt(pixel);
@@ -345,7 +344,7 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 	
 	// check if we are making use of all the colors defined
 	if (size(obj.colors) > max_index + 1) {
-		c.msgs += [unused_colors(obj.id, intercalate(", ", obj.colors[max_index+1..-1]), warn(), obj@location)];
+		c.msgs += [unused_colors(obj.id, intercalate(", ", obj.colors[max_index+1..size(obj.colors)]), warn(), obj@location)];
 	}
 	
 	return c;
@@ -624,9 +623,10 @@ Checker check_rulepart(RULEPART p: sound(str sound), Checker c){
 Checker check_rule(RULEDATA r, Checker c){
 
 	// check left side
-	if (!isEmpty(r.prefix)){
-		if (!(toLowerCase(r.prefix[0]) in rule_prefix)) c.msgs += [invalid_rule_prefix(r.prefix[0], error(), r@location)];
+	for (str pr <- r.prefix){
+		if (!(toLowerCase(pr) in rule_prefix)) c.msgs += [invalid_rule_prefix(pr, error(), r@location)];
 	}
+
 	
 	int msgs = size(c.msgs);
 	for (RULEPART p <- r.left + r.right){
@@ -858,24 +858,21 @@ void print_msgs(Checker checker){
 	if (!isEmpty(error_list)) {
 		println("ERRORS");
 		for (Msg msg <- error_list) {
-			print(msg);
-			println();
+			println(toString(msg));
 		}
 	}
 	
 	if (!isEmpty(warn_list)) {
 		println("WARNINGS");
 		for (Msg msg <- warn_list) {
-			print(msg);
-			println();
+			println(toString(msg));
 		}
 	}
 	
 	if (!isEmpty(info_list)) {
 		println("INFO");
 		for (Msg msg <- info_list) {
-			print(msg);
-			println();
+			println(toString(msg));
 		}
 	}
 }

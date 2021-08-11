@@ -24,6 +24,18 @@ anno loc LEGENDOPERATION@location;
 anno loc LAYERDATA@location;
 anno loc PSGAME@location;
 
+anno str PRELUDEDATA@label;
+anno str SECTION@label;
+anno str OBJECTDATA@label;
+anno str LEGENDDATA@label;
+anno str SOUNDDATA@label;
+anno str RULEDATA@label;
+anno str CONDITIONDATA@label;
+anno str LAYERDATA@label;
+anno str LEVELDATA@label;
+
+anno str PIXEL@color;
+
 data PRELUDEDATA 
 	= prelude_data(str key, str string, str)
 	;
@@ -66,7 +78,7 @@ data OBJECTS
 	
 data OBJECTDATA
 	= object_data(str id, list[str] legend, str, list[str] colors, str, list[SPRITE] spr)
-	| object_data(str id, list[str] legend, list[str] colors, list[list[str]] sprite)
+	| object_data(str id, list[str] legend, list[str] colors, list[list[PIXEL]] sprite)
 	| object_empty(str)
 	;
 	
@@ -78,6 +90,10 @@ data SPRITE
        str line3, str,
        str line4, str
       );
+      
+data PIXEL
+	= pixel(str pixel)
+	;
       
 data LEGEND
 	= legend(str, str, str, list[LEGENDDATA] legend)

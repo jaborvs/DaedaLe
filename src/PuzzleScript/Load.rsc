@@ -3,46 +3,42 @@ module PuzzleScript::Load
 import PuzzleScript::Syntax;
 import PuzzleScript::AST;
 import ParseTree;
-import IO;
+import List;
+import String;
 
 PSGAME load(loc path) {
-	return implode(parse(path));
-}
-
-PSGame parse(loc path){
-	return annotate(parse(#PSGame, path));
+	return ps_implode(ps_parse(path));
 }
 
 PSGAME load(str src) {
-	return implode(parse(src));
+	return ps_implode(ps_parse(src));
 }
 
-PSGame parse(str src){
+PSGame ps_parse(loc path){
+	return annotate(parse(#PSGame, path));
+}
+
+PSGame ps_parse(str src){
 	return annotate(parse(#PSGame, src));
 }
 
-PSGAME implode(PSGame tree) {
+PSGame ps_parse(str psString, loc psFile) { 
+	return annotate(parse(#PSGame, psString, psFile));
+}
+
+PSGAME ps_implode(PSGame tree) {
 	return post(implode(#PSGAME, tree));
 }
 
 PSGame annotate(PSGame tree) {
-	// annotate tree
-	
 	return tree;
 }
 
-PSGAME check(PSGAME game) {
-	// check contents, return error message etc...
-	
-	return game;
-
-}
-
 LEGENDDATA process_legend(LEGENDDATA l) {
-	legend = l.legend;
-	values = [l.first];
-	aliases = [];
-	combined = [];
+	str legend = l.legend;
+	list[str] values = [l.first];
+	list[str] aliases = [];
+	list[str] combined = [];
 	
 	for (LEGENDOPERATION other <- l.others) {
 		switch(other){
@@ -57,38 +53,56 @@ LEGENDDATA process_legend(LEGENDDATA l) {
 	} else if (size(combined) > 0) {
 		new_l = legend_combined(legend, values + combined);
 	}
-	
-	return new_l[@location = l@location];
+	new_l @ location = l@location;
+	new_l @ label = "Legend: <l.legend>";
+	return new_l;
 }
 
 OBJECTDATA process_object(OBJECTDATA obj){
-	list[list[str]] sprite_line = [];
+	list[list[PIXEL]] sprite_line = [];
 	
 	if (size(obj.spr) > 0) {;
-		sprite_line += [[
-			obj.spr[0].line0,
-			obj.spr[0].line1,
-			obj.spr[0].line2,
-			obj.spr[0].line3,
-			obj.spr[0].line4
-		]];
+		sprite_line += [
+			[pixel(x) | x <- split("", obj.spr[0].line0)],
+			[pixel(x) | x <- split("", obj.spr[0].line1)],
+			[pixel(x) | x <- split("", obj.spr[0].line2)],
+			[pixel(x) | x <- split("", obj.spr[0].line3)],
+			[pixel(x) | x <- split("", obj.spr[0].line4)]
+		];
+		
+		for (int i <- [0..size(sprite_line)]){
+			for (int j <- [0..size(sprite_line[i])]){
+				try
+					sprite_line[i][j] @ color = toLowerCase(obj.colors[toInt(sprite_line[i][j].pixel)]);
+				catch: sprite_line[i][j] @ color = "unknown";
+			}
+		}
 	}
 	
 	OBJECTDATA new_obj = object_data(obj.id, obj.legend, obj.colors, sprite_line);
-	return new_obj[@location = obj@location];
+	new_obj @ location = obj@location;
+	new_obj @ label = "Object <obj.id>";
+	return new_obj;
 }
 
 LAYERDATA process_layer(LAYERDATA l) {
 	LAYERDATA new_l = layer_data(l.layer);
-	return new_l[@location = l@location];
+	new_l @ location = l@location;
+	new_l @ label = "Layer";
+	return new_l;
 }
 
 LEVELDATA process_level(LEVELDATA l) {
 	switch(l) {
-		case message(_): return l;
+		case message(_): {
+			l @ label = "Message";
+			return l;
+		}
 		case level_data_raw(list[tuple[str, str]] lines): {
 			LEVELDATA new_l = level_data([x[0] | x <- lines]);
-			return new_l[@location = l@location];
+			new_l @ location = l@location;
+			new_l @ label = "Level";
+			return new_l;
 		}
 	}
 	

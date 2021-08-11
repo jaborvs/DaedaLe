@@ -26,21 +26,6 @@ data Object
 	| transparent(str name, str legend)
 	;
 	
-//alias alt_Line = list[alt_Object];
-//
-//data alt_Level
-//	= level(list[alt_Line] lines)
-//	| message(str msg)
-//	;
-//	
-//data alt_Object
-//	= player(list[str] names, str legend)
-//	| moving_player(list[str] names, str legend, str direction)
-//	| object(list[str] names, str legend)
-//	| moving_object(list[str] names, str legend, str direction)
-//	| transparent(list[str] names, str legend)
-//	;
-	
 alias Engine = tuple[
 	list[Level] states,
 	list[Level] levels,
@@ -84,7 +69,7 @@ Engine rewrite(Engine engine){
 	return engine;
 }
 
-str is_on(Engine engine, list[str] objs, list[str] on){
+list[bool] is_on(Engine engine, list[str] objs, list[str] on){
 	list[bool] results = [];
 	Level level = engine.current_level;
 	
@@ -107,10 +92,7 @@ str is_on(Engine engine, list[str] objs, list[str] on){
 	} 
 
 
-	if (isEmpty(results) || !any(x <- results, x)) return "no";
-	if (all(x <- results, x)) return "all";
-	
-	return "some";
+	return results;
 }
 
 bool is_victorious(Engine engine){
@@ -119,26 +101,34 @@ bool is_victorious(Engine engine){
 		switch(cond){
 			case no_objects(list[str] objs): {
 				for (Layer lyr <- engine.current_level.layers){
+					// if any objects present then we don't win
 					if (any(str x <- objs, x in lyr.objects)) victory = false;
 				}
 			}
 			
-			case no_objects_on(list[str] objs, list[str] on): {
-				if (is_on(engine, objs, on) != "no") victory = false;
-			}
-			
 			case some_objects(list[str] objs): {
 				for (Layer lyr <- engine.current_level.layers){
-					if (all(str x <- objs, !(x in lyr.objects))) victory = false;
+					// if not any objects present then we dont' win
+					if (!any(str x <- objs, x in lyr.objects)) victory = false;
 				}
 			}
 			
+			case no_objects_on(list[str] objs, list[str] on): {
+				// if any objects are on any of the ons then we don't win
+				list[bool] results = is_on(engine, objs, on);
+				if (any(x <- results, x)) victory = false;
+			}
+			
 			case some_objects_on(list[str] objs, list[str] on): {
-				if (is_on(engine, objs, on) != "some") victory = false;
+				// if no objects are on any of the ons then we don't win
+				list[bool] results = is_on(engine, objs, on);
+				if (!isEmpty(results) && !any(x <- results, x)) victory = false;
 			}
 			
 			case all_objects_on(list[str] objs, list[str] on): {
-				if (is_on(engine, objs, on) != "all") victory = false;
+				// if not all objects are on any of the ons then we don't win
+				list[bool] results = is_on(engine, objs, on);
+				if (!isEmpty(results) && !all(x <- results, x)) victory = false;
 			}
 		}
 	}
@@ -201,8 +191,8 @@ void print_level(Level l){
 	for (Layer lyr <- l.layers){
 		for (Line line <- lyr.lines) {
 			print(intercalate("", [x.legend | x <- line]));
-			print("   ");
-			print(intercalate(" ", line));
+			//print("   ");
+			//print(intercalate(" ", line));
 			println();
 		}
 		println();

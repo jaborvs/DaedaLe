@@ -18,4 +18,12 @@ void main() {
 	engine = do_move(engine, "right");
 	print_level(engine.current_level);
 	
+	//println("Movement Test");
+	//
+	//println("Victory Test");
+	//
+	//println("Deep Copy Test");
+	//
+	//println("Rewrite Test");
+	
 }

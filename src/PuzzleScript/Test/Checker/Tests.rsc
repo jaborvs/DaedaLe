@@ -3,6 +3,7 @@ module PuzzleScript::Test::Checker::Tests
 import PuzzleScript::Load;
 import PuzzleScript::AST;
 import PuzzleScript::Checker;
+import PuzzleScript::Messages;
 import IO;
 
 void main(){
@@ -15,6 +16,13 @@ void main(){
 	println(checker.objects);
 	println(checker.references);
 	println(checker.combinations);
+	print_msgs(checker);
+	println(toMessages(checker.msgs));
+	println();
+	
+	println("Object Errors");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Objects.PS|);
+	checker = check_game(game);
 	print_msgs(checker);
 	println();
 

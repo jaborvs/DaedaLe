@@ -9,9 +9,9 @@ layout LAYOUTLIST = LAYOUT* !>> [\t\r\ )];
 
 lexical SectionDelimiter = [=]+ Newlines;
 lexical Newlines = Newline+ !>> [\n];
-lexical Comment = @category="Comment" "(" (![()]|Comment)+ ")";
+lexical Comment = @Category="Comment" "(" (![()]|Comment)+ ")";
 lexical Newline = [\n];
-lexical ID = [a-z0-9.A-Z]+ !>> [a-z0-9.A-Z] \ Keywords;
+lexical ID = @Category="ID" [a-z0-9.A-Z]+ !>> [a-z0-9.A-Z] \ Keywords;
 lexical SpecialChars = [.!@#$%&*];
 lexical Pixel = [a-zA-Z.!@#$%&*0-9];
 lexical LegendKey = [a-zA-Z.!@#$%&*]+ !>> [a-zA-Z.!@#$%&*] \ Keywords;
@@ -20,7 +20,7 @@ lexical Levelline = Pixel+ !>> Pixel \ Keywords;
 lexical String = ![\n]+ >> [\n];
 lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
 lexical Directional = [\>\<^v] !>> [a-z0-9.A-Z];
-lexical KeywordID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
+lexical KeywordID = @Category="Key"[a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
 keyword PreludeKeyword 
@@ -39,18 +39,18 @@ syntax Sound
 	;
 
 start syntax PSGame
- 	= game: Prelude Section+
+ 	= @Foldable game: Prelude Section+
  	| empty: Newlines
  	;
  	
 syntax Section
- 	= objects: Objects
- 	| legend: Legend
- 	| sounds: Sounds
- 	| layers: Layers
- 	| rules: Rules
- 	| conditions: WinConditions
- 	| levels: Levels
+ 	= @Foldable objects: Objects
+ 	| @Foldable legend: Legend
+ 	| @Foldable sounds: Sounds
+ 	| @Foldable layers: Layers
+ 	| @Foldable rules: Rules
+ 	| @Foldable conditions: WinConditions
+ 	| @Foldable levels: Levels
  	| empty: SectionDelimiter? SectionKeyword Newlines SectionDelimiter?
  	;
  	
@@ -68,12 +68,12 @@ syntax Objects
 	;
 
 syntax ObjectData
-	= object_data: ID LegendKey? Newline ID+ Newline Sprite?
+	= @Foldable @Category="Object" object_data: ID LegendKey? Newline ID+ Newline Sprite?
 	| object_empty: Newlines
 	;
 
 syntax Sprite 
-    =  sprite: 
+    =  @Foldable sprite: 
        Spriteline Newline
        Spriteline Newline
        Spriteline Newline 
@@ -121,7 +121,7 @@ syntax Rules
 	;
 	
 syntax RuleData
-	= rule_data: ID? RulePart+ '-\>' (Command|RulePart)* Message? Newlines
+	= rule_data: ID* RulePart+ '-\>' (Command|RulePart)* Message? Newlines
 	;
 
 syntax RuleContent
@@ -154,6 +154,6 @@ syntax Message
 	;
 
 syntax LevelData
-	= level_data_raw: (Levelline Newline)+
+	= @Foldable level_data_raw: (Levelline Newline)+
 	| message: Message
 	;
