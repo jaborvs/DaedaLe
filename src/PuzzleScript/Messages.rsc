@@ -58,6 +58,7 @@ data Msg
 	| invalid_rule_keyword_amount(MsgType t, loc pos)
 	| invalid_rule_keyword_placement(MsgType t, loc pos)
 	| invalid_rule_ellipsis_size(MsgType t, loc pos)
+	| invalid_rule_movement_late(MsgType t, loc pos) // TODO: movement cannot appear in late rule
 	
 	| mixed_legend(str name, list[str] values, str l_type, str o_type, MsgType t, loc pos)
 	| mixed_legend(str name, list[str] values, MsgType t, loc pos)
@@ -95,7 +96,11 @@ data Msg
 	| existing_rule(loc original, MsgType t, loc pos)
 	| redundant_prelude_value(str key, MsgType t, loc pos)
 	| multilayered_object(str obj, MsgType t, loc pos)
-	| semantic_warning(str obj, str on, MsgType t, loc pos)
+	| semantic_warning(str obj, str on, MsgType t, loc pos) // TODO: Target on Crate
+	| win_keyword(MsgType t, loc pos) // TODO: win keyword in rule part makes other keywords pointless
+	
+	//dynamic analysis
+	| instant_victory() //TODO: if a level is won without playing action this is bad
 	;
 	
 //public str toString(Msg m: ) = ;

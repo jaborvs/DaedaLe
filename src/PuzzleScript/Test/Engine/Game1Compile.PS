@@ -1,6 +1,7 @@
 title Simple Block Pushing Game
 author David Skinner
 homepage www.puzzlescript.net
+debug
 
 ========
 OBJECTS
@@ -14,7 +15,8 @@ LIGHTGREEN GREEN
 11111
 10111
 
-Target b
+
+Target
 DarkBlue
 .....
 .000.
@@ -22,7 +24,7 @@ DarkBlue
 .000.
 .....
 
-Wall b
+Wall
 BROWN DARKBROWN
 00010
 11111
@@ -36,10 +38,18 @@ Black Orange White Blue
 .111.
 22222
 .333.
-.3.3.2
+.3.3.
 
-Crate
-Orange Yellow Red
+Crate1
+Orange Yellow
+00000
+0...0
+0...0
+0...0
+00000
+
+Crate2
+Red Yellow
 00000
 0...0
 0...0
@@ -53,9 +63,11 @@ LEGEND
 
 . = Background
 # = Wall
-P = Playerrrrr
-* = Crate
-@ = Crate and Target
+P = Player
+Crate = Crate1 or Crate2
+* = Crate1
+$ = Crate2
+@ = Crate1 and Target
 O = Target
 
 =======
@@ -63,6 +75,7 @@ SOUNDS
 =======
 
 Crate MOVE 36772507
+sfx4 435345435
 
 ================
 COLLISIONLAYERS
@@ -76,7 +89,7 @@ Player, Wall, Crate
 RULES
 ======
 
-[ >  Player | Crate ] -> [  >  Player | > Crate  ]
+late VERTICAL [ >  Player | Crate ] [ Crate ] -> [  >  Player | > Crate  ] [Crate ] sfx4 win message this is a test
 
 ==============
 WINCONDITIONS
@@ -93,7 +106,7 @@ LEVELS
 #.O#..
 #..###
 #@P..#
-#..*.#
+#..$.#
 #..###
 ####..
 

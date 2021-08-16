@@ -569,7 +569,7 @@ Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c){
 			c.msgs += [invalid_rule_keyword_amount(error(), cont@location)];
 		} else {
 			for (int i <- [0..size(cont.content)]){
-				if (cont.content[i] in verbs && i == size(cont.content) -1) {
+				if (cont.content[i] in verbs && i == size(cont.content) - 1) {
 					//leftover force on the end
 					c.msgs += [invalid_rule_keyword_placement(error(), cont@location)];
 				} else if (cont.content[i] in verbs && !(cont.content[i+1] in objs)){
