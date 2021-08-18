@@ -11,16 +11,17 @@ lexical SectionDelimiter = [=]+ Newlines;
 lexical Newlines = Newline+ !>> [\n];
 lexical Comment = @Category="Comment" "(" (![()]|Comment)+ ")";
 lexical Newline = [\n];
-lexical ID = @Category="ID" [a-z0-9.A-Z]+ !>> [a-z0-9.A-Z] \ Keywords;
+lexical ID = @Category="ID" [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
 lexical SpecialChars = [.!@#$%&*];
-lexical Pixel = [a-zA-Z.!@#$%&*0-9];
-lexical LegendKey = [a-zA-Z.!@#$%&*]+ !>> [a-zA-Z.!@#$%&*] \ Keywords;
+lexical Pixel = [a-zA-Z.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]];
+lexical LegendKey = Pixel+ !>> [a-zA-Z.!@#$%&*\-,`\'~_\"§è!çàé;?:/+°0-9£^{}|\>\<^v¬\[\]] \ Keywords;
 lexical Spriteline = [0-9.]+ !>> [0-9.] \ Keywords;
 lexical Levelline = Pixel+ !>> Pixel \ Keywords;
 lexical String = ![\n]+ >> [\n];
 lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
-lexical Directional = [\>\<^v] !>> [a-z0-9.A-Z];
 lexical KeywordID = @Category="Key"[a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
+lexical IDOrDirectional = @Category="ID" [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
+
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
 keyword PreludeKeyword 
@@ -39,7 +40,7 @@ syntax Sound
 	;
 
 start syntax PSGame
- 	= @Foldable game: Prelude Section+
+ 	= @Foldable game: Prelude? Section+
  	| empty: Newlines
  	;
  	
@@ -113,23 +114,31 @@ syntax Layers
 	;
 
 syntax LayerData
-	= layer_data: {ID ','}+ Newlines
+	= layer_data: (ID ','?)+ Newlines
 	;
 
 syntax Rules
-	= rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+
+	= rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? (RuleData|Loop)+
+	;
+	
+syntax Loop
+	= 'startloop' Newlines RuleData+ 'endloop' Newlines
 	;
 	
 syntax RuleData
-	= rule_data: ID* RulePart+ '-\>' (Command|RulePart)* Message? Newlines
+	= rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newlines
 	;
 
 syntax RuleContent
-	= content: (ID|Directional)*
+	= content: IDOrDirectional*
 	;
 	
 syntax RulePart
 	= part: '[' {RuleContent '|'}+ ']'
+	;
+
+syntax Prefix
+	= prefix: ID
 	;
 
 syntax Command
@@ -150,7 +159,7 @@ syntax Levels
 	;
 	
 syntax Message
-	=	'message' String+
+	=	'message' String*
 	;
 
 syntax LevelData

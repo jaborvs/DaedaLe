@@ -59,6 +59,7 @@ data Msg
 	| invalid_rule_keyword_placement(MsgType t, loc pos)
 	| invalid_rule_ellipsis_size(MsgType t, loc pos)
 	| invalid_rule_movement_late(MsgType t, loc pos) // TODO: movement cannot appear in late rule
+	| invalid_rule_random(MsgType t, loc pos) //TODO: random cannot appear on the left side
 	
 	| mixed_legend(str name, list[str] values, str l_type, str o_type, MsgType t, loc pos)
 	| mixed_legend(str name, list[str] values, MsgType t, loc pos)
@@ -98,6 +99,7 @@ data Msg
 	| multilayered_object(str obj, MsgType t, loc pos)
 	| semantic_warning(str obj, str on, MsgType t, loc pos) // TODO: Target on Crate
 	| win_keyword(MsgType t, loc pos) // TODO: win keyword in rule part makes other keywords pointless
+	| unused_sound_event(MsgType t, loc pos) //TODO: sfxXX is defined but never used
 	
 	//dynamic analysis
 	| instant_victory() //TODO: if a level is won without playing action this is bad
@@ -144,7 +146,7 @@ public str toString(Msg m: invalid_name(str name, MsgType t, loc pos))
 	= "Invalid name <name>, please only use characters appropriate for that section and not reserved keywords. <pos>";
 	
 public str toString(Msg m: unlayered_objects(str objects, MsgType t, loc pos))
-	= "Object(s) defined but not added to layer";
+	= "Object(s) <objects> defined but not added to layer";
 	
 public str toString(Msg m: invalid_level_row(MsgType t, loc pos))
 	= "All rows of level must be the same lenght. <pos>";

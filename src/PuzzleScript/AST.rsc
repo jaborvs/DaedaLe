@@ -46,7 +46,7 @@ data PRELUDE
 	;
 
 data PSGAME
- 	= game(PRELUDE pr, list[SECTION] sections)
+ 	= game(list[PRELUDE] pr, list[SECTION] sections)
  	| game(
  		list[PRELUDEDATA] prelude, 
  		list[OBJECTDATA] objects,
@@ -133,13 +133,15 @@ data RULES
 	;
 
 data RULEDATA
-	= rule_data(list[str] prefix, list[RULEPART] left, list[RULEPART] right, list[str] message, str)
+	= rule_data(list[RULEPART] left, list[RULEPART] right, list[str] message, str)
+	| loop(list[RULEDATA] loop)
 	;
 	
 data RULEPART
 	= part(list[RULECONTENT] contents)
 	| command(str command)
 	| sound(str sound)
+	| prefix(str prefix)
 	;
 
 data RULECONTENT

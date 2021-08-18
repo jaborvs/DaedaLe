@@ -118,6 +118,7 @@ PSGAME post(PSGAME game) {
 	list[RULEDATA] rules = [];
 	list[CONDITIONDATA] conditions = [];
 	list[LEVELDATA] levels = [];
+	list[PRELUDEDATA] pr = [];
 	
 	// assign to correct section
 	for (SECTION section <- game.sections) {
@@ -154,8 +155,10 @@ PSGAME post(PSGAME game) {
 	//unest levels
 	processed_levels = [process_level(l) | LEVELDATA l <- levels];
 	
+	if (!isEmpty(game.pr)) pr = game.pr[0].datas;
+	
 	PSGAME new_game = PSGAME::game(
-		game.pr.datas, 
+		pr, 
 		processed_objects, 
 		processed_legends, 
 		processed_sounds, 

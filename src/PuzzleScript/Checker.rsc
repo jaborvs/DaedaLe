@@ -74,7 +74,7 @@ list[str] conditions = ["all", "some", "no", "any"];
 list[str] condition_keywords = conditions + ["on"];
 
 list[str] rulepart_random = ["randomdir","random"];
-list[str] relative_directions = ["^","v","\>","\<"];
+list[str] relative_directions = ["^","v","\>","\<", "parallel", "perpendicular"];
 list[str] absolute_directions = ["horizontal", "vertical"] + absolute_directions_single;
 list[str] rulepart_keywords_other = [
 	"...", "moving","stationary","parallel","perpendicular", "action", "no"
@@ -153,7 +153,7 @@ bool check_valid_legend(str name){
 	if (size(name) > 1){
 		return check_valid_name(name);
 	} else {
-		return /^<x:[a-z0-9.!@#$%&*]+>$/i := name && !(toLowerCase(name) in keywords);
+		return /^<x:[a-uw-z0-9.!@#$%&*]+>$/i := name && !(toLowerCase(name) in keywords);
 	}
 }
 
@@ -609,6 +609,12 @@ Checker check_rulepart(RULEPART p: sound(str sound), Checker c){
 	return c;
 }
 
+Checker check_rulepart(RULEPART p: prefix(str prefix), Checker c){
+	if (!(toLowerCase(p.prefix) in rule_prefix)) c.msgs += [invalid_rule_prefix(p.prefix, error(), p@location)];
+	
+	return c;
+}
+
 // errors
 //	invalid_rule_prefix
 //	invalid_rule_command
@@ -621,13 +627,6 @@ Checker check_rulepart(RULEPART p: sound(str sound), Checker c){
 //	invalid_rule_content_size
 //	invalid_rule_ellipsis_size
 Checker check_rule(RULEDATA r, Checker c){
-
-	// check left side
-	for (str pr <- r.prefix){
-		if (!(toLowerCase(pr) in rule_prefix)) c.msgs += [invalid_rule_prefix(pr, error(), r@location)];
-	}
-
-	
 	int msgs = size(c.msgs);
 	for (RULEPART p <- r.left + r.right){
 		c = check_rulepart(p, c);
@@ -636,25 +635,29 @@ Checker check_rule(RULEDATA r, Checker c){
 	// if some of the rule is invalid it gets complicated to do more checks, so we return it 
 	// for now until they fixed the rest
 	if (size(c.msgs) > msgs) return c;
+	
 	list[RULEPART] part_right = [x | RULEPART x <- r.right, x is part];
 	if (isEmpty(part_right)) return c;
 	
+	list[RULEPART] part_left = [x | RULEPART x <- r.left, x is part];
+	if (isEmpty(part_left)) return c;
+	
 	//check if there are equal amounts of parts on both sides
-	if (size(r.left) != size(part_right)) {
+	if (size(part_left) != size(part_right)) {
 		c.msgs += [invalid_rule_part_size(error(), r@location)];
 		return c;
 	}
 	
 	//check if each part, and its equivalent have the same number of sections
-	for (int i <- [0..size(r.left)]){
-		if (size(r.left[i].contents) != size(part_right[i].contents)) {
+	for (int i <- [0..size(part_left)]){
+		if (size(part_left[i].contents) != size(part_right[i].contents)) {
 			c.msgs += [invalid_rule_content_size(error(), r@location)];
 			continue;
 		}
 		
 		//check if the equivalent of any part with an ellipsis also has one
-		for (int j <- [0..size(r.left[i].contents)]){
-			list[str] left = r.left[i].contents[j].content;
+		for (int j <- [0..size(part_left[i].contents)]){
+			list[str] left = part_left[i].contents[j].content;
 			list[str] right = part_right[i].contents[j].content;
 			
 			if (left == ["..."] && right != ["..."]) invalid_rule_ellipsis_size(error(), r@location);
@@ -828,9 +831,8 @@ Checker check_game(PSGAME g, bool debug=false) {
 		c = check_layer(l, c);
 	}
 	
-	list[str] unlayered = [x.id | OBJECTDATA x <- g.objects, !(toLowerCase(x.id) in c.layer_list)];
-	if (!isEmpty(unlayered)) {
-		c.msgs += [unlayered_objects(intercalate(", ", unlayered), error(), g@location)];
+	for (OBJECTDATA x <- g.objects){
+		if (!(toLowerCase(x.id) in c.layer_list)) c.msgs += [unlayered_objects(x.id, error(), x@location)];
 	}
 	
 	for (RULEDATA r <- g.rules) {

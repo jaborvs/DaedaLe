@@ -32,7 +32,8 @@ alias Rule = tuple[
 	set[str] direction,
 	set[Command] commands,
 	list[list[list[RuleReference]]] left,
-	list[list[list[RuleReference]]] right
+	list[list[list[RuleReference]]] right,
+	RULEDATA original
 ];
 	
 alias Engine = tuple[
@@ -292,7 +293,8 @@ Rule convert_rule(RULEDATA r, Checker c){
 		directions,
 		commands,
 		[convert_rulepart(x, c) | RULEPART x <- r.left],
-		[convert_rulepart(x, c) | RULEPART x <- r.right, x is part]
+		[convert_rulepart(x, c) | RULEPART x <- r.right, x is part],
+		r
 	>;
 }
 
