@@ -15,8 +15,8 @@ data Layer
 	;
 
 data Level
-	= level(list[Layer] layers)
-	| message(str msg)
+	= level(list[Layer] layers, LEVELDATA original)
+	| message(str msg, LEVELDATA original)
 	;
 	
 data Object
@@ -50,7 +50,7 @@ alias Engine = tuple[
 list[str] MOVES = ["left", "up", "down", "right"];
 
 Engine new_engine(){		
-	return <[], [], level([]), (), [], [], 0, false>;
+	return <[], [], level([], level_data([])), (), [], [], 0, false>;
 }
 
 Engine restart(Engine engine){
@@ -266,7 +266,8 @@ data Command
 	;
 
 Rule convert_rule(RULEDATA r, Checker c){
-	list[str] keywords = [toLowerCase(x) | str x <- r.prefix];
+	// rework
+	list[str] keywords = [toLowerCase(x.prefix) | RULEPART x <- r.left, x is prefix];
 	bool late = "late" in keywords;
 	set[str] directions = {};
 	for (str x <- keywords){
@@ -352,11 +353,11 @@ Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c){
 		layers += [Layer::layer(layer, objs, objects)];
 	}
 	
-	return Level::level(layers);
+	return Level::level(layers, l);
 }
 
 Level convert_level(LEVELDATA l: message(str msg), Checker c){
-	return Level::message(msg);
+	return Level::message(msg, l);
 }
 
 void print_level(Level l){
@@ -371,7 +372,7 @@ void print_level(Level l){
 	}
 }
 
-Level deep_copy(Level l: level(list[Layer] lyrs)){
+Level deep_copy(Level l: level(list[Layer] lyrs, LEVELDATA original)){
 	list[Layer] layers = [];
 	for (Layer lyr <- lyrs){
 		list[Line] layer = [];
@@ -386,7 +387,7 @@ Level deep_copy(Level l: level(list[Layer] lyrs)){
 		)];
 	}
 	
-	return Level::level(layers);
+	return Level::level(layers, original);
 }
 
 Engine do_move(Engine engine, str direction){

@@ -102,7 +102,7 @@ data Msg
 	| unused_sound_event(MsgType t, loc pos) //TODO: sfxXX is defined but never used
 	
 	//dynamic analysis
-	| instant_victory() //TODO: if a level is won without playing action this is bad
+	| instant_victory(MsgType t, loc pos) //TODO: if a level is won without playing action this is bad
 	;
 	
 //public str toString(Msg m: ) = ;
@@ -271,4 +271,4 @@ public str toString(Msg m: invalid_rule_keyword_placement(MsgType t, loc pos))
 public str toString(Msg m: multilayered_object(str obj, MsgType t, loc pos))
 	= "Object <obj> included in multiple collision layers";
 
-public default str toString(Msg m) = "Undefined message converter";
+public default str toString(Msg m) = "Undefined message converter for <m>";

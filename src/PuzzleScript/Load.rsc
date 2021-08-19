@@ -86,28 +86,39 @@ OBJECTDATA process_object(OBJECTDATA obj){
 }
 
 LAYERDATA process_layer(LAYERDATA l) {
-	LAYERDATA new_l = layer_data(l.layer);
+	list[str] new_layer = [];
+	for (str obj <- l.layer){
+		// flexible grammar parses the optional "," separator as a character so we remove it
+		// in post processing if it exists
+		if (obj[-1] == ",") {
+			new_layer += [obj[0..-1]];
+		} else {
+			new_layer += [obj];
+		}
+	}
+
+	LAYERDATA new_l = layer_data(new_layer);
 	new_l @ location = l@location;
 	new_l @ label = "Layer";
 	return new_l;
 }
 
-LEVELDATA process_level(LEVELDATA l) {
-	switch(l) {
-		case message(_): {
-			l @ label = "Message";
-			return l;
-		}
-		case level_data_raw(list[tuple[str, str]] lines): {
-			LEVELDATA new_l = level_data([x[0] | x <- lines]);
-			new_l @ location = l@location;
-			new_l @ label = "Level";
-			return new_l;
-		}
-	}
-	
+LEVELDATA process_level(LEVELDATA l : message(_)) {
+	l @ label = "Message";
 	return l;
 }
+
+LEVELDATA process_level(LEVELDATA l : level_data_raw(list[tuple[str, str]] lines)) {
+	LEVELDATA new_l = level_data([x[0] | x <- lines]);
+	new_l @ location = l@location;
+	new_l @ label = "Level";
+	return new_l;
+}
+
+default LEVELDATA process_level(LEVELDATA l) {
+	return l;
+}
+
 
 PSGAME post(PSGAME game) {
 	// do post processing here
