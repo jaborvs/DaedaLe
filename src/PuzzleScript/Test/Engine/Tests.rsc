@@ -22,7 +22,7 @@ void main() {
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Compile.PS|);
 	checker = check_game(game);
 	engine = compile(checker); 
-	for (x <- engine.rules) println(x);
+	for (x <- engine.rules) println(" late: <x.late>\n commands: <x.commands>\n left: <x.left>\n right: <x.right>");
 	
 	//println("Movement Test");
 	

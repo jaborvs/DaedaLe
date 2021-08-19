@@ -29,10 +29,9 @@ data Object
 	
 alias Rule = tuple[
 	bool late,
-	set[str] direction,
 	set[Command] commands,
-	list[list[list[RuleReference]]] left,
-	list[list[list[RuleReference]]] right,
+	list[RulePart] left,
+	list[RulePart] right,
 	RULEDATA original
 ];
 	
@@ -115,15 +114,29 @@ str generate_rule(list[Object] contents){
 	return rule;
 }
 
-list[str] generate_direction(str dir){
-	if (dir == "vertical") return ["up", "down"];
-	if (dir == "horizontal") return ["left", "right"];
-	if (dir == "any") return ["left", "right", "up", "down"];
+set[str] generate_directions(list[str] modifiers){
+	if (isEmpty(modifiers)) return {"left", "right", "up", "down"};
+
+	set[str] directions = {};
+	for (str mo <- modifiers){
+		if (mo == "vertical") directions += {"up", "down"};
+		if (mo == "horizontal") directions += {"left", "right"};
+	}
 	
-	return [dir];
+	return directions;
 }
 
-Engine rewrite(Engine engine){
+Engine apply_rule(Rule rule, Engine engine){
+	
+	return engine;
+}
+
+Engine rewrite(Engine engine, bool late=false){
+	list[Rule] rules = [x | Rule x <- engine.rules, x.late == late];
+	
+	for (Rule rule <- rules){
+		engine = apply_rule(rule, engine);
+	}
 	
 	return engine;
 }
@@ -134,7 +147,8 @@ void game_loop(Checker c){
 		str input = get_input();
 		if (input in MOVES){
 			engine = do_move(engine, input);
-			engine = rewrite(engine);
+			engine = rewrite(engine, late=false);
+			engine = rewrite(engine, late=true);
 		} else if (input == "undo"){
 			engine = undo(engine);
 		} else if (input == "restart"){
@@ -269,45 +283,66 @@ Rule convert_rule(RULEDATA r, Checker c){
 	// rework
 	list[str] keywords = [toLowerCase(x.prefix) | RULEPART x <- r.left, x is prefix];
 	bool late = "late" in keywords;
-	set[str] directions = {};
-	for (str x <- keywords){
-		if (x == "late") continue;
-		directions += toSet(generate_direction(x));	
-	}
-	
+
+
+	list[RulePart] left = [];
+	list[RulePart] right = [];
 	set[Command] commands = {};
-	for (str cmd <- [x.command | RULEPART x <- r.right, x is command]){
-		switch(cmd){
-			case /cancel/: commands += {cancel()};
-			case /checkpoint/: commands += {checkpoint()};
-			case /restart/: commands += {restart()};
-			case /win/: commands += {win()};
-			case /again/: commands += {again()};
-		}	
+	list[str] prefixes = [];
+	
+	for (RULEPART p <- r.left){
+		if (p is prefix && toLowerCase(p.prefix) != "late"){
+			prefixes += [toLowerCase(p.prefix)];
+		} else if (p is part) {
+			left += [convert_rulepart(p, prefixes, c)];
+			prefixes = [];
+		}
 	}
 	
-	commands += {sound(x.sound) | RULEPART x <- r.right, x is sound};
+	for (RULEPART p <- r.right){
+		if (p is command){
+			switch(p){
+				case /cancel/: commands += {cancel()};
+				case /checkpoint/: commands += {checkpoint()};
+				case /restart/: commands += {restart()};
+				case /win/: commands += {win()};
+				case /again/: commands += {again()};
+			}
+		} else if (p is sound) {
+			commands += {sound(p.sound)};
+		} else if (p is part) {
+			right += [convert_rulepart(p, [], c)];
+		}
+	}
+
+
 	if (!isEmpty(r.message)) commands += {message(r.message[0])};
 	
 	return <
 		late,
-		directions,
 		commands,
-		[convert_rulepart(x, c) | RULEPART x <- r.left],
-		[convert_rulepart(x, c) | RULEPART x <- r.right, x is part],
+		left,
+		right,
 		r
 	>;
 }
 
 alias RuleReference = tuple[
 	list[str] objects,
-	str modifier
+	str force
 ];
 
-list[list[RuleReference]] convert_rulepart(RULEPART p, Checker c){
-	list[list[RuleReference]] side = [];
+alias RuleContent = list[RuleReference];
+
+alias RulePart = tuple[
+	list[RuleContent] content,
+	set[str] directions
+];
+
+RulePart convert_rulepart(RULEPART p, list[str] prefixes, Checker c){
+	list[RuleContent] contents = [];
 	for (RULECONTENT cont <- p.contents){
-		list[RuleReference] refs = [];
+		RuleContent refs = [];
 
 		for (int i <- [0..size(cont.content)]){
 			if (toLowerCase(cont.content[i]) in PuzzleScript::Checker::rulepart_keywords) continue;
@@ -318,10 +353,10 @@ list[list[RuleReference]] convert_rulepart(RULEPART p, Checker c){
 			refs += [<objs, modifier>];
 		}
 		
-		side += [refs];
+		contents += [refs];
 	}
 	
-	return side;
+	return <contents, generate_directions(prefixes)>;
 }
 
 Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c){
