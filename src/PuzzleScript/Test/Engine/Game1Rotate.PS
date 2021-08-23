@@ -40,16 +40,8 @@ Black Orange White Blue
 .333.
 .3.3.
 
-Crate1
+Crate
 Orange Yellow
-00000
-0...0
-0...0
-0...0
-00000
-
-Crate2
-Red Yellow
 00000
 0...0
 0...0
@@ -64,10 +56,8 @@ LEGEND
 . = Background
 # = Wall
 P = Player
-Crate = Crate1 or Crate2
-* = Crate1
-$ = Crate2
-@ = Crate1 and Target
+* = Crate
+@ = Crate and Target
 O = Target
 
 =======
@@ -75,7 +65,6 @@ SOUNDS
 =======
 
 Crate MOVE 36772507
-sfx4 435345435
 
 ================
 COLLISIONLAYERS
@@ -89,7 +78,7 @@ Player, Wall, Crate
 RULES
 ======
 
-late VERTICAL [ >  Player | ... | Crate ] [ Crate ] -> [  >  Player | ... | > Crate  ] [Crate ] sfx4 win message this is a test
+[ >  Player | Crate ] -> [  >  Player | > Crate  ]
 
 ==============
 WINCONDITIONS
@@ -102,19 +91,5 @@ LEVELS
 =======
 
 
-####..
-#.O#..
-#..###
-#@P..#
-#..$.#
-#..###
-####..
-
-
-######
-#....#
-#.#P.#
-#.*@.#
-#.O@.#
-#....#
-######
+.P.
+P..

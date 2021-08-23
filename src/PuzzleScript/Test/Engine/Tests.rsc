@@ -10,12 +10,13 @@ void main() {
 	PSGAME game;
 	Checker checker;
 	Engine engine;
+	Level level;
 
 	//println("Engine Test");
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
 	//checker = check_game(game);
 	//engine = compile(checker);
-	//engine = do_move(engine, "right");
+	//engine = plan_move(engine, "right");
 	//print_level(engine.current_level);
 	
 	println("Test Compile");
@@ -23,6 +24,14 @@ void main() {
 	checker = check_game(game);
 	engine = compile(checker); 
 	for (x <- engine.rules) println(" late: <x.late>\n commands: <x.commands>\n left: <x.left>\n right: <x.right>");
+	
+	//println("Rotate Test");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Rotate.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//level = rotate_level(engine.levels[0]);
+	//print_level(level);
+	
 	
 	//println("Movement Test");
 	

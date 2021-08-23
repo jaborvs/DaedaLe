@@ -7,6 +7,7 @@ import Type;
 import Set;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import util::Eval;
 
 alias Line = list[Object];
 
@@ -30,6 +31,7 @@ data Object
 alias Rule = tuple[
 	bool late,
 	set[Command] commands,
+	set[str] directions,
 	list[RulePart] left,
 	list[RulePart] right,
 	RULEDATA original
@@ -43,14 +45,22 @@ alias Engine = tuple[
 	list[Condition] conditions,
 	list[Rule] rules,
 	int index,
-	bool win_keyword
+	bool win_keyword,
+	bool abort,
+	bool again,
+	int checkpoint,
+	list[str] sound_queue,
+	list[str] msg_queue
 ];
 
-list[str] MOVES = ["left", "up", "down", "right"];
+list[str] MOVES = ["right", "up", "left", "down"];
 
-Engine new_engine(){		
-	return <[], [], level([], level_data([])), (), [], [], 0, false>;
-}
+Rule new_rule(RULEDATA r)
+	= <false, {}, {}, [], [], r>; 
+
+
+Engine new_engine()		
+	= <[], [], level([], level_data([])), (), [], [], 0, false, false, false, 0, [], []>;
 
 Engine restart(Engine engine){
 	engine.current_level = engine.levels[engine.index];
@@ -75,67 +85,74 @@ Engine change_level(Engine engine, int index){
 	engine.current_level = engine.levels[index];
 	engine.index = index;
 	engine.states = [];
+	engine.win_keyword = false;
+	engine.abort = false;
+	engine.again = false;
 	
 	return engine;
 }
 
-str empty_layer(int index)
-	= "[ *layer<index> ]";
-	
-str default_layer(str lines, int index)
-	= "[ *prefix_lines<index>, <lines>, *suffix_lines<index> ]";
-
-str default_line(str cells, int index)
-	=	"[ *prefix_cells<index>, <cells>, *suffix_cells<index> ]";
-
-map[str, str] convert_part(RULEPART p : part(list[RULECONTENT] contents)){
-	list[Object] objs = [];
-	
-	
-	return ();
-}
-
-str process_obj(Object _: object(str name, str _), int index){
-	return "arg<index> : object(name<index> : \"<name>\", legend<index>)";
-}
-
-str generate_rule(list[Object] contents){
-	list [str] strings = [];
-	
-	int index = 0;
-	for (Object obj <- contents){
-		strings += [process_obj(obj, index)];
-		index += 1;
-	}
-	
-	string = intercalate(", ", strings);
-	rule = "[*prefix, <string>, *suffix]";
-	
-	return rule;
-}
-
 set[str] generate_directions(list[str] modifiers){
-	if (isEmpty(modifiers)) return {"left", "right", "up", "down"};
-
 	set[str] directions = {};
 	for (str mo <- modifiers){
 		if (mo == "vertical") directions += {"up", "down"};
 		if (mo == "horizontal") directions += {"left", "right"};
+		if (mo in ["left", "right", "down", "up"]) directions += {mo};
 	}
 	
+	if (isEmpty(directions)) return {"left", "right", "up", "down"};
 	return directions;
 }
 
-Engine apply_rule(Rule rule, Engine engine){
+// this rotates a level 90 degrees clockwise
+// [ [1, 2] , becomes [ [3, 1] ,
+//   [3, 4] ]  			[4, 2] ]
+// right matching becomes up matching
+Level rotate_level(Level level){
+	list[Layer] lyrs = [];
+	for (Layer lyr <- level.layers){
+		list[Line] new_layer = [[] | _ <- [0..size(lyr.lines[0])]];
+		for (int i <- [0..size(lyr.lines[0])]){
+			for (int j <- [0..size(lyr.lines)]){
+				new_layer[i] += [lyr.lines[j][i]];
+			}
+		}
+		
+		lyrs += layer([reverse(x) | Line x <- new_layer], lyr.layer, lyr.objects);
+	}
+	
+	level.layers = lyrs; 
+	return level;
+}
+
+Engine apply_rule(Engine engine, Level level, Rule rule){
+	//bool match = true;
+	//str right = MOVES[index];
+	//str up = MOVES[(index+1) % size(MOVES)];
+	//str left = MOVES[(index+1) % size(MOVES)];
+	//str down = MOVES[(index+1) % size(MOVES)];
+	//
+	//
+	//if (!all(RulePart part <- rule.left, eval("<part.pattern> := level") == result(true))) return level;
+	
+	
+	
+	for (Command cmd <- rule.commands){
+		if (engine.abort) return engine;
+		engine = run_command(cmd, engine);
+	}
 	
 	return engine;
 }
 
-Engine rewrite(Engine engine, bool late=false){
+
+
+Engine rewrite(Engine engine, Level level, bool late){
 	list[Rule] rules = [x | Rule x <- engine.rules, x.late == late];
-	
+
 	for (Rule rule <- rules){
-		engine = apply_rule(rule, engine);
+		if (engine.abort) break;
+		engine = apply_rule(engine, level, rule);
 	}
 	
 	return engine;
@@ -146,23 +163,39 @@ void game_loop(Checker c){
 	while (true){
 		str input = get_input();
 		if (input in MOVES){
-			engine = do_move(engine, input);
-			engine = rewrite(engine, late=false);
-			engine = rewrite(engine, late=true);
+			engine = plan_move(engine, input);
 		} else if (input == "undo"){
 			engine = undo(engine);
 		} else if (input == "restart"){
 			engine = restart(engine);
+		} else if (input == "action"){
+			// do nothing
+			input;
 		}
 		
+		do {
+			engine.again = false;
+			engine = rewrite(engine, engine.current_level, false);
+			engine = rewrite(engine, engine.current_level, true);
+		} while (engine.again && !engine.abort);
+		
 		bool victory = is_victorious(engine);
-		if (victory && !is_last(engine)){
-			engine = change_level(engine, engine.index + 1);
-		} else if (victory) {
+		if (victory && is_last(engine)){
 			break;
+		} else if (victory) {
+			engine = change_level(engine, engine.index + 1);
+		}
+		
+		for (str event <- engine.sound_queue){
+			play_sound(engine, event);
+		}
+		
+		for (str msg <- engine.msg_queue){
+			print_message(msg);
 		}
 		
 		print_level(engine.current_level);
+		engine.abort = false;
 	}
 	
 	println("VICTORY");
@@ -258,7 +291,7 @@ Engine compile(Checker c){
 		engine.levels += [convert_level(l, c)];
 	}
 	
-	engine.sounds = c.sound_events;
+	engine.sounds = (x : c.sound_event[x].seeds | x <- c.sound_events);
 	engine.conditions = c.conditions;
 	engine.current_level = engine.levels[0];
 	
@@ -279,52 +312,64 @@ data Command
 	| again()
 	;
 
+Engine run_command(Command cmd : cancel(), Engine engine){
+	engine.abort = true;
+	return undo(engine);
+}
+
+Engine run_command(Command cmd : checkpoint(), Engine engine){
+	return undo(engine);
+}
+
+Engine run_command(Command cmd : win(), Engine engine){
+	engine.abort = true;
+	engine.win_keyword = true;
+	return engine;
+}
+
+Engine run_command(Command cmd : restart(), Engine engine){
+	engine.abort = true;
+	return restart(engine);
+}
+
+Engine run_command(Command cmd : again(), Engine engine){
+	return undo(engine);
+}
+
+Engine run_command(Command cmd : message(str string), Engine engine){
+	engine.msg_queue += [string];
+	return engine;
+}
+
+Engine run_command(Command cmd : sound(str event), Engine engine){
+	engine.sound_queue += [event];
+	return engine;
+}
+
 Rule convert_rule(RULEDATA r, Checker c){
-	// rework
+	Rule rule = new_rule(r);
+
 	list[str] keywords = [toLowerCase(x.prefix) | RULEPART x <- r.left, x is prefix];
-	bool late = "late" in keywords;
+	rule.late = "late" in keywords;
+	rule.directions = generate_directions(keywords);
 
 
 	list[RulePart] left = [];
 	list[RulePart] right = [];
 	set[Command] commands = {};
-	list[str] prefixes = [];
 	
 	for (RULEPART p <- r.left){
-		if (p is prefix && toLowerCase(p.prefix) != "late"){
-			prefixes += [toLowerCase(p.prefix)];
-		} else if (p is part) {
-			left += [convert_rulepart(p, prefixes, c)];
-			prefixes = [];
-		}
+		rule = convert_rulepart(p, rule, c, true);
 	}
 	
 	for (RULEPART p <- r.right){
-		if (p is command){
-			switch(p){
-				case /cancel/: commands += {cancel()};
-				case /checkpoint/: commands += {checkpoint()};
-				case /restart/: commands += {restart()};
-				case /win/: commands += {win()};
-				case /again/: commands += {again()};
-			}
-		} else if (p is sound) {
-			commands += {sound(p.sound)};
-		} else if (p is part) {
-			right += [convert_rulepart(p, [], c)];
-		}
+		rule = convert_rulepart(p, rule, c, false);
 	}
 
 
-	if (!isEmpty(r.message)) commands += {message(r.message[0])};
+	if (!isEmpty(r.message)) commands += {Command::message(r.message[0])};
 	
-	return <
-		late,
-		commands,
-		left,
-		right,
-		r
-	>;
+	return rule;
 }
 
 alias RuleReference = tuple[
@@ -333,13 +378,10 @@ alias RuleReference = tuple[
 ];
 
 alias RuleContent = list[RuleReference];
+alias RulePart = list[RuleContent];
 
-alias RulePart = tuple[
-	list[RuleContent] content,
-	set[str] directions
-];
 
-RulePart convert_rulepart(RULEPART p, list[str] prefixes, Checker c){
+Rule convert_rulepart( RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker c, bool pattern) {
 	list[RuleContent] contents = [];
 	for (RULECONTENT cont <- p.contents){
 		RuleContent refs = [];
@@ -356,7 +398,35 @@ RulePart convert_rulepart(RULEPART p, list[str] prefixes, Checker c){
 		contents += [refs];
 	}
 	
-	return <contents, generate_directions(prefixes)>;
+	if (pattern){ 
+		rule.left += [contents];
+	} else {
+		rule.right += [contents];
+	}
+
+	return rule;
+}
+
+Rule convert_rulepart( RULEPART p: prefix(str _), Rule rule, Checker c, bool pattern) {
+	return rule;
+}
+
+Rule convert_rulepart( RULEPART p: command(str cmd), Rule rule, Checker c, bool pattern) {
+	switch(cmd){
+		case /cancel/: rule.commands += {Command::cancel()};
+		case /checkpoint/: rule.commands += {Command::checkpoint()};
+		case /restart/: rule.commands += {Command::restart()};
+		case /win/: rule.commands += {Command::win()};
+		case /again/: rule.commands += {Command::again()};
+	}
+	
+	return rule;
+}
+
+Rule convert_rulepart( RULEPART p: sound(str snd), Rule rule, Checker c, bool pattern) {
+	rule.commands += {Command::sound(snd)};
+
+	return rule;
 }
 
 Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c){
@@ -373,9 +443,9 @@ Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c){
 				pix = [x | str x <- obs, x in objs];
 				if (isEmpty(pix)){
 					line += [transparent("trans", ".")];
-				} else if (pix[0] == "player") {
-					line += [player(pix[0], ch)];
-					objects += [pix[0]];
+				//} else if (pix[0] == "player") {
+				//	line += [player(pix[0], ch)];
+				//	objects += [pix[0]];
 				} else {
 					line += [object(pix[0], ch)];
 					objects += [pix[0]];
@@ -425,10 +495,8 @@ Level deep_copy(Level l: level(list[Layer] lyrs, LEVELDATA original)){
 	return Level::level(layers, original);
 }
 
-Engine do_move(Engine engine, str direction){
-	Level level = engine.current_level;
-	
-	level = deep_copy(level);
+Engine plan_move(Engine engine, str direction){
+	Level level = deep_copy(engine.current_level);
 	
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];
@@ -436,8 +504,8 @@ Engine do_move(Engine engine, str direction){
 			Line line = layer.lines[j];
 			for(int k <- [0..size(line)]){
 				Object obj = line[k];
-				if (line[k] is player){
-					level.layers[i].lines[j][k] = moving_player(obj.name, obj.legend, direction);
+				if (line[k].name == "player"){
+					level.layers[i].lines[j][k] = moving_object(obj.name, obj.legend, direction);
 				}
 			}
 		}
@@ -447,9 +515,12 @@ Engine do_move(Engine engine, str direction){
 	return engine;
 }
 
-void play_sound(str event, Engine engine){
+void play_sound(Engine engine, str event){
 	if (event in engine.sounds) {
 		println(engine.sounds[event]);
 	}
 }
 
+void print_message(str string){
+	println(string);
+}

@@ -15,7 +15,8 @@ alias Checker = tuple[
 	list[str] objects,
 	map[str, list[str]] combinations,
 	list[str] layer_list,
-	map[str, list[int]] sound_events,
+	map[str, tuple[list[int] seeds, loc pos]] sound_events,
+	list[str] used_sounds,
 	list[Condition] conditions,
 	map[str, str] prelude,
 	PSGAME game
@@ -74,7 +75,9 @@ list[str] conditions = ["all", "some", "no", "any"];
 list[str] condition_keywords = conditions + ["on"];
 
 list[str] rulepart_random = ["randomdir","random"];
-list[str] relative_directions = ["^","v","\>","\<", "parallel", "perpendicular"];
+list[str] relative_directions_single = ["^","v","\>","\<"];
+list[str] relative_directions_duo = ["parallel", "perpendicular"];
+list[str] relative_directions = relative_directions_single + relative_directions_duo;
 list[str] absolute_directions = ["horizontal", "vertical"] + absolute_directions_single;
 list[str] rulepart_keywords_other = [
 	"...", "moving","stationary","parallel","perpendicular", "action", "no"
@@ -134,7 +137,7 @@ list[str] keywords =
 
 		
 Checker new_checker(bool debug_flag, PSGAME game){		
-	return <[], debug_flag, (), [], (), [], (), [], (), game>;
+	return <[], debug_flag, (), [], (), [], (), [], [], (), game>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -326,9 +329,10 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 
 	// check if it has a sprite
 	if (isEmpty(obj.sprite)) return c;
+	bool valid_length = true;
 	for(list[PIXEL] line <- obj.sprite){		
 		// check if the sprite is of valid length
-		if (size(line) != 5) c.msgs += [invalid_sprite(obj.id, line, error(), obj@location)];
+		if (size(line) != 5) valid_lenght = false;
 	
 		// check if all pixels have the correct index
 		for(PIXEL pix <- line){
@@ -341,6 +345,8 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 			} else if (converted > max_index) max_index = converted;
 		}
 	}
+	
+	if (!valid_length) c.msgs += [invalid_sprite(obj.id, error(), obj@location)];
 	
 	// check if we are making use of all the colors defined
 	if (size(obj.colors) > max_index + 1) {
@@ -443,9 +449,9 @@ Checker check_sound(SOUNDDATA s, Checker c){
 		
 		if (toLowerCase(s.sound[0]) in c.sound_events) {
 			c.msgs += [existing_sound(s.sound[0], warn(), s@location)];
-			c.sound_events[toLowerCase(s.sound[0])] += [seed];
+			c.sound_events[toLowerCase(s.sound[0])].seeds += [seed];
 		} else {
-			c.sound_events[toLowerCase(s.sound[0])] = [seed];
+			c.sound_events[toLowerCase(s.sound[0])] = <[seed], s@location>;
 		}
 		
 		return c;
@@ -511,9 +517,9 @@ Checker check_sound(SOUNDDATA s, Checker c){
 		for (str e <- events){
 			if (e in c.sound_events) {
 				c.msgs += [existing_sound(e, warn(), s@location)];
-				c.sound_events[e] += [seed];
+				c.sound_events[e].seeds += [seed];
 			} else {
-				c.sound_events[e] = [seed];
+				c.sound_events[e] = <[seed], s@location>;
 			}
 		}
 	}
@@ -537,16 +543,20 @@ Checker check_layer(LAYERDATA l, Checker c){
 	return c;
 }
 
-Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c){
-	// need to add warning if rulepart on the left is empty cause it matches everything
+Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c, bool late, bool pattern){
 	for (RULECONTENT cont <- contents) {
 		if ("..." in cont.content) {
 			if (cont.content != ["..."]) c.msgs += [invalid_ellipsis(error(), cont@location)];
 			continue;
 		}
 	
-		list[str] objs = [x | x <- cont.content, !(toLowerCase(x) in rulepart_keywords)];
-		list[str] verbs = [x | x <- cont.content, toLowerCase(x) in rulepart_keywords];
+		list[str] objs = [toLowerCase(x) | x <- cont.content, !(toLowerCase(x) in rulepart_keywords)];
+		list[str] verbs = [toLowerCase(x) | x <- cont.content, toLowerCase(x) in rulepart_keywords];
+		if(!isEmpty(verbs) && late) c.msgs += [invalid_rule_movement_late(error(), cont@location)];
+		
+		if (pattern){
+			if(any(str rand <- rulepart_random, rand in verbs)) c.msgs += [invalid_rule_random(error(), cont@location)];
+		}
 		
 		if (size(objs) > 1){
 			list[list[str]] references = [];
@@ -569,12 +579,12 @@ Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c){
 			c.msgs += [invalid_rule_keyword_amount(error(), cont@location)];
 		} else {
 			for (int i <- [0..size(cont.content)]){
-				if (cont.content[i] in verbs && i == size(cont.content) - 1) {
+				if (toLowerCase(cont.content[i]) in verbs && i == size(cont.content) - 1) {
 					//leftover force on the end
-					c.msgs += [invalid_rule_keyword_placement(error(), cont@location)];
-				} else if (cont.content[i] in verbs && !(cont.content[i+1] in objs)){
+					c.msgs += [invalid_rule_keyword_placement(false, error(), cont@location)];
+				} else if (toLowerCase(cont.content[i]) in verbs && !(toLowerCase(cont.content[i+1]) in objs)){
 					//force not followed by object
-					c.msgs += [invalid_rule_keyword_placement(error(), cont@location)];
+					c.msgs += [invalid_rule_keyword_placement(true, error(), cont@location)];
 				}
 			}
 		}					
@@ -587,29 +597,28 @@ Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c){
 	return c;
 }
 
-Checker check_rulepart(RULEPART p: command(str command), Checker c){
+Checker check_rulepart(RULEPART p: command(str command), Checker c, bool late, bool pattern){
 	if (!(toLowerCase(command) in rule_commands)) 
 		c.msgs += [invalid_rule_command(command, error(), p@location)];
 	
 	return c;
 }
 
-Checker check_rulepart(RULEPART p: sound(str sound), Checker c){
-	if (/sfx([0-9]|'10')/i := sound && toLowerCase(sound) in c.sound_events) {
-		//correct format and defined, do nothing?
-		sound;
-	} else if (/sfx([0-9]|10)/i := sound) {
+Checker check_rulepart(RULEPART p: sound(str snd), Checker c, bool late, bool pattern){
+	if (/sfx([0-9]|'10')/i := snd && toLowerCase(snd) in c.sound_events) {
+		c.used_sounds += [snd];
+	} else if (/sfx([0-9]|10)/i := snd) {
 		//correct format but undefined
-		c.msgs += [undefined_sound(sound, error(), p@location)];
+		c.msgs += [undefined_sound(snd, error(), p@location)];
 	} else {
 		//wrong format
-		c.msgs += [invalid_sound(sound, error(), p@location)];
+		c.msgs += [invalid_sound(snd, error(), p@location)];
 	}
 
 	return c;
 }
 
-Checker check_rulepart(RULEPART p: prefix(str prefix), Checker c){
+Checker check_rulepart(RULEPART p: prefix(str prefix), Checker c, bool late, bool pattern){
 	if (!(toLowerCase(p.prefix) in rule_prefix)) c.msgs += [invalid_rule_prefix(p.prefix, error(), p@location)];
 	
 	return c;
@@ -627,14 +636,25 @@ Checker check_rulepart(RULEPART p: prefix(str prefix), Checker c){
 //	invalid_rule_content_size
 //	invalid_rule_ellipsis_size
 Checker check_rule(RULEDATA r, Checker c){
-	int msgs = size(c.msgs);
-	for (RULEPART p <- r.left + r.right){
-		c = check_rulepart(p, c);
+	bool late = any(RULEPART p <- r.left, p is prefix && toLowerCase(p.prefix) == "late");
+	
+	bool redundant = any(RULEPART p <- r.right, p is prefix && toLowerCase(p.prefix) in ["win", "restart"]);
+	if (redundant && size(r.right) > 1) c.msgs += [redundant_keyword(warn(), r@location)];
+
+	int msgs = size([x | x <- c.msgs, x.t is error]);
+	if ([*_, part(_), prefix(_), *_] := r.left) c.msgs += [invalid_rule_direction(warn(), r@location)];
+	
+	for (RULEPART p <- r.left){
+		c = check_rulepart(p, c, late, true);
+	}
+	
+	for (RULEPART p <- r.right){
+		c = check_rulepart(p, c, late, false);
 	}
 	
 	// if some of the rule is invalid it gets complicated to do more checks, so we return it 
 	// for now until they fixed the rest
-	if (size(c.msgs) > msgs) return c;
+	if (size([x | x <- c.msgs, x.t is error]) > msgs) return c;
 	
 	list[RULEPART] part_right = [x | RULEPART x <- r.right, x is part];
 	if (isEmpty(part_right)) return c;
@@ -837,6 +857,10 @@ Checker check_game(PSGAME g, bool debug=false) {
 	
 	for (RULEDATA r <- g.rules) {
 		c = check_rule(r, c);
+	}
+	
+	for (str event <- c.sound_events) {
+		if (startsWith(event, "sfx") && event notin c.used_sounds) c.msgs += [unused_sound_event(warn(), c.sound_events[event].pos)];
 	}
 	
 	for (CONDITIONDATA w <- g.conditions) {
