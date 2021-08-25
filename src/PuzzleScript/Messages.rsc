@@ -102,7 +102,7 @@ data Msg
 	| invalid_rule_direction(MsgType t, loc pos)
 	
 	//dynamic analysis
-	| instant_victory(MsgType t, loc pos) //TODO: if a level is won without playing action this is bad
+	| instant_victory(MsgType t, loc pos)
 	;
 
 public str toString(Msg m: generic(str msg, MsgType t, loc pos))
@@ -115,7 +115,7 @@ public str toString(Msg m: existing_object(str name, MsgType t, loc pos))
 	= "Object <name> already exists. <pos>";
 
 public str toString(Msg m: invalid_sprite(str name, MsgType t, loc pos)) 
-	= "Sprite for <name> is not the correct length <size(line)>/5. <pos>";
+	= "A sprite line for <name> is not exactly 5 pixels. <pos>";
 	
 public str toString(Msg m: mixed_legend(str name, list[str] values, MsgType t, loc pos)) 
 	= "Legend <name> has both \'and\' and \'or\' symbols. <pos>";

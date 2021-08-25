@@ -54,7 +54,7 @@ LEGENDDATA process_legend(LEGENDDATA l) {
 		new_l = legend_combined(legend, values + combined);
 	}
 	new_l @ location = l@location;
-	new_l @ label = "Legend: <l.legend>";
+	new_l @ label = l.legend;
 	return new_l;
 }
 
@@ -81,7 +81,7 @@ OBJECTDATA process_object(OBJECTDATA obj){
 	
 	OBJECTDATA new_obj = object_data(obj.id, obj.legend, obj.colors, sprite_line);
 	new_obj @ location = obj@location;
-	new_obj @ label = "Object <obj.id>";
+	new_obj @ label = obj.id;
 	return new_obj;
 }
 
@@ -99,7 +99,7 @@ LAYERDATA process_layer(LAYERDATA l) {
 
 	LAYERDATA new_l = layer_data(new_layer);
 	new_l @ location = l@location;
-	new_l @ label = "Layer";
+	new_l @ label = intercalate(", ", new_layer);
 	return new_l;
 }
 
