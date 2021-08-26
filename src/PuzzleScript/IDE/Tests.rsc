@@ -3,11 +3,19 @@ module PuzzleScript::IDE::Tests
 import PuzzleScript::IDE::IDE;
 import IO;
 import PuzzleScript::Load;
+import ParseTree;
 
 void main(){
 	println("Test");
 	tree = ps_parse(|project://AutomatedPuzzleScript/src/PuzzleScript/IDE/Game1.PS|);
-	d = ps_outline(tree);
-	println(d);
+	ps_outline(tree);
+	ps_check(tree);
+	
+	visit(tree){
+		case c: appl(prod(def, symbols, {\tag("category"("orange"))}), args): {
+			println(c);
+		}
+	}
+
 
 }

@@ -12,7 +12,7 @@ import String;
 anno str node@label;
 anno loc node@\loc;
 
-private str PS_NAME = "PuzzeScript";
+private str PS_NAME = "PuzzleScript";
 private str PS_EXT = "PS";
 
 public Tree ps_check(Tree tree){
@@ -51,7 +51,7 @@ public node ps_outline(Tree x){
 	}
 	
 	g = post(g);
-	
+		
 	n = "Game";
 	list[node] levels = [l@label()[@\loc = l@location] | LEVELDATA l <- g.levels];
 	list[node] prelude = [pr.key()[@\loc = pr@location] | PRELUDEDATA pr <- g.prelude]; 
@@ -76,16 +76,18 @@ public node ps_outline(Tree x){
 
 public void registerPS(){
    
-  c =
-  {
-    categories
-    (
+  Contribution PS_style =
+    categories (
       (
         "Comment": {foregroundColor(color("dimgray"))},
-		"Key": {foregroundColor(color("purple"))},
+		"Keyword": {foregroundColor(color("purple"))},
+		"ID": {foregroundColor(color("purple"))},
 
-        "unknown" : {foregroundColor(color("firebrick"))},
-        "black": {foregroundColor(color("black"))},     
+
+		// pixel colors
+		"transparent": {foregroundColor(color("dimgray"))},
+  		"unknown" : {foregroundColor(color("firebrick"))},
+  		"black": {foregroundColor(color("black"))},     
 		"white": {foregroundColor(color("white"))},     
 		"grey": {foregroundColor(color("grey"))},      
 		"darkgrey": {foregroundColor(color("darkgrey"))},  
@@ -111,11 +113,16 @@ public void registerPS(){
 		"pink": {foregroundColor(color("pink"))}
         
       )
-    )
+    );
+    
+    
+  PS_contributions =
+  {
+    PS_style
   };
     
   registerLanguage(PS_NAME, PS_EXT, ps_parse);
   registerAnnotator(PS_NAME, ps_check);
   registerOutliner(PS_NAME, ps_outline);
-  registerContributions(PS_NAME, c);
+  registerContributions(PS_NAME, PS_contributions);
 }

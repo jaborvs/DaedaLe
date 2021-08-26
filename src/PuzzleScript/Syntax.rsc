@@ -9,18 +9,17 @@ layout LAYOUTLIST = LAYOUT* !>> [\t\r\ )];
 
 lexical SectionDelimiter = [=]+ Newlines;
 lexical Newlines = Newline+ !>> [\n];
-lexical Comment = @Category="Comment" "(" (![()]|Comment)+ ")";
+lexical Comment = @category="Comment" "(" (![()]|Comment)+ ")";
 lexical Newline = [\n];
-lexical ID = @Category="ID" [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
-lexical SpecialChars = [.!@#$%&*];
+lexical ID = @category="ID" [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
 lexical Pixel = [a-zA-Z.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]];
 lexical LegendKey = Pixel+ !>> [a-zA-Z.!@#$%&*\-,`\'~_\"§è!çàé;?:/+°0-9£^{}|\>\<^v¬\[\]] \ Keywords;
-lexical Spriteline = [0-9.]+ !>> [0-9.] \ Keywords;
+lexical SpriteP = [0-9.];
 lexical Levelline = Pixel+ !>> Pixel \ Keywords;
 lexical String = ![\n]+ >> [\n];
 lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
-lexical KeywordID = @Category="Key"[a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
-lexical IDOrDirectional = @Category="ID" [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
+lexical KeywordID = @category="Keyword" [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
+lexical IDOrDirectional = @category="ID" [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
 
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
@@ -67,19 +66,31 @@ syntax PreludeData
 syntax Objects
 	= objects: SectionDelimiter? 'OBJECTS' Newlines SectionDelimiter? ObjectData+
 	;
+	
+syntax Color
+	= @category="Color" ID
+	;
+
+syntax Colors
+	= @category="Colors" Color+
+	;
 
 syntax ObjectData
-	= @Foldable @Category="Object" object_data: ID LegendKey? Newline ID+ Newline Sprite?
+	= @Foldable @category="Object" object_data: ID LegendKey? Newline Colors colors Newline Sprite?
 	| object_empty: Newlines
+	;
+	
+syntax SpritePixel
+	= @category="SpritePixel" SpriteP
 	;
 
 syntax Sprite 
     =  @Foldable sprite: 
-       Spriteline Newline
-       Spriteline Newline
-       Spriteline Newline 
-       Spriteline Newline
-       Spriteline Newline
+       SpritePixel+ Newline
+       SpritePixel+ Newline
+       SpritePixel+ Newline 
+       SpritePixel+ Newline
+       SpritePixel+ Newline
     ;
 
 syntax Legend
@@ -92,21 +103,15 @@ syntax LegendOperation
 	;
 
 syntax LegendData
-	= legend_data: LegendKey '=' ID LegendOperation*  Newlines
+	= @category="Legend" legend_data: LegendKey '=' ID LegendOperation*  Newlines
 	;
-
-// ideal solution, doesn't currently work because of ambiguity issues	
-//syntax LegendData
-//	= legend_data_or: LegendKey '=' {ID 'or'}+ Newlines
-//	> legend_data_and: LegendKey '=' {ID 'and'}+ Newlines
-//	;
 
 syntax Sounds
 	= sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? (SoundData Newlines)+
 	;
 	
 syntax SoundData
-	= sound_data: ID+
+	= @category="Sound" sound_data: ID+
 	;
 
 syntax Layers
@@ -114,7 +119,7 @@ syntax Layers
 	;
 
 syntax LayerData
-	= layer_data: (ID ','?)+ Newlines
+	= @category="Layer" layer_data: (ID ','?)+ Newlines
 	;
 
 syntax Rules
@@ -122,11 +127,11 @@ syntax Rules
 	;
 	
 syntax Loop
-	= 'startloop' Newlines RuleData+ 'endloop' Newlines
+	= @Foldable 'startloop' Newlines RuleData+ 'endloop' Newlines
 	;
 	
 syntax RuleData
-	= rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newlines
+	= @category="Rule" rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newlines
 	;
 
 syntax RuleContent
@@ -151,7 +156,7 @@ syntax WinConditions
 	;
 
 syntax ConditionData
-	= condition_data: ID+ Newlines
+	= @category="Condition" @doc="All|Some|No Object On Object" condition_data: ID+ Newlines
 	;
 
 syntax Levels
@@ -163,6 +168,6 @@ syntax Message
 	;
 
 syntax LevelData
-	= @Foldable level_data_raw: (Levelline Newline)+
-	| message: Message
+	= @Foldable @category="Level" level_data_raw: (Levelline Newline)+
+	| @category="Message" message: Message
 	;

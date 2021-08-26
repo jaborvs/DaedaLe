@@ -2,10 +2,15 @@ module PuzzleScript::Test::Tests
 
 import PuzzleScript::Load;
 import IO;
+import ParseTree;
 
 void main(){
 	println("Game 1");
-	ps_parse(
-		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/GameTest/actiontest.txt|
-	);
+	Tree t = ps_parse(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Game1.txt|);	  
+	visit(t){
+		case c: appl(prod(def, symbols, {\tag("category"("orange"))}), args): {
+			println(c);
+		}
+	}
+	
 }

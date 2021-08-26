@@ -30,8 +30,26 @@ PSGAME ps_implode(PSGame tree) {
 	return post(implode(#PSGAME, tree));
 }
 
-PSGame annotate(PSGame tree) {
-	return tree;
+PSGame annotate(PSGame t) {
+	list[str] colors;
+
+	return visit(t){
+		case c: appl(prod(_, _, {\tag("category"("Colors"))}), _): colors = [toLowerCase(x) | str x <- split(" ", unparse(c))];
+		case c: appl(prod(def, symbols, {\tag("category"("Color"))}), args) => appl(prod(def, symbols, {\tag("category"(toLowerCase(unparse(c))))}), args)
+		case c: appl(prod(def, symbols, {\tag("category"("SpritePixel"))}), args) => appl(prod(def, symbols, {\tag("category"(to_color(unparse(c), colors)))}), args)
+	}
+}
+
+str to_color(str index, list[str] colors){
+	if (index == ".") return "transparent";
+
+	try
+		int s = toInt(index);
+	catch IllegalArgument: return "unknown";
+	
+	if (s < size(colors)) return colors[s];
+	
+	return "unknown";
 }
 
 LEGENDDATA process_legend(LEGENDDATA l) {

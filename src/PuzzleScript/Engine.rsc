@@ -53,7 +53,9 @@ alias Engine = tuple[
 	list[str] msg_queue
 ];
 
-list[str] MOVES = ["right", "up", "left", "down"];
+list[str] GAME1_LEVEL1_MOVES = ["down"," left"," up"," right"," right"," right"," down"," left"," up"," left"," left"," down"," down"," right"," up"," left"," up"," right"," up"," up"," left"," down"," down"," right"," down"," right"," right"," up"," left"," down"," left"," up"," up"," down"," down"," down"," left", "up"];
+list[str] GAME1_LEVEL2_MOVES = [];
+list[str] MOVES = GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES;
 
 Rule new_rule(RULEDATA r)
 	= <false, {}, {}, [], [], r>; 
@@ -291,7 +293,7 @@ Engine compile(Checker c){
 		engine.levels += [convert_level(l, c)];
 	}
 	
-	engine.sounds = (x : c.sound_event[x].seeds | x <- c.sound_events);
+	engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
 	engine.conditions = c.conditions;
 	engine.current_level = engine.levels[0];
 	
