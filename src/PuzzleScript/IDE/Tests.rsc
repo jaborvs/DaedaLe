@@ -12,8 +12,9 @@ void main(){
 	ps_check(tree);
 	
 	visit(tree){
-		case c: appl(prod(def, symbols, {\tag("category"("orange"))}), args): {
-			println(c);
+		case c: appl(prod(def, symbols, tags), args): {
+			println("<c>: <tags>");
+			println();
 		}
 	}
 

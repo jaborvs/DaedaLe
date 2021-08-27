@@ -16,6 +16,7 @@ private str PS_NAME = "PuzzleScript";
 private str PS_EXT = "PS";
 
 public Tree ps_check(Tree tree){
+	tree = annotate(tree);
 	PSGAME g = ps_implode(tree);
 	Checker c = check_game(g);
 	
@@ -80,21 +81,23 @@ public void registerPS(){
     categories (
       (
         "Comment": {foregroundColor(color("dimgray"))},
-		"Keyword": {foregroundColor(color("purple"))},
+		"Keyword": {foregroundColor(color("purple")), bold()},
 		"ID": {foregroundColor(color("purple"))},
+		"String": {italic()},
+		"ObjectName": {bold()},
 
 
 		// pixel colors
 		"transparent": {foregroundColor(color("dimgray"))},
   		"unknown" : {foregroundColor(color("firebrick"))},
   		"black": {foregroundColor(color("black"))},     
-		"white": {foregroundColor(color("white"))},     
-		"grey": {foregroundColor(color("grey"))},      
-		"darkgrey": {foregroundColor(color("darkgrey"))},  
-		"lightgrey": {foregroundColor(color("lightgrey"))}, 
-		"gray": {foregroundColor(color("grey"))},      
-		"darkgray": {foregroundColor(color("darkgrey"))},  
-		"lightgray": {foregroundColor(color("lightgrey"))}, 
+		"white": {foregroundColor(color("lightgrey"))},     
+		"lightgrey": {foregroundColor(color("grey"))}, 
+		"grey": {foregroundColor(color("darkgrey"))},      
+		"darkgrey": {foregroundColor(color("darkgrey")), bold()},  
+		"lightgray": {foregroundColor(color("grey"))}, 
+		"gray": {foregroundColor(color("darkgrey"))},      
+		"darkgray": {foregroundColor(color("darkgrey")), bold()},  
 		"red": {foregroundColor(color("red"))},       
 		"darkred": {foregroundColor(color("darkred"))},   
 		"lightred": {foregroundColor(color("mediumvioletred"))},  

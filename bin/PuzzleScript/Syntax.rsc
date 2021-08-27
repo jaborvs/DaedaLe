@@ -9,17 +9,17 @@ layout LAYOUTLIST = LAYOUT* !>> [\t\r\ )];
 
 lexical SectionDelimiter = [=]+ Newlines;
 lexical Newlines = Newline+ !>> [\n];
-lexical Comment = @category="Comment" "(" (![()]|Comment)+ ")";
+lexical Comment = @lineComment @category="Comment" "(" (![()]|Comment)+ ")";
 lexical Newline = [\n];
-lexical ID = @category="ID" [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
+lexical ID = [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
 lexical Pixel = [a-zA-Z.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]];
 lexical LegendKey = Pixel+ !>> [a-zA-Z.!@#$%&*\-,`\'~_\"§è!çàé;?:/+°0-9£^{}|\>\<^v¬\[\]] \ Keywords;
 lexical SpriteP = [0-9.];
 lexical Levelline = Pixel+ !>> Pixel \ Keywords;
-lexical String = ![\n]+ >> [\n];
+lexical String = @category="String" ![\n]+ >> [\n];
 lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
-lexical KeywordID = @category="Keyword" [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
-lexical IDOrDirectional = @category="ID" [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
+lexical KeywordID = @category="ID" [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
+lexical IDOrDirectional = [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
 
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
@@ -72,11 +72,15 @@ syntax Color
 	;
 
 syntax Colors
-	= @category="Colors" Color+
+	= Color+
+	;
+	
+syntax ObjectName
+	= @category="ObjectName" ID
 	;
 
 syntax ObjectData
-	= @Foldable @category="Object" object_data: ID LegendKey? Newline Colors colors Newline Sprite?
+	= @Foldable object_data: ObjectName LegendKey? Newline Colors Newline Sprite?
 	| object_empty: Newlines
 	;
 	
@@ -103,7 +107,7 @@ syntax LegendOperation
 	;
 
 syntax LegendData
-	= @category="Legend" legend_data: LegendKey '=' ID LegendOperation*  Newlines
+	= legend_data: LegendKey '=' ID LegendOperation*  Newlines
 	;
 
 syntax Sounds
@@ -111,7 +115,7 @@ syntax Sounds
 	;
 	
 syntax SoundData
-	= @category="Sound" sound_data: ID+
+	= sound_data: ID+
 	;
 
 syntax Layers
@@ -119,7 +123,7 @@ syntax Layers
 	;
 
 syntax LayerData
-	= @category="Layer" layer_data: (ID ','?)+ Newlines
+	= layer_data: (ID ','?)+ Newlines
 	;
 
 syntax Rules
@@ -131,7 +135,7 @@ syntax Loop
 	;
 	
 syntax RuleData
-	= @category="Rule" rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newlines
+	= rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newlines
 	;
 
 syntax RuleContent
@@ -168,6 +172,6 @@ syntax Message
 	;
 
 syntax LevelData
-	= @Foldable @category="Level" level_data_raw: (Levelline Newline)+
-	| @category="Message" message: Message
+	= @Foldable level_data_raw: (Levelline Newline)+
+	| message: Message
 	;

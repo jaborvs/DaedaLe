@@ -31,10 +31,10 @@ PSGAME ps_implode(PSGame tree) {
 }
 
 PSGame annotate(PSGame t) {
-	list[str] colors;
+	list[str] colors = [];
 
 	return visit(t){
-		case c: appl(prod(_, _, {\tag("category"("Colors"))}), _): colors = [toLowerCase(x) | str x <- split(" ", unparse(c))];
+		case (Colors)`<Color+ c>`: colors = [toLowerCase(x) | str x <- split(" ", unparse(c))];
 		case c: appl(prod(def, symbols, {\tag("category"("Color"))}), args) => appl(prod(def, symbols, {\tag("category"(toLowerCase(unparse(c))))}), args)
 		case c: appl(prod(def, symbols, {\tag("category"("SpritePixel"))}), args) => appl(prod(def, symbols, {\tag("category"(to_color(unparse(c), colors)))}), args)
 	}
