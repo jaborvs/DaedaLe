@@ -13,14 +13,14 @@ lexical Comment = @lineComment @category="Comment" "(" (![()]|Comment)+ ")";
 lexical Newline = [\n];
 lexical ID = [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
 lexical Pixel = [a-zA-Z.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]];
-lexical LegendKey = Pixel+ !>> [a-zA-Z.!@#$%&*\-,`\'~_\"§è!çàé;?:/+°0-9£^{}|\>\<^v¬\[\]] \ Keywords;
+lexical LegendKey = @category="LegendKey" Pixel+ !>> [a-zA-Z.!@#$%&*\-,`\'~_\"§è!çàé;?:/+°0-9£^{}|\>\<^v¬\[\]] \ Keywords;
 lexical SpriteP = [0-9.];
-lexical Levelline = Pixel+ !>> Pixel \ Keywords;
+lexical LevelPixel = @category="LevelPixel" Pixel;
+lexical Levelline = LevelPixel+ !>> LevelPixel \ Keywords;
 lexical String = @category="String" ![\n]+ >> [\n];
 lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
 lexical KeywordID = @category="ID" [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
-lexical IDOrDirectional = [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
-
+lexical IDOrDirectional = @category="IDorDirectional" [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
 keyword PreludeKeyword 
@@ -102,20 +102,24 @@ syntax Legend
 	;
 	
 syntax LegendOperation
-	= legend_or: 'or' ID
-	| legend_and: 'and' ID
+	= legend_or: 'or' ObjectName
+	| legend_and: 'and' ObjectName
 	;
 
 syntax LegendData
-	= legend_data: LegendKey '=' ID LegendOperation*  Newlines
+	= legend_data: LegendKey '=' ObjectName LegendOperation*  Newlines
 	;
 
 syntax Sounds
 	= sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? (SoundData Newlines)+
 	;
 	
+syntax SoundID
+	= @category="SoundID" ID
+	;
+	
 syntax SoundData
-	= sound_data: ID+
+	= sound_data: SoundID+
 	;
 
 syntax Layers
@@ -123,7 +127,7 @@ syntax Layers
 	;
 
 syntax LayerData
-	= layer_data: (ID ','?)+ Newlines
+	= layer_data: (ObjectName ','?)+ Newlines
 	;
 
 syntax Rules
@@ -147,20 +151,24 @@ syntax RulePart
 	;
 
 syntax Prefix
-	= prefix: ID
+	= @category="Keyword" prefix: ID
 	;
 
 syntax Command
-	= command: CommandKeyword
-	| sound: Sound
+	= @category="Keyword" command: CommandKeyword
+	| @category="Keyword" sound: Sound
 	;
 
 syntax WinConditions
 	= conditions: SectionDelimiter? 'WINCONDITIONS' Newlines SectionDelimiter? ConditionData+
 	;
+	
+syntax ConditionID
+	= @category="ConditonID" ID
+	;
 
 syntax ConditionData
-	= @category="Condition" @doc="All|Some|No Object On Object" condition_data: ID+ Newlines
+	= condition_data: ConditionID+ Newlines
 	;
 
 syntax Levels

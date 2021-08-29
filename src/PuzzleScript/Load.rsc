@@ -2,6 +2,7 @@ module PuzzleScript::Load
 
 import PuzzleScript::Syntax;
 import PuzzleScript::AST;
+import PuzzleScript::Utils;
 import ParseTree;
 import List;
 import String;
@@ -32,12 +33,45 @@ PSGAME ps_implode(PSGame tree) {
 
 PSGame annotate(PSGame t) {
 	list[str] colors = [];
+	list[str] sound_verbs = sound_keywords + sound_events;
 
 	return visit(t){
 		case (Colors)`<Color+ c>`: colors = [toLowerCase(x) | str x <- split(" ", unparse(c))];
 		case c: appl(prod(def, symbols, {\tag("category"("Color"))}), args) => appl(prod(def, symbols, {\tag("category"(toLowerCase(unparse(c))))}), args)
 		case c: appl(prod(def, symbols, {\tag("category"("SpritePixel"))}), args) => appl(prod(def, symbols, {\tag("category"(to_color(unparse(c), colors)))}), args)
+		case c: appl(prod(def, symbols, {\tag("category"("LevelPixel"))}), args) => appl(prod(def, symbols, {\tag("category"(to_trans(unparse(c))))}), args)
+		case c: appl(prod(def, symbols, {\tag("category"("SoundID"))}), args): {
+			if (toLowerCase(unparse(c)) in sound_verbs){
+				insert appl(prod(def, symbols, {\tag("category"("Keyword"))}), args);
+			} else if (check_valid_sound(unparse(c))) {
+				insert appl(prod(def, symbols, {\tag("category"("SoundSeed"))}), args);
+			} else {
+				insert appl(prod(def, symbols, {\tag("category"("ObjectName"))}), args);
+			}
+		}
+		
+		case c: appl(prod(def, symbols, {\tag("category"("ConditonID"))}), args): {
+			if (toLowerCase(unparse(c)) in condition_keywords){
+				insert appl(prod(def, symbols, {\tag("category"("Keyword"))}), args);
+			} else {
+				insert appl(prod(def, symbols, {\tag("category"("ObjectName"))}), args);
+			}
+		}
+		
+		case c: appl(prod(def, symbols, {\tag("category"("IDorDirectional"))}), args): {
+			if (toLowerCase(unparse(c)) in rulepart_keywords){
+				insert appl(prod(def, symbols, {\tag("category"("Keyword"))}), args);
+			} else {
+				insert appl(prod(def, symbols, {\tag("category"("ObjectName"))}), args);
+			}
+		}
 	}
+}
+
+str to_trans(str pixel){
+	if (pixel == ".") return "transparent";
+	
+	return "LevelPixel";
 }
 
 str to_color(str index, list[str] colors){

@@ -82,14 +82,16 @@ public void registerPS(){
       (
         "Comment": {foregroundColor(color("dimgray"))},
 		"Keyword": {foregroundColor(color("purple")), bold()},
-		"ID": {foregroundColor(color("purple"))},
+		"ID": {foregroundColor(color("purple")), bold()},
 		"String": {italic()},
 		"ObjectName": {bold()},
+		"LegendKey": {italic()},
+		"SoundSeed": {foregroundColor(color("white")), backgroundColor(color("black"))},
 
 
 		// pixel colors
-		"transparent": {foregroundColor(color("dimgray"))},
-  		"unknown" : {foregroundColor(color("firebrick"))},
+		"transparent": {foregroundColor(color("lightgray")), italic()},
+  		"unknown" : {bold()},
   		"black": {foregroundColor(color("black"))},     
 		"white": {foregroundColor(color("lightgrey"))},     
 		"lightgrey": {foregroundColor(color("grey"))}, 

@@ -7,6 +7,7 @@ import List;
 import String;
 import Type;
 import PuzzleScript::Messages;
+import PuzzleScript::Utils;
 
 alias Checker = tuple[
 	list[Msg] msgs,
@@ -65,76 +66,6 @@ map[str, str] COLORS = (
 );
 
 str default_mask = "@None@";
-
-list[str] directional_sound_masks = ["move", "cantmove"];
-list[str] sound_masks = ["create", "destroy", "action"] + directional_sound_masks;
-list[str] absolute_directions_single = ["left", "right", "down", "up"];
-list[str] sound_keywords = sound_masks + absolute_directions_single; 
-
-list[str] conditions = ["all", "some", "no", "any"];
-list[str] condition_keywords = conditions + ["on"];
-
-list[str] rulepart_random = ["randomdir","random"];
-list[str] relative_directions_single = ["^","v","\>","\<"];
-list[str] relative_directions_duo = ["parallel", "perpendicular"];
-list[str] relative_directions = relative_directions_single + relative_directions_duo;
-list[str] absolute_directions = ["horizontal", "vertical"] + absolute_directions_single;
-list[str] rulepart_keywords_other = [
-	"...", "moving","stationary","parallel","perpendicular", "action", "no"
-];
-list[str] rulepart_keywords = 
-	rulepart_random + 
-	absolute_directions + 
-	relative_directions +
-	rulepart_keywords_other;
-
-list[str] rule_prefix = ["late", "random", "rigid"] + absolute_directions;
-list[str] rule_commands = ["cancel", "checkpoint", "restart", "win"];
-list[str] rule_keywords = rulepart_keywords + rule_prefix + rule_commands;
-
-
-list[str] section_headers = [
-	"objects", "collisionlayers", "legend", "sounds", "rules",
-	"winconditions", "levels"
-];
-
-list[str] sound_events = [
-	"titlescreen", "startgame", "cancel", "endgame", "startlevel", "undo", "restart", 
-	"endlevel", "showmessage", "closemessage", 
-	"sfx0", "sfx1", "sfx2", "sfx3", "sfx4", "sfx5", "sfx6", "sfx7", "sfx8", "sfx9", "sfx10"
-];
-
-list[str] prelude_with_arguments_str_dim = ["flickscreen","zoomscreen"];
-
-list[str] prelude_with_arguments_str_color = ["background_color","text_color"];
-
-list[str] prelude_with_arguments_str = [
-	"title","author","homepage", "color_palette","youtube"
-] + prelude_with_arguments_str_color + prelude_with_arguments_str_dim;
-
-list[str] prelude_with_arguments_int = [
-	"key_repeat_interval", "realtime_interval","again_interval"
-];
-
-list[str] prelude_with_arguments = prelude_with_arguments_str + prelude_with_arguments_int;
-
-list[str] prelude_without_arguments = [
-	"run_rules_on_level_start","norepeat_action","require_player_movement","debug",
-	"verbose_logging","throttle_movement","noundo","noaction","norestart","scanline"
-];
-
-list[str] prelude = prelude_with_arguments + prelude_without_arguments; 
-
-list[str] keywords = 
-	condition_keywords + 
-	sound_keywords +
-	prelude +
-	sound_events +
-	rule_keywords +
-	section_headers +
-	["message"]
-;
-
 		
 Checker new_checker(bool debug_flag, PSGAME game){		
 	return <[], debug_flag, (), [], (), [], (), [], [], (), game>;
@@ -227,13 +158,6 @@ Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allo
 	return <dup(objs), c>;
 }
 
-bool check_valid_sound(str sound){
-	try
-		int s = toInt(sound);
-	catch IllegalArgument: return false;
-	return s > 0;
-}
-
 bool check_valid_real(str v) {
 	try
 		real i = toReal(v);
@@ -250,7 +174,7 @@ bool check_valid_real(str v) {
 // warnings
 Checker check_prelude(PRELUDEDATA pr, Checker c){
 	str key = toLowerCase(pr.key);
-	if (!(key in prelude)){
+	if (!(key in prelude_keywords)){
 		c.msgs += [invalid_prelude_key(pr.key, error(), pr@location)];
 		return c;
 	}
