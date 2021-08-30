@@ -2,6 +2,7 @@ module PuzzleScript::Test::Engine::Tests
 
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
+import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import IO;
@@ -37,7 +38,7 @@ void main() {
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Movement.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
-	level = deep_copy(engine.levels[0]);
+	level = engine.levels[0];
 	print_level(level);
 	level = plan_move(level, "right");
 	level = do_move(level);

@@ -4,6 +4,7 @@ import String;
 import List;
 import Type;
 import Set;
+import IO;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Compiler;
