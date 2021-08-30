@@ -7,6 +7,7 @@ import Type;
 import Set;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import PuzzleScript::Utils;
 import util::Eval;
 
 alias Line = list[Object];
@@ -127,7 +128,7 @@ Level rotate_level(Level level){
 	return level;
 }
 
-Engine apply_rule(Engine engine, Level level, Rule rule){
+tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
 	//bool match = true;
 	//str right = MOVES[index];
 	//str up = MOVES[(index+1) % size(MOVES)];
@@ -140,48 +141,49 @@ Engine apply_rule(Engine engine, Level level, Rule rule){
 	
 	
 	for (Command cmd <- rule.commands){
-		if (engine.abort) return engine;
+		if (engine.abort) return <engine, level>;
 		engine = run_command(cmd, engine);
 	}
 	
-	return engine;
+	return <engine, level>;
 }
 
-
-
-Engine rewrite(Engine engine, Level level, bool late){
+tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
 	list[Rule] rules = [x | Rule x <- engine.rules, x.late == late];
 
 	for (Rule rule <- rules){
 		if (engine.abort) break;
-		engine = apply_rule(engine, level, rule);
+		<engine, level> = apply_rule(engine, level, rule);
 	}
 	
-	return engine;
+	return <engine, level>;
 }
 
 void game_loop(Checker c){
 	Engine engine = compile(c);
 	while (true){
 		str input = get_input();
-		if (input in MOVES){
-			engine = plan_move(engine, input);
-		} else if (input == "undo"){
+		if (input == "undo"){
 			engine = undo(engine);
+			continue;
 		} else if (input == "restart"){
 			engine = restart(engine);
-		} else if (input == "action"){
-			// do nothing
-			input;
+			continue;
 		}
+		
+		engine.states += [engine.current_level];
+		if (input in MOVES){
+			engine.current_level = plan_move(engine.current_level, input);
+		}
+		
 		
 		do {
 			engine.again = false;
-			engine = rewrite(engine, engine.current_level, false);
-			engine = rewrite(engine, engine.current_level, true);
+			<engine, engine.current_level> = rewrite(engine, engine.current_level, false);
+			<engine, engine.current_level> = rewrite(engine, engine.current_level, true);
 		} while (engine.again && !engine.abort);
 		
-		bool victory = is_victorious(engine);
+		bool victory = is_victorious(engine, engine.current_level);
 		if (victory && is_last(engine)){
 			break;
 		} else if (victory) {
@@ -217,10 +219,67 @@ str get_input(){
 	return move;
 }
 
-list[bool] is_on(Engine engine, list[str] objs, list[str] on){
-	list[bool] results = [];
-	Level level = engine.current_level;
+alias Coords = tuple[int x, int y, int z];
+
+Coords shift_coords(Layer lyr, Coords coords, str direction : "left"){
+	if (coords.y - 1 < 0) return coords;
 	
+	return <coords.x, coords.y - 1, coords.z>;
+}
+
+Coords shift_coords(Layer lyr, Coords coords, str direction : "right"){
+	if (coords.y + 1 >= size(lyr.lines[coords.x])) return coords;
+	
+	return <coords.x, coords.y + 1, coords.z>;
+}
+
+Coords shift_coords(Layer lyr, Coords coords, str direction : "up"){
+	if (coords.x - 1 < 0) return coords;
+	
+	return <coords.x - 1, coords.y, coords.z>;
+}
+
+Coords shift_coords(Layer lyr, Coords coords, str direction : "down"){
+	if (coords.x + 1 >= size(lyr.lines)) return coords;
+	
+	return <coords.x + 1, coords.y, coords.z>;
+}
+
+Level move_obstacle(Level level, Coords coords){
+	Object obj = level.layers[coords.z].lines[coords.x][coords.y];
+	if (!(obj is moving_object)) return level;
+	
+	Coords neighbor_coords = shift_coords(level.layers[coords.z], coords, obj.direction);
+	if (coords == neighbor_coords) return level;
+	
+	Object neighbor_obj = level.layers[neighbor_coords.z].lines[neighbor_coords.x][neighbor_coords.y];
+	if (!(neighbor_obj is transparent)) level = move_obstacle(level, neighbor_coords);
+	
+	neighbor_obj = level.layers[neighbor_coords.z].lines[neighbor_coords.x][neighbor_coords.y];
+	if (neighbor_obj is transparent) {
+		level.layers[coords.z].lines[coords.x][coords.y] = new_transparent();
+		level.layers[coords.z].lines[neighbor_coords.x][neighbor_coords.y] = object(obj.name, obj.legend);
+	}
+	
+	return level;
+}
+
+Level do_move(Level level){
+	for (int i <- [0..size(level.layers)]){
+		Layer layer = level.layers[i];
+		for(int j <- [0..size(layer.lines)]){
+			Line line = layer.lines[j];
+			for(int k <- [0..size(line)]){
+				level = move_obstacle(level, <j, k, i>); 
+			}
+		}
+	}
+
+	return level;
+}
+
+list[bool] is_on(Level level, list[str] objs, list[str] on){
+	list[bool] results = [];	
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];
 		for(int j <- [0..size(layer.lines)]){
@@ -243,21 +302,21 @@ list[bool] is_on(Engine engine, list[str] objs, list[str] on){
 	return results;
 }
 
-bool is_victorious(Engine engine){
+bool is_victorious(Engine engine, Level level){
 	if (engine.win_keyword) return true;
 	
 	victory = true;
 	for (Condition cond <- engine.conditions){
 		switch(cond){
 			case no_objects(list[str] objs): {
-				for (Layer lyr <- engine.current_level.layers){
+				for (Layer lyr <- level.layers){
 					// if any objects present then we don't win
 					if (any(str x <- objs, x in lyr.objects)) victory = false;
 				}
 			}
 			
 			case some_objects(list[str] objs): {
-				for (Layer lyr <- engine.current_level.layers){
+				for (Layer lyr <- level.layers){
 					// if not any objects present then we dont' win
 					if (!any(str x <- objs, x in lyr.objects)) victory = false;
 				}
@@ -265,19 +324,19 @@ bool is_victorious(Engine engine){
 			
 			case no_objects_on(list[str] objs, list[str] on): {
 				// if any objects are on any of the ons then we don't win
-				list[bool] results = is_on(engine, objs, on);
+				list[bool] results = is_on(level, objs, on);
 				if (any(x <- results, x)) victory = false;
 			}
 			
 			case some_objects_on(list[str] objs, list[str] on): {
 				// if no objects are on any of the ons then we don't win
-				list[bool] results = is_on(engine, objs, on);
+				list[bool] results = is_on(level, objs, on);
 				if (!isEmpty(results) && !any(x <- results, x)) victory = false;
 			}
 			
 			case all_objects_on(list[str] objs, list[str] on): {
 				// if not all objects are on any of the ons then we don't win
-				list[bool] results = is_on(engine, objs, on);
+				list[bool] results = is_on(level, objs, on);
 				if (!isEmpty(results) && !all(x <- results, x)) victory = false;
 			}
 		}
@@ -354,11 +413,6 @@ Rule convert_rule(RULEDATA r, Checker c){
 	list[str] keywords = [toLowerCase(x.prefix) | RULEPART x <- r.left, x is prefix];
 	rule.late = "late" in keywords;
 	rule.directions = generate_directions(keywords);
-
-
-	list[RulePart] left = [];
-	list[RulePart] right = [];
-	set[Command] commands = {};
 	
 	for (RULEPART p <- r.left){
 		rule = convert_rulepart(p, rule, c, true);
@@ -369,7 +423,7 @@ Rule convert_rule(RULEDATA r, Checker c){
 	}
 
 
-	if (!isEmpty(r.message)) commands += {Command::message(r.message[0])};
+	if (!isEmpty(r.message)) rule.commands += {Command::message(r.message[0])};
 	
 	return rule;
 }
@@ -389,10 +443,10 @@ Rule convert_rulepart( RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker
 		RuleContent refs = [];
 
 		for (int i <- [0..size(cont.content)]){
-			if (toLowerCase(cont.content[i]) in PuzzleScript::Checker::rulepart_keywords) continue;
+			if (toLowerCase(cont.content[i]) in rulepart_keywords) continue;
 			list[str] objs = resolve_reference(cont.content[i], c, p@location).objs;
 			str modifier = "none";
-			if (i != 0 && toLowerCase(cont.content[i-1]) in PuzzleScript::Checker::rulepart_keywords) modifier = toLowerCase(cont.content[i-1]);
+			if (i != 0 && toLowerCase(cont.content[i-1]) in rulepart_keywords) modifier = toLowerCase(cont.content[i-1]);
 			
 			refs += [<objs, modifier>];
 		}
@@ -431,6 +485,8 @@ Rule convert_rulepart( RULEPART p: sound(str snd), Rule rule, Checker c, bool pa
 	return rule;
 }
 
+Object new_transparent() = transparent("trans", ".");
+
 Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c){
 	list[Layer] layers = [];
 	for (LAYERDATA lyr <- c.game.layers){
@@ -444,7 +500,7 @@ Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c){
 				list[str] obs = resolve_reference(ch, c, lyr@location).objs;
 				pix = [x | str x <- obs, x in objs];
 				if (isEmpty(pix)){
-					line += [transparent("trans", ".")];
+					line += [new_transparent()];
 				//} else if (pix[0] == "player") {
 				//	line += [player(pix[0], ch)];
 				//	objects += [pix[0]];
@@ -479,7 +535,7 @@ void print_level(Level l){
 	}
 }
 
-Level deep_copy(Level l: level(list[Layer] lyrs, LEVELDATA original)){
+Level deep_copy(Level _: level(list[Layer] lyrs, LEVELDATA original)){
 	list[Layer] layers = [];
 	for (Layer lyr <- lyrs){
 		list[Line] layer = [];
@@ -497,8 +553,8 @@ Level deep_copy(Level l: level(list[Layer] lyrs, LEVELDATA original)){
 	return Level::level(layers, original);
 }
 
-Engine plan_move(Engine engine, str direction){
-	Level level = deep_copy(engine.current_level);
+Level plan_move(Level l, str direction){
+	Level level = deep_copy(l);
 	
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];
@@ -513,8 +569,7 @@ Engine plan_move(Engine engine, str direction){
 		}
 	}
 	
-	engine.current_level = level;
-	return engine;
+	return level;
 }
 
 void play_sound(Engine engine, str event){

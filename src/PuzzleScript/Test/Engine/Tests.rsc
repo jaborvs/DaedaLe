@@ -16,14 +16,14 @@ void main() {
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
 	//checker = check_game(game);
 	//engine = compile(checker);
-	//engine = plan_move(engine, "right");
-	//print_level(engine.current_level);
+	//level = plan_move(engine.levels[0], "right");
+	//print_level(level);
 	
-	println("Test Compile");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Compile.PS|);
-	checker = check_game(game);
-	engine = compile(checker); 
-	for (x <- engine.rules) println(" late: <x.late>\n commands: <x.commands>\n left: <x.left>\n right: <x.right>");
+	//println("Test Compile");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Compile.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker); 
+	//for (x <- engine.rules) println(" late: <x.late>\n commands: <x.commands>\n left: <x.left>\n right: <x.right>");
 	
 	//println("Rotate Test");
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Rotate.PS|);
@@ -33,7 +33,20 @@ void main() {
 	//print_level(level);
 	
 	
-	//println("Movement Test");
+	println("Movement Test");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Movement.PS|);
+	checker = check_game(game);
+	engine = compile(checker);
+	level = deep_copy(engine.levels[0]);
+	print_level(level);
+	level = plan_move(level, "right");
+	level = do_move(level);
+	print_level(level);
+	level = plan_move(level, "right");
+	level = do_move(level);
+	level = plan_move(level, "down");
+	level = do_move(level);
+	print_level(level);
 	
 	//println("Victory Test");
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Victory.PS|);
@@ -42,9 +55,7 @@ void main() {
 	//println("Victory: true == <is_victorious(engine)>");
 	//engine = change_level(engine, engine.index + 1);
 	//println("Victory: false == <is_victorious(engine)>");
-	
-	//println("Deep Copy Test");
-	
+		
 	//println("Rewrite Test");
 	
 }
