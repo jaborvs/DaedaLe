@@ -1,83 +1,30 @@
 module PuzzleScript::Engine
 
-import IO;
 import String;
 import List;
 import Type;
 import Set;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import PuzzleScript::Compiler;
 import PuzzleScript::Utils;
 import util::Eval;
 
-alias Line = list[Object];
-
-data Layer
-	= layer(list[Line] lines, list[str] layer, list[str] objects)
-	;
-
-data Level
-	= level(list[Layer] layers, LEVELDATA original)
-	| message(str msg, LEVELDATA original)
-	;
-	
-data Object
-	= player(str name, str legend)
-	| moving_player(str name, str legend, str direction)
-	| object(str name, str legend)
-	| moving_object(str name, str legend, str direction)
-	| transparent(str name, str legend)
-	;
-	
-alias Rule = tuple[
-	bool late,
-	set[Command] commands,
-	set[str] directions,
-	list[RulePart] left,
-	list[RulePart] right,
-	RULEDATA original
-];
-	
-alias Engine = tuple[
-	list[Level] states,
-	list[Level] levels,
-	Level current_level,
-	map[str, list[int]] sounds,
-	list[Condition] conditions,
-	list[Rule] rules,
-	int index,
-	bool win_keyword,
-	bool abort,
-	bool again,
-	int checkpoint,
-	list[str] sound_queue,
-	list[str] msg_queue
-];
-
-list[str] GAME1_LEVEL1_MOVES = ["down"," left"," up"," right"," right"," right"," down"," left"," up"," left"," left"," down"," down"," right"," up"," left"," up"," right"," up"," up"," left"," down"," down"," right"," down"," right"," right"," up"," left"," down"," left"," up"," up"," down"," down"," down"," left", "up"];
-list[str] GAME1_LEVEL2_MOVES = [];
-list[str] MOVES = GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES;
-
-Rule new_rule(RULEDATA r)
-	= <false, {}, {}, [], [], r>; 
-
-
-Engine new_engine()		
-	= <[], [], level([], level_data([])), (), [], [], 0, false, false, false, 0, [], []>;
-
-Engine restart(Engine engine){
-	engine.current_level = engine.levels[engine.index];
-	
-	return engine;
+Level restart(Level level){	
+	level.layers = level.states[level.checkpoint];
+	level.states = level.states[0..level.checkpoint];
+	return level;
 }
 
-Engine undo(Engine engine){
-	if (!isEmpty(engine.states)) {
-		engine.current_level = engine.states[-1];
-		engine.states = engine.states[0..-1];
+Level undo(Level level){
+	if (!isEmpty(level.states)) {
+		level.layers = level.states[-1];
+		level.states = level.states[0..-1];
+		
+		if (size(level.states) - 1 < level.checkpoint) level.checkpoint = -1;
 	}
 	
-	return engine;
+	return level;
 }
 
 bool is_last(Engine engine){
@@ -87,24 +34,11 @@ bool is_last(Engine engine){
 Engine change_level(Engine engine, int index){
 	engine.current_level = engine.levels[index];
 	engine.index = index;
-	engine.states = [];
 	engine.win_keyword = false;
 	engine.abort = false;
 	engine.again = false;
 	
 	return engine;
-}
-
-set[str] generate_directions(list[str] modifiers){
-	set[str] directions = {};
-	for (str mo <- modifiers){
-		if (mo == "vertical") directions += {"up", "down"};
-		if (mo == "horizontal") directions += {"left", "right"};
-		if (mo in ["left", "right", "down", "up"]) directions += {mo};
-	}
-	
-	if (isEmpty(directions)) return {"left", "right", "up", "down"};
-	return directions;
 }
 
 // this rotates a level 90 degrees clockwise
@@ -159,58 +93,41 @@ tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
 	return <engine, level>;
 }
 
-void game_loop(Checker c){
-	Engine engine = compile(c);
-	while (true){
-		str input = get_input();
-		if (input == "undo"){
-			engine = undo(engine);
-			continue;
-		} else if (input == "restart"){
-			engine = restart(engine);
-			continue;
-		}
-		
-		engine.states += [engine.current_level];
-		if (input in MOVES){
-			engine.current_level = plan_move(engine.current_level, input);
-		}
-		
-		
-		do {
-			engine.again = false;
-			<engine, engine.current_level> = rewrite(engine, engine.current_level, false);
-			<engine, engine.current_level> = rewrite(engine, engine.current_level, true);
-		} while (engine.again && !engine.abort);
-		
-		bool victory = is_victorious(engine, engine.current_level);
-		if (victory && is_last(engine)){
-			break;
-		} else if (victory) {
-			engine = change_level(engine, engine.index + 1);
-		}
-		
-		for (str event <- engine.sound_queue){
-			play_sound(engine, event);
-		}
-		
-		for (str msg <- engine.msg_queue){
-			print_message(msg);
-		}
-		
-		print_level(engine.current_level);
-		engine.abort = false;
+list[str] MOVES = ["left", "up", "rigth", "down"];
+tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _)){
+	str input = get_input();
+	if (input == "undo"){
+		return <engine, undo(level)>;
+	} else if (input == "restart"){
+		return <engine, restart(level)>;
 	}
 	
-	println("VICTORY");
+	if (level.layers notin level.states) level.states += [deep_copy(level.layers)];
+	if (input in MOVES){
+		level = plan_move(level, input);
+	}
+	
+	do {
+		engine.again = false;
+		<engine, level> = rewrite(engine, level, false);
+		<engine, level> = rewrite(engine, level, true);
+	} while (engine.again && !engine.abort);
+	
+	return <engine, level>;
+}
+
+tuple[Engine, Level] do_turn(Engine engine, Level level : message(_, _)){
+	return <engine, level>;
 }
 
 // temporary substitute to getting user input
 int INDEX = 0;
-list[str] MOVE_LIST = ["left"];
+list[str] GAME1_LEVEL1_MOVES = ["down"," left"," up"," right"," right"," right"," down"," left"," up"," left"," left"," down"," down"," right"," up"," left"," up"," right"," up"," up"," left"," down"," down"," right"," down"," right"," right"," up"," left"," down"," left"," up"," up"," down"," down"," down"," left", "up"];
+list[str] GAME1_LEVEL2_MOVES = [];
+list[str] PLANNED_MOVES = GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES; 
 str get_input(){
-	str move = MOVE_LIST[INDEX];
-	if (INDEX == size(MOVE_LIST)-1){
+	str move = PLANNED_MOVES[INDEX];
+	if (INDEX >= size(PLANNED_MOVES)){
 		INDEX = 0;
 	} else {
 		INDEX += 1;
@@ -303,7 +220,7 @@ list[bool] is_on(Level level, list[str] objs, list[str] on){
 }
 
 bool is_victorious(Engine engine, Level level){
-	if (engine.win_keyword) return true;
+	if (engine.win_keyword || level is message) return true;
 	
 	victory = true;
 	for (Condition cond <- engine.conditions){
@@ -345,41 +262,21 @@ bool is_victorious(Engine engine, Level level){
 	return victory;
 }
 
-Engine compile(Checker c){
-	Engine engine = new_engine();
-	
-	for (LEVELDATA l <- c.game.levels){
-		engine.levels += [convert_level(l, c)];
-	}
-	
-	engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
-	engine.conditions = c.conditions;
-	engine.current_level = engine.levels[0];
-	
-	for (RULEDATA r <- c.game.rules){
-		engine.rules += [convert_rule(r, c)];
-	}
-	
+//TODO
+Engine run_command(Command cmd : again(), Engine engine){
 	return engine;
 }
 
-data Command
-	= message(str string)
-	| sound(str event)
-	| cancel()
-	| checkpoint()
-	| restart()
-	| win()
-	| again()
-	;
+Engine run_command(Command cmd : checkpoint(), Engine engine){
+	engine.current_level.checkpoint = size(engine.current_level.states) - 1;
+	return engine;
+}
+//TODO
 
 Engine run_command(Command cmd : cancel(), Engine engine){
 	engine.abort = true;
-	return undo(engine);
-}
-
-Engine run_command(Command cmd : checkpoint(), Engine engine){
-	return undo(engine);
+	engine.current_level = undo(engine.current_level);
+	return engine;
 }
 
 Engine run_command(Command cmd : win(), Engine engine){
@@ -390,11 +287,8 @@ Engine run_command(Command cmd : win(), Engine engine){
 
 Engine run_command(Command cmd : restart(), Engine engine){
 	engine.abort = true;
-	return restart(engine);
-}
-
-Engine run_command(Command cmd : again(), Engine engine){
-	return undo(engine);
+	engine.current_level = restart(engine.current_level);
+	return engine;
 }
 
 Engine run_command(Command cmd : message(str string), Engine engine){
@@ -407,123 +301,13 @@ Engine run_command(Command cmd : sound(str event), Engine engine){
 	return engine;
 }
 
-Rule convert_rule(RULEDATA r, Checker c){
-	Rule rule = new_rule(r);
-
-	list[str] keywords = [toLowerCase(x.prefix) | RULEPART x <- r.left, x is prefix];
-	rule.late = "late" in keywords;
-	rule.directions = generate_directions(keywords);
-	
-	for (RULEPART p <- r.left){
-		rule = convert_rulepart(p, rule, c, true);
-	}
-	
-	for (RULEPART p <- r.right){
-		rule = convert_rulepart(p, rule, c, false);
-	}
-
-
-	if (!isEmpty(r.message)) rule.commands += {Command::message(r.message[0])};
-	
-	return rule;
+void print_level(Level _: message(str msg, _)){
+	println("#####################################################");
+	println(msg);
+	println("#####################################################");
 }
 
-alias RuleReference = tuple[
-	list[str] objects,
-	str force
-];
-
-alias RuleContent = list[RuleReference];
-alias RulePart = list[RuleContent];
-
-
-Rule convert_rulepart( RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker c, bool pattern) {
-	list[RuleContent] contents = [];
-	for (RULECONTENT cont <- p.contents){
-		RuleContent refs = [];
-
-		for (int i <- [0..size(cont.content)]){
-			if (toLowerCase(cont.content[i]) in rulepart_keywords) continue;
-			list[str] objs = resolve_reference(cont.content[i], c, p@location).objs;
-			str modifier = "none";
-			if (i != 0 && toLowerCase(cont.content[i-1]) in rulepart_keywords) modifier = toLowerCase(cont.content[i-1]);
-			
-			refs += [<objs, modifier>];
-		}
-		
-		contents += [refs];
-	}
-	
-	if (pattern){ 
-		rule.left += [contents];
-	} else {
-		rule.right += [contents];
-	}
-
-	return rule;
-}
-
-Rule convert_rulepart( RULEPART p: prefix(str _), Rule rule, Checker c, bool pattern) {
-	return rule;
-}
-
-Rule convert_rulepart( RULEPART p: command(str cmd), Rule rule, Checker c, bool pattern) {
-	switch(cmd){
-		case /cancel/: rule.commands += {Command::cancel()};
-		case /checkpoint/: rule.commands += {Command::checkpoint()};
-		case /restart/: rule.commands += {Command::restart()};
-		case /win/: rule.commands += {Command::win()};
-		case /again/: rule.commands += {Command::again()};
-	}
-	
-	return rule;
-}
-
-Rule convert_rulepart( RULEPART p: sound(str snd), Rule rule, Checker c, bool pattern) {
-	rule.commands += {Command::sound(snd)};
-
-	return rule;
-}
-
-Object new_transparent() = transparent("trans", ".");
-
-Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c){
-	list[Layer] layers = [];
-	for (LAYERDATA lyr <- c.game.layers){
-		list[str] objs = resolve_references(lyr.layer, c, lyr@location).objs;
-		list[Line] layer = [];
-		list[str] objects = [];
-		for (str charline <- l.level){
-			Line line = [];
-			list[str] chars = split("", charline);
-			for (str ch <- chars){
-				list[str] obs = resolve_reference(ch, c, lyr@location).objs;
-				pix = [x | str x <- obs, x in objs];
-				if (isEmpty(pix)){
-					line += [new_transparent()];
-				//} else if (pix[0] == "player") {
-				//	line += [player(pix[0], ch)];
-				//	objects += [pix[0]];
-				} else {
-					line += [object(pix[0], ch)];
-					objects += [pix[0]];
-				}
-			}
-			
-			layer += [line];
-		}
-		
-		layers += [Layer::layer(layer, objs, objects)];
-	}
-	
-	return Level::level(layers, l);
-}
-
-Level convert_level(LEVELDATA l: message(str msg), Checker c){
-	return Level::message(msg, l);
-}
-
-void print_level(Level l){
+void print_level(Level l : level(_, _, _, _)){
 	for (Layer lyr <- l.layers){
 		for (Line line <- lyr.lines) {
 			print(intercalate("", [x.legend | x <- line]));
@@ -535,7 +319,7 @@ void print_level(Level l){
 	}
 }
 
-Level deep_copy(Level _: level(list[Layer] lyrs, LEVELDATA original)){
+list[Layer] deep_copy(list[Layer] lyrs){
 	list[Layer] layers = [];
 	for (Layer lyr <- lyrs){
 		list[Line] layer = [];
@@ -550,12 +334,10 @@ Level deep_copy(Level _: level(list[Layer] lyrs, LEVELDATA original)){
 		)];
 	}
 	
-	return Level::level(layers, original);
+	return layers;
 }
 
-Level plan_move(Level l, str direction){
-	Level level = deep_copy(l);
-	
+Level plan_move(Level level, str direction){	
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];
 		for(int j <- [0..size(layer.lines)]){
@@ -580,4 +362,30 @@ void play_sound(Engine engine, str event){
 
 void print_message(str string){
 	println(string);
+}
+
+void game_loop(Checker c){
+	Engine engine = compile(c);
+	while (true){
+		<engine, engine.current_level> = do_turn(engine, engine.current_level);
+		bool victory = is_victorious(engine, engine.current_level);
+		if (victory && is_last(engine)){
+			break;
+		} else if (victory) {
+			engine = change_level(engine, engine.index + 1);
+		}
+		
+		for (str event <- engine.sound_queue){
+			play_sound(engine, event);
+		}
+		
+		for (str msg <- engine.msg_queue){
+			print_message(msg);
+		}
+		
+		print_level(engine.current_level);
+		engine.abort = false;
+	}
+	
+	println("VICTORY");
 }
