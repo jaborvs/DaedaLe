@@ -245,7 +245,7 @@ Coords shift_coords(Layer lyr, Coords coords, str direction : "down"){
 	return <coords.x + 1, coords.y, coords.z>;
 }
 
-Level move_obstacle(Level level, Coords coords){
+Level move_obstacle(Level level, Coords coords, Coords other_neighbor_coords){
 	Object obj = level.layers[coords.z].lines[coords.x][coords.y];
 	if (!(obj is moving_object)) return level;
 	
@@ -253,7 +253,7 @@ Level move_obstacle(Level level, Coords coords){
 	if (coords == neighbor_coords) return level;
 	
 	Object neighbor_obj = level.layers[neighbor_coords.z].lines[neighbor_coords.x][neighbor_coords.y];
-	if (!(neighbor_obj is transparent)) level = move_obstacle(level, neighbor_coords);
+	if (!(neighbor_obj is transparent) && neighbor_coords != other_neighbor_coords) level = move_obstacle(level, neighbor_coords, coords);
 	
 	neighbor_obj = level.layers[neighbor_coords.z].lines[neighbor_coords.x][neighbor_coords.y];
 	if (neighbor_obj is transparent) {
@@ -270,7 +270,7 @@ Level do_move(Level level){
 		for(int j <- [0..size(layer.lines)]){
 			Line line = layer.lines[j];
 			for(int k <- [0..size(line)]){
-				level = move_obstacle(level, <j, k, i>); 
+				level = move_obstacle(level, <j, k, i>, <j, k, i>); 
 			}
 		}
 	}
