@@ -6,6 +6,7 @@ import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import IO;
+import util::Eval;
 
 void main() {
 	PSGAME game;
@@ -20,10 +21,16 @@ void main() {
 	//level = plan_move(engine.levels[0], "right");
 	//print_level(level);
 	
-	//println("Test Compile");
-	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Compile.PS|);
-	//checker = check_game(game);
-	//engine = compile(checker); 
+	println("Test Compile");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Rules.PS|);
+	checker = check_game(game);
+	engine = compile(checker);
+	println(engine.rules[0].left[0]);
+	println(engine.rules[0].right[0]);
+	//println(engine.levels[0].layers);
+	//Result[bool] re = eval(#bool, "<engine.rules[0].left[0]> := <engine.levels[0].layers>;");
+	//if (result(true) := re) println("Is True");
+	
 	//for (x <- engine.rules) println(" late: <x.late>\n commands: <x.commands>\n left: <x.left>\n right: <x.right>");
 	
 	//println("Rotate Test");
@@ -33,21 +40,20 @@ void main() {
 	//level = rotate_level(engine.levels[0]);
 	//print_level(level);
 	
-	
-	println("Movement Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Movement.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	level = engine.levels[0];
-	print_level(level);
-	level = plan_move(level, "right");
-	level = do_move(level);
-	print_level(level);
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = plan_move(level, "down");
-	level = do_move(level);
-	print_level(level);
+	//println("Movement Test");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Movement.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//level = engine.levels[0];
+	//print_level(level);
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//print_level(level);
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//level = plan_move(level, "down");
+	//level = do_move(level);
+	//print_level(level);
 	
 	//println("Victory Test");
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Victory.PS|);
@@ -58,5 +64,6 @@ void main() {
 	//println("Victory: false == <is_victorious(engine)>");
 		
 	//println("Rewrite Test");
+	
 	
 }

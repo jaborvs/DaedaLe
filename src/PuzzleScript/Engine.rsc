@@ -8,7 +8,6 @@ import IO;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Compiler;
-import PuzzleScript::Utils;
 import util::Eval;
 
 Level restart(Level level){	
@@ -42,6 +41,17 @@ Engine change_level(Engine engine, int index){
 	return engine;
 }
 
+list[str] update_objectdata(Level level){
+	set[str] objs = {};
+	for (Layer lyr <- level.layers){
+		for (Line line <- lyr){
+			objs += {x.name | Object x <- line};
+		}
+	}
+	
+	return toList(objs);
+}
+
 // this rotates a level 90 degrees clockwise
 // [ [1, 2] , becomes [ [3, 1] ,
 //   [3, 4] ]  			[4, 2] ]
@@ -49,14 +59,14 @@ Engine change_level(Engine engine, int index){
 Level rotate_level(Level level){
 	list[Layer] lyrs = [];
 	for (Layer lyr <- level.layers){
-		list[Line] new_layer = [[] | _ <- [0..size(lyr.lines[0])]];
-		for (int i <- [0..size(lyr.lines[0])]){
-			for (int j <- [0..size(lyr.lines)]){
-				new_layer[i] += [lyr.lines[j][i]];
+		list[Line] new_layer = [[] | _ <- [0..size(lyr[0])]];
+		for (int i <- [0..size(lyr[0])]){
+			for (int j <- [0..size(lyr)]){
+				new_layer[i] += [lyr[j][i]];
 			}
 		}
 		
-		lyrs += layer([reverse(x) | Line x <- new_layer], lyr.layer, lyr.objects);
+		lyrs += [reverse(x) | Line x <- new_layer];
 	}
 	
 	level.layers = lyrs; 
@@ -64,21 +74,16 @@ Level rotate_level(Level level){
 }
 
 tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
-	//bool match = true;
-	//str right = MOVES[index];
-	//str up = MOVES[(index+1) % size(MOVES)];
-	//str left = MOVES[(index+1) % size(MOVES)];
-	//str down = MOVES[(index+1) % size(MOVES)];
-	//
-	//
-	//if (!all(RulePart part <- rule.left, eval("<part.pattern> := level") == result(true))) return level;
+	//check if all ruleparts match
 	
-	
-	
+	//compile commands to see if we can cheat and just abort
 	for (Command cmd <- rule.commands){
 		if (engine.abort) return <engine, level>;
 		engine = run_command(cmd, engine);
 	}
+	
+	//transform the level
+	//TODO
 	
 	return <engine, level>;
 }
@@ -95,7 +100,7 @@ tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
 }
 
 list[str] MOVES = ["left", "up", "rigth", "down"];
-tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _)){
+tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _)){
 	str input = get_input();
 	if (input == "undo"){
 		return <engine, undo(level)>;
@@ -113,6 +118,8 @@ tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _)){
 		<engine, level> = rewrite(engine, level, false);
 		<engine, level> = rewrite(engine, level, true);
 	} while (engine.again && !engine.abort);
+	
+	level.objectdata = update_objectdata(level);
 	
 	return <engine, level>;
 }
@@ -146,7 +153,7 @@ Coords shift_coords(Layer lyr, Coords coords, str direction : "left"){
 }
 
 Coords shift_coords(Layer lyr, Coords coords, str direction : "right"){
-	if (coords.y + 1 >= size(lyr.lines[coords.x])) return coords;
+	if (coords.y + 1 >= size(lyr[coords.x])) return coords;
 	
 	return <coords.x, coords.y + 1, coords.z>;
 }
@@ -158,25 +165,25 @@ Coords shift_coords(Layer lyr, Coords coords, str direction : "up"){
 }
 
 Coords shift_coords(Layer lyr, Coords coords, str direction : "down"){
-	if (coords.x + 1 >= size(lyr.lines)) return coords;
+	if (coords.x + 1 >= size(lyr)) return coords;
 	
 	return <coords.x + 1, coords.y, coords.z>;
 }
 
 Level move_obstacle(Level level, Coords coords, Coords other_neighbor_coords){
-	Object obj = level.layers[coords.z].lines[coords.x][coords.y];
+	Object obj = level.layers[coords.z][coords.x][coords.y];
 	if (!(obj is moving_object)) return level;
 	
 	Coords neighbor_coords = shift_coords(level.layers[coords.z], coords, obj.direction);
 	if (coords == neighbor_coords) return level;
 	
-	Object neighbor_obj = level.layers[neighbor_coords.z].lines[neighbor_coords.x][neighbor_coords.y];
+	Object neighbor_obj = level.layers[neighbor_coords.z][neighbor_coords.x][neighbor_coords.y];
 	if (!(neighbor_obj is transparent) && neighbor_coords != other_neighbor_coords) level = move_obstacle(level, neighbor_coords, coords);
 	
-	neighbor_obj = level.layers[neighbor_coords.z].lines[neighbor_coords.x][neighbor_coords.y];
+	neighbor_obj = level.layers[neighbor_coords.z][neighbor_coords.x][neighbor_coords.y];
 	if (neighbor_obj is transparent) {
-		level.layers[coords.z].lines[coords.x][coords.y] = new_transparent();
-		level.layers[coords.z].lines[neighbor_coords.x][neighbor_coords.y] = object(obj.name, obj.legend);
+		level.layers[coords.z][coords.x][coords.y] = new_transparent();
+		level.layers[coords.z][neighbor_coords.x][neighbor_coords.y] = object(obj.name, obj.legend);
 	}
 	
 	return level;
@@ -185,8 +192,8 @@ Level move_obstacle(Level level, Coords coords, Coords other_neighbor_coords){
 Level do_move(Level level){
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];
-		for(int j <- [0..size(layer.lines)]){
-			Line line = layer.lines[j];
+		for(int j <- [0..size(layer)]){
+			Line line = layer[j];
 			for(int k <- [0..size(line)]){
 				level = move_obstacle(level, <j, k, i>, <j, k, i>); 
 			}
@@ -200,14 +207,14 @@ list[bool] is_on(Level level, list[str] objs, list[str] on){
 	list[bool] results = [];	
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];
-		for(int j <- [0..size(layer.lines)]){
-			Line line = layer.lines[j];
+		for(int j <- [0..size(layer)]){
+			Line line = layer[j];
 			for(int k <- [0..size(line)]){
 				Object obj = line[k];
 				if (obj.name in objs){
 					bool t = false;
 					for (int l <- [0..size(level.layers)]){
-						if (level.layers[l].lines[j][k].name in on) t = true;
+						if (level.layers[l][j][k].name in on) t = true;
 					}
 					
 					results += [t];
@@ -227,17 +234,13 @@ bool is_victorious(Engine engine, Level level){
 	for (Condition cond <- engine.conditions){
 		switch(cond){
 			case no_objects(list[str] objs): {
-				for (Layer lyr <- level.layers){
-					// if any objects present then we don't win
-					if (any(str x <- objs, x in lyr.objects)) victory = false;
-				}
+				// if any objects present then we don't win
+				if (any(str x <- objs, x in level.objectdata)) victory = false;
 			}
 			
 			case some_objects(list[str] objs): {
-				for (Layer lyr <- level.layers){
-					// if not any objects present then we dont' win
-					if (!any(str x <- objs, x in lyr.objects)) victory = false;
-				}
+				// if not any objects present then we dont' win
+				if (!any(str x <- objs, x in level.objectdata)) victory = false;
 			}
 			
 			case no_objects_on(list[str] objs, list[str] on): {
@@ -263,8 +266,8 @@ bool is_victorious(Engine engine, Level level){
 	return victory;
 }
 
-//TODO
 Engine run_command(Command cmd : again(), Engine engine){
+	engine.again = true;
 	return engine;
 }
 
@@ -272,7 +275,6 @@ Engine run_command(Command cmd : checkpoint(), Engine engine){
 	engine.current_level.checkpoint = size(engine.current_level.states) - 1;
 	return engine;
 }
-//TODO
 
 Engine run_command(Command cmd : cancel(), Engine engine){
 	engine.abort = true;
@@ -308,9 +310,9 @@ void print_level(Level _: message(str msg, _)){
 	println("#####################################################");
 }
 
-void print_level(Level l : level(_, _, _, _)){
+void print_level(Level l : level(_, _, _, _, _, _)){
 	for (Layer lyr <- l.layers){
-		for (Line line <- lyr.lines) {
+		for (Line line <- lyr) {
 			print(intercalate("", [x.legend | x <- line]));
 			//print("   ");
 			//print(intercalate(" ", line));
@@ -324,15 +326,11 @@ list[Layer] deep_copy(list[Layer] lyrs){
 	list[Layer] layers = [];
 	for (Layer lyr <- lyrs){
 		list[Line] layer = [];
-		for (Line lin <- lyr.lines){
+		for (Line lin <- lyr){
 			layer += [[x | Object x <- lin]];
 		}
 		
-		layers += [Layer::layer(
-			layer, 
-			[x | x <- lyr.layer], 
-			[x | x <- lyr.objects]
-		)];
+		layers += [layer];
 	}
 	
 	return layers;
@@ -341,12 +339,12 @@ list[Layer] deep_copy(list[Layer] lyrs){
 Level plan_move(Level level, str direction){	
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];
-		for(int j <- [0..size(layer.lines)]){
-			Line line = layer.lines[j];
+		for(int j <- [0..size(layer)]){
+			Line line = layer[j];
 			for(int k <- [0..size(line)]){
 				Object obj = line[k];
 				if (line[k].name == "player"){
-					level.layers[i].lines[j][k] = moving_object(obj.name, obj.legend, direction);
+					level.layers[i][j][k] = moving_object(obj.name, obj.legend, direction);
 				}
 			}
 		}
