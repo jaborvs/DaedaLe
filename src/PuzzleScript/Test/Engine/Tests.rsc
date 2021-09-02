@@ -26,6 +26,7 @@ void main() {
 	checker = check_game(game);
 	engine = compile(checker);
 	println(engine.rules[0].left[0]);
+	println();
 	println(engine.rules[0].right[0]);
 	//println(engine.levels[0].layers);
 	//Result[bool] re = eval(#bool, "<engine.rules[0].left[0]> := <engine.levels[0].layers>;");

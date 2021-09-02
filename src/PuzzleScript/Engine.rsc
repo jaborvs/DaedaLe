@@ -120,6 +120,7 @@ tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _
 	} while (engine.again && !engine.abort);
 	
 	level.objectdata = update_objectdata(level);
+	level = do_move(level);
 	
 	return <engine, level>;
 }
@@ -143,8 +144,6 @@ str get_input(){
 	
 	return move;
 }
-
-alias Coords = tuple[int x, int y, int z];
 
 Coords shift_coords(Layer lyr, Coords coords, str direction : "left"){
 	if (coords.y - 1 < 0) return coords;
@@ -182,8 +181,8 @@ Level move_obstacle(Level level, Coords coords, Coords other_neighbor_coords){
 	
 	neighbor_obj = level.layers[neighbor_coords.z][neighbor_coords.x][neighbor_coords.y];
 	if (neighbor_obj is transparent) {
-		level.layers[coords.z][coords.x][coords.y] = new_transparent();
-		level.layers[coords.z][neighbor_coords.x][neighbor_coords.y] = object(obj.name, obj.legend);
+		level.layers[coords.z][coords.x][coords.y] = new_transparent(coords);
+		level.layers[coords.z][neighbor_coords.x][neighbor_coords.y] = object(obj.name, obj.legend, neighbor_coords);
 	}
 	
 	return level;
@@ -304,13 +303,13 @@ Engine run_command(Command cmd : sound(str event), Engine engine){
 	return engine;
 }
 
-void print_level(Level _: message(str msg, _)){
+void print_level(Level _: message(str msg, _), Engine engine){
 	println("#####################################################");
 	println(msg);
 	println("#####################################################");
 }
 
-void print_level(Level l : level(_, _, _, _, _, _)){
+void print_level(Level l : level(_, _, _, _, _, _), Engine engine){
 	for (Layer lyr <- l.layers){
 		for (Line line <- lyr) {
 			print(intercalate("", [x.legend | x <- line]));
@@ -344,7 +343,7 @@ Level plan_move(Level level, str direction){
 			for(int k <- [0..size(line)]){
 				Object obj = line[k];
 				if (line[k].name == "player"){
-					level.layers[i][j][k] = moving_object(obj.name, obj.legend, direction);
+					level.layers[i][j][k] = moving_object(obj.name, obj.legend, direction, <j, k, i>);
 				}
 			}
 		}
@@ -367,12 +366,6 @@ void game_loop(Checker c){
 	Engine engine = compile(c);
 	while (true){
 		<engine, engine.current_level> = do_turn(engine, engine.current_level);
-		bool victory = is_victorious(engine, engine.current_level);
-		if (victory && is_last(engine)){
-			break;
-		} else if (victory) {
-			engine = change_level(engine, engine.index + 1);
-		}
 		
 		for (str event <- engine.sound_queue){
 			play_sound(engine, event);
@@ -382,7 +375,14 @@ void game_loop(Checker c){
 			print_message(msg);
 		}
 		
-		print_level(engine.current_level);
+		bool victory = is_victorious(engine, engine.current_level);
+		if (victory && is_last(engine)){
+			break;
+		} else if (victory) {
+			engine = change_level(engine, engine.index + 1);
+		}
+		
+		print_level(engine.current_level, engine);
 		engine.abort = false;
 	}
 	

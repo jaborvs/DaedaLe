@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: salix
+Bundle-Name: AutomatedPuzzleScript
 Bundle-SymbolicName: AutomatedPuzzleScript;singleton:=true
 Bundle-Version: 0.1.0
 Require-Bundle: rascal_eclipse

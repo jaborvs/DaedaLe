@@ -8,8 +8,6 @@ import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Utils;
 
-import IO;
-
 alias Line = list[Object];
 alias Layer = list[Line];
 
@@ -25,12 +23,12 @@ data Level
 	| message(str msg, LEVELDATA original)
 	;
 	
+alias Coords = tuple[int x, int y, int z];
+	
 data Object
-	= player(str name, str legend)
-	| moving_player(str name, str legend, str direction)
-	| object(str name, str legend)
-	| moving_object(str name, str legend, str direction)
-	| transparent(str name, str legend)
+	= object(str name, str legend, Coords coords)
+	| moving_object(str name, str legend, str direction, Coords coords)
+	| transparent(str name, str legend, Coords coords)
 	;
 	
 data Command
@@ -156,17 +154,20 @@ str line(int index, list[str] stuff, bool _: false) {
 	return "[ prefix_objects<index>, <compiled_stuff>, suffix_objects<index> ]";
 }
 
-str object(str index, str names, str ref, bool _: true)
-	= "\<<ref><index>:object(\<name<index>:/<names>/\>, legend<index>)\>";
+str coords(int index)
+	=	"\<int xcoord<index>, int ycoord<index>, _\>";
+
+str object(Coords index, str names, str ref, bool _: true)
+	= "\<<ref><index.y>:object(\<name<index.y>:/<names>/\>, legend<index.y>, <coords(index.x)>)\>";
 	
-str object(str index, str names, str ref, bool _: false)
-	= "object(name<index>, legend<index>)";
+str object(Coords index, str names, str ref, bool _: false)
+	= "object(name<index.y>, legend<index.y>, <coords(index.x)>)";
 	
-str moving_object(str index, str names, str direction, str ref, bool _: true)
-	= "\<<ref><index>:moving_object(\<name<index>:/<names>/\>, legend<index>, \<direction<index>:/<direction>/\>)\>";
+str moving_object(Coords index, str names, str direction, str ref, bool _: true)
+	= "\<<ref><index.y>:moving_object(\<name<index.y>:/<names>/\>, legend<index.y>, \<direction<index.y>:/<direction>/\>, <coords(index.x)>)\>";
 	
-str moving_object(str index, str names, str direction, str ref, bool _: false)
-	= "object(name<index>, legend<index>, \"<direction>\")";
+str moving_object(Coords index, str names, str direction, str ref, bool _: false)
+	= "object(name<index.y>, legend<index.y>, \"<direction>\", <coords(index.x)>)";
 
 Rule compile_rulepart(list[RuleContent] contents, Rule rule, list[set[str]] layers, bool is_pattern){
 	list[list[str]] compiled_layer = [];
@@ -177,7 +178,7 @@ Rule compile_rulepart(list[RuleContent] contents, Rule rule, list[set[str]] laye
 			RuleContent refs = contents[i];
 			for (int j <- [0..size(refs)]){
 				// index = <section_index>_<content_index>
-				str index = "<j>";
+				Coords index = <i, j, b>;
 				RuleReference ref = refs[j];
 				if (!any(str x <- ref.objects, x in lyr)) continue;
 				str names = intercalate("|", ref.objects);     
@@ -259,23 +260,26 @@ Rule convert_rulepart( RULEPART p: sound(str snd), Rule rule, Checker c, list[se
 	return rule;
 }
 
-Object new_transparent() = transparent("trans", ".");
+Object new_transparent(Coords coords) = transparent("trans", ".", coords);
 
 Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c, Engine engine){
 	list[Layer] layers = [];
 	list[str] objectdata = [];
-	for (set[str] lyr <- engine.layers){
+	for (int i <- [0..size(engine.layers)]){
+		set[str] lyr = engine.layers[i];
 		Layer layer = [];
-		for (str charline <- l.level){
+		for (int j <- [0..size(l.level)]){
+			str charline = l.level[j];
 			Line line = [];
 			list[str] chars = split("", charline);
-			for (str ch <- chars){
+			for (int k <- [0..size(chars)]){
+				str ch = chars[k];
 				list[str] objs = resolve_reference(ch, c, l@location).objs;
 				pix = [x | str x <- objs, x in lyr];
 				if (isEmpty(pix)){
-					line += [new_transparent()];
+					line += [new_transparent(<j, k, i>)];
 				} else {
-					line += [object(pix[0], ch)];
+					line += [object(pix[0], ch, <j, k, i>)];
 					objectdata += [pix[0]];
 				}
 			}
