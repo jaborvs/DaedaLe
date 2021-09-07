@@ -222,13 +222,13 @@ Checker check_prelude(PRELUDEDATA pr, Checker c){
 //	unused_colors
 Checker check_object(OBJECTDATA obj, Checker c) {
 	int max_index = 0;
-	str id = toLowerCase(obj.id);	
+	str id = toLowerCase(obj.name);	
 	
 	if (!check_valid_name(id)) c.msgs += [invalid_name(id, error(), obj@location)];
 
 	// check for duplicate object names
 	if (id in c.objects) {
-		c.msgs += [existing_object(obj.id, error(), obj@location)];
+		c.msgs += [existing_object(obj.name, error(), obj@location)];
 	} else {
 		c.objects += [id];
 	}
@@ -236,7 +236,7 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 	// add references
 	c.references[id] = [id];
 	if (!isEmpty(obj.legend)) {
-		msgs = check_existing_legend(obj.legend[0], [obj.id], obj@location, c);
+		msgs = check_existing_legend(obj.legend[0], [obj.name], obj@location, c);
 		if (!isEmpty(msgs)){
 			c.msgs += msgs;
 		} else {
@@ -248,7 +248,7 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 	for (str color <- obj.colors) {
 		if (toLowerCase(color) in COLORS) continue;
 		
-		c.msgs += [invalid_color(obj.id, color, error(), obj@location)];
+		c.msgs += [invalid_color(obj.name, color, error(), obj@location)];
 	}
 
 	// check if it has a sprite
@@ -265,16 +265,16 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 			
 			int converted = toInt(pixel);
 			if (converted + 1 > size(obj.colors)) {
-				c.msgs += [invalid_index(obj.id, converted, error(), obj@location)];
+				c.msgs += [invalid_index(obj.name, converted, error(), obj@location)];
 			} else if (converted > max_index) max_index = converted;
 		}
 	}
 	
-	if (!valid_length) c.msgs += [invalid_sprite(obj.id, error(), obj@location)];
+	if (!valid_length) c.msgs += [invalid_sprite(obj.name, error(), obj@location)];
 	
 	// check if we are making use of all the colors defined
 	if (size(obj.colors) > max_index + 1) {
-		c.msgs += [unused_colors(obj.id, intercalate(", ", obj.colors[max_index+1..size(obj.colors)]), warn(), obj@location)];
+		c.msgs += [unused_colors(obj.name, intercalate(", ", obj.colors[max_index+1..size(obj.colors)]), warn(), obj@location)];
 	}
 	
 	return c;
@@ -752,7 +752,7 @@ Checker check_game(PSGAME g, bool debug=false) {
 	
 	map[SECTION, int] dupes = distribution(g.sections);
 	for (SECTION s <- dupes) {
-		if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], error(), s@location)];
+		if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], warn(), s@location)];
 	}
 	
 	for (PRELUDEDATA pr <- g.prelude){
@@ -776,7 +776,7 @@ Checker check_game(PSGAME g, bool debug=false) {
 	}
 	
 	for (OBJECTDATA x <- g.objects){
-		if (!(toLowerCase(x.id) in c.layer_list)) c.msgs += [unlayered_objects(x.id, error(), x@location)];
+		if (!(toLowerCase(x.name) in c.layer_list)) c.msgs += [unlayered_objects(x.name, error(), x@location)];
 	}
 	
 	for (RULEDATA r <- g.rules) {

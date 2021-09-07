@@ -77,8 +77,8 @@ data OBJECTS
 	;
 	
 data OBJECTDATA
-	= object_data(str id, list[str] legend, str, list[str] colors, str, list[SPRITE] spr)
-	| object_data(str id, list[str] legend, list[str] colors, list[list[PIXEL]] sprite)
+	= object_data(str name, list[str] legend, str, list[str] colors, str, list[SPRITE] spr)
+	| object_data(str name, list[str] legend, list[str] colors, list[list[PIXEL]] sprite, int id)
 	| object_empty(str)
 	;
 	

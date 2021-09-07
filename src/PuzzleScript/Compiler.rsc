@@ -25,11 +25,25 @@ data Level
 	
 alias Coords = tuple[int x, int y, int z];
 	
+	
+// CHANGES DONE TO THIS DATA STRUCTURE NEED TO BE MIRRORED BELOW TO 'EVAL_PRESET'
 data Object
-	= object(str name, str legend, Coords coords)
-	| moving_object(str name, str legend, str direction, Coords coords)
-	| transparent(str name, str legend, Coords coords)
+	= object(str name, int id, Coords coords)
+	| moving_object(str name, int id, str direction, Coords coords)
+	| transparent(str name, int id, Coords coords)
 	;
+	
+public str EVAL_PRESET = "
+	'import List;
+	'alias Coords = <#Coords>;
+	'data Object
+	'= object(str name, int id, Coords coords)
+	'| moving_object(str name, int id, str direction, Coords coords)
+	'| transparent(str name, int id, Coords coords)
+	';
+	'alias Line = <#Line>;
+	'alias Layer = <#Layer>;
+	'";
 	
 data Command
 	= message(str string)
@@ -73,24 +87,32 @@ alias Engine = tuple[
 	bool abort,
 	bool again,
 	list[str] sound_queue,
-	list[str] msg_queue
+	list[str] msg_queue,
+	PSGAME game
 ];
 
-Engine new_engine()		
+Engine new_engine(PSGAME game)		
 	= <
 		[], 
 		level([], [], 0, [], [], level_data([])), 
 		(), 
 		[], 
 		[],
-		[], 
+		[],
 		0, 
 		false, 
 		false, 
 		false, 
 		[], 
-		[]
+		[],
+		game
 	>;
+
+OBJECTDATA get_object(int id, Engine engine) 
+	= [x | x <- engine.game.objects, x.id == id][0];
+	
+OBJECTDATA get_object(str name, Engine engine) 
+	= [x | x <- engine.game.objects, toLowerCase(x.name) == name][0];
 
 set[str] generate_directions(list[str] modifiers){
 	set[str] directions = {};
@@ -104,7 +126,7 @@ set[str] generate_directions(list[str] modifiers){
 	return directions;
 }
 
-Rule convert_rule(RULEDATA r, Checker c, list[set[str]] layers){
+Rule convert_rule(RULEDATA r, Checker c, Engine engine){
 	Rule rule = new_rule(r);
 
 	list[str] keywords = [toLowerCase(x.prefix) | RULEPART x <- r.left, x is prefix];
@@ -112,11 +134,11 @@ Rule convert_rule(RULEDATA r, Checker c, list[set[str]] layers){
 	rule.directions = generate_directions(keywords);
 	
 	for (RULEPART p <- r.left){
-		rule = convert_rulepart(p, rule, c, layers, true);
+		rule = convert_rulepart(p, rule, c, engine, true);
 	}
 	
 	for (RULEPART p <- r.right){
-		rule = convert_rulepart(p, rule, c, layers, false);
+		rule = convert_rulepart(p, rule, c, engine, false);
 	}
 
 
@@ -134,43 +156,66 @@ alias RuleReference = tuple[
 alias RuleContent = list[RuleReference];
 alias RulePart = list[RuleContent];
 
-str empty_layer(int index, bool _: true) = "[ *layer<index> ]";
+// matching & replacement
+str empty_layer(int index, bool _) = "[ *layer<index> ]";
 str empty_level(bool _: true) = "[ *level ]";
-str layer(int index, list[str] stuff, bool is_pattern: true) 
+
+str layer(int index, list[str] stuff, bool is_pattern) 
 	= "[ *prefix_lines<index>, <line(index, stuff, is_pattern)>, *suffix_lines<index> ]";
 	
-str line(int index, list[str] stuff, bool _: true) {
+str line(int index, list[str] stuff, bool _) {
 	str compiled_stuff = intercalate(", ", stuff);
 	return "[ *prefix_objects<index>, <compiled_stuff>, *suffix_objects<index> ]";
 }
 
-str empty_layer(int index, bool _: false) = "[ layer<index> ]";
-str empty_level(bool _: false) = "[ level ]";
-str layer(int index, list[str] stuff, bool is_pattern: false) 
-	= "[ prefix_lines<index>, <line(index, stuff, is_pattern)>, suffix_lines<index> ]";
+str unique(Coords index) = "<index.x>_<index.y>_<index.z>";
+str absolufy(str force, Coords coords, bool _: true) 
+	= "str direction<unique(coords)> : /<force>/";
 	
-str line(int index, list[str] stuff, bool _: false) {
-	str compiled_stuff = intercalate(", ", stuff);
-	return "[ prefix_objects<index>, <compiled_stuff>, suffix_objects<index> ]";
+str absolufy(str force, Coords coords, bool _: false) 
+	= "\"<force>\"";
+
+// matching
+str coords(Coords index, bool _: true)
+	= "Coords coords<unique(index)> : \<int xcoord<index.x>, int ycoord<index.x>, int zcoord<unique(index)>\>";
+
+str object(Coords index, RuleReference ref, Engine engine, bool is_pattern: true) {
+	str names = intercalate(", ", ref.objects);
+	return "Object <ref.objects[0]><index.y> : object(str name<unique(index)> : /<names>/, int id<unique(index)>, <coords(index, is_pattern)>)";
 }
 
-str coords(int index)
-	=	"\<int xcoord<index>, int ycoord<index>, _\>";
+str moving_object(Coords index, RuleReference ref, Engine engine, bool is_pattern: true) {
+	str names = intercalate(", ", ref.objects);
+	return "Object <ref.objects[0]><index.y> : moving_object(str name<unique(index)> : /<names>/, int id<unique(index)>, <absolufy(ref.force, index, is_pattern)>, <coords(index, is_pattern)>)";
+}
+	
+//replacement
 
-str object(Coords index, str names, str ref, bool _: true)
-	= "\<<ref><index.y>:object(\<name<index.y>:/<names>/\>, legend<index.y>, <coords(index.x)>)\>";
+str coords(Coords index, bool _: false)
+	= "coords<unique(index)>";	
 	
-str object(Coords index, str names, str ref, bool _: false)
-	= "object(name<index.y>, legend<index.y>, <coords(index.x)>)";
-	
-str moving_object(Coords index, str names, str direction, str ref, bool _: true)
-	= "\<<ref><index.y>:moving_object(\<name<index.y>:/<names>/\>, legend<index.y>, \<direction<index.y>:/<direction>/\>, <coords(index.x)>)\>";
-	
-str moving_object(Coords index, str names, str direction, str ref, bool _: false)
-	= "object(name<index.y>, legend<index.y>, \"<direction>\", <coords(index.x)>)";
+str object(Coords index, RuleReference ref, Engine engine, bool is_pattern: false) {
+	if (size(ref.objects) == 1){
+		int id = get_object(ref.objects[0], engine).id;
+		return "object(\"<ref.objects[0]>\", <id>, <coords(index, is_pattern)>)";
+	} else {
+		return "object(name<unique(index)>, id<unique(index)>, <coords(index, is_pattern)>)";
+	}
+}
 
-Rule compile_rulepart(list[RuleContent] contents, Rule rule, list[set[str]] layers, bool is_pattern){
+str moving_object(Coords index, RuleReference ref, Engine engine, bool is_pattern: false) {
+	if (size(ref.objects) == 1){
+		int id = get_object(ref.objects[0], engine).id;
+		return "moving_object(\"<ref.objects[0]>\", <id>, <absolufy(ref.force, index, is_pattern)>, <coords(index, is_pattern)>)";
+	} else {
+		return "moving_object(name<unique>, id<unique(index)>, <absolufy(ref.force, index, is_pattern)>, <coords(index, is_pattern)>)";
+	}
+}
+
+Rule compile_rulepart(list[RuleContent] contents, Rule rule, Engine engine, bool is_pattern){
 	list[list[str]] compiled_layer = [];
+	list[set[str]] layers = engine.layers;
+	
 	for (int b <- [0..size(layers)]){
 		set[str] lyr = layers[b];
 		list[str] compiled_lines = [];
@@ -181,12 +226,11 @@ Rule compile_rulepart(list[RuleContent] contents, Rule rule, list[set[str]] laye
 				Coords index = <i, j, b>;
 				RuleReference ref = refs[j];
 				if (!any(str x <- ref.objects, x in lyr)) continue;
-				str names = intercalate("|", ref.objects);     
 		        if (ref.force == "none"){
-		            compiled_lines += [object(index, names, ref.reference, is_pattern)];
+		            compiled_lines += [object(index, ref, engine, is_pattern)];
 		        } else {
 		            str direction = ref.force;
-		            compiled_lines += [moving_object(index, names, direction, ref.reference, is_pattern)];
+		            compiled_lines += [moving_object(index, ref, engine, is_pattern)];
 		        }
 		        // only one item from each layer should exist so if we found the one for the
 		        // current layer we can just return, if not, then it's on the user
@@ -217,7 +261,7 @@ Rule compile_rulepart(list[RuleContent] contents, Rule rule, list[set[str]] laye
 	return rule;
 }
 
-Rule convert_rulepart( RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker c, list[set[str]] layers, bool is_pattern) {
+Rule convert_rulepart( RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker c, Engine engine, bool is_pattern) {
 	list[RuleContent] contents = [];
 	for (RULECONTENT cont <- p.contents){
 		RuleContent refs = [];
@@ -228,21 +272,28 @@ Rule convert_rulepart( RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker
 			str force = "none";
 			if (i != 0 && toLowerCase(cont.content[i-1]) in rulepart_keywords) force = toLowerCase(cont.content[i-1]);
 			
-			refs += [<objs, toLowerCase(cont.content[i]), force>];
+			if (toLowerCase(cont.content[i]) in c.combinations){
+				for (str obj <- objs){
+					refs += [<obj, toLowerCase(cont.content[i]), force>];
+				}
+			} else {
+				refs += [<objs, toLowerCase(cont.content[i]), force>];
+			}
+			
 		}
 		
 		contents += [refs];
 	}
 
 
-	return compile_rulepart(contents, rule, layers, is_pattern);
+	return compile_rulepart(contents, rule, engine, is_pattern);
 }
 
-Rule convert_rulepart( RULEPART p: prefix(str _), Rule rule, Checker c, list[set[str]] layers, bool pattern) {
+Rule convert_rulepart( RULEPART p: prefix(str _), Rule rule, Checker c, Engine engine, bool pattern) {
 	return rule;
 }
 
-Rule convert_rulepart( RULEPART p: command(str cmd), Rule rule, Checker c, list[set[str]] layers, bool pattern) {
+Rule convert_rulepart( RULEPART p: command(str cmd), Rule rule, Checker c, Engine engine, bool pattern) {
 	switch(cmd){
 		case /cancel/: rule.commands += {Command::cancel()};
 		case /checkpoint/: rule.commands += {Command::checkpoint()};
@@ -254,13 +305,13 @@ Rule convert_rulepart( RULEPART p: command(str cmd), Rule rule, Checker c, list[
 	return rule;
 }
 
-Rule convert_rulepart( RULEPART p: sound(str snd), Rule rule, Checker c, list[set[str]] layers, bool pattern) {
+Rule convert_rulepart( RULEPART p: sound(str snd), Rule rule, Checker c, Engine engine, bool pattern) {
 	rule.commands += {Command::sound(snd)};
 
 	return rule;
 }
 
-Object new_transparent(Coords coords) = transparent("trans", ".", coords);
+Object new_transparent(Coords coords) = transparent("trans", -1, coords);
 
 Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c, Engine engine){
 	list[Layer] layers = [];
@@ -279,7 +330,7 @@ Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c, Engine 
 				if (isEmpty(pix)){
 					line += [new_transparent(<j, k, i>)];
 				} else {
-					line += [object(pix[0], ch, <j, k, i>)];
+					line += [object(pix[0], get_object(pix[0], engine).id, <j, k, i>)];
 					objectdata += [pix[0]];
 				}
 			}
@@ -307,7 +358,7 @@ set[str] convert_layer(LAYERDATA l, Checker c){
 }
 
 Engine compile(Checker c){
-	Engine engine = new_engine();
+	Engine engine = new_engine(c.game);
 	engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
 	engine.conditions = c.conditions;
 	engine.layers = [convert_layer(x, c) | x <- c.game.layers];
@@ -320,7 +371,7 @@ Engine compile(Checker c){
 	
 	
 	for (RULEDATA r <- c.game.rules){
-		engine.rules += [convert_rule(r, c, engine.layers)];
+		engine.rules += [convert_rule(r, c, engine)];
 	}
 	
 	return engine;

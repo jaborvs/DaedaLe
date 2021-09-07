@@ -7,6 +7,7 @@ import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import IO;
 import util::Eval;
+import Type;
 
 void main() {
 	PSGAME game;
@@ -21,19 +22,17 @@ void main() {
 	//level = plan_move(engine.levels[0], "right");
 	//print_level(level);
 	
-	println("Test Compile");
+	println("Rule Test");
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Rules.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
-	println(engine.rules[0].left[0]);
+	level = engine.levels[0];
+	<engine, level> = rewrite(engine, level, false);
+	level = do_move(level);
 	println();
-	println(engine.rules[0].right[0]);
-	//println(engine.levels[0].layers);
-	//Result[bool] re = eval(#bool, "<engine.rules[0].left[0]> := <engine.levels[0].layers>;");
-	//if (result(true) := re) println("Is True");
+	print_level(level);
 	
-	//for (x <- engine.rules) println(" late: <x.late>\n commands: <x.commands>\n left: <x.left>\n right: <x.right>");
-	
+
 	//println("Rotate Test");
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Rotate.PS|);
 	//checker = check_game(game);

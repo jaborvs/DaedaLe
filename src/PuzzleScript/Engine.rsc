@@ -10,6 +10,8 @@ import PuzzleScript::AST;
 import PuzzleScript::Compiler;
 import util::Eval;
 
+int MAX_LOOPS = 20;
+
 Level restart(Level level){	
 	level.layers = level.states[level.checkpoint];
 	level.states = level.states[0..level.checkpoint];
@@ -56,25 +58,75 @@ list[str] update_objectdata(Level level){
 // [ [1, 2] , becomes [ [3, 1] ,
 //   [3, 4] ]  			[4, 2] ]
 // right matching becomes up matching
-Level rotate_level(Level level){
-	list[Layer] lyrs = [];
-	for (Layer lyr <- level.layers){
-		list[Line] new_layer = [[] | _ <- [0..size(lyr[0])]];
-		for (int i <- [0..size(lyr[0])]){
-			for (int j <- [0..size(lyr)]){
-				new_layer[i] += [lyr[j][i]];
+list[Layer] rotate_level(list[Layer] layers){
+	list[Layer] new_layers = [];
+	for (Layer layer <- layers){
+		list[Line] new_layer = [[] | _ <- [0..size(layer[0])]];
+		for (int i <- [0..size(layer[0])]){
+			for (int j <- [0..size(layer)]){
+				new_layer[i] += [layer[j][i]];
 			}
 		}
 		
-		lyrs += [reverse(x) | Line x <- new_layer];
+		new_layers += [[reverse(x) | Line x <- new_layer]];
 	}
 	
-	level.layers = lyrs; 
-	return level;
+	return new_layers;
 }
 
+str format_replacement(str pattern, str replacement, list[Layer] layers) {
+	return "
+	'list[Layer] layers = <layers>;
+	'if (<pattern> := layers) layers = <replacement>;
+	'layers;
+	'";
+}
+
+str format_pattern(str pattern, list[Layer] layers){
+	return "
+	'list[Layer] layers  = <layers>;
+	'<pattern>;
+	'";
+}
+
+list[str] ROTATION_ORDER = ["right", "up", "left", "down"];
 tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
+	
 	//check if all ruleparts match
+	str check_left = intercalate(" && ", ["<x> := layers" | str x <- rule.left]);
+	int loops = 0;
+	list[Layer] layers = level.layers;
+	bool changed = false;
+	for (str dir <- ROTATION_ORDER){
+		if (dir in rule.directions){
+			println(dir);
+			while (eval(#bool, [EVAL_PRESET, format_pattern(check_left, layers)]).val){
+				changed = true;
+				int index = loops % size(rule.left);
+				
+				if (isEmpty(rule.right)){
+					break;
+				}
+				
+				println(layers);
+				println();
+				layers = eval(#list[Layer], [EVAL_PRESET, format_replacement(rule.left[index], rule.right[index], layers)]).val;
+				loops += 1;
+				println(layers);
+				
+				if (index == 0 && layers == level.layers){
+					break;
+				} else if (loops > MAX_LOOPS) {
+					break;
+				}
+			}
+		}
+		
+		layers = rotate_level(layers);
+	}
+	
+	level.layers = layers;
+	if (!changed) return <engine, level>;
 	
 	//compile commands to see if we can cheat and just abort
 	for (Command cmd <- rule.commands){
@@ -83,7 +135,6 @@ tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
 	}
 	
 	//transform the level
-	//TODO
 	
 	return <engine, level>;
 }
@@ -182,7 +233,7 @@ Level move_obstacle(Level level, Coords coords, Coords other_neighbor_coords){
 	neighbor_obj = level.layers[neighbor_coords.z][neighbor_coords.x][neighbor_coords.y];
 	if (neighbor_obj is transparent) {
 		level.layers[coords.z][coords.x][coords.y] = new_transparent(coords);
-		level.layers[coords.z][neighbor_coords.x][neighbor_coords.y] = object(obj.name, obj.legend, neighbor_coords);
+		level.layers[coords.z][neighbor_coords.x][neighbor_coords.y] = object(obj.name, obj.id, neighbor_coords);
 	}
 	
 	return level;
@@ -303,18 +354,16 @@ Engine run_command(Command cmd : sound(str event), Engine engine){
 	return engine;
 }
 
-void print_level(Level _: message(str msg, _), Engine engine){
-	println("#####################################################");
-	println(msg);
-	println("#####################################################");
+void print_level(Level l: message(str msg, _)){
+	print_message(msg);
 }
 
-void print_level(Level l : level(_, _, _, _, _, _), Engine engine){
+void print_level(Level l : level){
 	for (Layer lyr <- l.layers){
 		for (Line line <- lyr) {
-			print(intercalate("", [x.legend | x <- line]));
-			//print("   ");
-			//print(intercalate(" ", line));
+			print(intercalate("", [x.id | x <- line]));
+			print("   ");
+			print(intercalate(" ", line));
 			println();
 		}
 		println();
@@ -343,7 +392,7 @@ Level plan_move(Level level, str direction){
 			for(int k <- [0..size(line)]){
 				Object obj = line[k];
 				if (line[k].name == "player"){
-					level.layers[i][j][k] = moving_object(obj.name, obj.legend, direction, <j, k, i>);
+					level.layers[i][j][k] = moving_object(obj.name, obj.id, direction, <j, k, i>);
 				}
 			}
 		}
@@ -359,7 +408,9 @@ void play_sound(Engine engine, str event){
 }
 
 void print_message(str string){
+	println("#####################################################");
 	println(string);
+	println("#####################################################");
 }
 
 void game_loop(Checker c){
@@ -382,7 +433,7 @@ void game_loop(Checker c){
 			engine = change_level(engine, engine.index + 1);
 		}
 		
-		print_level(engine.current_level, engine);
+		print_level(engine.current_level);
 		engine.abort = false;
 	}
 	

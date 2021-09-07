@@ -110,7 +110,7 @@ LEGENDDATA process_legend(LEGENDDATA l) {
 	return new_l;
 }
 
-OBJECTDATA process_object(OBJECTDATA obj){
+OBJECTDATA process_object(OBJECTDATA obj, int index){
 	list[list[PIXEL]] sprite_line = [];
 	
 	if (size(obj.spr) > 0) {;
@@ -131,9 +131,9 @@ OBJECTDATA process_object(OBJECTDATA obj){
 		}
 	}
 	
-	OBJECTDATA new_obj = object_data(obj.id, obj.legend, obj.colors, sprite_line);
+	OBJECTDATA new_obj = object_data(obj.name, obj.legend, obj.colors, sprite_line, index);
 	new_obj @ location = obj@location;
-	new_obj @ label = obj.id;
+	new_obj @ label = obj.name;
 	return new_obj;
 }
 
@@ -186,23 +186,24 @@ PSGAME post(PSGAME game) {
 	// assign to correct section
 	for (SECTION section <- game.sections) {
 		switch(section) {
-			case SECTION::objects(objs): objects = objs.objects;
-			case SECTION::legend(lgd): legends = lgd.legend;
-			case SECTION::sounds(snd): sounds = snd.sounds;
-			case SECTION::layers(lyrs): layers = lyrs.layers;
-			case SECTION::rules(rls): rules = rls.rules;
-			case SECTION::conditions(cnd): conditions = cnd.conditions;
-			case SECTION::levels(lvl): levels = lvl.levels;
+			case SECTION::objects(objs): objects += objs.objects;
+			case SECTION::legend(lgd): legends += lgd.legend;
+			case SECTION::sounds(snd): sounds += snd.sounds;
+			case SECTION::layers(lyrs): layers += lyrs.layers;
+			case SECTION::rules(rls): rules += rls.rules;
+			case SECTION::conditions(cnd): conditions += cnd.conditions;
+			case SECTION::levels(lvl): levels += lvl.levels;
 		
 		}
 	}
 	
 	//fix sprite
 	processed_objects = [];
+	int index = 0;
 	for (OBJECTDATA obj <- objects){
-		switch(obj){
-			case object_data(_, _, _, _, _, _): 
-				processed_objects += process_object(obj);
+		if (obj is object_data){
+			processed_objects += process_object(obj, index);
+			index += 1;
 		}
 	}
 	
