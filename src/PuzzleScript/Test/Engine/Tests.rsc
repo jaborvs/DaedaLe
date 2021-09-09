@@ -8,6 +8,8 @@ import PuzzleScript::AST;
 import IO;
 import util::Eval;
 import Type;
+import util::Math;
+import List;
 
 void main() {
 	PSGAME game;
@@ -77,12 +79,33 @@ void main() {
 	//checker = check_game(game);
 	//game_loop(checker, GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES);
 	
-	list[str] GAME2_LEVEL1_MOVES = ["left", "up", "up", "right", "down", "left", "down", "right", "right", "down", "down", "right", "right", "right", "up"];
-	list[str] GAME2_LEVEL2_MOVES = ["right"];
+	//list[str] GAME2_LEVEL1_MOVES = ["left", "up", "up", "right", "down", "left", "down", "right", "right", "down", "down", "right", "right", "right", "up"];
+	//list[str] GAME2_LEVEL2_MOVES = ["right"];
+	//println("Intermediate Game Test");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/IntermediateGame1.PS|);
+	//checker = check_game(game);
+	//game_loop(checker, GAME2_LEVEL1_MOVES + GAME2_LEVEL2_MOVES);
+	
+	list[str] GAME3_LEVEL1_MOVES = ["left", "up", "up", "right", "down", "left", "down", "right", "right", "down", "down", "right", "right", "right", "up"];
 	println("Intermediate Game Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/IntermediateGame1.PS|);
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/RandomGame1.PS|);
 	checker = check_game(game);
-	game_loop(checker, GAME2_LEVEL1_MOVES + GAME2_LEVEL2_MOVES);
+	engine = compile(checker);
+	
+	println(engine.levels[0].layers);
+	println();
+	println(engine.rules[1].left[0]);
+	println();
+	println(engine.rules[1].right[0]);
+	
+	Object randomObject(list[Object] objs){
+		int rand = arbInt(size(objs));
+		return objs[rand];
+	}
+	
+	[ [ *layer0 ], [ *prefix_lines1, [ *prefix_objects1, object("spawner", 1, coords0_0_1), *suffix_objects1 ], *suffix_lines1 ], [ *prefix_lines2, [ *prefix_objects2, randomObject([object("redrobot", 3, coords0_1_2), object("greenrobot", 4, coords0_1_2), object("bluerobot", 5, coords0_1_2)]), *suffix_objects2 ], *suffix_lines2 ] ];
+	
+	//game_loop(checker, GAME3_LEVEL1_MOVES);
 	
 	//println("Undo Test");
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);

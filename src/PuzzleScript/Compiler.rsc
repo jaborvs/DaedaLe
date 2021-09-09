@@ -37,6 +37,13 @@ data Object
 	
 public str EVAL_PRESET = "
 	'import List;
+	'import util::Math;
+	'
+	'str randomDir(){
+	'	int rand = arbInt(4);
+	'	return <MOVES>[rand];
+	'}
+	'
 	'alias Coords = <#Coords>;
 	'data Object
 	'= object(str name, int id, Coords coords)
@@ -45,6 +52,13 @@ public str EVAL_PRESET = "
 	';
 	'alias Line = <#Line>;
 	'alias Layer = <#Layer>;
+	'
+	'Object randomObject(list[Object] objs){
+	'	int rand = arbInt(size(objs));
+	'	return objs[rand];
+	'}
+	'
+	'
 	'";
 	
 data Command
@@ -159,7 +173,7 @@ str line(int index, list[str] stuff, bool _) {
 
 str unique(Coords index) = "<index.x>_<index.y>_<index.z>";
 
-//ANY CHANGES TO THE VALUES ON THE LEFT MUST BE MIRRORED IN THE FUNCTION BELOW
+//ANY CHANGES TO THE VALUES ON THE RIGHT MUST BE MIRRORED IN THE FUNCTION BELOW
 map[str, str] relative_mapping = (
 	"\>": "relative_right",
 	"\<": "relative_left",
@@ -187,6 +201,8 @@ str absolufy(str force) {
 		return "/left|right/";
 	} else if (force == "vertical") {
 		return "/up|down/";
+	} else if (force == "randomdir") {
+		return "randomDir()";
 	} else {
 		return force;
 	}
@@ -194,16 +210,22 @@ str absolufy(str force) {
 
 // matching
 str coords(Coords index, bool _: true)
-	= "Coords coords<unique(index)> : \<int xcoord<index.x>, int ycoord<index.x>, int zcoord<unique(index)>\>";
+	= "Coords coords<unique(index)> : \<xcoord<index.x>, ycoord<index.x>, zcoord<unique(index)>\>";
 
 str object(Coords index, RuleReference ref, Engine engine, bool is_pattern: true) {
-	str names = intercalate(", ", ref.objects);
-	return "Object <ref.objects[0]><index.y> : object(str name<unique(index)> : /<names>/, int id<unique(index)>, <coords(index, is_pattern)>)";
+	str names = intercalate("|", ref.objects);
+	str obj_name = "object";
+	if (ref.force == "no"){
+		//names = intercalate("|", ref.objects + ["trans"]);
+		//names = "^((?!<names>).)*$";
+		obj_name = "/object|transparent/";
+	}
+	return "Object <ref.reference><index.y> : <obj_name>(str name<unique(index)> : /<names>/, int id<unique(index)>, <coords(index, is_pattern)>)";
 }
 
 str moving_object(Coords index, RuleReference ref, Engine engine, bool is_pattern: true) {
-	str names = intercalate(", ", ref.objects);
-	return "Object <ref.objects[0]><index.y> : moving_object(str name<unique(index)> : /<names>/, int id<unique(index)>, str direction<unique(index)> : <absolufy(ref.force)>, <coords(index, is_pattern)>)";
+	str names = intercalate("|", ref.objects);
+	return "Object <ref.reference><index.y> : moving_object(str name<unique(index)> : /<names>/, int id<unique(index)>, str direction<unique(index)> : <absolufy(ref.force)>, <coords(index, is_pattern)>)";
 }
 	
 //replacement
@@ -261,7 +283,7 @@ Rule compile_rulepart_left(Rule rule, Engine engine, RulePart left_contents, Rul
 					Coords index = <i, j, b>;
 					RuleReference ref = refs[j];
 					if (!any(str x <- ref.objects, x in lyr)) continue;
-			        if (ref.force in ["none", "stationary"]){
+			        if (ref.force in ["none", "stationary", "no"]){
 			            compiled_lines += [object(index, ref, engine, true)];
 			        } else {
 			            compiled_lines += [moving_object(index, ref, engine, true)];
@@ -302,6 +324,10 @@ Rule compile_rulepart_right(Rule rule, Engine engine, RulePart left_contents, Ru
 					if (!any(str x <- ref.objects, x in lyr)) continue;
 			        if (ref.force in ["none", "stationary"]){
 			            compiled_lines += [object(index, ref, engine, false)];
+			        } else if (ref.force == "random"){
+			        	list[str] objlist = [object(index, <[obj], ref.reference, "none">, engine, false) | str obj <- ref.objects];
+			        	str str_objlist = "[" + intercalate(", ", objlist) + "]";
+			        	compiled_lines += ["randomObject(<str_objlist>)"];
 			        } else {
 			            compiled_lines += [moving_object(index, ref, engine, false)];
 			        }

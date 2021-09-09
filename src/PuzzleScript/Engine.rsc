@@ -7,6 +7,7 @@ import Set;
 import IO;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import PuzzleScript::Utils;
 import PuzzleScript::Compiler;
 import util::Eval;
 
@@ -162,7 +163,6 @@ tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
 	return <engine, level>;
 }
 
-list[str] MOVES = ["left", "up", "right", "down"];
 tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _), str input){
 	if (input == "undo"){
 		return <engine, undo(level)>;
@@ -297,6 +297,7 @@ list[bool] is_on(Level level, list[str] objs, list[str] on){
 
 bool is_victorious(Engine engine, Level level){
 	if (engine.win_keyword || level is message) return true;
+	if (isEmpty(engine.conditions)) return false;
 	
 	victory = true;
 	for (Condition cond <- engine.conditions){
