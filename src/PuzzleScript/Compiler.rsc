@@ -130,27 +130,6 @@ set[str] generate_directions(list[str] modifiers){
 	return directions;
 }
 
-Rule convert_rule(RULEDATA r, Checker c, Engine engine){
-	Rule rule = new_rule(r);
-
-	list[str] keywords = [toLowerCase(x.prefix) | RULEPART x <- r.left, x is prefix];
-	rule.late = "late" in keywords;
-	rule.directions = generate_directions(keywords);
-	
-	for (RULEPART p <- r.left){
-		rule = convert_rulepart(p, rule, c, engine, true);
-	}
-	
-	for (RULEPART p <- r.right){
-		rule = convert_rulepart(p, rule, c, engine, false);
-	}
-
-
-	if (!isEmpty(r.message)) rule.commands += {Command::message(r.message[0])};
-	
-	return rule;
-}
-
 alias RuleReference = tuple[
 	list[str] objects,
 	str reference,
@@ -160,7 +139,7 @@ alias RuleReference = tuple[
 data RuleContent
 	= references(list[RuleReference] refs)
 	| ellipsis()
-	| empty(int layer)
+	| empty()
 	;
 
 //alias RuleContent = list[RuleReference];
@@ -231,6 +210,9 @@ str moving_object(Coords index, RuleReference ref, Engine engine, bool is_patter
 str coords(Coords index, bool _: false)
 	= "coords<unique(index)>";	
 	
+str transparent(Coords index)
+	= "transparent(\"trans\", -1, coords<unique(index)>)";
+	
 str object(Coords index, RuleReference ref, Engine engine, bool is_pattern: false) {
 	if (size(ref.objects) == 1){
 		int id = get_object(ref.objects[0], engine).id;
@@ -249,44 +231,8 @@ str moving_object(Coords index, RuleReference ref, Engine engine, bool is_patter
 	}
 }
 
-Rule compile_rulepart(list[RuleContent] contents, Rule rule, Engine engine, bool is_pattern){
-	list[list[str]] compiled_layer = [];
-	list[set[str]] layers = engine.layers;
-	
-	for (int b <- [0..size(layers)]){
-		set[str] lyr = layers[b];
-		list[str] compiled_lines = [];
-		for (int i <- [0..size(contents)]){
-			RuleContent cont = contents[i];
-			if (cont is references){
-				list[RuleReference] refs = cont.refs;
-				for (int j <- [0..size(refs)]){
-					// index = <section_index, content_index, layer_index>;
-					Coords index = <i, j, b>;
-					RuleReference ref = refs[j];
-					if (!any(str x <- ref.objects, x in lyr)) continue;
-			        if (ref.force in ["none", "stationary"]){
-			            compiled_lines += [object(index, ref, engine, is_pattern)];
-			        } else {
-			            compiled_lines += [moving_object(index, ref, engine, is_pattern)];
-			        }
-			        // only one item from each layer should exist so if we found the one for the
-			        // current layer we can just return, if not, then it's on the user
-			        break;
-				}
-			} else if (cont is ellipsis){
-				compiled_lines += ["*ellipsis<b>"];
-			} else if (cont is empty && is_pattern){
-				compiled_lines += ["empty<i>_<b>"];
-			} else if (cont is empty && b == cont.layer){
-				compiled_lines += ["empty<i>_<b>"];
-			}
-		}
-		
-		compiled_layer += [compiled_lines];
-    }
-    
-    list[str] comp = [];
+str format_compiled_layers(list[list[str]] compiled_layer, bool is_pattern){
+	list[str] comp = [];
     for (int l <- [0..size(compiled_layer)]){
     	list[str] lyr = compiled_layer[l];
     	if (isEmpty(lyr)) {
@@ -296,17 +242,103 @@ Rule compile_rulepart(list[RuleContent] contents, Rule rule, Engine engine, bool
     	}
     }
     
-    if (is_pattern) {
-    	rule.left += ["[ " + intercalate(", ", comp) + " ]"];
-    } else {
-    	rule.right += ["[ " + intercalate(", ", comp) + " ]"];
-    }
-    
+    return "[ " + intercalate(", ", comp) + " ]";
+} 
+
+Rule compile_rulepart_left(Rule rule, Engine engine, RulePart left_contents, RulePart right_contents){
+	list[list[str]] compiled_layer = [];
+	list[set[str]] layers = engine.layers;
+	
+	for (int b <- [0..size(layers)]){
+		set[str] lyr = layers[b];
+		list[str] compiled_lines = [];
+		for (int i <- [0..size(left_contents)]){
+			RuleContent cont = left_contents[i];
+			if (cont is references){
+				list[RuleReference] refs = cont.refs;
+				for (int j <- [0..size(refs)]){
+					// index = <section_index, content_index, layer_index>;
+					Coords index = <i, j, b>;
+					RuleReference ref = refs[j];
+					if (!any(str x <- ref.objects, x in lyr)) continue;
+			        if (ref.force in ["none", "stationary"]){
+			            compiled_lines += [object(index, ref, engine, true)];
+			        } else {
+			            compiled_lines += [moving_object(index, ref, engine, true)];
+			        }
+			        // only one item from each layer should exist so if we found the one for the
+			        // current layer we can just return, if not, then it's on the user
+			        break;
+				}
+			} else if (cont is ellipsis){
+				compiled_lines += ["*ellipsis<b>"];
+			} else if (cont is empty){
+				compiled_lines += ["empty<i>_<b>"];
+			}
+		}
+		
+		compiled_layer += [compiled_lines];
+	}
+	
+	rule.left += [format_compiled_layers(compiled_layer, true)];
 	return rule;
 }
 
-Rule convert_rulepart( RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker c, Engine engine, bool is_pattern) {
-	list[RuleContent] contents = [];
+Rule compile_rulepart_right(Rule rule, Engine engine, RulePart left_contents, RulePart right_contents){
+	list[list[str]] compiled_layer = [];
+	list[set[str]] layers = engine.layers;
+	
+	for (int b <- [0..size(layers)]){
+		set[str] lyr = layers[b];
+		list[str] compiled_lines = [];
+		for (int i <- [0..size(right_contents)]){
+			RuleContent cont = right_contents[i];
+			if (cont is references){
+				list[RuleReference] refs = cont.refs;
+				for (int j <- [0..size(refs)]){
+					// index = <section_index, content_index, layer_index>;
+					Coords index = <i, j, b>;
+					RuleReference ref = refs[j];
+					if (!any(str x <- ref.objects, x in lyr)) continue;
+			        if (ref.force in ["none", "stationary"]){
+			            compiled_lines += [object(index, ref, engine, false)];
+			        } else {
+			            compiled_lines += [moving_object(index, ref, engine, false)];
+			        }
+			        // only one item from each layer should exist so if we found the one for the
+			        // current layer we can just return, if not, then it's on the user
+			        break;
+				}
+			} else if (cont is ellipsis){
+				compiled_lines += ["*ellipsis<b>"];
+			} else if (cont is empty){
+				list[RuleReference] refs = left_contents[i].refs;
+				for (int j <- [0..size(refs)]){
+					// index = <section_index, content_index, layer_index>;
+					Coords index = <i, j, b>;
+					RuleReference ref = refs[j];
+					if (!any(str x <- ref.objects, x in lyr)) continue;
+			        compiled_lines += [transparent(index)];
+			        break;
+			    }
+			}
+		}
+		compiled_layer += [compiled_lines];
+	}
+	
+	rule.right += [format_compiled_layers(compiled_layer, false)];
+	return rule;
+}
+
+Rule compile_rulepart(Rule rule, Engine engine, RulePart left, RulePart right){
+	rule = compile_rulepart_left(rule, engine, left, right);
+	rule = compile_rulepart_right(rule, engine, left, right);
+	
+	return rule;
+}
+
+RulePart convert_rulepart(RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker c, Engine engine, bool is_pattern) {
+	RulePart contents = [];
 	if (isEmpty(p.contents)) contents += [empty()];
 	
 	for (int j <- [0..size(p.contents)]){
@@ -336,30 +368,58 @@ Rule convert_rulepart( RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker
 		}
 	}
 
-	println(p);
-	println(contents);
-	return compile_rulepart(contents, rule, engine, is_pattern);
+	return contents;
 }
 
-Rule convert_rulepart( RULEPART p: prefix(str _), Rule rule, Checker c, Engine engine, bool pattern) {
-	return rule;
-}
-
-Rule convert_rulepart( RULEPART p: command(str cmd), Rule rule, Checker c, Engine engine, bool pattern) {
+Command convert_command(RULEPART _: command(str cmd)) {
+	Command command;
 	switch(cmd){
-		case /cancel/: rule.commands += {Command::cancel()};
-		case /checkpoint/: rule.commands += {Command::checkpoint()};
-		case /restart/: rule.commands += {Command::restart()};
-		case /win/: rule.commands += {Command::win()};
-		case /again/: rule.commands += {Command::again()};
+		case /cancel/: command = Command::cancel();
+		case /checkpoint/: command = Command::checkpoint();
+		case /restart/: command = Command::restart();
+		case /win/: command = Command::win();
+		case /again/: command = Command::again();
+		default: throw "Expected valid command, got <cmd>";
 	}
 	
-	return rule;
+	return command;
 }
 
-Rule convert_rulepart( RULEPART p: sound(str snd), Rule rule, Checker c, Engine engine, bool pattern) {
-	rule.commands += {Command::sound(snd)};
+Command convert_command(RULEPART _: sound(str snd)) {
+	return Command::sound(snd);
+}
 
+Rule convert_rule(RULEDATA r, Checker c, Engine engine){
+	Rule rule = new_rule(r);
+
+	list[str] keywords = [toLowerCase(x.prefix) | RULEPART x <- r.left, x is prefix];
+	rule.late = "late" in keywords;
+	rule.directions = generate_directions(keywords);
+	
+	list[RulePart] left  = [];
+	for (RULEPART p <- [x | RULEPART x <- r.left, x is part]){
+		left += [convert_rulepart(p, rule, c, engine, true)];
+	}
+	
+	list[RulePart] right = [];
+	for (RULEPART p <- [x | RULEPART x <- r.right, x is part]){
+		right += [convert_rulepart(p, rule, c, engine, false)];
+	}
+	
+	for (int i <- [0..size(left)]){
+		RulePart right_part;
+		if (i < size(right)){
+			right_part = right[i];
+		} else {
+			right_part = [];
+		}
+		
+		rule = compile_rulepart(rule, engine, left[i], right_part);
+	}
+
+	rule.commands = {convert_command(x) | RULEPART x <- r.right, x is command || x is sound};
+	if (!isEmpty(r.message)) rule.commands += {Command::message(r.message[0])};
+	
 	return rule;
 }
 

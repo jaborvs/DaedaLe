@@ -163,14 +163,14 @@ tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
 }
 
 list[str] MOVES = ["left", "up", "right", "down"];
-tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _)){
-	str input = get_input();
+tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _), str input){
 	if (input == "undo"){
 		return <engine, undo(level)>;
 	} else if (input == "restart"){
 		return <engine, restart(level)>;
 	}
 	
+	// pre-run before the move
 	do {
 		engine.again = false;
 		<engine, level> = rewrite(engine, level, false);
@@ -180,15 +180,21 @@ tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _
 		level = plan_move(level, input);
 	}
 	
+	// run during the move
 	do {
 		engine.again = false;
 		<engine, level> = rewrite(engine, level, false);
+	} while (engine.again && !engine.abort);
+	
+	level = do_move(level);
+	
+	// post-run after the move
+	do {
+		engine.again = false;
 		<engine, level> = rewrite(engine, level, true);
 	} while (engine.again && !engine.abort);
 	
 	level.objectdata = update_objectdata(level);
-	level = do_move(level);
-	
 	return <engine, level>;
 }
 
@@ -197,14 +203,10 @@ tuple[Engine, Level] do_turn(Engine engine, Level level : message(_, _)){
 }
 
 // temporary substitute to getting user input
-int INDEX = 0;
-list[str] GAME1_LEVEL1_MOVES = ["down", "left", "up", "right", "right", "right", "down", "left", "up", "left", "left", "down", "down", "right", "up", "left", "up", "right", "up", "up", "left", "down", "down", "right", "down", "right", "right", "up", "left", "down", "left", "up", "up", "down", "down", "down", "left",  "up"];
-list[str] GAME1_LEVEL2_MOVES = ["right", "down", "down", "left", "right", "up", "up", "left", "down", "up", "up", "left", "left", "down", "down", "right"];
-list[str] PLANNED_MOVES = GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES; 
-str get_input(){
-	str move = PLANNED_MOVES[INDEX];
-	INDEX += 1;
-	return move;
+tuple[str, int] get_input(list[str] moves, int index){
+	str move = moves[index];
+	index += 1;
+	return <move, index>;
 }
 
 Coords shift_coords(Layer lyr, Coords coords, str direction : "left"){
@@ -441,12 +443,15 @@ void print_message(str string){
 	println("#####################################################");
 }
 
-void game_loop(Checker c){
+void game_loop(Checker c, list[str] moves){
 	Engine engine = compile(c);
 	
 	print_level(engine.current_level);
+	int index = 0;
+	str input;
 	while (true){
-		<engine, engine.current_level> = do_turn(engine, engine.current_level);
+		<input, index> = get_input(moves, index);
+		<engine, engine.current_level> = do_turn(engine, engine.current_level, input);
 		
 		for (str event <- engine.sound_queue){
 			play_sound(engine, event);
