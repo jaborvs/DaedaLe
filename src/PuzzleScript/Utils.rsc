@@ -2,6 +2,11 @@ module PuzzleScript::Utils
 
 import String;
 
+public str RIGHT = "right";
+public str LEFT = "left";
+public str UP = "up";
+public str DOWN = "down";
+
 public list[str] directional_sound_masks = ["move", "cantmove"];
 public list[str] sound_masks = ["create", "destroy", "action"] + directional_sound_masks;
 public list[str] absolute_directions_single = ["left", "right", "down", "up"];

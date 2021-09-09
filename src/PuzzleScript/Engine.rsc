@@ -13,24 +13,35 @@ import util::Eval;
 int MAX_LOOPS = 20;
 
 Level restart(Level level){	
-	level.layers = level.states[level.checkpoint];
-	level.states = level.states[0..level.checkpoint];
+	if (level.states[-1] != level.layers) level.states += [deep_copy(level.layers)];
+	
+	level.layers = deep_copy(level.checkpoint);
 	return level;
 }
 
 Level undo(Level level){
+	int index;
+	if (level.layers == level.states[-1]) {
+		index = -2;
+	} else {
+		index = -1;
+	}
+	
 	if (!isEmpty(level.states)) {
-		level.layers = level.states[-1];
-		level.states = level.states[0..-1];
-		
-		if (size(level.states) - 1 < level.checkpoint) level.checkpoint = -1;
+		level.layers = level.states[index];
+		level.states = level.states[0..index];
 	}
 	
 	return level;
 }
 
+Level checkpoint(Level level){
+	level.checkpoint = deep_copy(level.layers);
+	return level;
+}
+
 bool is_last(Engine engine){
-	return size(engine.levels) - 1 > engine.index;
+	return engine.index == size(engine.levels) - 1;
 }
 
 Engine change_level(Engine engine, int index){
@@ -85,22 +96,29 @@ str format_replacement(str pattern, str replacement, list[Layer] layers) {
 str format_pattern(str pattern, list[Layer] layers){
 	return "
 	'list[Layer] layers  = <layers>;
-	'<pattern>;
+	'<pattern> := layers;
 	'";
 }
 
+map[str, list[str]] directional_absolutes = (
+	"right" : ["right", "left",  "down",  "up"], // >
+	"left" :  ["left",  "right", "up",    "down"], // <
+	"down":   ["down",  "up",    "left",  "right"], // v
+	"up" :    ["up",    "down",  "right", "left" ] // ^
+);
+
+bool eval_pattern(str pattern, str relatives)
+	=	eval(#bool, [EVAL_PRESET, relatives, pattern]).val;
+
 list[str] ROTATION_ORDER = ["right", "up", "left", "down"];
 tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
-	
-	//check if all ruleparts match
-	str check_left = intercalate(" && ", ["<x> := layers" | str x <- rule.left]);
 	int loops = 0;
 	list[Layer] layers = level.layers;
 	bool changed = false;
 	for (str dir <- ROTATION_ORDER){
 		if (dir in rule.directions){
-			println(dir);
-			while (eval(#bool, [EVAL_PRESET, format_pattern(check_left, layers)]).val){
+			str relatives = format_relatives(directional_absolutes[dir]);
+			while (all(str pattern <- rule.left, eval_pattern(format_pattern(pattern, layers), relatives))){
 				changed = true;
 				int index = loops % size(rule.left);
 				
@@ -108,11 +126,8 @@ tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
 					break;
 				}
 				
-				println(layers);
-				println();
-				layers = eval(#list[Layer], [EVAL_PRESET, format_replacement(rule.left[index], rule.right[index], layers)]).val;
+				layers = eval(#list[Layer], [EVAL_PRESET, relatives, format_replacement(rule.left[index], rule.right[index], layers)]).val;
 				loops += 1;
-				println(layers);
 				
 				if (index == 0 && layers == level.layers){
 					break;
@@ -128,14 +143,11 @@ tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
 	level.layers = layers;
 	if (!changed) return <engine, level>;
 	
-	//compile commands to see if we can cheat and just abort
 	for (Command cmd <- rule.commands){
 		if (engine.abort) return <engine, level>;
 		engine = run_command(cmd, engine);
 	}
-	
-	//transform the level
-	
+		
 	return <engine, level>;
 }
 
@@ -150,7 +162,7 @@ tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
 	return <engine, level>;
 }
 
-list[str] MOVES = ["left", "up", "rigth", "down"];
+list[str] MOVES = ["left", "up", "right", "down"];
 tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _)){
 	str input = get_input();
 	if (input == "undo"){
@@ -159,7 +171,11 @@ tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _
 		return <engine, restart(level)>;
 	}
 	
-	if (level.layers notin level.states) level.states += [deep_copy(level.layers)];
+	do {
+		engine.again = false;
+		<engine, level> = rewrite(engine, level, false);
+	} while (engine.again && !engine.abort);
+	
 	if (input in MOVES){
 		level = plan_move(level, input);
 	}
@@ -182,17 +198,12 @@ tuple[Engine, Level] do_turn(Engine engine, Level level : message(_, _)){
 
 // temporary substitute to getting user input
 int INDEX = 0;
-list[str] GAME1_LEVEL1_MOVES = ["down"," left"," up"," right"," right"," right"," down"," left"," up"," left"," left"," down"," down"," right"," up"," left"," up"," right"," up"," up"," left"," down"," down"," right"," down"," right"," right"," up"," left"," down"," left"," up"," up"," down"," down"," down"," left", "up"];
-list[str] GAME1_LEVEL2_MOVES = [];
+list[str] GAME1_LEVEL1_MOVES = ["down", "left", "up", "right", "right", "right", "down", "left", "up", "left", "left", "down", "down", "right", "up", "left", "up", "right", "up", "up", "left", "down", "down", "right", "down", "right", "right", "up", "left", "down", "left", "up", "up", "down", "down", "down", "left",  "up"];
+list[str] GAME1_LEVEL2_MOVES = ["right", "down", "down", "left", "right", "up", "up", "left", "down", "up", "up", "left", "left", "down", "down", "right"];
 list[str] PLANNED_MOVES = GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES; 
 str get_input(){
 	str move = PLANNED_MOVES[INDEX];
-	if (INDEX >= size(PLANNED_MOVES)){
-		INDEX = 0;
-	} else {
-		INDEX += 1;
-	}
-	
+	INDEX += 1;
 	return move;
 }
 
@@ -218,6 +229,10 @@ Coords shift_coords(Layer lyr, Coords coords, str direction : "down"){
 	if (coords.x + 1 >= size(lyr)) return coords;
 	
 	return <coords.x + 1, coords.y, coords.z>;
+}
+
+default Coords shift_coords(_, _, str dir) { 
+	throw "expected valid direction, got <dir>"; 
 }
 
 Level move_obstacle(Level level, Coords coords, Coords other_neighbor_coords){
@@ -249,7 +264,8 @@ Level do_move(Level level){
 			}
 		}
 	}
-
+	
+	if (level.states[-1] != level.layers) level.states += [deep_copy(level.layers)];
 	return level;
 }
 
@@ -322,7 +338,7 @@ Engine run_command(Command cmd : again(), Engine engine){
 }
 
 Engine run_command(Command cmd : checkpoint(), Engine engine){
-	engine.current_level.checkpoint = size(engine.current_level.states) - 1;
+	engine.current_level = checkpoint(level);
 	return engine;
 }
 
@@ -359,15 +375,27 @@ void print_level(Level l: message(str msg, _)){
 }
 
 void print_level(Level l : level){
-	for (Layer lyr <- l.layers){
-		for (Line line <- lyr) {
-			print(intercalate("", [x.id | x <- line]));
-			print("   ");
-			print(intercalate(" ", line));
-			println();
-		}
+
+	str pixel(str p : "trans") = ".";
+	default str pixel(str p) = p[0];
+	
+	//for (Layer lyr <- l.layers){
+	//	for (Line line <- lyr) {
+	//		print(intercalate("", [pixel(x.name) | x <- line]));
+	//		//print("   ");
+	//		//print(intercalate(" ", line));
+	//		println();
+	//	}
+	//	println();
+	//}
+	
+	for (Line line <- l.layers[-1]) {
+		print(intercalate("", [pixel(x.name) | x <- line]));
+		//print("   ");
+		//print(intercalate(" ", line));
 		println();
 	}
+	println();
 }
 
 list[Layer] deep_copy(list[Layer] lyrs){
@@ -415,6 +443,8 @@ void print_message(str string){
 
 void game_loop(Checker c){
 	Engine engine = compile(c);
+	
+	print_level(engine.current_level);
 	while (true){
 		<engine, engine.current_level> = do_turn(engine, engine.current_level);
 		
@@ -426,6 +456,8 @@ void game_loop(Checker c){
 			print_message(msg);
 		}
 		
+		print_level(engine.current_level);
+		
 		bool victory = is_victorious(engine, engine.current_level);
 		if (victory && is_last(engine)){
 			break;
@@ -433,7 +465,6 @@ void game_loop(Checker c){
 			engine = change_level(engine, engine.index + 1);
 		}
 		
-		print_level(engine.current_level);
 		engine.abort = false;
 	}
 	

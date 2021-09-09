@@ -8,6 +8,8 @@ import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Utils;
 
+import IO;
+
 alias Line = list[Object];
 alias Layer = list[Line];
 
@@ -15,7 +17,7 @@ data Level
 	= level(
 		list[Layer] layers, 
 		list[list[Layer]] states,
-		int checkpoint,
+		list[Layer] checkpoint,
 		list[set[str]] layerdata,
 		list[str] objectdata,
 		LEVELDATA original
@@ -88,13 +90,14 @@ alias Engine = tuple[
 	bool again,
 	list[str] sound_queue,
 	list[str] msg_queue,
+	list[Command] cmd_queue,
 	PSGAME game
 ];
 
 Engine new_engine(PSGAME game)		
 	= <
 		[], 
-		level([], [], 0, [], [], level_data([])), 
+		level([], [], [], [], [], level_data([])), 
 		(), 
 		[], 
 		[],
@@ -104,6 +107,7 @@ Engine new_engine(PSGAME game)
 		false, 
 		false, 
 		[], 
+		[],
 		[],
 		game
 	>;
@@ -153,7 +157,13 @@ alias RuleReference = tuple[
 	str force
 ];
 
-alias RuleContent = list[RuleReference];
+data RuleContent
+	= references(list[RuleReference] refs)
+	| ellipsis()
+	| empty(int layer)
+	;
+
+//alias RuleContent = list[RuleReference];
 alias RulePart = list[RuleContent];
 
 // matching & replacement
@@ -169,11 +179,39 @@ str line(int index, list[str] stuff, bool _) {
 }
 
 str unique(Coords index) = "<index.x>_<index.y>_<index.z>";
-str absolufy(str force, Coords coords, bool _: true) 
-	= "str direction<unique(coords)> : /<force>/";
-	
-str absolufy(str force, Coords coords, bool _: false) 
-	= "\"<force>\"";
+
+//ANY CHANGES TO THE VALUES ON THE LEFT MUST BE MIRRORED IN THE FUNCTION BELOW
+map[str, str] relative_mapping = (
+	"\>": "relative_right",
+	"\<": "relative_left",
+	"v": "relative_down",
+	"^": "relative_up"
+);
+
+str format_relatives(list[str] absolutes){
+	return "
+	'str relative_right = \"<absolutes[0]>\";
+	'str relative_left = \"<absolutes[1]>\";
+	'str relative_down = \"<absolutes[2]>\";
+	'str relative_up = \"<absolutes[3]>\";
+	";
+}
+
+str absolufy(str force) {
+	if (force in absolute_directions_single){
+		return "/<force>/";
+	} else if (force in relative_mapping){
+		return relative_mapping[force];
+	} else if (force == "moving"){
+		return "/left|right|up|down/";
+	} else if (force == "horizontal") {
+		return "/left|right/";
+	} else if (force == "vertical") {
+		return "/up|down/";
+	} else {
+		return force;
+	}
+}
 
 // matching
 str coords(Coords index, bool _: true)
@@ -186,11 +224,10 @@ str object(Coords index, RuleReference ref, Engine engine, bool is_pattern: true
 
 str moving_object(Coords index, RuleReference ref, Engine engine, bool is_pattern: true) {
 	str names = intercalate(", ", ref.objects);
-	return "Object <ref.objects[0]><index.y> : moving_object(str name<unique(index)> : /<names>/, int id<unique(index)>, <absolufy(ref.force, index, is_pattern)>, <coords(index, is_pattern)>)";
+	return "Object <ref.objects[0]><index.y> : moving_object(str name<unique(index)> : /<names>/, int id<unique(index)>, str direction<unique(index)> : <absolufy(ref.force)>, <coords(index, is_pattern)>)";
 }
 	
 //replacement
-
 str coords(Coords index, bool _: false)
 	= "coords<unique(index)>";	
 	
@@ -206,9 +243,9 @@ str object(Coords index, RuleReference ref, Engine engine, bool is_pattern: fals
 str moving_object(Coords index, RuleReference ref, Engine engine, bool is_pattern: false) {
 	if (size(ref.objects) == 1){
 		int id = get_object(ref.objects[0], engine).id;
-		return "moving_object(\"<ref.objects[0]>\", <id>, <absolufy(ref.force, index, is_pattern)>, <coords(index, is_pattern)>)";
+		return "moving_object(\"<ref.objects[0]>\", <id>, <absolufy(ref.force)>, <coords(index, is_pattern)>)";
 	} else {
-		return "moving_object(name<unique>, id<unique(index)>, <absolufy(ref.force, index, is_pattern)>, <coords(index, is_pattern)>)";
+		return "moving_object(name<unique>, id<unique(index)>, <absolufy(ref.force)>, <coords(index, is_pattern)>)";
 	}
 }
 
@@ -220,23 +257,30 @@ Rule compile_rulepart(list[RuleContent] contents, Rule rule, Engine engine, bool
 		set[str] lyr = layers[b];
 		list[str] compiled_lines = [];
 		for (int i <- [0..size(contents)]){
-			RuleContent refs = contents[i];
-			for (int j <- [0..size(refs)]){
-				// index = <section_index>_<content_index>
-				Coords index = <i, j, b>;
-				RuleReference ref = refs[j];
-				if (!any(str x <- ref.objects, x in lyr)) continue;
-		        if (ref.force == "none"){
-		            compiled_lines += [object(index, ref, engine, is_pattern)];
-		        } else {
-		            str direction = ref.force;
-		            compiled_lines += [moving_object(index, ref, engine, is_pattern)];
-		        }
-		        // only one item from each layer should exist so if we found the one for the
-		        // current layer we can just return, if not, then it's on the user
-		        break;
+			RuleContent cont = contents[i];
+			if (cont is references){
+				list[RuleReference] refs = cont.refs;
+				for (int j <- [0..size(refs)]){
+					// index = <section_index, content_index, layer_index>;
+					Coords index = <i, j, b>;
+					RuleReference ref = refs[j];
+					if (!any(str x <- ref.objects, x in lyr)) continue;
+			        if (ref.force in ["none", "stationary"]){
+			            compiled_lines += [object(index, ref, engine, is_pattern)];
+			        } else {
+			            compiled_lines += [moving_object(index, ref, engine, is_pattern)];
+			        }
+			        // only one item from each layer should exist so if we found the one for the
+			        // current layer we can just return, if not, then it's on the user
+			        break;
+				}
+			} else if (cont is ellipsis){
+				compiled_lines += ["*ellipsis<b>"];
+			} else if (cont is empty && is_pattern){
+				compiled_lines += ["empty<i>_<b>"];
+			} else if (cont is empty && b == cont.layer){
+				compiled_lines += ["empty<i>_<b>"];
 			}
-			
 		}
 		
 		compiled_layer += [compiled_lines];
@@ -263,29 +307,37 @@ Rule compile_rulepart(list[RuleContent] contents, Rule rule, Engine engine, bool
 
 Rule convert_rulepart( RULEPART p: part(list[RULECONTENT] _), Rule rule, Checker c, Engine engine, bool is_pattern) {
 	list[RuleContent] contents = [];
-	for (RULECONTENT cont <- p.contents){
-		RuleContent refs = [];
-
-		for (int i <- [0..size(cont.content)]){
-			if (toLowerCase(cont.content[i]) in rulepart_keywords) continue;
-			list[str] objs = resolve_reference(cont.content[i], c, p@location).objs;
-			str force = "none";
-			if (i != 0 && toLowerCase(cont.content[i-1]) in rulepart_keywords) force = toLowerCase(cont.content[i-1]);
-			
-			if (toLowerCase(cont.content[i]) in c.combinations){
-				for (str obj <- objs){
-					refs += [<obj, toLowerCase(cont.content[i]), force>];
+	if (isEmpty(p.contents)) contents += [empty()];
+	
+	for (int j <- [0..size(p.contents)]){
+		RULECONTENT cont = p.contents[j];
+		if ("..." in cont.content){
+			contents += [ellipsis()];
+		} else if (isEmpty(cont.content)){
+			contents += [empty()];
+		} else {
+			list[RuleReference] refs = [];
+			//processing direction
+			for (int i <- [0..size(cont.content)]){
+				if (toLowerCase(cont.content[i]) in rulepart_keywords) continue;
+				list[str] objs = resolve_reference(cont.content[i], c, p@location).objs;
+				str force = "none";
+				if (i != 0 && toLowerCase(cont.content[i-1]) in rulepart_keywords) force = toLowerCase(cont.content[i-1]);
+				
+				if (toLowerCase(cont.content[i]) in c.combinations){
+					for (str obj <- objs){
+						refs += [<obj, toLowerCase(cont.content[i]), force>];
+					}
+				} else {
+					refs += [<objs, toLowerCase(cont.content[i]), force>];
 				}
-			} else {
-				refs += [<objs, toLowerCase(cont.content[i]), force>];
 			}
-			
+			contents += [references(refs)];
 		}
-		
-		contents += [refs];
 	}
 
-
+	println(p);
+	println(contents);
 	return compile_rulepart(contents, rule, engine, is_pattern);
 }
 
@@ -341,7 +393,7 @@ Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c, Engine 
 		layers += [layer];
 	}
 	
-	return Level::level(layers, [], 0, engine.layers, objectdata, l);
+	return Level::level(layers, [layers], layers, engine.layers, objectdata, l);
 }
 
 Level convert_level(LEVELDATA l: message(str msg), Checker c, Engine engine){

@@ -1,6 +1,7 @@
-title Simple Block Pushing Game
-author David Skinner
+title Match 3 Block Push
+author increpare
 homepage www.puzzlescript.net
+debug
 
 ========
 OBJECTS
@@ -40,7 +41,7 @@ Black Orange White Blue
 .3.3.
 
 Crate
-Orange
+Orange Yellow
 00000
 0...0
 0...0
@@ -80,30 +81,31 @@ RULES
 
 [ >  Player | Crate ] -> [  >  Player | > Crate  ]
 
+late [ Crate | Crate | Crate ] -> [ | | ]
+
 ==============
 WINCONDITIONS
 ==============
 
-All Target on Crate
+All Crate on Target
 
 =======
 LEVELS
 =======
 
+#########
+#.......#
+#.*.*.@.#
+#.P...O.#
+#...*.*.#
+#.......#
+#########
 
-####..
-#.O#..
-#..###
-#@P..#
-#..*.#
-#..###
-####..
-
-
-######
-#....#
-#.#P.#
-#.*@.#
-#.O@.#
-#....#
-######
+.#######.
+.#.....#.
+.#O##..##
+##.##.*.#
+#.*..**.#
+#.OOO.#.#
+#.P.....#
+#########

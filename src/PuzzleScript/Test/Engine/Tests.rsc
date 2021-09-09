@@ -23,16 +23,28 @@ void main() {
 	//print_level(level);
 	
 	println("Rule Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Rules.PS|);
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/IntermediateGame1.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 	level = engine.levels[0];
-	<engine, level> = rewrite(engine, level, false);
-	level = do_move(level);
-	println();
-	print_level(level);
 	
-
+	println(engine.rules[1].left[0]);
+	println();
+	println(engine.rules[1].right[0]);
+	
+	
+	//level = plan_move(level, "up");
+	//level = do_move(level);
+	//print_level(level);
+	//println();
+	//
+	//level = do_move(level);
+	//<engine, level> = rewrite(engine, level, false);
+	//level = plan_move(level, "up");
+	//level = do_move(level);
+	//print_level(level);
+	
+	
 	//println("Rotate Test");
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Rotate.PS|);
 	//checker = check_game(game);
@@ -65,5 +77,81 @@ void main() {
 		
 	//println("Rewrite Test");
 	
+	//println("Simple Game Test");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+	//checker = check_game(game);
+	//game_loop(checker);
 	
+	//println("Undo Test");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//level = engine.levels[0];
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//level = plan_move(level, "down");
+	//level = do_move(level);
+	//level = plan_move(level, "left");
+	//<engine, level> = rewrite(engine, level, false);
+	//level = do_move(level);
+	//print_level(level);
+	//level = undo(level);
+	//print_level(level);
+	
+	//println("Restart Test");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//level = engine.levels[0];
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//level = plan_move(level, "down");
+	//level = do_move(level);
+	//level = plan_move(level, "left");
+	//<engine, level> = rewrite(engine, level, false);
+	//level = do_move(level);
+	//print_level(level);
+	//level = restart(level);
+	//print_level(level);
+	
+	//println("Checkpoint Test");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//level = engine.levels[0];
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//level = checkpoint(level);
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//level = plan_move(level, "down");
+	//level = do_move(level);
+	//level = plan_move(level, "left");
+	//<engine, level> = rewrite(engine, level, false);
+	//level = do_move(level);
+	//print_level(level);
+	//level = restart(level);
+	//print_level(level);
+	
+	//println("Mixed Command Test");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//level = engine.levels[0];
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//level = plan_move(level, "right");
+	//level = do_move(level);
+	//level = plan_move(level, "down");
+	//level = do_move(level);
+	//level = plan_move(level, "left");
+	//<engine, level> = rewrite(engine, level, false);
+	//level = do_move(level);
+	//print_level(level);
+	//level = restart(level);
+	//print_level(level);
 }
