@@ -216,8 +216,7 @@ str object(Coords index, RuleReference ref, Engine engine, bool is_pattern: true
 	str names = intercalate("|", ref.objects);
 	str obj_name = "object";
 	if (ref.force == "no"){
-		//names = intercalate("|", ref.objects + ["trans"]);
-		//names = "^((?!<names>).)*$";
+		names = "^((?!<names>).)*$";
 		obj_name = "/object|transparent/";
 	}
 	return "Object <ref.reference><index.y> : <obj_name>(str name<unique(index)> : /<names>/, int id<unique(index)>, <coords(index, is_pattern)>)";
@@ -249,7 +248,7 @@ str moving_object(Coords index, RuleReference ref, Engine engine, bool is_patter
 		int id = get_object(ref.objects[0], engine).id;
 		return "moving_object(\"<ref.objects[0]>\", <id>, <absolufy(ref.force)>, <coords(index, is_pattern)>)";
 	} else {
-		return "moving_object(name<unique>, id<unique(index)>, <absolufy(ref.force)>, <coords(index, is_pattern)>)";
+		return "moving_object(name<unique(index)>, id<unique(index)>, <absolufy(ref.force)>, <coords(index, is_pattern)>)";
 	}
 }
 

@@ -11,6 +11,11 @@ import Type;
 import util::Math;
 import List;
 
+Object randomObject(list[Object] objs){
+		int rand = arbInt(size(objs));
+		return objs[rand];
+	}
+
 void main() {
 	PSGAME game;
 	Checker checker;
@@ -92,20 +97,14 @@ void main() {
 	checker = check_game(game);
 	engine = compile(checker);
 	
-	println(engine.levels[0].layers);
-	println();
-	println(engine.rules[1].left[0]);
-	println();
-	println(engine.rules[1].right[0]);
+	//println(engine.levels[0].layers);
+	//println();
+	//println(engine.rules[1].left[0]);
+	//println();
+	//println(engine.rules[1].right[0]);
+	//println();
 	
-	Object randomObject(list[Object] objs){
-		int rand = arbInt(size(objs));
-		return objs[rand];
-	}
-	
-	[ [ *layer0 ], [ *prefix_lines1, [ *prefix_objects1, object("spawner", 1, coords0_0_1), *suffix_objects1 ], *suffix_lines1 ], [ *prefix_lines2, [ *prefix_objects2, randomObject([object("redrobot", 3, coords0_1_2), object("greenrobot", 4, coords0_1_2), object("bluerobot", 5, coords0_1_2)]), *suffix_objects2 ], *suffix_lines2 ] ];
-	
-	//game_loop(checker, GAME3_LEVEL1_MOVES);
+	game_loop(checker, GAME3_LEVEL1_MOVES);
 	
 	//println("Undo Test");
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
