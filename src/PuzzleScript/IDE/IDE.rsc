@@ -13,6 +13,7 @@ import ParseTree;
 import String;
 import IO;
 import util::Webserver;
+import Content;
 
 anno str node@label;
 anno loc node@\loc;
@@ -80,17 +81,13 @@ public node ps_outline(Tree x){
 	);
 }
 
-void run_game(Tree t, loc s){
+Content run_game(Tree t, loc s){
 	t = annotate(t);
 	PSGAME g = ps_implode(t);
 	Checker c = check_game(g);
 	Engine engine = compile(c);
 	
-	loc host = |http://localhost:9050/|;
-	
-	try { util::Webserver::shutdown(host);} catch: ;
-	util::Webserver::serve(host, load_app(engine)().callback, asDaemon = true);
-	println("Serving content at <host>");
+	return load_app(engine)();
 }
 
 public void registerPS(){
@@ -146,7 +143,7 @@ public void registerPS(){
     	menu(
     		"PuzzleScript",
     		[
-    			action("Run Game", run_game)
+    			interaction("Run Game", run_game)
     		]
     	)
     )

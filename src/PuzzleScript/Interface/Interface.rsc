@@ -74,15 +74,23 @@ void view(Model m){
 			}
 			
 			h3("Rules");
-			for (Rule rule <- m.engine.rules){
+			for (int i <- [0..size(m.engine.rules)]){
+				Rule rule = m.engine.rules[i];
 				str left_original = intercalate(" ", [toString(x) | x <- rule.original.left]);
 				str right_original = intercalate(" ", [toString(x) | x <- rule.original.right]);
 				str message = "";
 				if (!isEmpty(rule.original.message)) message = "message <rule.original.message[0]>";
 				
 				p(() {
-					span("<left_original> -\> <right_original> <message>: ");
+					button(\type("button"), class("collapsible"), "+");
+					span("\t <left_original> -\> <right_original> <message>: ");
 					b(class("<rule.used>"), "<rule.used>");
+				});
+				
+				div(class("content"), () {
+					p(rule.left);
+					br();
+					p(rule.right);
 				});
 			}
 			
@@ -158,5 +166,6 @@ App[str]() load_app(Engine engine){
 //Test
 //import PuzzleScript::Interface::Interface;
 // load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|)();
+// load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/AdvancedGame1.PS|)();
 
 

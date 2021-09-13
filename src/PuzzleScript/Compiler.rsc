@@ -39,7 +39,6 @@ data Object
 public str EVAL_PRESET = "
 	'import List;
 	'import util::Math;
-	'import PuzzleScript::Compiler;
 	'
 	'str randomDir(){
 	'	int rand = arbInt(4);
@@ -194,6 +193,7 @@ str format_relatives(list[str] absolutes){
 	";
 }
 
+// matching
 str absolufy(str force) {
 	if (force in absolute_directions_single){
 		return "/<force>/";
@@ -212,7 +212,6 @@ str absolufy(str force) {
 	}
 }
 
-// matching
 str coords(Coords index, bool _: true)
 	= "Coords coords<unique(index)> : \<xcoord<index.x>, ycoord<index.x>, zcoord<unique(index)>\>";
 
@@ -232,6 +231,20 @@ str moving_object(Coords index, RuleReference ref, Engine engine, bool is_patter
 }
 	
 //replacement
+str absolufy(str force, Coords index) {
+	if (force in absolute_directions_single){
+		return "\"<force>\"";
+	} else if (force in relative_mapping){
+		return relative_mapping[force];
+	} else if (force in ["moving", "vertical", "horizontal"]){
+		return "direction<unique(index)>";
+	} else if (force == "randomdir") {
+		return "randomDir()";
+	} else {
+		return force;
+	}
+}
+
 str coords(Coords index, bool _: false)
 	= "coords<unique(index)>";	
 	
@@ -252,7 +265,7 @@ str moving_object(Coords index, RuleReference ref, Engine engine, bool is_patter
 		int id = get_object(ref.objects[0], engine).id;
 		return "moving_object(\"<ref.objects[0]>\", <id>, <absolufy(ref.force)>, <coords(index, is_pattern)>)";
 	} else {
-		return "moving_object(name<unique(index)>, id<unique(index)>, <absolufy(ref.force)>, <coords(index, is_pattern)>)";
+		return "moving_object(name<unique(index)>, id<unique(index)>, <absolufy(ref.force, index)>, <coords(index, is_pattern)>)";
 	}
 }
 

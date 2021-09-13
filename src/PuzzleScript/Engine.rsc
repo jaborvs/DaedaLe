@@ -116,7 +116,6 @@ bool eval_pattern(str pattern, str relatives)
 
 list[str] ROTATION_ORDER = ["right", "up", "left", "down"];
 tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
-	rule.used = false;
 	int loops = 0;
 	list[Layer] layers = level.layers;
 	bool changed = false;
@@ -172,6 +171,10 @@ tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _
 		return <engine, undo(level)>;
 	} else if (input == "restart"){
 		return <engine, restart(level)>;
+	}
+	
+	for (int i <- [0..size(engine.rules)]){
+		engine.rules[i].used = false;
 	}
 	
 	// pre-run before the move

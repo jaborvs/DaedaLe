@@ -476,7 +476,7 @@ Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c, 
 	
 		list[str] objs = [toLowerCase(x) | x <- cont.content, !(toLowerCase(x) in rulepart_keywords)];
 		list[str] verbs = [toLowerCase(x) | x <- cont.content, toLowerCase(x) in rulepart_keywords];
-		if(!isEmpty(verbs) && late) c.msgs += [invalid_rule_movement_late(error(), cont@location)];
+		if(any(str x <- verbs, x notin ["no"]) && late) c.msgs += [invalid_rule_movement_late(error(), cont@location)];
 		
 		if (pattern){
 			if(any(str rand <- rulepart_random, rand in verbs)) c.msgs += [invalid_rule_random(error(), cont@location)];
@@ -530,7 +530,7 @@ Checker check_rulepart(RULEPART p: command(str command), Checker c, bool late, b
 
 Checker check_rulepart(RULEPART p: sound(str snd), Checker c, bool late, bool pattern){
 	if (/sfx([0-9]|'10')/i := snd && toLowerCase(snd) in c.sound_events) {
-		c.used_sounds += [snd];
+		c.used_sounds += [toLowerCase(snd)];
 	} else if (/sfx([0-9]|10)/i := snd) {
 		//correct format but undefined
 		c.msgs += [undefined_sound(snd, error(), p@location)];
@@ -716,7 +716,7 @@ Checker check_condition(CONDITIONDATA w, Checker c){
 //	message_too_long
 Checker check_level(LEVELDATA l, Checker c){
 	switch(l) {
-		case message(str msg): if (size(msg) > 12) c.msgs += [message_too_long(warn(), l@location)];
+		case message(str msg): if (size(split(" ", msg)) > 12) c.msgs += [message_too_long(warn(), l@location)];
 		case level_data(_): {
 			int length = size(l.level[0]);
 			bool invalid = false;
