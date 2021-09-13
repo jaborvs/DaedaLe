@@ -123,7 +123,7 @@ tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
 		if (dir in rule.directions){
 			str relatives = format_relatives(directional_absolutes[dir]);
 			while (all(str pattern <- rule.left, eval_pattern(format_pattern(pattern, layers), relatives))){
-				rule.used = true;
+				rule.used += 1;
 				int index = loops % size(rule.left);
 				
 				if (isEmpty(rule.right)){
@@ -166,7 +166,7 @@ tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
 	return <engine, level>;
 }
 
-tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _), str input){
+tuple[Engine, Level] do_turn(Engine engine, Level level : level, str input){
 	if (input == "undo"){
 		return <engine, undo(level)>;
 	} else if (input == "restart"){
@@ -174,7 +174,7 @@ tuple[Engine, Level] do_turn(Engine engine, Level level : level(_, _, _, _, _, _
 	}
 	
 	for (int i <- [0..size(engine.rules)]){
-		engine.rules[i].used = false;
+		engine.rules[i].used = 0;
 	}
 	
 	// pre-run before the move
@@ -449,7 +449,7 @@ Level plan_move(Level level, str direction){
 			Line line = layer[j];
 			for(int k <- [0..size(line)]){
 				Object obj = line[k];
-				if (line[k].name == "player"){
+				if (line[k].name in level.player){
 					level.layers[i][j][k] = moving_object(obj.name, obj.id, direction, <j, k, i>);
 				}
 			}

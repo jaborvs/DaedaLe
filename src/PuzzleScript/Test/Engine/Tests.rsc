@@ -106,7 +106,7 @@ void main() {
 	engine = compile(checker);
 	level = engine.levels[0];
 	
-	<engine, level> = do_turn(engine, level, "right");
+	print(engine.rules[0].left[0]);
 	
 	//game_loop(checker, GAME3_LEVEL1_MOVES);
 	

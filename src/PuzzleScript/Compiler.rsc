@@ -20,6 +20,7 @@ data Level
 		list[Layer] checkpoint,
 		list[set[str]] layerdata,
 		list[str] objectdata,
+		list[str] player,
 		LEVELDATA original
 	)
 	| message(str msg, LEVELDATA original)
@@ -79,7 +80,7 @@ alias Rule = tuple[
 	set[str] directions,
 	list[str] left,
 	list[str] right,
-	bool used,
+	int used,
 	RULEDATA original
 ];
 
@@ -90,7 +91,7 @@ Rule new_rule(RULEDATA r)
 		{}, 
 		[], 
 		[],
-		false, 
+		0, 
 		r
 	>;
 
@@ -108,13 +109,14 @@ alias Engine = tuple[
 	list[str] sound_queue,
 	list[str] msg_queue,
 	list[Command] cmd_queue,
+	list[str] player,
 	PSGAME game
 ];
 
 Engine new_engine(PSGAME game)		
 	= <
 		[], 
-		level([], [], [], [], [], level_data([])), 
+		level([], [], [], [], [], [], level_data([])), 
 		(), 
 		[], 
 		[],
@@ -124,6 +126,7 @@ Engine new_engine(PSGAME game)
 		false, 
 		false, 
 		[], 
+		[],
 		[],
 		[],
 		game
@@ -167,11 +170,11 @@ str empty_layer(int index, bool _) = "[ *layer<index> ]";
 str empty_level(bool _: true) = "[ *level ]";
 
 str layer(int index, list[str] stuff, bool is_pattern) 
-	= "[ *prefix_lines<index>, <line(index, stuff, is_pattern)>, *suffix_lines<index> ]";
+	= "[ *prefix_lines<index>, \n\t\t<line(index, stuff, is_pattern)>, \n\t*suffix_lines<index> ]";
 	
 str line(int index, list[str] stuff, bool _) {
-	str compiled_stuff = intercalate(", ", stuff);
-	return "[ *prefix_objects<index>, <compiled_stuff>, *suffix_objects<index> ]";
+	str compiled_stuff = intercalate(", \n\t\t\t", stuff);
+	return "[ *prefix_objects<index>, \n\t\t\t<compiled_stuff>, \n\t\t*suffix_objects<index> ]";
 }
 
 str unique(Coords index) = "<index.x>_<index.y>_<index.z>";
@@ -280,7 +283,7 @@ str format_compiled_layers(list[list[str]] compiled_layer, bool is_pattern){
     	}
     }
     
-    return "[ " + intercalate(", ", comp) + " ]";
+    return "[ \n\t" + intercalate(", \n\t", comp) + "\n ]";
 } 
 
 Rule compile_rulepart_left(Rule rule, Engine engine, RulePart left_contents, RulePart right_contents){
@@ -495,7 +498,7 @@ Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c, Engine 
 		layers += [layer];
 	}
 	
-	return Level::level(layers, [layers], layers, engine.layers, objectdata, l);
+	return Level::level(layers, [layers], layers, engine.layers, objectdata, c.references["player"], l);
 }
 
 Level convert_level(LEVELDATA l: message(str msg), Checker c, Engine engine){

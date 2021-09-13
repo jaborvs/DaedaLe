@@ -84,13 +84,13 @@ void view(Model m){
 				p(() {
 					button(\type("button"), class("collapsible"), "+");
 					span("\t <left_original> -\> <right_original> <message>: ");
-					b(class("<rule.used>"), "<rule.used>");
+					b(class("<rule.used > 0>"), "<rule.used>");
 				});
 				
 				div(class("content"), () {
-					p(rule.left);
+					for (str r <- rule.left) p(class("rule"), r);
 					br();
-					p(rule.right);
+					for (str r <- rule.right) p(class("rule"), r);
 				});
 			}
 			
@@ -111,7 +111,8 @@ void view(Model m){
 		} else {
 			div(class("left"), () {
 				h3("Layers");
-				for (Layer lyr <- m.engine.current_level.layers){
+				list[Layer] layers = reverse(m.engine.current_level.layers);
+				for (Layer lyr <- layers){
 					table(() {
 						for (Line line <- lyr) {
 							tr(() {
