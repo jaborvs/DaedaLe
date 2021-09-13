@@ -4,10 +4,15 @@ import PuzzleScript::Load;
 import PuzzleScript::AST;
 import PuzzleScript::Checker;
 import PuzzleScript::Messages;
+import PuzzleScript::Compiler;
+import PuzzleScript::Interface::Interface;
+import PuzzleScript::Engine;
 import util::IDE;
 import vis::Figure;
 import ParseTree;
 import String;
+import IO;
+import util::Webserver;
 
 anno str node@label;
 anno loc node@\loc;
@@ -56,7 +61,7 @@ public node ps_outline(Tree x){
 	n = "Game";
 	list[node] levels = [l@label()[@\loc = l@location] | LEVELDATA l <- g.levels];
 	list[node] prelude = [pr.key()[@\loc = pr@location] | PRELUDEDATA pr <- g.prelude]; 
-	list[node] objects = [obj.id()[@\loc = obj@location] | OBJECTDATA obj <- g.objects];
+	list[node] objects = [obj.name()[@\loc = obj@location] | OBJECTDATA obj <- g.objects];
 	list[node] legends = [l.legend()[@\loc = l@location] | LEGENDDATA l <- g.legend];
 	list[node] sounds = ["Sound"()[@\loc = s@location] | SOUNDDATA s <- g.sounds];
 	list[node] layers = [intercalate(", ", l.layer)()[@\loc = l@location] | LAYERDATA l <- g.layers];
@@ -73,6 +78,19 @@ public node ps_outline(Tree x){
 		"Conditions"(conditions)[@label="Conditions (<size(conditions)>)"][@\loc = localize("conditions", g@location, g.sections)],
 		"Levels"(levels)[@label="Levels (<size(levels)>)"][@\loc = localize("levels", g@location, g.sections)]
 	);
+}
+
+void run_game(Tree t, loc s){
+	t = annotate(t);
+	PSGAME g = ps_implode(t);
+	Checker c = check_game(g);
+	Engine engine = compile(c);
+	
+	loc host = |http://localhost:9050/|;
+	
+	try { util::Webserver::shutdown(host);} catch: ;
+	util::Webserver::serve(host, load_app(engine)().callback, asDaemon = true);
+	println("Serving content at <host>");
 }
 
 public void registerPS(){
@@ -123,7 +141,15 @@ public void registerPS(){
     
   PS_contributions =
   {
-    PS_style
+    PS_style,
+    popup(
+    	menu(
+    		"PuzzleScript",
+    		[
+    			action("Run Game", run_game)
+    		]
+    	)
+    )
   };
     
   registerLanguage(PS_NAME, PS_EXT, ps_parse);

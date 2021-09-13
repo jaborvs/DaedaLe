@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<link rel="stylesheet" href="/salix/lib/bootstrap.min.css">
+<script src="/salix/lib/jquery-1.11.0.min.js"></script>
+<script src="/salix/lib/bootstrap.min.js"></script>
+<link rel="stylesheet" href="/salix/lib/codemirror.css">
+<script src="/salix/lib/codemirror.js"></script>
+<script src="/salix/lib/javascript.js"></script>
+<script src="/salix/lib/simple.js"></script>
+<script src="/salix/lib/salix-cm.js"></script>
+<script src="/salix/salix.js"></script>
+
+<style>
+	.trans {
+		color: white;
+		width: 21px;
+	}
+	
+	.object {
+		border: 1px dotted black;
+		width: 21px;
+		text-align: center;
+	}
+	
+	.left {
+		float: left;
+		margin: 10px;
+	}
+	
+	.true {
+		color: darkgreen;
+	}
+	
+	.false {
+		color: darkred;
+	}
+	
+</style>
+
+<script>
+  var salix = new Salix();
+  $(document).ready(salix.start);
+</script>
+<body>
+<div class="container">
+  <div id="root">
+  </div>
+</div>
+</body>
+
+</html>

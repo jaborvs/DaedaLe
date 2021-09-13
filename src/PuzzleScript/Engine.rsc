@@ -10,6 +10,7 @@ import PuzzleScript::AST;
 import PuzzleScript::Utils;
 import PuzzleScript::Compiler;
 import util::Eval;
+import util::Math;
 
 int MAX_LOOPS = 20;
 
@@ -22,16 +23,18 @@ Level restart(Level level){
 
 Level undo(Level level){
 	int index;
+	if (isEmpty(level.states)) return level;
+	
 	if (level.layers == level.states[-1]) {
 		index = -2;
 	} else {
 		index = -1;
 	}
 	
-	if (!isEmpty(level.states)) {
-		level.layers = level.states[index];
-		level.states = level.states[0..index];
-	}
+	if(size(level.states) > abs(index)) return level;
+	
+	level.layers = level.states[index];
+	level.states = level.states[0..index];
 	
 	return level;
 }
@@ -112,7 +115,8 @@ bool eval_pattern(str pattern, str relatives)
 	=	eval(#bool, [EVAL_PRESET, relatives, pattern]).val;
 
 list[str] ROTATION_ORDER = ["right", "up", "left", "down"];
-tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
+tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
+	rule.used = false;
 	int loops = 0;
 	list[Layer] layers = level.layers;
 	bool changed = false;
@@ -120,7 +124,7 @@ tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
 		if (dir in rule.directions){
 			str relatives = format_relatives(directional_absolutes[dir]);
 			while (all(str pattern <- rule.left, eval_pattern(format_pattern(pattern, layers), relatives))){
-				changed = true;
+				rule.used = true;
 				int index = loops % size(rule.left);
 				
 				if (isEmpty(rule.right)){
@@ -142,22 +146,22 @@ tuple[Engine, Level] apply_rule(Engine engine, Level level, Rule rule){
 	}
 	
 	level.layers = layers;
-	if (!changed) return <engine, level>;
+	if (!changed) return <engine, level, rule>;
 	
 	for (Command cmd <- rule.commands){
-		if (engine.abort) return <engine, level>;
+		if (engine.abort) return <engine, level, rule>;
 		engine = run_command(cmd, engine);
 	}
 		
-	return <engine, level>;
+	return <engine, level, rule>;
 }
 
 tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
-	list[Rule] rules = [x | Rule x <- engine.rules, x.late == late];
-
-	for (Rule rule <- rules){
+	for (int i <- [0..size(engine.rules)]){
+		Rule rule = engine.rules[i];
+		if (rule.late != late) continue;
 		if (engine.abort) break;
-		<engine, level> = apply_rule(engine, level, rule);
+		<engine, level, engine.rules[i]> = apply_rule(engine, level, rule);
 	}
 	
 	return <engine, level>;
@@ -295,41 +299,61 @@ list[bool] is_on(Level level, list[str] objs, list[str] on){
 	return results;
 }
 
+bool is_met(Condition _ : no_objects(list[str] objs), Level level)
+	= !any(str x <- objs, x in level.objectdata);
+	
+str toString(Condition _ : no_objects(list[str] objs)){
+	str t = intercalate(", ", objs);
+	return "No <t>";
+}
+	
+bool is_met(Condition _ : some_objects(list[str] objs), Level level)
+	= any(str x <- objs, x in level.objectdata);
+	
+str toString(Condition _ : some_objects(list[str] objs)) {
+	str t = intercalate(", ", objs);
+	return "Some <t>";
+}
+	
+bool is_met(Condition _ : no_objects_on(list[str] objs, list[str] on), Level level)
+	= !any(x <- is_on(level, objs, on), x);
+	
+str toString(Condition _ : no_objects_on(list[str] objs, list[str] on)) {
+	str t = intercalate(", ", objs);
+	str t2 = intercalate(", ", on);
+	return "No <t> On <t2>";
+}
+
+	
+bool is_met(Condition _ : some_objects_on(list[str] objs, list[str] on), Level level) {
+	list[bool] results = is_on(level, objs, on);
+	return isEmpty(results) || any(x <- results, x);
+}
+
+str toString(Condition _ : some_objects_on(list[str] objs, list[str] on)) {
+	str t = intercalate(", ", objs);
+	str t2 = intercalate(", ", on);
+	return "Some <t> On <t2>";
+}
+	
+bool is_met(Condition _ : all_objects_on(list[str] objs, list[str] on), Level level) {
+	list[bool] results = is_on(level, objs, on);
+	return isEmpty(results) || all(x <- results, x);
+}
+
+str toString(Condition _ : all_objects_on(list[str] objs, list[str] on)) {
+	str t = intercalate(", ", objs);
+	str t2 = intercalate(", ", on);
+	return "All <t> On <t2>";
+}
+
 bool is_victorious(Engine engine, Level level){
 	if (engine.win_keyword || level is message) return true;
 	if (isEmpty(engine.conditions)) return false;
 	
 	victory = true;
 	for (Condition cond <- engine.conditions){
-		switch(cond){
-			case no_objects(list[str] objs): {
-				// if any objects present then we don't win
-				if (any(str x <- objs, x in level.objectdata)) victory = false;
-			}
-			
-			case some_objects(list[str] objs): {
-				// if not any objects present then we dont' win
-				if (!any(str x <- objs, x in level.objectdata)) victory = false;
-			}
-			
-			case no_objects_on(list[str] objs, list[str] on): {
-				// if any objects are on any of the ons then we don't win
-				list[bool] results = is_on(level, objs, on);
-				if (any(x <- results, x)) victory = false;
-			}
-			
-			case some_objects_on(list[str] objs, list[str] on): {
-				// if no objects are on any of the ons then we don't win
-				list[bool] results = is_on(level, objs, on);
-				if (!isEmpty(results) && !any(x <- results, x)) victory = false;
-			}
-			
-			case all_objects_on(list[str] objs, list[str] on): {
-				// if not all objects are on any of the ons then we don't win
-				list[bool] results = is_on(level, objs, on);
-				if (!isEmpty(results) && !all(x <- results, x)) victory = false;
-			}
-		}
+		if (!is_met(cond, level)) victory = false;
 	}
 
 	return victory;
@@ -432,6 +456,12 @@ Level plan_move(Level level, str direction){
 	return level;
 }
 
+Engine do_victory(Engine engine){
+	engine.current_level = Level::message("VICTORY!", LEVELDATA::message("VICTORY!"));
+	
+	return engine;
+}
+
 void play_sound(Engine engine, str event){
 	if (event in engine.sounds) {
 		println(engine.sounds[event]);
@@ -457,10 +487,12 @@ void game_loop(Checker c, list[str] moves){
 		for (str event <- engine.sound_queue){
 			play_sound(engine, event);
 		}
+		engine.sound_queue = [];
 		
 		for (str msg <- engine.msg_queue){
 			print_message(msg);
 		}
+		engine.msg_queue = [];
 		
 		print_level(engine.current_level);
 		

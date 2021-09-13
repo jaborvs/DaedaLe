@@ -1,5 +1,7 @@
 module PuzzleScript::AST
 
+import List;
+
 anno loc PRELUDEDATA@location;
 anno loc PRELUDE@location;
 anno loc PSGAME@location;
@@ -136,6 +138,26 @@ data RULEDATA
 	= rule_data(list[RULEPART] left, list[RULEPART] right, list[str] message, str)
 	| loop(list[RULEDATA] loop)
 	;
+
+str toString(RULECONTENT _: content(list[str] cnt)){
+	return intercalate(" ", cnt);
+}
+	
+str toString(RULEPART _: part(list[RULECONTENT] contents)){
+	return "[ " + intercalate(" | ", [toString(x) | x <- contents]) + " ]";
+}
+
+str toString(RULEPART _: command(str cmd)){
+	return cmd;
+}
+
+str toString(RULEPART _: sound(str snd)){
+	return snd;
+}
+
+str toString(RULEPART _: prefix(str pr)){
+	return pr;
+}
 	
 data RULEPART
 	= part(list[RULECONTENT] contents)

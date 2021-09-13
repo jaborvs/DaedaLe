@@ -34,10 +34,12 @@ data Object
 	| moving_object(str name, int id, str direction, Coords coords)
 	| transparent(str name, int id, Coords coords)
 	;
-	
+
+// TODO: play around with imports	
 public str EVAL_PRESET = "
 	'import List;
 	'import util::Math;
+	'import PuzzleScript::Compiler;
 	'
 	'str randomDir(){
 	'	int rand = arbInt(4);
@@ -78,6 +80,7 @@ alias Rule = tuple[
 	set[str] directions,
 	list[str] left,
 	list[str] right,
+	bool used,
 	RULEDATA original
 ];
 
@@ -87,7 +90,8 @@ Rule new_rule(RULEDATA r)
 		{}, 
 		{}, 
 		[], 
-		[], 
+		[],
+		false, 
 		r
 	>;
 
