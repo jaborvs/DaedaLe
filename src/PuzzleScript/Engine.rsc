@@ -123,21 +123,24 @@ tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
 		if (dir in rule.directions){
 			str relatives = format_relatives(directional_absolutes[dir]);
 			while (all(str pattern <- rule.left, eval_pattern(format_pattern(pattern, layers), relatives))){
-				rule.used += 1;
-				int index = loops % size(rule.left);
-				
+				rule.used += 1;				
 				if (isEmpty(rule.right)){
 					break;
 				}
 				
-				layers = eval(#list[Layer], [EVAL_PRESET, relatives, format_replacement(rule.left[index], rule.right[index], layers)]).val;
+				for (int i <- [0..size(rule.left)]){
+					layers = eval(#list[Layer], [EVAL_PRESET, relatives, format_replacement(rule.left[i], rule.right[i], layers)]).val;
+				}
+				
+				
 				loops += 1;
 				
-				if (index == 0 && layers == level.layers){
+				if (layers == level.layers || loops > MAX_LOOPS){
 					break;
-				} else if (loops > MAX_LOOPS) {
-					break;
+				} else {
+					changed = true;
 				}
+
 			}
 		}
 		
