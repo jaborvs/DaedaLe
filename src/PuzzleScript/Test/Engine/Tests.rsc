@@ -76,13 +76,13 @@ void main() {
 	//engine = change_level(engine, engine.index + 1);
 	//println("Victory: false == <is_victorious(engine)>");
 		
-	//println("Rewrite Test");
-	//list[str] GAME1_LEVEL1_MOVES = ["down", "left", "up", "right", "right", "right", "down", "left", "up", "left", "left", "down", "down", "right", "up", "left", "up", "right", "up", "up", "left", "down", "down", "right", "down", "right", "right", "up", "left", "down", "left", "up", "up", "down", "down", "down", "left",  "up"];
-	//list[str] GAME1_LEVEL2_MOVES = ["right", "down", "down", "left", "right", "up", "up", "left", "down", "up", "up", "left", "left", "down", "down", "right"];
-	//println("Simple Game Test");
-	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
-	//checker = check_game(game);
-	//engine = compile(checker);
+	println("Rewrite Test");
+	list[str] GAME1_LEVEL1_MOVES = ["down", "left", "up", "right", "right", "right", "down", "left", "up", "left", "left", "down", "down", "right", "up", "left", "up", "right", "up", "up", "left", "down", "down", "right", "down", "right", "right", "up", "left", "down", "left", "up", "up", "down", "down", "down", "left",  "up"];
+	list[str] GAME1_LEVEL2_MOVES = ["right", "down", "down", "left", "right", "up", "up", "left", "down", "up", "up", "left", "left", "down", "down", "right"];
+	println("Simple Game Test");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+	checker = check_game(game);
+	engine = compile(checker);
 	
 	//println(engine.levels[0].layers);
 	//println();
@@ -90,7 +90,7 @@ void main() {
 	//println();
 	//println(engine.rules[0].right[0]);
 	//println();
-	//game_loop(checker, GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES);
+	game_loop(checker, GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES);
 	
 	//list[str] GAME2_LEVEL1_MOVES = ["left", "up", "up", "right", "down", "left", "down", "right", "right", "down", "down", "right", "right", "right", "up"];
 	//list[str] GAME2_LEVEL2_MOVES = ["right"];
@@ -99,14 +99,25 @@ void main() {
 	//checker = check_game(game);
 	//game_loop(checker, GAME2_LEVEL1_MOVES + GAME2_LEVEL2_MOVES);
 	
-	list[str] GAME3_LEVEL1_MOVES = ["right"];
-	println("Advanced Game Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/AdvancedGame1.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	level = engine.levels[0];
+	//list[str] GAME3_LEVEL1_MOVES = ["right"];
+	//println("Advanced Game Test");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/AdvancedGame1.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//level = engine.levels[0];
 	
-	print(engine.rules[0].left[0]);
+	//print_level(level);
+	//<engine, level> = do_turn(engine, level, "right");
+	//print_level(level);
+	
+	//println(engine.rules[0].left[0]);
+	//println(format_coords(engine.rules[0].indexes[0]));
+	//println(engine.rules[0].left[1]);
+	//println(format_coords(engine.rules[0].indexes[1]));
+	//println(engine.rules[0].indexes);
+	//println();
+	//println(engine.rules[0].right[0]);
+	//println(engine.rules[0].right[1]);
 	
 	//game_loop(checker, GAME3_LEVEL1_MOVES);
 	

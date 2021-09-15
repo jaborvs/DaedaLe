@@ -124,26 +124,8 @@ love
 ======
 RULES
 ======
-
-UP [ Up PlayerGround | No Obstacle ] -> [ Up PlayerJump2 | ]
-DOWN [ Up JumpingPlayer | no obstacle ] -> [ JumpingPlayer | ]
-DOWN [ Up PlayerJump2 | no obstacle ] -> [ PlayerJump2 | ]
-
-[ Stationary CanFall ] -> [ Down CanFall ]
-
-HORIZONTAL [ > PlayerJump1 | NO obstacle ] -> [ | PlayerGround ]
-HORIZONTAL [ > PlayerJump2 | NO obstacle ] -> [ | PlayerJump1 ]
-LATE DOWN [ PlayerGround | NO obstacle ] -> [ | playerground ]
-
 LATE [ crown no player ] [ player ] -> [ ] [ crown player ]
-LATE [ goldingblock ] -> [goldblock]
-LATE [ crown | wall ] -> [crown | goldingblock] SFX1
-LATE [ crown | water ] -> [ | water ] SFX0
-LATE [ crown | target ] -> [ crown | goldtarget ] SFX2
-LATE DOWN [ JumpingPlayer | Obstacle ] -> [ PlayerGround | Obstacle ]
 
-LATE [ player | target ] -> [ player lovebase | target ]
-LATE UP [ lovebase | ] -> [ | love ]
 
 ==============
 WINCONDITIONS
@@ -153,6 +135,11 @@ some love
 =======
 LEVELS
 =======
+
+...
+.P.
+#G#
+
 ##############
 #............#
 #............#

@@ -1,7 +1,7 @@
 module PuzzleScript::Test::Analyser::Tests
 
 import PuzzleScript::Load;
-import PuzzleScript::Engine;
+import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Analyser;

@@ -2,7 +2,7 @@ module PuzzleScript::Analyser
 
 import PuzzleScript::Checker;
 import PuzzleScript::Messages;
-import PuzzleScript::Engine;
+import PuzzleScript::Compiler;
 import PuzzleScript::AST;
 import IO;
 
