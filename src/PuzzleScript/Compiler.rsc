@@ -80,6 +80,8 @@ alias Rule = tuple[
 	set[str] directions,
 	list[str] left,
 	list[str] right,
+	list[RulePart] converted_left,
+	list[RulePart] converted_right,
 	int used,
 	RULEDATA original
 ];
@@ -90,6 +92,8 @@ Rule new_rule(RULEDATA r)
 		{}, 
 		{}, 
 		[], 
+		[],
+		[],
 		[],
 		0, 
 		r
@@ -110,6 +114,8 @@ alias Engine = tuple[
 	list[str] msg_queue,
 	list[Command] cmd_queue,
 	list[str] player,
+	map[str, OBJECTDATA] objects,
+	list[list[str]] input_log, // keep track of moves made by the player for every level
 	PSGAME game
 ];
 
@@ -129,6 +135,10 @@ Engine new_engine(PSGAME game)
 		[],
 		[],
 		[],
+		(),
+		
+		[],
+		
 		game
 	>;
 
@@ -377,7 +387,7 @@ Rule compile_rulepart_right(Rule rule, Engine engine, RulePart left_contents, Ru
 
 Rule compile_rulepart(Rule rule, Engine engine, RulePart left, RulePart right){
 	rule = compile_rulepart_left(rule, engine, left, right);
-	rule = compile_rulepart_right(rule, engine, left, right);
+	if (!isEmpty(right)) rule = compile_rulepart_right(rule, engine, left, right);
 	
 	return rule;
 }
@@ -462,6 +472,8 @@ Rule convert_rule(RULEDATA r, Checker c, Engine engine){
 		rule = compile_rulepart(rule, engine, left[i], right_part);
 	}
 
+	rule.converted_left = left;
+	rule.converted_right = right;
 	rule.commands = {convert_command(x) | RULEPART x <- r.right, x is command || x is sound};
 	if (!isEmpty(r.message)) rule.commands += {Command::message(r.message[0])};
 	
@@ -522,14 +534,16 @@ Engine compile(Checker c){
 	
 	for (LEVELDATA l <- c.game.levels){
 		engine.levels += [convert_level(l, c, engine)];
+		engine.input_log += [[]];
 	}
 	
 	engine.current_level = engine.levels[0];
 	
-	
 	for (RULEDATA r <- c.game.rules){
 		engine.rules += [convert_rule(r, c, engine)];
 	}
+	
+	engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
 	
 	return engine;
 }

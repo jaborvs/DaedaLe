@@ -10,6 +10,8 @@ import salix::HTML;
 import salix::App;
 
 import List;
+import String;
+import IO;
 
 alias Model = tuple[str input, str title, Engine engine];
 
@@ -50,92 +52,146 @@ Model update(Msg msg, Model model){
 	return model;
 }
 
-void view(Model m){
-	div(() {
-		h2(m.title);
-		div(class("left"), () {
-			h3("Buttons");
-			button(onClick(left()), "left");
-			button(onClick(right()), "right");
-			button(onClick(up()), "up");
-			button(onClick(down()), "down");
-			button(onClick(action()), "action");
-			button(onClick(restart()), "restart");
-			button(onClick(undo()), "undo");
-			button(onClick(win()), "win");
-		
-			h3("Victory Conditions");
-			for (Condition cond <- m.engine.conditions){
-				bool met = is_met(cond, m.engine.current_level);
-				p(() {
-					span("<toString(cond)>: ");
-					b(class("<met>"), "<met>");
-				});
-			}
-			
-			h3("Rules");
-			for (int i <- [0..size(m.engine.rules)]){
-				Rule rule = m.engine.rules[i];
-				str left_original = intercalate(" ", [toString(x) | x <- rule.original.left]);
-				str right_original = intercalate(" ", [toString(x) | x <- rule.original.right]);
-				str message = "";
-				if (!isEmpty(rule.original.message)) message = "message <rule.original.message[0]>";
-				
-				p(() {
-					button(\type("button"), class("collapsible"), "+");
-					span("\t <left_original> -\> <right_original> <message>: ");
-					b(class("<rule.used > 0>"), "<rule.used>");
-				});
-				
-				div(class("content"), () {
-					for (str r <- rule.left) p(class("rule"), r);
-					br();
-					for (str r <- rule.right) p(class("rule"), r);
-				});
-			}
-			
-			h3("Messages");
-			for (str msg <- m.engine.msg_queue){
-				p(msg);
-			}
-			
-		});
-		
-		
-		if (m.engine.current_level is message){
-			div(class("left"), () {
-				p("#####################################################");
-				p(m.engine.current_level.msg);
-				p("#####################################################");
-			});
-		} else {
-			div(class("left"), () {
-				h3("Layers");
-				list[Layer] layers = reverse(m.engine.current_level.layers);
-				for (Layer lyr <- layers){
-					table(() {
-						for (Line line <- lyr) {
-							tr(() {
-								for (Object obj <- line) {
-									str c = "object";
-									if (obj is transparent) {
-										td(class(c), class("trans"), obj.name[0]);
-									} else {
-										td(class(c), obj.name[0]);
-									}	
-									
-								}
-								td(class("trans"), "t");
-								td(class("objects"), "\t\t" + intercalate(", ", dup([x.name | x <- line, !(x is transparent)])));
-							});
-						}
-						
-					});
-					
-					br();
+void view_sprite(Model m, str _ : "trans"){
+	table(class("sprite"), class("cell"), () {
+		for (int _ <- [0..5]){
+			tr((){
+				for (int _ <- [0..5]){
+					td(class("pixel"), class("transparent"));
 				}
 			});
 		}
+	});
+}
+
+default void view_sprite(Model m, str name){
+	OBJECTDATA obj = m.engine.objects[name];
+	table(class("sprite"), class("cell"), () {
+		for (list[PIXEL] line <- obj.sprite){
+			tr((){
+				for (PIXEL pix <- line){
+					if (pix.pixel == "."){
+						td(class("pixel"), class("transparent"));
+					} else {
+						td(class("pixel"), class(toLowerCase(obj.colors[toInt(pix.pixel)])));
+					}
+				}
+			});
+		}
+	});
+}
+
+void view_level(Model m){
+	if (m.engine.current_level is message){
+		p("#####################################################");
+		p(m.engine.current_level.msg);
+		p("#####################################################");
+	} else {
+		h3("Layers");
+		list[Layer] layers = m.engine.current_level.layers;
+		for (Layer lyr <- layers){
+			table(class("layer"), () {
+				for (Line line <- lyr) {
+					tr(() {
+						for (Object obj <- line) {
+							td(class(obj.name), class("cell"), () {view_sprite(m, obj.name);});
+						}
+					});
+				}
+				
+			});
+					}
+	}
+}
+
+void view_panel(Model m){
+	h3("Buttons");
+	button(onClick(left()), "left");
+	button(onClick(right()), "right");
+	button(onClick(up()), "up");
+	button(onClick(down()), "down");
+	button(onClick(action()), "action");
+	button(onClick(restart()), "restart");
+	button(onClick(undo()), "undo");
+	button(onClick(win()), "win");
+
+	h3("Victory Conditions");
+	for (Condition cond <- m.engine.conditions){
+		bool met = is_met(cond, m.engine.current_level);
+		p(() {
+			span("<toString(cond)>: ");
+			b(class("<met>"), "<met>");
+		});
+	}
+	
+	h3("Rules");
+	for (int i <- [0..size(m.engine.rules)]){
+		Rule rule = m.engine.rules[i];
+		str left_original = intercalate(" ", [toString(x) | x <- rule.original.left]);
+		str right_original = intercalate(" ", [toString(x) | x <- rule.original.right]);
+		str message = "";
+		if (!isEmpty(rule.original.message)) message = "message <rule.original.message[0]>";
+		
+		p(() {
+			button(\type("button"), class("collapsible"), "+");
+			span("\t <left_original> -\> <right_original> <message>: ");
+			b(class("<rule.used > 0>"), "<rule.used>");
+		});
+		
+		div(class("content"), () {
+			for (str r <- rule.left) p(class("rule"), r);
+			br();
+			for (str r <- rule.right) p(class("rule"), r);
+		});
+	}
+	
+	h3("Messages");
+	for (str msg <- m.engine.msg_queue){
+		p(msg);
+	}
+}
+
+void view_layers(Model m){
+	if (m.engine.current_level is message){
+		p("#####################################################");
+		p(m.engine.current_level.msg);
+		p("#####################################################");
+	} else {
+		h3("Layers");
+		list[Layer] layers = reverse(m.engine.current_level.layers);
+		for (Layer lyr <- layers){
+			table(() {
+				for (Line line <- lyr) {
+					tr(() {
+						for (Object obj <- line) {
+							str c = "object";
+							if (obj is transparent) {
+								td(class(c), class("trans"), obj.name[0]);
+							} else {
+								td(class(c), obj.name[0]);
+							}	
+							
+						}
+						td(class("trans"), "t");
+						td(class("objects"), "\t\t" + intercalate(", ", dup([x.name | x <- line, !(x is transparent)])));
+					});
+				}
+				
+			});
+			
+			br();
+		}
+	}
+}
+
+void view(Model m){
+	div(() {
+		h2(m.title);
+		div(class("left"), () {view_panel(m);});
+		div(class("left"), () {view_layers(m);});
+		div(class("left"), () {
+			div(class("grid"), () {view_level(m);});
+		});
 	});
 
 }
@@ -150,7 +206,6 @@ App[str]() load_app(loc src){
 
 App[str]() load_app(Engine engine){
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
-
 	Model init() = <"none", title, engine>;
 	SalixApp[Model] gameApp(str appId = "root") = makeApp(appId, init, view, update);
 	

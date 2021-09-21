@@ -99,10 +99,7 @@ data Msg
 	| multilayered_object(str obj, MsgType t, loc pos)
 	| redundant_keyword(MsgType t, loc pos)
 	| unused_sound_event(MsgType t, loc pos)
-	| invalid_rule_direction(MsgType t, loc pos)
-	
-	//dynamic analysis
-	| instant_victory(MsgType t, loc pos)
+	| invalid_rule_direction(MsgType t, loc pos)	
 	;
 
 public str toString(Msg m: generic(str msg, MsgType t, loc pos))
@@ -284,8 +281,5 @@ public str toString(Msg m: unused_sound_event(MsgType t, loc pos))
 	
 public str toString(Msg m: invalid_rule_direction(MsgType t, loc pos))
 	= "Rule directions should be placed at a start of a rule. <pos>";
-	
-public str toString(Msg m: instant_victory(MsgType t, loc pos))
-	= "Level can be won without playing interaction. <pos>";
 
 public default str toString(Msg m) = "Undefined message converter for <m>";

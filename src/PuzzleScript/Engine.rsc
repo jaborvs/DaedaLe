@@ -170,6 +170,8 @@ tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
 }
 
 tuple[Engine, Level] do_turn(Engine engine, Level level : level, str input){
+	engine.input_log[engine.index] += [input];
+
 	if (input == "undo"){
 		return <engine, undo(level)>;
 	} else if (input == "restart"){
