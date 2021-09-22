@@ -81,14 +81,29 @@ default void view_sprite(Model m, str name){
 	});
 }
 
+void view_background(Model m){
+	str name = m.engine.current_level.background[0];
+	
+	table(class("layer"), class("background"), () {
+		for (int _ <- [0..m.engine.size.height]){
+			tr(() {
+				for (int _ <- [0..m.engine.size.width]){
+					td(class(name), class("cell"), () {view_sprite(m, name);});
+				}
+			});
+		}
+	});
+}
+
 void view_level(Model m){
 	if (m.engine.current_level is message){
 		p("#####################################################");
 		p(m.engine.current_level.msg);
 		p("#####################################################");
 	} else {
-		h3("Layers");
 		list[Layer] layers = m.engine.current_level.layers;
+		view_background(m);
+		
 		for (Layer lyr <- layers){
 			table(class("layer"), () {
 				for (Line line <- lyr) {
@@ -190,6 +205,7 @@ void view(Model m){
 		div(class("left"), () {view_panel(m);});
 		div(class("left"), () {view_layers(m);});
 		div(class("left"), () {
+			h3("Layers");
 			div(class("grid"), () {view_level(m);});
 		});
 	});

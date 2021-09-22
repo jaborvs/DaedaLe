@@ -83,7 +83,7 @@ void main() {
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
-	println(engine.rules[0].left[0]);
+	//println(engine.rules[0].left[0]);
 	
 	//println(engine.levels[0].layers);
 	//println();
@@ -91,7 +91,7 @@ void main() {
 	//println();
 	//println(engine.rules[0].right[0]);
 	//println();
-	//game_loop(checker, GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES);
+	game_loop(checker, GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES);
 	
 	//list[str] GAME2_LEVEL1_MOVES = ["left", "up", "up", "right", "down", "left", "down", "right", "right", "down", "down", "right", "right", "right", "up"];
 	//list[str] GAME2_LEVEL2_MOVES = ["right"];

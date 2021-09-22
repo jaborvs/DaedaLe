@@ -21,6 +21,7 @@ data Level
 		list[set[str]] layerdata,
 		list[str] objectdata,
 		list[str] player,
+		list[str] background,
 		LEVELDATA original
 	)
 	| message(str msg, LEVELDATA original)
@@ -113,8 +114,8 @@ alias Engine = tuple[
 	list[str] sound_queue,
 	list[str] msg_queue,
 	list[Command] cmd_queue,
-	list[str] player,
 	map[str, OBJECTDATA] objects,
+	tuple[int height, int width] size,
 	list[list[str]] input_log, // keep track of moves made by the player for every level
 	PSGAME game
 ];
@@ -122,7 +123,7 @@ alias Engine = tuple[
 Engine new_engine(PSGAME game)		
 	= <
 		[], 
-		level([], [], [], [], [], [], level_data([])), 
+		level([], [], [], [], [], [], [], level_data([])), 
 		(), 
 		[], 
 		[],
@@ -134,8 +135,8 @@ Engine new_engine(PSGAME game)
 		[], 
 		[],
 		[],
-		[],
 		(),
+		<0,0>,
 		
 		[],
 		
@@ -510,7 +511,16 @@ Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c, Engine 
 		layers += [layer];
 	}
 	
-	return Level::level(layers, [layers], layers, engine.layers, objectdata, c.references["player"], l);
+	return Level::level(
+		layers, 
+		[layers], 
+		layers, 
+		engine.layers, 
+		objectdata, 
+		c.references["player"],
+		c.references["background"],
+		l
+	);
 }
 
 Level convert_level(LEVELDATA l: message(str msg), Checker c, Engine engine){
@@ -537,7 +547,11 @@ Engine compile(Checker c){
 		engine.input_log += [[]];
 	}
 	
-	engine.current_level = engine.levels[0];
+	if (!isEmpty(engine.levels)){
+		engine.current_level = engine.levels[0];
+		engine.size = <size(engine.levels[0].layers[0]), size(engine.levels[0].layers[0][0])>;
+	}
+	
 	
 	for (RULEDATA r <- c.game.rules){
 		engine.rules += [convert_rule(r, c, engine)];
