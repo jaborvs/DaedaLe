@@ -4,49 +4,12 @@ import PuzzleScript::Messages;
 import PuzzleScript::Compiler;
 import PuzzleScript::AST;
 import PuzzleScript::Engine;
+
 import IO;
-
-// a list of stupid solutions that game designers probably want to avoid making possible
-data StupidSolutions
-	// solving the game by only going in one direction or by pressing the action button
-	= unidirectional(str dir, MsgType t, loc pos)
-	
-	// solving a level without using any rules, this means the win condition requires
-	// the player object and optionally some other already fulfilled condition
-	| unruled(MsgType t, loc pos)
-	;
-
-// a list of msgs that are detected through semi-dynamic analysis, we don't always
-// have to run the game to figure them out but we do have to compile it
-data DynamicMsgs
-	// we have a level that matches our required win conditions before
-	// the player even interacts with it
-	= instant_victory(MsgType t, loc pos)
-	
-	// we have levels that cannot be solved because the rules do not spawn 
-	// the necessary items and they are not available off the bat
-	| unsolvable_rules_missing_items(MsgType t, loc pos)
-	
-	// levels should increase in difficulty, increasing difficulty is
-	// defined as a mix of increased size, increased number of items
-	// and using more rules than the previous ones
-	| difficulty_not_increasing(MsgType t, loc pos)
-	
-	// a solution to a level has been found but some rules have gone unused
-	// a rule is unused if it is never fully succesffuly matched, it is fine
-	// if it doesn't change anything, as long as it can match, or is it?
-	| unused_rule(MsgType t, loc pos)
-	
-	// a rule is too similar to another rule, not simply the string but
-	// what it does and what it references
-	| similar_rules(MsgType t, loc pos)
-	;
-	
-public str toString(DynamicMsgs m: instant_victory(MsgType t, loc pos))
-	= "Level can be won without playing interaction. <pos>";
+import List;
 	
 alias DynamicChecker = tuple[
-	list[StupidSolutions] stupid_solutions,
+	list[StupidSolutions] solutions,
 	list[DynamicMsgs] msgs
 ];
 
@@ -69,6 +32,13 @@ DynamicChecker analyse_instant_victory(Engine engine, Level level, DynamicChecke
 	return c;
 }
 
+DynamicChecker analyse_rules(DynamicChecker c, Rule r1, Rule r2){
+	if (any(RulePart x <- r1.converted_left, x in r2.converted_left)) c.msgs += [similar_rules(error(), r1.original@location)];
+	if (any(RulePart x <- r1.converted_right, x in r2.converted_right)) c.msgs += [similar_rules(error(), r1.original@location)];
+	
+	return c;
+}
+
 DynamicChecker analyse_game(Engine engine){
 	DynamicChecker c = new_dynamic_checker();
 
@@ -76,6 +46,46 @@ DynamicChecker analyse_game(Engine engine){
 		c = analyse_instant_victory(engine, level, c);
 	}
 	
+	for (int i_r1 <- [0..size(engine.rules)]){
+		for (int i_r2 <- [i_r1+1..size(engine.rules)]){
+			c = analyse_rules(c, engine.rules[i_r1], engine.rules[i_r2]);
+		}
+	}
+	
 	
 	return c;
+}
+
+DynamicChecker analyse_stupid_solution(Engine engine){
+	DynamicChecker c = new_dynamic_checker();
+	
+	return c;
+	
+}
+
+void print_msgs(DynamicChecker checker){
+	list[DynamicMsgs] error_list = [x | DynamicMsgs x <- checker.msgs, x.t == error()];
+	list[DynamicMsgs] warn_list  = [x | DynamicMsgs x <- checker.msgs, x.t == warn()];
+	list[DynamicMsgs] info_list  = [x | DynamicMsgs x <- checker.msgs, x.t == info()];
+	
+	if (!isEmpty(error_list)) {
+		println("ERRORS");
+		for (DynamicMsgs msg <- error_list) {
+			println(toString(msg));
+		}
+	}
+	
+	if (!isEmpty(warn_list)) {
+		println("WARNINGS");
+		for (DynamicMsgs msg <- warn_list) {
+			println(toString(msg));
+		}
+	}
+	
+	if (!isEmpty(info_list)) {
+		println("INFO");
+		for (DynamicMsgs msg <- info_list) {
+			println(toString(msg));
+		}
+	}
 }

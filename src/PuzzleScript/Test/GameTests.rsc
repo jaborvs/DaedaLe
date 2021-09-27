@@ -20,13 +20,12 @@ bool try_parse(loc pos){
 
 void main(){
 	loc pos = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/GameTest|;
-	list[str] entries = listEntries(pos);
+	list[str] ignored = ["README.md"];
+	list[str] entries = [x | str x <- listEntries(pos), x notin ignored];
 	list[str] s = [];
 	list[str] f = [];
-	list[str] ignored = ["README.md"];
 	
 	for (str x <- entries) {
-		if (x in ignored) continue;
 		bool success = try_parse(pos + x);
 		if (success){
 			s += [x];
