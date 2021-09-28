@@ -22,11 +22,18 @@ void main() {
 	//d_checker = analyse_game(engine);
 	//print_msgs(checker);
 	
-	println("Rule Similarity");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1InstantVictory.PS|);
+	//println("Rule Similarity");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//d_checker = analyse_game(engine);
+	//print_msgs(d_checker);
+	
+	println("Unidirectional Solutions");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1Unidirectional.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
-	d_checker = analyse_game(engine);
+	d_checker = analyse_stupid_solution(engine);
 	print_msgs(d_checker);
 	
 }

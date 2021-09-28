@@ -292,6 +292,9 @@ data StupidSolutions
 	// the player object and optionally some other already fulfilled condition
 	| unruled(MsgType t, loc pos)
 	;
+	
+public str toString(StupidSolutions m: unidirectional(str dir, MsgType t, loc pos))
+	= "Level can be solved by going only to the <dir>. <pos>";
 
 // a list of msgs that are detected through semi-dynamic analysis, we don't always
 // have to run the game to figure them out but we do have to compile it

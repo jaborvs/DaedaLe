@@ -482,6 +482,31 @@ void print_message(str string){
 	println("#####################################################");
 }
 
+tuple[Engine, Level] do_post_turn(Engine engine, Level level){
+	for (str event <- engine.sound_queue){
+		play_sound(engine, event);
+	}
+	engine.sound_queue = [];
+	
+	for (str msg <- engine.msg_queue){
+		print_message(msg);
+	}
+	engine.msg_queue = [];
+	
+	print_level(level);
+	
+	bool victory = is_victorious(engine, level);
+	if (victory && is_last(engine)){
+		break;
+	} else if (victory) {
+		engine = change_level(engine, engine.index + 1);
+	}
+	
+	engine.abort = false;
+	
+	return <engine, level>;
+}
+
 void game_loop(Checker c, list[str] moves){
 	Engine engine = compile(c);
 	
@@ -491,27 +516,7 @@ void game_loop(Checker c, list[str] moves){
 	while (true){
 		<input, index> = get_input(moves, index);
 		<engine, engine.current_level> = do_turn(engine, engine.current_level, input);
-		
-		for (str event <- engine.sound_queue){
-			play_sound(engine, event);
-		}
-		engine.sound_queue = [];
-		
-		for (str msg <- engine.msg_queue){
-			print_message(msg);
-		}
-		engine.msg_queue = [];
-		
-		print_level(engine.current_level);
-		
-		bool victory = is_victorious(engine, engine.current_level);
-		if (victory && is_last(engine)){
-			break;
-		} else if (victory) {
-			engine = change_level(engine, engine.index + 1);
-		}
-		
-		engine.abort = false;
+		<engine, engine.current_level> = do_post_turn(engine, engine.current_level);
 	}
 	
 	println("VICTORY");

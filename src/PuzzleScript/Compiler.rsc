@@ -22,6 +22,7 @@ data Level
 		list[str] objectdata,
 		list[str] player,
 		list[str] background,
+		tuple[int height, int width] size,
 		LEVELDATA original
 	)
 	| message(str msg, LEVELDATA original)
@@ -115,7 +116,6 @@ alias Engine = tuple[
 	list[str] msg_queue,
 	list[Command] cmd_queue,
 	map[str, OBJECTDATA] objects,
-	tuple[int height, int width] size,
 	list[list[str]] input_log, // keep track of moves made by the player for every level
 	PSGAME game
 ];
@@ -123,7 +123,7 @@ alias Engine = tuple[
 Engine new_engine(PSGAME game)		
 	= <
 		[], 
-		level([], [], [], [], [], [], [], level_data([])), 
+		level([], [], [], [], [], [], [], <0,0>, level_data([])), 
 		(), 
 		[], 
 		[],
@@ -136,7 +136,6 @@ Engine new_engine(PSGAME game)
 		[],
 		[],
 		(),
-		<0,0>,
 		
 		[],
 		
@@ -519,6 +518,7 @@ Level convert_level(LEVELDATA l: level_data(list[str] level), Checker c, Engine 
 		objectdata, 
 		c.references["player"],
 		c.references["background"],
+		<size(layers[0]), size(layers[0][0])>,
 		l
 	);
 }
@@ -549,7 +549,6 @@ Engine compile(Checker c){
 	
 	if (!isEmpty(engine.levels)){
 		engine.current_level = engine.levels[0];
-		engine.size = <size(engine.levels[0].layers[0]), size(engine.levels[0].layers[0][0])>;
 	}
 	
 	

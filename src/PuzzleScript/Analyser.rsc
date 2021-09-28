@@ -56,8 +56,39 @@ DynamicChecker analyse_game(Engine engine){
 	return c;
 }
 
+DynamicChecker analyse_unidirectional_solution(DynamicChecker c, Engine engine, str dir){
+	for (Level level <- engine.levels){
+		list[Layer] old_layers = deep_copy(level.layers);
+		int loops = 0;
+		int MAX_LOOPS = 0;
+		
+		if(dir in ["left", "right"]) {
+			MAX_LOOPS = level.size.width * 2;
+		} else {
+			MAX_LOOPS = level.size.height * 2;
+		}
+		
+		bool victory = false;
+		for (int _ <- [0..MAX_LOOPS]){
+			<engine, level> = do_turn(engine, level, dir);
+			victory = is_victorious(engine, level);
+			if (victory) break;
+		}
+		
+		if (victory) c.solutions += [unidirectional(dir, error(), level.original@location)];
+		
+		level.layers = old_layers;
+	}
+	
+	return c;
+}
+
 DynamicChecker analyse_stupid_solution(Engine engine){
 	DynamicChecker c = new_dynamic_checker();
+	
+	for (str dir <- ["left", "right", "up", "down"]){
+		c = analyse_unidirectional_solution(c, engine, dir);
+	}
 	
 	return c;
 	
@@ -85,6 +116,13 @@ void print_msgs(DynamicChecker checker){
 	if (!isEmpty(info_list)) {
 		println("INFO");
 		for (DynamicMsgs msg <- info_list) {
+			println(toString(msg));
+		}
+	}
+	
+	if (!isEmpty(checker.solutions)){
+		println("SOLUTIONS");
+		for (StupidSolutions msg <- checker.solutions){
 			println(toString(msg));
 		}
 	}

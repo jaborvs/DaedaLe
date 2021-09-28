@@ -85,9 +85,9 @@ void view_background(Model m){
 	str name = m.engine.current_level.background[0];
 	
 	table(class("layer"), class("background"), () {
-		for (int _ <- [0..m.engine.size.height]){
+		for (int _ <- [0..m.engine.current_level.size.height]){
 			tr(() {
-				for (int _ <- [0..m.engine.size.width]){
+				for (int _ <- [0..m.engine.current_level.size.width]){
 					td(class(name), class("cell"), () {view_sprite(m, name);});
 				}
 			});
