@@ -14,9 +14,17 @@ LIGHTGREEN GREEN
 11111
 10111
 
+Background
+LIGHTGREEN GREEN
+11111
+01111
+11101
+11111
+10111
+
 
 Target
-DarkBlue
+DarkBlue DONKEY
 .....
 .000.
 .0.0.
@@ -34,13 +42,21 @@ BROWN DARKBROWN
 Player
 Black Orange White Blue
 .000.
-.111.
+.111..
 22222
-.333.
+.333..
 .3.3.
 
 Crate
-Orange
+Orange BLUE
+00000
+0...0
+0...0
+0...0
+00000
+
+Crate2
+Red
 00000
 0...0
 0...0
@@ -54,31 +70,35 @@ LEGEND
 
 . = Background
 # = Wall
-P = Player
+P = Player and Tico or Target
 * = Crate
 @ = Crate and Target
 O = Target
-
+T = Target
+C = Crate or Player
 
 =======
 SOUNDS
 =======
 
 Crate MOVE 36772507
+SFX0 2342342
 
 ================
 COLLISIONLAYERS
 ================
 
 Background
-Target
-Player, Wall, Crate
+Target, Barko
+Player, Wall, Crate, Crate2
 
 ======
 RULES
 ======
 
 [ >  Player | Crate ] -> [  >  Player | > Crate  ]
+late [ > Player ] -> [  >  Player ]
+
 
 ==============
 WINCONDITIONS
@@ -91,18 +111,18 @@ LEVELS
 =======
 
 ####..
-#.O#..
-#..###
-#@P..#
+#.O#..#
+#C.###
+#@P..##
 #..*.#
-#..###
+#..####
 ####..
 
 
-######
+####
 #....#
 #.#P.#
 #.*@.#
 #.O@.#
 #....#
-######
+####

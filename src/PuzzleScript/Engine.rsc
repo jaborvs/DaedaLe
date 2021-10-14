@@ -307,49 +307,49 @@ list[bool] is_on(Level level, list[str] objs, list[str] on){
 	return results;
 }
 
-bool is_met(Condition _ : no_objects(list[str] objs), Level level)
+bool is_met(Condition _ : no_objects(list[str] objs, _), Level level)
 	= !any(str x <- objs, x in level.objectdata);
 	
-str toString(Condition _ : no_objects(list[str] objs)){
+str toString(Condition _ : no_objects(list[str] objs, _)){
 	str t = intercalate(", ", objs);
 	return "No <t>";
 }
 	
-bool is_met(Condition _ : some_objects(list[str] objs), Level level)
+bool is_met(Condition _ : some_objects(list[str] objs, _), Level level)
 	= any(str x <- objs, x in level.objectdata);
 	
-str toString(Condition _ : some_objects(list[str] objs)) {
+str toString(Condition _ : some_objects(list[str] objs, _)) {
 	str t = intercalate(", ", objs);
 	return "Some <t>";
 }
 	
-bool is_met(Condition _ : no_objects_on(list[str] objs, list[str] on), Level level)
+bool is_met(Condition _ : no_objects_on(list[str] objs, list[str] on, _), Level level)
 	= !any(x <- is_on(level, objs, on), x);
 	
-str toString(Condition _ : no_objects_on(list[str] objs, list[str] on)) {
+str toString(Condition _ : no_objects_on(list[str] objs, list[str] on, _)) {
 	str t = intercalate(", ", objs);
 	str t2 = intercalate(", ", on);
 	return "No <t> On <t2>";
 }
 
 	
-bool is_met(Condition _ : some_objects_on(list[str] objs, list[str] on), Level level) {
+bool is_met(Condition _ : some_objects_on(list[str] objs, list[str] on, _), Level level) {
 	list[bool] results = is_on(level, objs, on);
 	return isEmpty(results) || any(x <- results, x);
 }
 
-str toString(Condition _ : some_objects_on(list[str] objs, list[str] on)) {
+str toString(Condition _ : some_objects_on(list[str] objs, list[str] on, _)) {
 	str t = intercalate(", ", objs);
 	str t2 = intercalate(", ", on);
 	return "Some <t> On <t2>";
 }
 	
-bool is_met(Condition _ : all_objects_on(list[str] objs, list[str] on), Level level) {
+bool is_met(Condition _ : all_objects_on(list[str] objs, list[str] on, _), Level level) {
 	list[bool] results = is_on(level, objs, on);
 	return isEmpty(results) || all(x <- results, x);
 }
 
-str toString(Condition _ : all_objects_on(list[str] objs, list[str] on)) {
+str toString(Condition _ : all_objects_on(list[str] objs, list[str] on, _)) {
 	str t = intercalate(", ", objs);
 	str t2 = intercalate(", ", on);
 	return "All <t> On <t2>";
@@ -494,14 +494,6 @@ tuple[Engine, Level] do_post_turn(Engine engine, Level level){
 	engine.msg_queue = [];
 	
 	print_level(level);
-	
-	bool victory = is_victorious(engine, level);
-	if (victory && is_last(engine)){
-		break;
-	} else if (victory) {
-		engine = change_level(engine, engine.index + 1);
-	}
-	
 	engine.abort = false;
 	
 	return <engine, level>;
@@ -517,6 +509,13 @@ void game_loop(Checker c, list[str] moves){
 		<input, index> = get_input(moves, index);
 		<engine, engine.current_level> = do_turn(engine, engine.current_level, input);
 		<engine, engine.current_level> = do_post_turn(engine, engine.current_level);
+		
+		bool victory = is_victorious(engine, engine.current_level);
+		if (victory && is_last(engine)){
+			break;
+		} else if (victory) {
+			engine = change_level(engine, engine.index + 1);
+		}
 	}
 	
 	println("VICTORY");

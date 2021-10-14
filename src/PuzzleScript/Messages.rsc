@@ -6,16 +6,33 @@ import String;
 import List;
 import Message;
 
+
 set[Message] toMessages(list[Msg] msgs){
 	set[Message] messages = {};
 	
 	for (Msg msg <- msgs){
 		if (msg.t is error){
-			messages = messages + error(toString(msg), msg.pos);
+			messages += {error(toString(msg), msg.pos)};
 		} else if (msg.t is warn) {
-			messages = messages + warning(toString(msg), msg.pos);
+			messages += {warning(toString(msg), msg.pos)};
 		} else {
-			messages = messages + info(toString(msg), msg.pos);
+			messages += {info(toString(msg), msg.pos)};
+		}
+	}
+	
+	return messages;
+}
+
+set[Message] toMessages(list[DynamicMsg] msgs){
+	set[Message] messages = {};
+	
+	for (DynamicMsg msg <- msgs){
+		if (msg.t is error){
+			messages += {error(toString(msg), msg.pos)};
+		} else if (msg.t is warn) {
+			messages += {warning(toString(msg), msg.pos)};
+		} else {
+			messages += {info(toString(msg), msg.pos)};
 		}
 	}
 	
@@ -99,7 +116,9 @@ data Msg
 	| multilayered_object(str obj, MsgType t, loc pos)
 	| redundant_keyword(MsgType t, loc pos)
 	| unused_sound_event(MsgType t, loc pos)
-	| invalid_rule_direction(MsgType t, loc pos)	
+	| invalid_rule_direction(MsgType t, loc pos)
+	| unused_object(str name, MsgType t, loc pos)
+	| unused_legend(str name, MsgType t, loc pos)	
 	;
 
 public str toString(Msg m: generic(str msg, MsgType t, loc pos))
@@ -112,7 +131,7 @@ public str toString(Msg m: existing_object(str name, MsgType t, loc pos))
 	= "Object <name> already exists. <pos>";
 
 public str toString(Msg m: invalid_sprite(str name, MsgType t, loc pos)) 
-	= "A sprite line for <name> is not exactly 5 pixels. <pos>";
+	= "The sprite for <name> is not exactly 5*5 pixels. <pos>";
 	
 public str toString(Msg m: mixed_legend(str name, list[str] values, MsgType t, loc pos)) 
 	= "Legend <name> has both \'and\' and \'or\' symbols. <pos>";
@@ -281,6 +300,12 @@ public str toString(Msg m: unused_sound_event(MsgType t, loc pos))
 	
 public str toString(Msg m: invalid_rule_direction(MsgType t, loc pos))
 	= "Rule directions should be placed at a start of a rule. <pos>";
+	
+public str toString(Msg m: unused_object(str name, MsgType t, loc pos))
+	= "Object <name> defined but not used. <pos>";
+	
+public str toString(Msg m: unused_legend(str name, MsgType t, loc pos))
+	= "Legend <name> defined but not used. <pos>";
 
 
 // a list of stupid solutions that game designers probably want to avoid making possible
@@ -298,14 +323,14 @@ public str toString(StupidSolutions m: unidirectional(str dir, MsgType t, loc po
 
 // a list of msgs that are detected through semi-dynamic analysis, we don't always
 // have to run the game to figure them out but we do have to compile it
-data DynamicMsgs
+data DynamicMsg
 	// we have a level that matches our required win conditions before
 	// the player even interacts with it
 	= instant_victory(MsgType t, loc pos)
 	
 	// we have levels that cannot be solved because the rules do not spawn 
 	// the necessary items and they are not available off the bat
-	| unsolvable_rules_missing_items(MsgType t, loc pos)
+	| unsolvable_rules_missing_items(MsgType t, loc condition, loc pos)
 	
 	// levels should increase in difficulty, increasing difficulty is
 	// defined as a mix of increased size, increased number of items
@@ -320,15 +345,21 @@ data DynamicMsgs
 	// a rule is too similar to another rule, not simply the string but
 	// what it does and what it references
 	| similar_rules(MsgType t, loc pos)
+	
+	// a list of conditions that are contridactory and cannot be resolved together
+	| impossible_victory(tuple[loc c1, loc c2] conditions, MsgType t, loc pos)
 	;
 	
-public str toString(DynamicMsgs m: instant_victory(MsgType t, loc pos))
+public str toString(DynamicMsg m: instant_victory(MsgType t, loc pos))
 	= "Level can be won without playing interaction. <pos>";
+	
+public str toString(DynamicMsg m: unsolvable_rules_missing_items(MsgType t, loc condition, loc pos))
+	= "Condition at <condition> cannot be met for level. <pos>";
 	
 	
 //defaults
 public default str toString(Msg m) = "Undefined message converter for <m>";	
 	
-public default str toString(DynamicMsgs m) = "Undefined message converter for <m>";
+public default str toString(DynamicMsg m) = "Undefined message converter for <m>";
 
 public default str toString(StupidSolutions m) = "Undefined message converter for <m>";

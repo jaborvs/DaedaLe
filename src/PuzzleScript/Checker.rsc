@@ -20,20 +20,23 @@ alias Checker = tuple[
 	list[str] used_sounds,
 	list[Condition] conditions,
 	map[str, str] prelude,
+	list[str] used_objects,
+	list[str] used_references,
 	PSGAME game
 ];
 
 alias Reference = tuple[
 	list[str] objs, 
-	Checker c
+	Checker c,
+	list[str] references
 ];
 
 data Condition
-	= some_objects(list[str] objects)
-	| no_objects(list[str] objects)
-	| all_objects_on(list[str] objects, list[str] on)
-	| some_objects_on(list[str] objects, list[str] on)
-	| no_objects_on(list[str] objects, list[str] on)
+	= some_objects(list[str] objects, CONDITIONDATA original)
+	| no_objects(list[str] objects, CONDITIONDATA original)
+	| all_objects_on(list[str] objects, list[str] on, CONDITIONDATA original)
+	| some_objects_on(list[str] objects, list[str] on, CONDITIONDATA original)
+	| no_objects_on(list[str] objects, list[str] on, CONDITIONDATA original)
 	;
 
 anno loc Condition@location;
@@ -68,7 +71,7 @@ map[str, str] COLORS = (
 str default_mask = "@None@";
 		
 Checker new_checker(bool debug_flag, PSGAME game){		
-	return <[], debug_flag, (), [], (), [], (), [], [], (), game>;
+	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], game>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -113,17 +116,20 @@ list[Msg] check_undefined_object(str name, loc pos, Checker c){
 Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]){
 	Reference r;
 	
-	list[str] objs = [];	
+	list[str] objs = [];
+	list[str] references = [];	
 	str name = toLowerCase(raw_name);
 	
-	if (name in c.references && c.references[name] == [name]) return <[name], c>;
+	if (name in c.references && c.references[name] == [name]) return <[name], c, references>;
 	
+	references += [toLowerCase(name)];
 	if (name in c.combinations) {
 		if ("combinations" in allowed) {
 			for (str n <- c.combinations[name]) {
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
 				c = r.c;
+				references += r.references;
 			}
 		} else {
 			c.msgs += [invalid_object_type("combinations", name, error(), pos)];
@@ -133,6 +139,7 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 			for (str n <- c.references[name]) {
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
+				references += r.references;
 				c = r.c;
 			}
 		} else {
@@ -142,20 +149,22 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 		c.msgs += [undefined_object(raw_name, error(), pos)];
 	}
 	
-	return <dup(objs), c>;
+	return <dup(objs), c, references>;
 }
 
 Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]) {
 	list[str] objs = [];
+	list[str] references = [];
 	Reference r;
 	
 	for (str name <- names) {
 		r = resolve_reference(name, c, pos, allowed=allowed);
 		objs += r.objs;
 		c = r.c;
+		references += r.references;
 	}
 	
-	return <dup(objs), c>;
+	return <dup(objs), c, references>;
 }
 
 bool check_valid_real(str v) {
@@ -254,9 +263,10 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 	// check if it has a sprite
 	if (isEmpty(obj.sprite)) return c;
 	bool valid_length = true;
+	if (size(obj.sprite) != 5) valid_length = false;
 	for(list[PIXEL] line <- obj.sprite){		
 		// check if the sprite is of valid length
-		if (size(line) != 5) valid_lenght = false;
+		if (size(line) != 5) valid_length = false;
 	
 		// check if all pixels have the correct index
 		for(PIXEL pix <- line){
@@ -269,6 +279,7 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 			} else if (converted > max_index) max_index = converted;
 		}
 	}
+	
 	
 	if (!valid_length) c.msgs += [invalid_sprite(obj.name, error(), obj@location)];
 	
@@ -296,12 +307,17 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 	Reference r = resolve_references(l.values, c, l@location);
 	list[str] values = r[0];
 	c = r[1];
+	c.used_references += r.references[1..];
 	
 	str legend = toLowerCase(l.legend);
 	
 	if (check_valid_name(l.legend)) c.objects += [legend];
 	for (str v <- values){
-		if (!(v in c.objects)) c.msgs += [undefined_object(v, error(), l@location)];
+		if (!(v in c.objects)) {
+			c.msgs += [undefined_object(v, error(), l@location)];
+		} else {
+			c.used_objects += [v];
+		}
 	}
 	
 	// if it's just one thing being defined with check it and return
@@ -487,6 +503,7 @@ Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c, 
 			for (str obj <- objs) {
 				Reference r = resolve_reference(obj, c, cont@location);
 				c = r.c;
+				c.used_references += r.references;
 				references += [r.objs];
 			}
 			
@@ -642,14 +659,16 @@ Checker check_condition(CONDITIONDATA w, Checker c){
 	Reference r = resolve_reference(w.condition[1], c, w@location);
 	list[str] objs = r.objs;
 	c = r.c; 
+	c.used_references += r.references;
 	
 	// only one object can defined but it can be an aggregate so we can end up with
 	// multiple objects once we're done resolving references
 	list[str] on = [];
 	if (has_on) {
-		Reference r = resolve_reference(w.condition[3], c, w@location);
-		on = r.objs;
-		c = r.c; 
+		Reference r2 = resolve_reference(w.condition[3], c, w@location);
+		on = r2.objs;
+		c = r2.c;
+		c.used_references += r2.references; 
 	}
 	
 	for (str obj <- objs + on) {
@@ -669,7 +688,7 @@ Checker check_condition(CONDITIONDATA w, Checker c){
 	switch(toLowerCase(w.condition[0])) {
 		case /all/: {
 			if (has_on) {
-				cond = all_objects_on(objs, on);
+				cond = all_objects_on(objs, on, w);
 			} else {
 				valid = false;
 				c.msgs += [invalid_condition(error(), w@location)];
@@ -677,16 +696,16 @@ Checker check_condition(CONDITIONDATA w, Checker c){
 		}
 		case /some|any/: {
 			if (has_on) {
-				cond = some_objects_on(objs, on);
+				cond = some_objects_on(objs, on, w);
 			} else {
-				cond = some_objects(objs);
+				cond = some_objects(objs, w);
 			}
 		}
 		case /no/: {
 			if (has_on) {
-				cond = no_objects_on(objs, on);
+				cond = no_objects_on(objs, on, w);
 			} else {
-				cond = no_objects(objs);
+				cond = no_objects(objs, w);
 			}
 		}
 		
@@ -728,6 +747,7 @@ Checker check_level(LEVELDATA l, Checker c){
 				for (str legend <- char_list) {
 					Reference r = resolve_reference(legend, c, l@location);
 					c = r.c;
+					c.used_references += r.references;
 					
 					if (toLowerCase(legend) in c.references && size(r.objs) > 1) {
 						c.msgs += [ambiguous_pixel(legend, r.objs, error(), l@location)];
@@ -775,10 +795,6 @@ Checker check_game(PSGAME g, bool debug=false) {
 		c = check_layer(l, c);
 	}
 	
-	for (OBJECTDATA x <- g.objects){
-		if (!(toLowerCase(x.name) in c.layer_list)) c.msgs += [unlayered_objects(x.name, error(), x@location)];
-	}
-	
 	for (RULEDATA r <- g.rules) {
 		c = check_rule(r, c);
 	}
@@ -793,6 +809,15 @@ Checker check_game(PSGAME g, bool debug=false) {
 	
 	for (LEVELDATA l <- g.levels) {
 		c = check_level(l, c);
+	}
+	
+	for (OBJECTDATA x <- g.objects){
+		if (!(toLowerCase(x.name) in c.layer_list)) c.msgs += [unlayered_objects(x.name, error(), x@location)];
+		if (!(toLowerCase(x.name) in c.used_objects)) c.msgs += [unused_object(x.name, warn(), x@location)];
+	}
+	
+	for (LEGENDDATA x <- g.legend){
+		if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x@location)];
 	}
 	
 	if (isEmpty(g.levels)) c.msgs += no_levels(warn(), g@location);

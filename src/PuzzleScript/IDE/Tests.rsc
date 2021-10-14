@@ -18,7 +18,9 @@ void main(){
 	//	}
 	//}
 	
-	run_game(tree, |project://AutomatedPuzzleScript/src/PuzzleScript/IDE/Tests.rsc|);
+	//run_game(tree, |project://AutomatedPuzzleScript/src/PuzzleScript/IDE/Tests.rsc|);
+	
+	build_game(tree);
 
 
 }

@@ -10,15 +10,15 @@ void main(){
 	PSGAME game;
 	Checker checker;
 
-	println("Resolve Reference");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/Game1ResolveLegend.PS|);
-	checker = check_game(game);
-	println(checker.objects);
-	println(checker.references);
-	println(checker.combinations);
-	print_msgs(checker);
-	println(toMessages(checker.msgs));
-	println();
+	//println("Resolve Reference");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/Game1ResolveLegend.PS|);
+	//checker = check_game(game);
+	//println(checker.objects);
+	//println(checker.references);
+	//println(checker.combinations);
+	//print_msgs(checker);
+	//println(toMessages(checker.msgs));
+	//println();
 	
 	println("Object Errors");
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Objects.PS|);

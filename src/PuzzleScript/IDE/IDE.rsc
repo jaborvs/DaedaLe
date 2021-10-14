@@ -7,6 +7,8 @@ import PuzzleScript::Messages;
 import PuzzleScript::Compiler;
 import PuzzleScript::Interface::Interface;
 import PuzzleScript::Engine;
+import PuzzleScript::Analyser;
+
 import util::IDE;
 import vis::Figure;
 import ParseTree;
@@ -90,6 +92,16 @@ Content run_game(Tree t, loc s){
 	return load_app(engine)();
 }
 
+set[Message] build_game(Tree tree){
+	tree = annotate(tree);
+	PSGAME g = ps_implode(tree);
+	Checker c = check_game(g);
+	Engine e = compile(c);
+	DynamicChecker dc = analyse_game(e);
+	
+	return toMessages(dc.msgs);
+}
+
 public void registerPS(){
    
   Contribution PS_style =
@@ -146,7 +158,8 @@ public void registerPS(){
     			interaction("Run Game", run_game)
     		]
     	)
-    )
+    ),
+    builder(build_game)
   };
     
   registerLanguage(PS_NAME, PS_EXT, ps_parse);

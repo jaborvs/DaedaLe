@@ -5,6 +5,8 @@ import PuzzleScript::Engine;
 import PuzzleScript::Load;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import PuzzleScript::Analyser;
+import PuzzleScript::Messages;
 
 import salix::HTML;
 import salix::App;
@@ -12,8 +14,11 @@ import salix::App;
 import List;
 import String;
 import IO;
+import util::Benchmark;
+import util::Math;
+import Message;
 
-alias Model = tuple[str input, str title, Engine engine];
+alias Model = tuple[str input, str title, Engine engine, int update, set[Message] msgs];
 
 data Msg 
 	= left() 
@@ -24,18 +29,25 @@ data Msg
 	| undo() 
 	| restart()
 	| win()
+	| direction(int i)
 	;
 
 Model update(Msg msg, Model model){
+	int start_time = userTime();
 	switch(msg){
-		case left(): model.input = "left";
-		case right(): model.input = "right";
-		case up(): model.input = "up";
-		case down(): model.input = "down";
+		case direction(int i): {
+			switch(i){
+				case 37: model.input = "left";
+				case 38: model.input = "up";
+				case 39: model.input = "right";
+				case 40: model.input = "down";
+			}
+		}
 		case action(): model.input = "action";
 		case undo(): model.input = "undo";
 		case restart(): model.input = "restart";
 		case win(): model.engine.win_keyword = true;
+		default: return model;
 	}
 	
 	model.engine.msg_queue = [];
@@ -49,6 +61,7 @@ Model update(Msg msg, Model model){
 	}
 	
 	model.engine.abort = false;
+	model.update = userTime() - start_time;
 	return model;
 }
 
@@ -63,6 +76,8 @@ void view_sprite(Model m, str _ : "trans"){
 		}
 	});
 }
+
+
 
 default void view_sprite(Model m, str name){
 	OBJECTDATA obj = m.engine.objects[name];
@@ -82,7 +97,8 @@ default void view_sprite(Model m, str name){
 }
 
 void view_background(Model m){
-	str name = m.engine.current_level.background[0];
+	int s = size(m.engine.current_level.background);
+	str name = m.engine.current_level.background[arbInt(s)];
 	
 	table(class("layer"), class("background"), () {
 		for (int _ <- [0..m.engine.current_level.size.height]){
@@ -121,10 +137,10 @@ void view_level(Model m){
 
 void view_panel(Model m){
 	h3("Buttons");
-	button(onClick(left()), "left");
-	button(onClick(right()), "right");
-	button(onClick(up()), "up");
-	button(onClick(down()), "down");
+	button(onClick(direction(37)), "left");
+	button(onClick(direction(39)), "right");
+	button(onClick(direction(38)), "up");
+	button(onClick(direction(40)), "down");
 	button(onClick(action()), "action");
 	button(onClick(restart()), "restart");
 	button(onClick(undo()), "undo");
@@ -158,11 +174,6 @@ void view_panel(Model m){
 			br();
 			for (str r <- rule.right) p(class("rule"), r);
 		});
-	}
-	
-	h3("Messages");
-	for (str msg <- m.engine.msg_queue){
-		p(msg);
 	}
 }
 
@@ -200,16 +211,44 @@ void view_layers(Model m){
 }
 
 void view(Model m){
-	div(() {
+	int start_time = userTime();
+	div(class("main"), () {
+		//p(m.input);
 		h2(m.title);
 		div(class("left"), () {view_panel(m);});
 		div(class("left"), () {view_layers(m);});
-		div(class("left"), () {
+		div(class("left"), onKeyDown(direction), () {
 			h3("Layers");
 			div(class("grid"), () {view_level(m);});
 		});
+		//div(() {
+		//	h3("Messages");
+		//	for (Message msg <- m.msgs){
+		//		p(() { 
+		//			u(msg.at.begin.line);
+		//			p(msg.msg);
+		//		});
+		//	}
+		//});
+		
+		int view_time = userTime() - start_time;
+		//p("View: <view_time/1000000> ms");
+		//p("Update: <m.update/1000000> ms");
+		
+		//div(() {
+		//	br();
+		//	br();
+		//	br();
+		//	br();
+		//	br();
+		//	button(onClick(direction(37)), "left");
+		//	button(onClick(direction(39)), "right");
+		//	button(onClick(direction(38)), "up");
+		//	button(onClick(direction(40)), "down");
+		//});
 	});
-
+	
+	
 }
 
 App[str]() load_app(loc src){
@@ -222,7 +261,9 @@ App[str]() load_app(loc src){
 
 App[str]() load_app(Engine engine){
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
-	Model init() = <"none", title, engine>;
+	DynamicChecker dc = analyse_game(engine);
+	
+	Model init() = <"none", title, engine, 0, toMessages(dc.msgs)>;
 	SalixApp[Model] gameApp(str appId = "root") = makeApp(appId, init, view, update);
 	
 	App[str] gameWebApp()
@@ -237,7 +278,7 @@ App[str]() load_app(Engine engine){
 
 //Test
 //import PuzzleScript::Interface::Interface;
-// load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|)();
+// load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/IDE/Game1.PS|)();
 // load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/AdvancedGame1.PS|)();
 
 

@@ -29,12 +29,34 @@ void main() {
 	//d_checker = analyse_game(engine);
 	//print_msgs(d_checker);
 	
-	println("Unidirectional Solutions");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1Unidirectional.PS|);
+	//println("Unidirectional Solutions");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1Unidirectional.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//d_checker = analyse_stupid_solution(engine);
+	//print_msgs(d_checker);
+	
+	//println("Difficulty Increase");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//d_checker = analyse_game(engine);
+	//print_msgs(d_checker);
+	
+	//println("Get Rule type");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleCompare.PS|);
+	//checker = check_game(game);
+	//engine = compile(checker);
+	//
+	//for (Rule r <- engine.rules){
+	//	println(get_rule_type(r));
+	//}
+	
+	println("Impossible Rules");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1ImpossibleVictory.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
-	d_checker = analyse_stupid_solution(engine);
+	d_checker = analyse_game(engine);
 	print_msgs(d_checker);
-	
 }
  
