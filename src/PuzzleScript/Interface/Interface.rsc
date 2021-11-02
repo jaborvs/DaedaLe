@@ -82,14 +82,20 @@ void view_sprite(Model m, str _ : "trans"){
 default void view_sprite(Model m, str name){
 	OBJECTDATA obj = m.engine.objects[name];
 	table(class("sprite"), class("cell"), () {
-		for (list[PIXEL] line <- obj.sprite){
+		for (int i <- [0..5]){
 			tr((){
-				for (PIXEL pix <- line){
-					if (pix.pixel == "."){
-						td(class("pixel"), class("transparent"));
+				for (int j <- [0..5]){
+					if(isEmpty(obj.sprite)){
+						td(class("pixel"), class(toLowerCase(obj.colors[0])));
 					} else {
-						td(class("pixel"), class(toLowerCase(obj.colors[toInt(pix.pixel)])));
+						PIXEL pix = obj.sprite[i][j];
+						if (pix.pixel == "."){
+							td(class("pixel"), class("transparent"));
+						} else {
+							td(class("pixel"), class(toLowerCase(obj.colors[toInt(pix.pixel)])));
+						}
 					}
+					
 				}
 			});
 		}
