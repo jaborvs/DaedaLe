@@ -13,7 +13,7 @@ import IO;
 
 void main(){
 	println("Interface Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/DEMO.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 	load_app(engine)();

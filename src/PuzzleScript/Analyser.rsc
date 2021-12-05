@@ -108,8 +108,15 @@ DynamicChecker analyse_instant_victory(DynamicChecker c, Engine engine, Level l)
 }
 
 DynamicChecker analyse_rules(DynamicChecker c, Rule r1, Rule r2){
-	if (any(RulePart x <- r1.converted_left, x in r2.converted_left)) c.msgs += [similar_rules(warn(), r1.original@location)];
-	if (any(RulePart x <- r1.converted_right, x in r2.converted_right)) c.msgs += [similar_rules(warn(), r1.original@location)];
+	if (any(RulePart x <- r1.converted_left, x in r2.converted_left)){
+		 c.msgs += [similar_rules("left", warn(), r2.original@location, r1.original@location)];
+		 c.msgs += [similar_rules("left", warn(), r1.original@location, r2.original@location)];
+	}
+	
+	if (any(RulePart x <- r1.converted_right, x in r2.converted_right)) {
+		c.msgs += [similar_rules("right", warn(), r2.original@location, r1.original@location)];
+		c.msgs += [similar_rules("right", warn(), r1.original@location, r2.original@location)];
+	}
 	
 	return c;
 }
@@ -121,19 +128,24 @@ DynamicChecker analyse_difficulty(DynamicChecker c, list[Level] levels){
 
 	for (int i <- [0..size(levels)]){
 		Level level = levels[i];
+		if (level is message) continue;
+		
 		int level_size = level.size.height * level.size.width;
-		int object_size = size(level.objectdata);
+		int object_size = size([x | x <- level.objectdata, x notin level.background]);
 		
 		real size_check = 0.0;
 		real object_check = 0.0;
 		if (!isEmpty(level_sizes)){
-			size_check = level_size - mean(level_sizes);
-			object_check = object_size - mean(object_sizes);
+			size_check = mean(level_sizes);
+			object_check = mean(object_sizes);
 		}
 		
-		if ((size_check + object_check) > 0 ){
-			c.msgs += [difficulty_not_increasing(warn(), level.original@location)];
-		}
+		//if ((size_check + object_check) <= 0 ){
+		//	c.msgs += [difficulty_not_increasing(warn(), level.original@location)];
+		//}
+		
+		//instead of trying to create a difficulty metrics that probably wouldn't work we just give the raw stats to the user
+		c.msgs += [metrics(level_size, object_size, size_check, object_check, warn(), level.original@location)];
 		
 		
 		level_sizes += [level_size];

@@ -307,7 +307,10 @@ list[bool] is_on(Level level, list[str] objs, list[str] on){
 	return results;
 }
 
-bool is_met(Condition _ : no_objects(list[str] objs, _), Level level)
+bool is_met(Condition _, Level level : message)
+	= true;
+
+bool is_met(Condition _ : no_objects(list[str] objs, _), Level level : level)
 	= !any(str x <- objs, x in level.objectdata);
 	
 str toString(Condition _ : no_objects(list[str] objs, _)){
@@ -315,7 +318,7 @@ str toString(Condition _ : no_objects(list[str] objs, _)){
 	return "No <t>";
 }
 	
-bool is_met(Condition _ : some_objects(list[str] objs, _), Level level)
+bool is_met(Condition _ : some_objects(list[str] objs, _), Level level : level)
 	= any(str x <- objs, x in level.objectdata);
 	
 str toString(Condition _ : some_objects(list[str] objs, _)) {
@@ -323,7 +326,7 @@ str toString(Condition _ : some_objects(list[str] objs, _)) {
 	return "Some <t>";
 }
 	
-bool is_met(Condition _ : no_objects_on(list[str] objs, list[str] on, _), Level level)
+bool is_met(Condition _ : no_objects_on(list[str] objs, list[str] on, _), Level level : level)
 	= !any(x <- is_on(level, objs, on), x);
 	
 str toString(Condition _ : no_objects_on(list[str] objs, list[str] on, _)) {
@@ -333,7 +336,7 @@ str toString(Condition _ : no_objects_on(list[str] objs, list[str] on, _)) {
 }
 
 	
-bool is_met(Condition _ : some_objects_on(list[str] objs, list[str] on, _), Level level) {
+bool is_met(Condition _ : some_objects_on(list[str] objs, list[str] on, _), Level level : level) {
 	list[bool] results = is_on(level, objs, on);
 	return isEmpty(results) || any(x <- results, x);
 }
@@ -344,7 +347,7 @@ str toString(Condition _ : some_objects_on(list[str] objs, list[str] on, _)) {
 	return "Some <t> On <t2>";
 }
 	
-bool is_met(Condition _ : all_objects_on(list[str] objs, list[str] on, _), Level level) {
+bool is_met(Condition _ : all_objects_on(list[str] objs, list[str] on, _), Level level : level) {
 	list[bool] results = is_on(level, objs, on);
 	return isEmpty(results) || all(x <- results, x);
 }

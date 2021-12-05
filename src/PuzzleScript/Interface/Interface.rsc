@@ -285,6 +285,6 @@ App[str]() load_app(Engine engine){
 //Test
 //import PuzzleScript::Interface::Interface;
 // load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/IDE/Game1.PS|)();
-// load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/AdvancedGame1.PS|)();
+// load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/DEMO.PS|)();
 
 

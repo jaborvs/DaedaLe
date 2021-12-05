@@ -20,23 +20,23 @@ void main(){
 	//println(toMessages(checker.msgs));
 	//println();
 	
-	println("Object Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Objects.PS|);
-	checker = check_game(game);
-	print_msgs(checker);
-	println();
-
-	println("Legend Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Legend.PS|);
-	checker = check_game(game);
-	print_msgs(checker);
-	println();
-	
-	println("Layer Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Layers.PS|);
-	checker = check_game(game);
-	println(checker.layer_list);
-	print_msgs(checker);
+	//println("Object Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Objects.PS|);
+	//checker = check_game(game);
+	//print_msgs(checker);
+	//println();
+//
+	//println("Legend Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Legend.PS|);
+	//checker = check_game(game);
+	//print_msgs(checker);
+	//println();
+	//
+	//println("Layer Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Layers.PS|);
+	//checker = check_game(game);
+	//println(checker.layer_list);
+	//print_msgs(checker);
 	println();
 	
 	println("Level Errors");
@@ -45,29 +45,29 @@ void main(){
 	print_msgs(checker);
 	println();
 	
-	println("Sound Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Sounds.PS|);
-	checker = check_game(game);
-	println(checker.sound_events);
-	print_msgs(checker);
-	println();
-	
-	println("Condition Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Conditions.PS|);
-	checker = check_game(game);
-	println(checker.conditions);
-	print_msgs(checker);
-	println();
-	
-	println("Prelude Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Prelude.PS|);
-	checker = check_game(game);
-	print_msgs(checker);
-	println();
-	
-	println("Rule Errors");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Rules.PS|);
-	checker = check_game(game);
-	print_msgs(checker);
-	println();
+	//println("Sound Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Sounds.PS|);
+	//checker = check_game(game);
+	//println(checker.sound_events);
+	//print_msgs(checker);
+	//println();
+	//
+	//println("Condition Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Conditions.PS|);
+	//checker = check_game(game);
+	//println(checker.conditions);
+	//print_msgs(checker);
+	//println();
+	//
+	//println("Prelude Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Prelude.PS|);
+	//checker = check_game(game);
+	//print_msgs(checker);
+	//println();
+	//
+	//println("Rule Errors");
+	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Checker/BadGame1Rules.PS|);
+	//checker = check_game(game);
+	//print_msgs(checker);
+	//println();
 }

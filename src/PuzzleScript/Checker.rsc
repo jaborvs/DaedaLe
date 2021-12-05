@@ -83,14 +83,14 @@ str get_prelude(list[PRELUDEDATA] values, str key, str default_str){
 }
 
 bool check_valid_name(str name){
-	return /^<x:[a-z0-9]+>$/i := name && !(toLowerCase(name) in keywords);
+	return /^<x:[a-z0-9_]+>$/i := name && !(toLowerCase(name) in keywords);
 }
 
 bool check_valid_legend(str name){
 	if (size(name) > 1){
 		return check_valid_name(name);
 	} else {
-		return /^<x:[a-uw-z0-9.!@#$%&*]+>$/i := name && !(toLowerCase(name) in keywords);
+		return /^<x:[a-uw-z0-9.!@#$%&*,\-+]+>$/i := name && !(toLowerCase(name) in keywords);
 	}
 }
 
@@ -250,12 +250,14 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 			c.msgs += msgs;
 		} else {
 			c.references[toLowerCase(obj.legend[0])] = [id];
+			c.used_objects += [id];
 		}
 	}
 	
 	//check colors (only default mastersystem palette supported currently)
 	for (str color <- obj.colors) {
 		if (toLowerCase(color) in COLORS) continue;
+		if (/^#(?:[0-9a-fA-F]{3}){1,2}$/ := color) continue;
 		
 		c.msgs += [invalid_color(obj.name, color, error(), obj@location)];
 	}
@@ -498,15 +500,16 @@ Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c, 
 			if(any(str rand <- rulepart_random, rand in verbs)) c.msgs += [invalid_rule_random(error(), cont@location)];
 		}
 		
+		list[list[str]] references = [];
+		for (str obj <- objs) {
+			Reference r = resolve_reference(obj, c, cont@location);
+			c = r.c;
+			c.used_references += r.references;
+			c.used_objects += r.objs;
+			references += [r.objs];
+		}
+		
 		if (size(objs) > 1){
-			list[list[str]] references = [];
-			for (str obj <- objs) {
-				Reference r = resolve_reference(obj, c, cont@location);
-				c = r.c;
-				c.used_references += r.references;
-				references += [r.objs];
-			}
-			
 			for (int i <- [0..size(references)-1]){
 				for (int j <- [i+1..size(references)]){
 					c = check_stackable(references[i], references[j], c, cont@location);

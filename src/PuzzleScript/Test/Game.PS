@@ -1,0 +1,909 @@
+title Rainbow Renovation
+author Diamond Knight
+homepage diamond-knight.itch.io/
+background_color Black
+text_color Brown
+noaction
+norepeat_action
+run_rules_on_level_start
+
+
+
+
+
+
+
+
+
+
+========
+OBJECTS
+========
+
+Background
+White #a6a6a6
+01000
+11111
+00010
+11111
+01000
+
+Marble
+#d9b18c #cc9766 #bf7d40 #996433 #734b26
+.323.
+31013
+32123
+43334
+.323.
+
+RedMarble
+#ff0000 #cc0000 #990000 #660000 #330000
+.323.
+31013
+32123
+43334
+.323.
+
+BlueMarble
+#0000ff #0000cc #000099 #000066 #000033
+.323.
+31013
+32123
+43334
+.323.
+
+YellowMarble
+#ffff66 #ffff33 #ffff00 #cccc00 #999900
+.323.
+31013
+32123
+43334
+.323.
+
+PurpleMarble
+#ff00ff #cc00cc #990099 #660066 #330033
+.323.
+31013
+32123
+43334
+.323.
+
+OrangeMarble
+#ff8533 #ff6600 #cc5200 #993d00 #662900
+.323.
+31013
+32123
+43334
+.323.
+
+GreenMarble
+#33ff33 #00ff00 #00cc00 #009900 #006600
+.323.
+31013
+32123
+43334
+.323.
+
+BrownMarble
+#662200 #4d1a00 #331100 #1a0900 #000000
+.323.
+31013
+32123
+43334
+.323.
+
+Crate
+#bf8040 #663300
+11111
+11001
+10101
+10011
+11111
+
+RedPaint
+#ff6666 #ff1a1a
+01000
+11111
+00010
+11111
+01000
+
+RedPaintBad
+DarkRed #ff6666
+01000
+00010
+10000
+01001
+00010
+
+BluePaint
+#66b3ff #0080ff
+01000
+11111
+00010
+11111
+01000
+
+BluePaintBad
+DarkBlue #66b3ff
+01000
+00010
+10000
+01001
+00010
+
+YellowPaint
+#ffffcc #ffff00
+01000
+11111
+00010
+11111
+01000
+
+YellowPaintBad
+#997a00 #ffffcc
+01000
+00010
+10000
+01001
+00010
+
+PurplePaint
+#ff33ff #b300b3
+01000
+11111
+00010
+11111
+01000
+
+PurplePaintBad
+#330033 #ff33ff
+01000
+00010
+10000
+01001
+00010
+
+OrangePaint
+#ffb366 #ff8000
+01000
+11111
+00010
+11111
+01000
+
+OrangePaintBad
+#803300 #ffb366
+01000
+00010
+10000
+01001
+00010
+
+GreenPaint
+#80ff80 #1aff1a
+01000
+11111
+00010
+11111
+01000
+
+GreenPaintBad
+darkgreen #80ff80
+01000
+00010
+10000
+01001
+00010
+
+BrownPaint
+#994d00 #1a0d00
+01000
+11111
+00010
+11111
+01000
+
+RedPaintBucket
+#595959 #262626 Red
+.111.
+12221
+01220
+00200
+00000
+
+BluePaintBucket
+#595959 #262626 Blue
+.111.
+12221
+01220
+00200
+00000
+
+YellowPaintBucket
+#595959 #262626 Yellow
+.111.
+12221
+01220
+00200
+00000
+
+WaterBucket
+Brown DarkBrown LightBlue
+.111.
+12221
+01110
+00000
+00000
+
+RedTarget
+#ff1a1a
+.....
+..0..
+.000.
+..0..
+.....
+
+BlueTarget
+#0080ff
+.....
+..0..
+.000.
+..0..
+.....
+
+YellowTarget
+#ffff00
+.....
+..0..
+.000.
+..0..
+.....
+
+PurpleTarget
+#b300b3
+.....
+..0..
+.000.
+..0..
+.....
+
+OrangeTarget
+#ff8000
+.....
+..0..
+.000.
+..0..
+.....
+
+GreenTarget
+#1aff1a
+.....
+..0..
+.000.
+..0..
+.....
+
+MarbleEscort
+#ffe6f2 #ffcce6 #ffb3d9 #ff99cc #ff80bf #ff66b3 #ff4da6 #ff3399 #ff1a8c #ff0080
+.642.
+75102
+83214
+97356
+.987.
+
+Target
+DarkBrown Brown Black
+.000.
+01110
+01110
+02110
+01110
+
+TargetEnabled
+DarkBrown Brown Black
+.000.
+02220
+02220
+02220
+02220
+
+Wall
+#333333 Black
+01000
+11111
+00010
+11111
+01000
+
+MarblePrisonerSteel
+White #f2f2f2 #e6e6e6 #000000 #cccccc #bfbfbf #b3b3b3 #a6a6a6 #ff5c33 #ff3300
+.642.
+75102
+98338
+98888
+.988.
+
+PrisonSteel
+Grey White
+11111
+0.0.0
+0.0.0
+0.0.0
+11111
+
+TargetHidden
+transparent
+
+InvisibleWall
+Transparent
+
+Marker
+Transparent
+
+LitCauldron
+Black Yellow Red Orange
+.3...
+.33.3
+32233
+01110
+00000
+
+FloorRoyal
+Red Darkred
+01000
+00010
+00100
+10000
+00001
+
+Step1TRoyal
+Red Darkred #ffad33 #b36b00
+22222
+33333
+00100
+10000
+00001
+
+Step1LRoyal
+Red Darkred #ffad33 #b36b00
+23000
+23010
+23100
+23000
+23001
+
+Step1RRoyal
+Red Darkred #ffad33 #b36b00
+01032
+00032
+00132
+10032
+00032
+
+Step2LDRoyal
+Red Darkred #ffad33 #b36b00
+21000
+22010
+32200
+13220
+00322
+
+Step2RDRoyal
+Red DarkRed #ffad33 #b36b00
+01002
+00022
+00223
+12230
+22301
+
+Step1TLRoyal
+Red Darkred #ffad33 #b36b00
+23000
+30010
+00100
+10000
+00001
+
+Step1TRRoyal
+Red Darkred #ffad33 #b36b00
+01032
+00013
+00100
+10000
+00001
+
+KingTL
+#ffd699 #ffcc80 #ffc266 #ffb84d #ffad33 #ffa31a #ff9900 Red Darkred
+78777
+77732
+77431
+86521
+76510
+
+KingTC
+#ffffff #fff5e6 #ffebcc #ffe0b3 #ffd699
+43332
+33322
+33221
+32111
+43100
+
+KingTR
+#ffffff #fff5e6 #ffebcc #ffe0b3 #ffd699 #ffcc80 Red darkred
+67666
+33676
+23466
+13456
+01257
+
+KingCL
+#ffd699 #ffcc80 #ffc266 #ffb84d #ffad33 #ffa31a #ff9900 #e68a00 #cc7a00 #b36b00
+86420
+86420
+96420
+97531
+98542
+
+KingCC
+#ffffff #fff5e6 #ffebcc #ffe0b3 #ffd699 #ffcc80 #ffc266 #ffb84d
+43100
+43300
+54321
+65432
+76544
+
+KingCR
+#ffffff #fff5e6 #ffebcc #ffe0b3 #ffd699 #ffcc80 #ffc266 Red Darkred
+00456
+00145
+01345
+12446
+23566
+
+KingBL
+#ff9900 #e68a00 #cc7a00 #b36b00 Red Darkred
+42210
+43231
+44223
+54412
+44445
+
+KingBC
+#ffcc80 #ffc266 #ffb84d #ffad33 #ffa31a #ff9900 #e68a00 #cc7a00 #b36b00 Red
+54210
+65421
+76533
+88766
+78765
+
+KingBR
+#ffc266 #ffb84d #ffad33 #ffa31a #ff9900 Red Darkred
+01235
+12345
+23455
+34555
+55556
+
+=======
+LEGEND
+=======
+
+PaintedPlayer = RedMarble OR BlueMarble OR YellowMarble OR PurpleMarble OR OrangeMarble OR GreenMarble OR BrownMarble
+Player = Marble OR PaintedPlayer
+TargetRoyal = Target AND FloorRoyal
+PlayerRoyal = Marble AND FloorRoyal
+TargetInvis = Target AND InvisibleWall
+Goal = TargetEnabled OR TargetHidden
+Pushable = Crate
+WallInvis = Wall AND InvisibleWall
+Steps = FloorRoyal OR Step1TRoyal OR Step1LRoyal OR Step1RRoyal OR Step2LDRoyal OR Step2RDRoyal OR Step1TLRoyal OR Step1TRRoyal
+RoyalCauldron = LitCauldron AND FloorRoyal
+RoyalEscort = MarbleEscort AND FloorRoyal
+King = KingTL OR KingTC OR KingTR OR KingCL OR KingCC OR KingCR OR KingBL OR KingBC OR KingBR
+Obstructions = Wall OR King OR LitCauldron OR MarbleEscort OR Target OR MarblePrisonerSteel
+Object = RedPaint OR Crate OR Wall OR Target OR TargetEnabled OR Steps OR LitCauldron OR King OR TargetHidden OR LitCauldron OR InvisibleWall
+Paint = RedPaint OR BluePaint OR YellowPaint OR PurplePaint OR OrangePaint OR GreenPaint
+BadPaint = RedPaintBad OR BluePaintBad OR YellowPaintBad OR PurplePaintBad OR OrangePaintBad OR GreenPaintBad OR BrownPaint
+PaintBuckets = RedPaintBucket OR BluePaintBucket OR YellowPaintBucket
+PaintMarker = RedTarget OR BlueTarget OR YellowTarget OR PurpleTarget OR OrangeTarget OR GreenTarget 
+Prisoner = PrisonSteel AND MarblePrisonerSteel AND InvisibleWall
+
+. = Background
+M = Marble
+E = RoyalEscort
+C = RoyalCauldron
+K = LitCauldron
+O = TargetInvis
+{ = PlayerRoyal
+* = Crate
+P = RedPaintBucket
+B = BluePaintBucket
+Y = YellowPaintBucket
+F = WaterBucket
+! = RedTarget
+@ = BlueTarget
+$ = YellowTarget
+% = PurpleTarget
+& = OrangeTarget
+` = GreenTarget
+# = WallInvis
+/ = InvisibleWall
+R = FloorRoyal
+; = Step1TRoyal
+: = Step1LRoyal
+" = Step1RRoyal
+' = Step2LDRoyal
+? = Step2RDRoyal
+_ = Step1TLRoyal
++ = Step1TRRoyal
+Q = KingTL
+W = KingTC
+A = KingTR
+S = KingCL
+Z = KingCC
+X = KingCR
+U = KingBL
+H = KingBC
+N = KingBR
+J = Prisoner
+L = TargetHidden
+
+=======
+SOUNDS
+=======
+
+StartGame 234626
+Player Move 71782707
+Player CantMove 94624704
+Pushable MOVE 36772507
+EndLevel 25377300
+
+
+sfx0 78573103
+
+sfx1 38526102
+
+sfx2 16302708
+
+================
+COLLISIONLAYERS
+================
+
+Background
+Marker
+Steps
+Paint, BadPaint
+Obstructions, PaintBuckets, WaterBucket, Pushable
+PrisonSteel
+Goal
+Player, InvisibleWall
+PaintMarker
+
+======
+RULES
+======
+
+
+
+[ Marker ] -> [ ]
+[ > RedMarble Background ] -> [ > RedMarble RedPaint  ]
+[ > BlueMarble Background ] -> [ > BlueMarble BluePaint  ]
+[ > YellowMarble Background ] -> [ > YellowMarble GreenPaint  ]
+[ > PurpleMarble Background ] -> [ > PurpleMarble PurplePaint  ]
+[ > OrangeMarble Background ] -> [ > OrangeMarble OrangePaint  ]
+[ > GreenMarble Background ] -> [ > GreenMarble GreenPaint  ]
+[ > BrownMarble Background ] -> [ > BrownMarble BrownPaint  ] sfx1
+[ Player RedPaint ] -> [ Player RedPaint Marker ]
+[ Player BluePaint ] -> [ Player BluePaint Marker ]
+[ Player YellowPaint ] -> [ Player YellowPaint Marker ]
+[ Player PurplePaint ] -> [ Player PurplePaint Marker ]
+[ Player OrangePaint ] -> [ Player OrangePaint Marker ]
+[ Player GreenPaint ] -> [ Player GreenPaint Marker ]
+
+
+
+[ > Player | Crate ] -> [ Player | > Crate  ]
+[ > Crate | PaintBuckets ] -> [ > Crate | > PaintBuckets ]
+[ > Crate | WaterBucket ] -> [ > Crate | > WaterBucket ]
+
+
+
+late [ Marble RedPaintBucket ]  -> [ RedMarble RedPaint ] sfx0
+late [ Marble BluePaintBucket ]  -> [ BlueMarble BluePaint ] sfx0
+late [ Marble YellowPaintBucket ]  -> [ YellowMarble YellowPaint] sfx0
+late [ RedMarble RedPaintBucket ]  -> [ RedMarble RedPaint ]
+late [ RedMarble BluePaintBucket ]  -> [ PurpleMarble PurplePaint ] sfx0
+late [ RedMarble YellowPaintBucket ]  -> [ OrangeMarble OrangePaint] sfx0
+late [ BlueMarble RedPaintBucket ]  -> [ PurpleMarble PurplePaint ] sfx0
+late [ BlueMarble BluePaintBucket ]  -> [ BlueMarble BluePaint ]
+late [ BlueMarble YellowPaintBucket ]  -> [ GreenMarble GreenPaint] sfx0
+late [ YellowMarble RedPaintBucket ]  -> [ OrangeMarble OrangePaint ] sfx0
+late [ YellowMarble BluePaintBucket ]  -> [ GreenMarble GreenPaint ] sfx0
+late [ YellowMarble YellowPaintBucket ]  -> [ YellowMarble YellowPaint]
+late [ PurpleMarble RedPaintBucket ]  -> [ PurpleMarble PurplePaint ]
+late [ PurpleMarble BluePaintBucket ]  -> [ PurpleMarble PurplePaint ]
+late [ PurpleMarble YellowPaintBucket ]  -> [ BrownMarble BrownPaint] sfx1
+late [ OrangeMarble RedPaintBucket ]  -> [ OrangeMarble OrangePaint ]
+late [ OrangeMarble BluePaintBucket ]  -> [ BrownMarble BrownPaint ] sfx1
+late [ OrangeMarble YellowPaintBucket ]  -> [ OrangeMarble OrangePaint]
+late [ GreenMarble RedPaintBucket ]  -> [ BrownMarble BrownPaint ] sfx1
+late [ GreenMarble BluePaintBucket ]  -> [ GreenMarble GreenPaint ]
+late [ GreenMarble YellowPaintBucket ]  -> [ GreenMarble GreenPaint]
+late [ BrownMarble PaintBuckets ]  -> [ BrownMarble BrownPaint] sfx1
+late [ PaintedPlayer WaterBucket ]  -> [ Marble ] sfx2
+
+
+
+late [ Player RedPaint no Marker ] -> [ Player RedPaintBad ] sfx1
+late [ Player BluePaint no Marker ] -> [ Player BluePaintBad ] sfx1
+late [ Player YellowPaint no Marker ] -> [ Player YellowPaintBad ] sfx1
+late [ Player PurplePaint no Marker ] -> [ Player PurplePaintBad ] sfx1
+late [ Player OrangePaint no Marker ] -> [ Player OrangePaintBad ] sfx1
+late [ Player GreenPaint no Marker ] -> [ Player GreenPaintBad ] sfx1
+late [ RedMarble Background ] -> [ RedMarble RedPaint ]
+late [ BlueMarble Background ] -> [ BlueMarble BluePaint ]
+late [ YellowMarble Background ] -> [ YellowMarble YellowPaint ]
+late [ PurpleMarble Background ] -> [ PurpleMarble PurplePaint ]
+late [ OrangeMarble Background ] -> [ OrangeMarble OrangePaint ]
+late [ GreenMarble Background ] -> [ GreenMarble GreenPaint ]
+late [ BrownMarble Background ] -> [ BrownMarble BrownPaint ] sfx1
+
+
+
+late [ TargetInvis ] -> [ TargetEnabled ]
+late [ Background no Object ] [ TargetEnabled ] ->  [ Background no Object ] [ TargetInvis ]
+late [ BadPaint ] [ TargetEnabled ] -> [ BadPaint ] [ TargetInvis ]
+late [ RedTarget no RedPaint ] [ TargetEnabled ] -> [ RedTarget no RedPaint ] [ TargetInvis ]
+late [ BlueTarget no BluePaint ] [ TargetEnabled ] -> [ BlueTarget no BluePaint ] [ TargetInvis ]
+late [ YellowTarget no YellowPaint ] [ TargetEnabled ] -> [ YellowTarget no YellowPaint ] [ TargetInvis ]
+late [ PurpleTarget no PurplePaint ] [ TargetEnabled ] -> [ PurpleTarget no PurplePaint ] [ TargetInvis ]
+late [ OrangeTarget no OrangePaint ] [ TargetEnabled ] -> [ OrangeTarget no OrangePaint ] [ TargetInvis ]
+late [ GreenTarget no GreenPaint ] [ TargetEnabled ] -> [ GreenTarget no GreenPaint ] [ TargetInvis ]
+late [ BrownPaint ] [ TargetEnabled ] -> [ Brownpaint ] [ TargetInvis ]
+late [ Player TargetHidden ] [ Background no Object ] -> [ Player TargetHidden ] [ Background InvisibleWall ]
+
+==============
+WINCONDITIONS
+==============
+
+All TargetHidden on Player
+No BadPaint
+All Background on Object
+No Target
+All TargetEnabled on Player
+
+
+=======
+LEVELS
+=======
+
+
+
+
+
+
+
+
+
+
+
+Message King Aurum: Ah Chief Interior Designer Puffball... The castle is a bit dull. Please repaint the floor to make it livelier
+Message King Aurum: My Throne Room is already perfect so there's nothing to do here.
+Message King Aurum: You can leave through the open door below when ready
+
+
+
+
+"c"crrrc:c:
+"r"rqwar:r:
+"c"rszxr:c:
+"r"euhne:r:
+"c+'rrr?_c:
++'e+'{?_e?_
+c+'e+;_e?_c
+#c+'rrr?_c#
+##c+;;;_c##
+###crrrc###
+####coc####
+
+Message King Aurum: Any colour will do. Please don't step on fresh paint. Don't want your footprints all over
+Message King Aurum: Supplies should be all around
+
+
+
+####o####
+#....####
+#.###...#
+#..#..#.#
+##...##.#
+#######.#
+#P#...#.#
+#m..#...#
+#########
+
+#######
+####P.#
+#o...m#
+###..##
+#######
+
+#########
+##...#..#
+#.......#
+#.#.#p#.#
+#....#..#
+#om#...##
+#########
+
+Message King Aurum: Puffball! When I said any colour, I meant except certain marked areas
+Message Hmm... Wonder what happens if I mix them
+
+#########
+#..######
+#..##..##
+#..%.!.##
+#......p#
+#ob....m#
+#########
+
+
+
+##########
+#........#
+#.....!..#
+#..&#....#
+#.......y#
+##p###...#
+#..###...#
+#..###..##
+#.......##
+#o..#m.###
+##########
+
+
+
+########
+#y.....#
+#......#
+#......#
+#.##y..#
+#.m#`..#
+#o.b...#
+########
+
+Message King Aurum: Puffball! When I said any colour, I also meant not BROWN! I hate BROWN
+Message Maybe I should try having a wash
+
+
+
+########
+##b..`p#
+#y.##f.#
+#....m##
+#b######
+#y...o##
+########
+
+
+
+########
+#.....@#
+#.#..bm#
+#..o..%#
+#..pb#.#
+#....#.#
+#...f..#
+########
+
+Message King Aurum: Puffball! As Chief Interior Designer, you can rearrange the furniture as you see fit
+Message There's so much to do... If I hide some unpainted spots from view, His Majesty won't notice right? ... RIGHT???
+
+
+
+######
+#o#.##
+#....#
+#..*.#
+##..b#
+##.ym#
+######
+
+
+
+###o##
+##!..#
+##...#
+#..m.#
+#.#*.#
+#.p..#
+######
+
+
+
+########
+#.....o#
+#*#*.#.#
+#..b.**#
+#.#..#.#
+#m.....#
+########
+
+Message I didn't expect things to get so complicated!
+
+
+
+###o####
+#.`f$..#
+#!.#...#
+#....by#
+#.#**..#
+#.#m...#
+#p#...##
+########
+
+
+
+##########
+#.......##
+#....!...#
+#........#
+#....*...#
+#....#...#
+#....f...#
+#$...p..##
+#o##pm#y##
+##########
+
+
+
+#########
+#..@#b#.#
+#...*y..#
+##.*....#
+#..fm..%#
+#....#p.#
+##.....##
+#o.....##
+#########
+
+
+
+########
+#..#b#m#
+#.*.*..#
+#..#.#.#
+#...*..#
+#.*#.#.#
+#o.*.*p#
+#.....##
+########
+
+
+
+##########
+#...@f...#
+#..b#..y.#
+###.y..#$#
+#&pmoy..f#
+#.##.....#
+#........#
+#.p..#`..#
+#...f!.b%#
+##########
+
+Message Done! Time to visit an old friend
+Message Steele... Your intel was on the money.
+Message Our assassin is ready to sneak in. I've moved crates around to give him cover.
+
+
+
+##j##
+#klk#
+#k.k#
+#k.k#
+#k.k#
+##m##
+
+Message FOR THE REVOLUTION!
+Message Thanks for playing! If you like it, please share it :)

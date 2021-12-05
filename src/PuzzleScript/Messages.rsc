@@ -344,10 +344,13 @@ data DynamicMsg
 	
 	// a rule is too similar to another rule, not simply the string but
 	// what it does and what it references
-	| similar_rules(MsgType t, loc pos)
+	| similar_rules(str side, MsgType t, loc other, loc pos)
 	
 	// a list of conditions that are contridactory and cannot be resolved together
 	| impossible_victory(tuple[loc c1, loc c2] conditions, MsgType t, loc pos)
+	
+	//
+	| metrics(int size, int objects, real mean_size, real mean_objects, MsgType t, loc pos)
 	;
 	
 public str toString(DynamicMsg m: instant_victory(MsgType t, loc pos))
@@ -355,6 +358,12 @@ public str toString(DynamicMsg m: instant_victory(MsgType t, loc pos))
 	
 public str toString(DynamicMsg m: unsolvable_rules_missing_items(MsgType t, loc condition, loc pos))
 	= "Condition at <condition> cannot be met for level. <pos>";
+	
+public str toString(DynamicMsg m: similar_rules(str side, MsgType t, loc other, loc pos))
+	= "<side> side in rule very similar to rule on line <other.begin.line>. <pos>";
+	
+public str toString(DynamicMsg m: metrics(int size, int objects, real mean_size, real mean_objects, MsgType t, loc pos))
+	= "Size: <size> (avg: <mean_size>) Objects: <objects> (avg: <mean_objects>)";
 	
 	
 //defaults
