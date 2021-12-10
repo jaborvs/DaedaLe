@@ -182,6 +182,8 @@ DynamicChecker analyse_game(Engine engine){
 	DynamicChecker c = new_dynamic_checker();
 
 	for (Level level <- engine.levels){
+		if (level is message) continue;
+		
 		c = analyse_instant_victory(c, engine, level);
 		c = anaylyse_impossible_victory(c, engine, level);
 	}
@@ -198,8 +200,8 @@ DynamicChecker analyse_game(Engine engine){
 	return c;
 }
 
-DynamicChecker analyse_unidirectional_solution(DynamicChecker c, Engine engine, str dir){
-	for (Level level <- engine.levels){
+DynamicChecker analyse_unidirectional_solution(DynamicChecker c, Engine engine, Level level){
+	for (str dir <- ["down", "left", "right", "up"]){		
 		list[Layer] old_layers = deep_copy(level.layers);
 		int loops = 0;
 		int MAX_LOOPS = 0;
@@ -212,14 +214,19 @@ DynamicChecker analyse_unidirectional_solution(DynamicChecker c, Engine engine, 
 		
 		bool victory = false;
 		for (int _ <- [0..MAX_LOOPS]){
+			list[Layer] previous_layers = deep_copy(level.layers);
 			<engine, level> = do_turn(engine, level, dir);
 			victory = is_victorious(engine, level);
-			if (victory) break;
+			print_level(level);
+			if (victory || previous_layers == level.layers) break;
 		}
 		
-		if (victory) c.solutions += [unidirectional(dir, warn(), level.original@location)];
-		
 		level.layers = old_layers;
+		
+		if (victory) {
+		 	c.solutions += [unidirectional(dir, warn(), level.original@location)];
+		 	return c;
+		}
 	}
 	
 	return c;
@@ -228,8 +235,10 @@ DynamicChecker analyse_unidirectional_solution(DynamicChecker c, Engine engine, 
 DynamicChecker analyse_stupid_solution(Engine engine){
 	DynamicChecker c = new_dynamic_checker();
 	
-	for (str dir <- ["left", "right", "up", "down"]){
-		c = analyse_unidirectional_solution(c, engine, dir);
+	for (Level level <- engine.levels){
+		if (level is message) continue;
+		
+		c = analyse_unidirectional_solution(c, engine, level);
 	}
 	
 	return c;
