@@ -1,9 +1,6 @@
 module PuzzleScript::Messages
 
-import IO;
 import PuzzleScript::AST;
-import String;
-import List;
 import Message;
 
 
@@ -27,6 +24,22 @@ set[Message] toMessages(list[DynamicMsg] msgs){
 	set[Message] messages = {};
 	
 	for (DynamicMsg msg <- msgs){
+		if (msg.t is error){
+			messages += {error(toString(msg), msg.pos)};
+		} else if (msg.t is warn) {
+			messages += {warning(toString(msg), msg.pos)};
+		} else {
+			messages += {info(toString(msg), msg.pos)};
+		}
+	}
+	
+	return messages;
+}
+
+set[Message] toMessages(list[StupidSolutions] msgs){
+	set[Message] messages = {};
+	
+	for (StupidSolutions msg <- msgs){
 		if (msg.t is error){
 			messages += {error(toString(msg), msg.pos)};
 		} else if (msg.t is warn) {
@@ -319,7 +332,7 @@ data StupidSolutions
 	;
 	
 public str toString(StupidSolutions m: unidirectional(str dir, MsgType t, loc pos))
-	= "Level can be solved by going only to the <dir>. <pos>";
+	= "Level can be solved by going only <dir>. <pos>";
 
 // a list of msgs that are detected through semi-dynamic analysis, we don't always
 // have to run the game to figure them out but we do have to compile it

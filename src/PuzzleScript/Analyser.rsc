@@ -225,6 +225,7 @@ DynamicChecker analyse_unidirectional_solution(DynamicChecker c, Engine engine, 
 		
 		if (victory) {
 		 	c.solutions += [unidirectional(dir, warn(), level.original@location)];
+		 	println(toString(unidirectional(dir, warn(), level.original@location)));
 		 	return c;
 		}
 	}

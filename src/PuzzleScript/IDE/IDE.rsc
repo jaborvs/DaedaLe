@@ -98,8 +98,10 @@ set[Message] build_game(Tree tree){
 	Checker c = check_game(g);
 	Engine e = compile(c);
 	DynamicChecker dc = analyse_game(e);
+	//dc = analyse_stupid_solution(e);
 	
-	return toMessages(dc.msgs);
+	//return toMessages(dc.msgs) + toMessages(dc.solutions) + toMessages(c.msgs);
+	return toMessages(dc.msgs) + toMessages(c.msgs);
 }
 
 public void registerPS(){

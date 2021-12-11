@@ -190,7 +190,7 @@ RULES
 ======
 
 [ Guardian | Background | Player_stealth ] -> [ > Guardian | Background | Player_stealth ]
-[ Action  Player | Objective ] -> [ Player | No_Objective]
+
 [ Player_captured | ] -> restart
 [ Guardian | ... | Player_stealth ] -> [ > Guardian | ... | Player_stealth ]
 [ Guardian | Player_stealth ] -> [ Guardian | < Player_captured ] message Hey, you!!
@@ -207,6 +207,7 @@ RULES
 WINCONDITIONS
 ==============
 
+No Objective
 All Player on Exit
 
 
@@ -438,4 +439,3 @@ message Now it’s the time to prove yourself!
 #kl..#ktf.fl#######gf...#
 #kkk......l.p.lk###gf..o#
 ###########eee###########
-

@@ -11,23 +11,22 @@ import IO;
 
 // Remove the "No Objective" win condition
 void modif_1(){
-
-	PSGAME game;
-	Checker checker;
-	Engine engine;
-	DynamicChecker d_checker;
-
 	println("Unidirectional Case");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Case/Modification1.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	d_checker = analyse_stupid_solution(engine);
-	print_msgs(d_checker);
+	PSGAME game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Case/Modification1.PS|);
+	Checker checker = check_game(game);
+	Engine engine = compile(checker);
+	DynamicChecker d_checker = analyse_stupid_solution(engine);
+	println(d_checker.solutions);
 }
 
 // Remove rule \#2
 void modif_2(){
-
+	println("Impossible Win Case");
+	PSGAME game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Case/Modification2.PS|);
+	Checker checker = check_game(game);
+	Engine engine = compile(checker);
+	DynamicChecker d_checker = analyse_game(engine);
+	print_msgs(d_checker);
 }
 
 // Remove Exit objects from levels
@@ -41,5 +40,6 @@ void modif_4(){
 
 
 void main(){
-	modif_1();
+	//modif_1();
+	modif_2();
 }
