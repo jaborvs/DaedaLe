@@ -20,7 +20,7 @@ void main() {
 	//checker = check_game(game);
 	//engine = compile(checker);
 	//d_checker = analyse_game(engine);
-	//print_msgs(checker);
+	//print_msgs(d_checker);
 	
 	//println("Rule Similarity");
 	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
@@ -52,11 +52,13 @@ void main() {
 	//	println(get_rule_type(r));
 	//}
 	
-	println("Impossible Rules");
+	println("Impossible Victory");
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1ImpossibleVictory.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
-	d_checker = analyse_game(engine);
-	print_msgs(d_checker);
+	//d_checker = analyse_game(engine);
+	d_checker = analyse_unrulable_condition(new_dynamic_checker(), engine, engine.conditions[0]);
+	println(d_checker.msgs);
+	
 }
  

@@ -17,9 +17,9 @@ alias DynamicChecker = tuple[
 ];
 
 data RuleType 
-	= transform_items(list[list[str]] objects) // transforms items (movement)
-	| remove_items(list[list[str]] objects) // deletes items
-	| add_items(list[list[str]] objects) //add items
+	= transform_items(list[str] left, list[str] right) // transforms items (movement)
+	| remove_items(list[str] left, list[str] right) // deletes items
+	| add_items(list[str] left, list[str] right) //add items
 	;
 
 //This checker does not check for code bug it checks for "gameplay" bugs, which means 
@@ -29,15 +29,15 @@ DynamicChecker new_dynamic_checker()
 	;
 	
 RuleType get_rule_type(Rule rule){
-	list[list[str]] refs_right = [];
-	list[list[str]] refs_left = [];
+	list[str] refs_right = [];
+	list[str] refs_left = [];
 	for (RulePart rp <- rule.converted_left){
 		for (RuleContent cont <- rp){
 			if (!(cont is references)) continue;
 			
 			for (RuleReference ref <- cont.refs){
 				if (ref.force == "no") continue;
-				refs_left += [ref.objects];
+				refs_left += ref.objects;
 					
 			}
 		}
@@ -49,60 +49,91 @@ RuleType get_rule_type(Rule rule){
 			
 			for (RuleReference ref <- cont.refs){
 				if (ref.force == "no") continue;
-				refs_right += [ref.objects];
+				refs_right += ref.objects;
 					
 			}
 		}
 	}
 	
-	if (size(refs_right) < size(refs_left)) return remove_items(refs_right & refs_left);
-	if (size(refs_left) < size(refs_right)) return add_items(refs_right & refs_left);
+	if (size(refs_right) < size(refs_left)) return remove_items(refs_left, refs_right);
+	if (size(refs_left) < size(refs_right)) return add_items(refs_left, refs_right);
 	
-	return transform_items(refs_right & refs_left);
+	return transform_items(refs_left, refs_right);
 }
+//
+//DynamicChecker anaylyse_impossible_victory(DynamicChecker c, Engine engine, Level level){
+//	if (level is message) return c;
+//	
+//	list[RuleType] rule_types = [get_rule_type(x) | Rule x <- engine.rules];
+//	//println(rule_types);
+//	//println();
+//	
+//	for (Condition cond <- engine.conditions){
+//		switch (cond){
+//			case no_objects: {
+//				println(cond);
+//				// if not all conditions have a rule type that allows them to remove the item
+//				// then we raise a warning
+//				if (!all(
+//					str obj <- cond.objects, 
+//					any(
+//						RuleType rule <- rule_types, 
+//						obj in rule.left && !(obj in rule.right)
+//					)
+//				)) c.msgs += [level_issue(cond.original@location, warn(), level.original@location)];
+//			}
+//		}
+//	}
+//
+//	return c;
+//}
 
-list[RuleType] get_victory_requirements(Level level, Condition _ : no_objects(list[str] objects, _)){
-	return [remove_items([objects])];
-}
-
-list[RuleType] get_victory_requirements(Level level, Condition _ : some_objects(list[str] objects, _)){
-	return [add_items([objects])];
-}
-
-list[RuleType] get_victory_requirements(Level level, Condition _ : no_objects_on(list[str] objects, list[str] on, CONDITIONDATA original)){
-	return [transform_items([objects, on]), remove_items([objects, on])];
-}
-
-list[RuleType] get_victory_requirements(Level level, Condition _ : all_objects_on(list[str] objects, list[str] on, CONDITIONDATA original)){
-	return [transform_items([objects, on]), add_items([objects, on])];
-}
-
-list[RuleType] get_victory_requirements(Level level, Condition _ : some_objects_on(list[str] objects, list[str] on, CONDITIONDATA original)){
-	return [transform_items([objects, on]), add_items([objects, on])];
-}
-
-DynamicChecker anaylyse_impossible_victory(DynamicChecker c, Engine engine, Level level){
+DynamicChecker analyse_unrulable_condition(DynamicChecker c, Engine engine, Condition cond){
 	list[RuleType] rule_types = [get_rule_type(x) | Rule x <- engine.rules];
-	list[list[RuleType]] needed_rules = [];
 	
-	for (Condition cond <- engine.conditions){
-		needed_rules += [get_victory_requirements(level, cond)];
+	switch (cond){
+		case no_objects: {
+			// if not all objects in the condition have a rule that allows them to
+			// remove the object then we raise a warning
+			// we assume that if there is a no_object condition by default that means all the
+			// levels have that objects
+			if (!all(
+				str obj <- cond.objects, 
+				any(
+					RuleType rule <- rule_types, 
+					obj in rule.left && !(obj in rule.right)
+				)
+			)) c.msgs += [unrulable_condition(warn(), cond.original@location)];
+		}
+		case no_objects_on: ; // check if objects can disappear or move
+		case some_objects: {
+			if (!any(
+				str obj <- cond.objects, 
+				any(
+					RuleType rule <- rule_types, 
+					!(obj in rule.left) && obj in rule.right
+				)
+			)) c.msgs += [unrulable_condition(warn(), cond.original@location)];
+		}
+		case some_objects_on: ; // check if objects can appear or move
+		case all_objects_on: ; // check if objects can appear or move
 	}
 	
-	for (int i <- [0..size(needed_rules)]){
-			list[RuleType] nd = needed_rules[i];
-			if (!any(RuleType rt <- nd, rt notin rule_types)) c.msgs += [unsolvable_rules_missing_items(warn(), engine.conditions[i].original@location, level.original@location)];
-		
-	}
-
 	return c;
 }
 
 //errors
 //	instant_victory
+//  condition_met
 DynamicChecker analyse_instant_victory(DynamicChecker c, Engine engine, Level l){
 	if (!(l is level)) return c;	
-	if (is_victorious(engine, l)) c.msgs += [instant_victory(warn(), l.original@location)];
+	if (is_victorious(engine, l)) {
+		c.msgs += [instant_victory(warn(), l.original@location)];
+	} else {
+		for (Condition cond <- engine.conditions){
+			if (is_met(cond, l)) c.msgs += [condition_met(cond.original@location, warn(), l.original@location)];
+		}
+	}
 	
 	return c;
 }
@@ -162,8 +193,11 @@ DynamicChecker analyse_impossible_conditions(DynamicChecker c, list[Condition] c
 	//  ALL X ON Y and NO X ON Y
 	// ALL X ON Y and SOME X ON Y
 	
-	for (Condition c1 <- conditions){
-		for (Condition c2 <- conditions){
+	for (int i <- [0..size(conditions)]){
+		for (int j <- [i+1..size(conditions)]){
+			Condition c1 = conditions[i];
+			Condition c2 = conditions[j];
+			
 			if (c1 is some_objects && c2 is no_objects){
 				if (any(str obj <- c1.objects, obj in c2.objects)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, warn(), c1.original@location)];
 			} else if (c2 is no_objects_on && (c1 is some_objects_on || c1 is all_objects_on)){
@@ -185,7 +219,7 @@ DynamicChecker analyse_game(Engine engine){
 		if (level is message) continue;
 		
 		c = analyse_instant_victory(c, engine, level);
-		c = anaylyse_impossible_victory(c, engine, level);
+		//c = anaylyse_impossible_victory(c, engine, level);
 	}
 	
 	for (int i_r1 <- [0..size(engine.rules)]){
@@ -193,6 +227,11 @@ DynamicChecker analyse_game(Engine engine){
 			c = analyse_rules(c, engine.rules[i_r1], engine.rules[i_r2]);
 		}
 	}
+	
+	for (Condition cond <- engine.conditions){
+		c = analyse_unrulable_condition(c, engine, cond);
+	}
+	
 	c = analyse_impossible_conditions(c, engine.conditions);
 	c = analyse_difficulty(c, engine.levels);
 	

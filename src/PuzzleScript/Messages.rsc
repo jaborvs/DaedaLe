@@ -348,7 +348,7 @@ data DynamicMsg
 	// levels should increase in difficulty, increasing difficulty is
 	// defined as a mix of increased size, increased number of items
 	// and using more rules than the previous ones
-	| difficulty_not_increasing(MsgType t, loc pos)
+	//| difficulty_not_increasing(MsgType t, loc pos) REPLACED WITH METRICS
 	
 	// a solution to a level has been found but some rules have gone unused
 	// a rule is unused if it is never fully succesffuly matched, it is fine
@@ -364,16 +364,27 @@ data DynamicMsg
 	
 	//
 	| metrics(int size, int objects, real mean_size, real mean_objects, MsgType t, loc pos)
+	
+	| unrulable_condition(MsgType t, loc pos)
+	
+	// if it's not an instant_victory we just check if individual conditions are already met
+	| condition_met(loc condition, MsgType t, loc pos)
 	;
 	
 public str toString(DynamicMsg m: instant_victory(MsgType t, loc pos))
 	= "Level can be won without playing interaction. <pos>";
+	
+public str toString(DynamicMsg m: condition_met(loc condition, MsgType t, loc pos))
+	= "Condition on line <condition.begin.line> already met for level. <pos>";
 	
 public str toString(DynamicMsg m: unsolvable_rules_missing_items(MsgType t, loc condition, loc pos))
 	= "Condition at <condition> cannot be met for level. <pos>";
 	
 public str toString(DynamicMsg m: similar_rules(str side, MsgType t, loc other, loc pos))
 	= "<side> side in rule very similar to rule on line <other.begin.line>. <pos>";
+	
+public str toString(DynamicMsg m: unrulable_condition(MsgType t, loc pos))
+	= "Win Condition has no rules that allow it to reach the condition given they are unfufilled at the start of the level. <pos>";
 	
 public str toString(DynamicMsg m: metrics(int size, int objects, real mean_size, real mean_objects, MsgType t, loc pos))
 	= "Size: <size> (avg: <mean_size>) Objects: <objects> (avg: <mean_objects>)";
