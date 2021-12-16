@@ -31,7 +31,12 @@ void modif_2(){
 
 // Remove Exit objects from levels
 void modif_3(){
-
+	println("Missing Objects");
+	PSGAME game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Case/Modification3.PS|);
+	Checker checker = check_game(game);
+	Engine engine = compile(checker);
+	DynamicChecker d_checker = analyse_game(engine);
+	print_msgs(d_checker);
 }
 
 void modif_4(){
@@ -41,5 +46,6 @@ void modif_4(){
 
 void main(){
 	//modif_1();
-	modif_2();
+	//modif_2();
+	modif_3();
 }

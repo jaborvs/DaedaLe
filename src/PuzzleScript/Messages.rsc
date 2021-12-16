@@ -367,6 +367,8 @@ data DynamicMsg
 	
 	| unrulable_condition(MsgType t, loc pos)
 	
+	| missing_objects(list[str] objs, MsgType t, loc pos)
+	
 	// if it's not an instant_victory we just check if individual conditions are already met
 	| condition_met(loc condition, MsgType t, loc pos)
 	;
@@ -379,6 +381,9 @@ public str toString(DynamicMsg m: condition_met(loc condition, MsgType t, loc po
 	
 public str toString(DynamicMsg m: unsolvable_rules_missing_items(MsgType t, loc condition, loc pos))
 	= "Condition at <condition> cannot be met for level. <pos>";
+	
+public str toString(DynamicMsg m: missing_objects(list[str] objs, MsgType t, loc pos))
+	= "Objects <objs> missing and cannot be spawned <pos>";
 	
 public str toString(DynamicMsg m: similar_rules(str side, MsgType t, loc other, loc pos))
 	= "<side> side in rule very similar to rule on line <other.begin.line>. <pos>";

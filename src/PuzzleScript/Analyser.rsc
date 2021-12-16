@@ -60,33 +60,38 @@ RuleType get_rule_type(Rule rule){
 	
 	return transform_items(refs_left, refs_right);
 }
-//
-//DynamicChecker anaylyse_impossible_victory(DynamicChecker c, Engine engine, Level level){
-//	if (level is message) return c;
-//	
-//	list[RuleType] rule_types = [get_rule_type(x) | Rule x <- engine.rules];
-//	//println(rule_types);
-//	//println();
-//	
-//	for (Condition cond <- engine.conditions){
-//		switch (cond){
-//			case no_objects: {
-//				println(cond);
-//				// if not all conditions have a rule type that allows them to remove the item
-//				// then we raise a warning
-//				if (!all(
-//					str obj <- cond.objects, 
-//					any(
-//						RuleType rule <- rule_types, 
-//						obj in rule.left && !(obj in rule.right)
-//					)
-//				)) c.msgs += [level_issue(cond.original@location, warn(), level.original@location)];
-//			}
-//		}
-//	}
-//
-//	return c;
-//}
+
+DynamicChecker check_ruleability(DynamicChecker c, Condition cond, Level level, list[RuleType] rule_types, list[str] objs){
+	if (objs == level.player) return c;
+	// if the object is not already present we check if it can be spawned
+	if (!any(str obj <- objs, obj in level.objectdata)) {
+		if (!any(
+		str obj <- objs, 
+		any(
+			RuleType rule <- rule_types, 
+			!(obj in rule.left) && obj in rule.right
+		)
+	)) c.msgs += [missing_objects(objs, warn(), level.original@location)];
+	}
+	
+	return c;
+}
+
+DynamicChecker anaylyse_impossible_victory(DynamicChecker c, Engine engine, Level level){
+	if (level is message) return c;
+	list[RuleType] rule_types = [get_rule_type(x) | Rule x <- engine.rules];
+	
+	for (Condition cond <- engine.conditions){
+		switch (cond){
+			case all_objects_on(list[str] objs, list[str] on, CONDITIONDATA _): {
+				c = check_ruleability(c, cond, level, rule_types, objs);
+				c = check_ruleability(c, cond, level, rule_types, on);
+			}
+		}
+	}
+
+	return c;
+}
 
 DynamicChecker analyse_unrulable_condition(DynamicChecker c, Engine engine, Condition cond){
 	list[RuleType] rule_types = [get_rule_type(x) | Rule x <- engine.rules];
@@ -219,7 +224,7 @@ DynamicChecker analyse_game(Engine engine){
 		if (level is message) continue;
 		
 		c = analyse_instant_victory(c, engine, level);
-		//c = anaylyse_impossible_victory(c, engine, level);
+		c = anaylyse_impossible_victory(c, engine, level);
 	}
 	
 	for (int i_r1 <- [0..size(engine.rules)]){
