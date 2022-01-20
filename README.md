@@ -1,4 +1,4 @@
-# Automated PuzzleScript
+# ScriptButler
 
 
 ## Current Shortcomings
