@@ -15,42 +15,42 @@ void main() {
 	Engine engine;
 	DynamicChecker d_checker;
 	
-	//println("Instant Victory");
-	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1InstantVictory.PS|);
-	//checker = check_game(game);
-	//engine = compile(checker);
-	//d_checker = analyse_game(engine);
-	//print_msgs(d_checker);
+	println("Instant Victory");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1InstantVictory.PS|);
+	checker = check_game(game);
+	engine = compile(checker);
+	d_checker = analyse_game(engine);
+	print_msgs(d_checker);
 	
-	//println("Rule Similarity");
-	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
-	//checker = check_game(game);
-	//engine = compile(checker);
-	//d_checker = analyse_game(engine);
-	//print_msgs(d_checker);
+	println("Rule Similarity");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
+	checker = check_game(game);
+	engine = compile(checker);
+	d_checker = analyse_game(engine);
+	print_msgs(d_checker);
 	
-	//println("Unidirectional Solutions");
-	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1Unidirectional.PS|);
-	//checker = check_game(game);
-	//engine = compile(checker);
-	//d_checker = analyse_stupid_solution(engine);
-	//print_msgs(d_checker);
+	println("Unidirectional Solutions");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1Unidirectional.PS|);
+	checker = check_game(game);
+	engine = compile(checker);
+	d_checker = analyse_stupid_solution(engine);
+	print_msgs(d_checker);
 	
-	//println("Difficulty Increase");
-	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
-	//checker = check_game(game);
-	//engine = compile(checker);
-	//d_checker = analyse_game(engine);
-	//print_msgs(d_checker);
+	println("Difficulty Increase");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
+	checker = check_game(game);
+	engine = compile(checker);
+	d_checker = analyse_game(engine);
+	print_msgs(d_checker);
 	
-	//println("Get Rule type");
-	//game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleCompare.PS|);
-	//checker = check_game(game);
-	//engine = compile(checker);
-	//
-	//for (Rule r <- engine.rules){
-	//	println(get_rule_type(r));
-	//}
+	println("Get Rule type");
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleCompare.PS|);
+	checker = check_game(game);
+	engine = compile(checker);
+	
+	for (Rule r <- engine.rules){
+		println(get_rule_type(r));
+	}
 	
 	println("Impossible Victory");
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1ImpossibleVictory.PS|);

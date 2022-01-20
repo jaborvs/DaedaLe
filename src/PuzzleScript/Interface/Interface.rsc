@@ -224,7 +224,7 @@ void view(Model m){
 		div(class("left"), () {view_panel(m);});
 		div(class("left"), () {view_layers(m);});
 		div(class("left"), onKeyDown(direction), () {
-			h3("Layers");
+			h3("Level");
 			div(class("grid"), () {view_level(m);});
 		});
 		//div(() {

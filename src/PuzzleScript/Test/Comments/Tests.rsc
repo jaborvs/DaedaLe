@@ -45,9 +45,9 @@ void main(){
 	);
 	
 	// currently does not work because the grammar does not accept a game that ends with comments
-	//println("Just comments");
-	//parse(
-	//	#Section,
-	//	|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Comments/Test7.PS|
-	//);
+	println("Just comments");
+	parse(
+		#Section,
+		|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Comments/Test7.PS|
+	);
 }
