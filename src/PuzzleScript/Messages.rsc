@@ -394,6 +394,9 @@ public str toString(DynamicMsg m: unrulable_condition(MsgType t, loc pos))
 public str toString(DynamicMsg m: metrics(int size, int objects, real mean_size, real mean_objects, MsgType t, loc pos))
 	= "Size: <size> (avg: <mean_size>) Objects: <objects> (avg: <mean_objects>)";
 	
+public str toString(DynamicMsg m: impossible_victory(tuple[loc c1, loc c2] conditions, MsgType t, loc pos))
+	= "Condition clashes with condition on line <conditions.c2.begin.line>. <pos>";
+	
 	
 //defaults
 public default str toString(Msg m) = "Undefined message converter for <m>";	

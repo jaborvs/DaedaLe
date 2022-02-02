@@ -199,16 +199,17 @@ DynamicChecker analyse_impossible_conditions(DynamicChecker c, list[Condition] c
 	// ALL X ON Y and SOME X ON Y
 	
 	for (int i <- [0..size(conditions)]){
-		for (int j <- [i+1..size(conditions)]){
+		for (int j <- [0..size(conditions)]){
+			if (i == j) continue;
 			Condition c1 = conditions[i];
 			Condition c2 = conditions[j];
-			
+
 			if (c1 is some_objects && c2 is no_objects){
-				if (any(str obj <- c1.objects, obj in c2.objects)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, warn(), c1.original@location)];
+				if (any(str obj <- c1.objects, obj in c2.objects)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, error(), c1.original@location)];
 			} else if (c2 is no_objects_on && (c1 is some_objects_on || c1 is all_objects_on)){
-				if (any(str obj <- c1.objects, obj in c2.objects) && any(str obj <- c1.on, obj in c2.on)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, warn(), c1.original@location)];
+				if (any(str obj <- c1.objects, obj in c2.objects) && any(str obj <- c1.on, obj in c2.on)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, error(), c1.original@location)];
 			} else if (c1 is all_objects_on && c2 is some_objects_on) {
-				if (any(str obj <- c1.objects, obj in c2.objects) && any(str obj <- c1.on, obj in c2.on)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, warn(), c1.original@location)];
+				if (any(str obj <- c1.objects, obj in c2.objects) && any(str obj <- c1.on, obj in c2.on)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, error(), c1.original@location)];
 			}
 		}
 	}
