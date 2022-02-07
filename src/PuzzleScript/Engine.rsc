@@ -188,7 +188,7 @@ tuple[Engine, Level] do_turn(Engine engine, Level level : level, str input){
 		<engine, level> = rewrite(engine, level, false);
 	} while (engine.again && !engine.abort);
 	
-	if (input in MOVES){
+	if (input in MOVES || input == "action"){
 		level = plan_move(level, input);
 	}
 	

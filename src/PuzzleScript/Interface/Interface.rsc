@@ -34,24 +34,27 @@ data Msg
 
 Model update(Msg msg, Model model){
 	int start_time = userTime();
-	switch(msg){
-		case direction(int i): {
-			switch(i){
-				case 37: model.input = "left";
-				case 38: model.input = "up";
-				case 39: model.input = "right";
-				case 40: model.input = "down";
-			}
-		}
-		case action(): model.input = "action";
-		case undo(): model.input = "undo";
-		case restart(): model.input = "restart";
-		case win(): model.engine.win_keyword = true;
-		default: return model;
-	}
 	
-	model.engine.msg_queue = [];
-	<model.engine, model.engine.current_level> = do_turn(model.engine, model.engine.current_level, model.input);
+	if (model.engine.current_level is level){
+		switch(msg){
+			case direction(int i): {
+				switch(i){
+					case 37: model.input = "left";
+					case 38: model.input = "up";
+					case 39: model.input = "right";
+					case 40: model.input = "down";
+				}
+			}
+			case action(): model.input = "action";
+			case undo(): model.input = "undo";
+			case restart(): model.input = "restart";
+			case win(): model.engine.win_keyword = true;
+			default: return model;
+		}
+		
+		model.engine.msg_queue = [];
+		<model.engine, model.engine.current_level> = do_turn(model.engine, model.engine.current_level, model.input);
+	}
 	
 	bool victory = is_victorious(model.engine, model.engine.current_level);
 	if (victory && is_last(model.engine)){
@@ -154,7 +157,12 @@ void view_panel(Model m){
 
 	h3("Victory Conditions");
 	for (Condition cond <- m.engine.conditions){
-		bool met = is_met(cond, m.engine.current_level);
+		bool met;
+		if (m.engine.current_level is message){
+			met = true;
+		} else {
+			met = is_met(cond, m.engine.current_level);
+		}
 		p(() {
 			span("<toString(cond)>: ");
 			b(class("<met>"), "<met>");
@@ -184,12 +192,12 @@ void view_panel(Model m){
 }
 
 void view_layers(Model m){
+	h3("Layers");
 	if (m.engine.current_level is message){
 		p("#####################################################");
 		p(m.engine.current_level.msg);
 		p("#####################################################");
 	} else {
-		h3("Layers");
 		list[Layer] layers = reverse(m.engine.current_level.layers);
 		for (Layer lyr <- layers){
 			table(() {
@@ -240,18 +248,6 @@ void view(Model m){
 		int view_time = userTime() - start_time;
 		//p("View: <view_time/1000000> ms");
 		//p("Update: <m.update/1000000> ms");
-		
-		//div(() {
-		//	br();
-		//	br();
-		//	br();
-		//	br();
-		//	br();
-		//	button(onClick(direction(37)), "left");
-		//	button(onClick(direction(39)), "right");
-		//	button(onClick(direction(38)), "up");
-		//	button(onClick(direction(40)), "down");
-		//});
 	});
 	
 	
