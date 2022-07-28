@@ -1,0 +1,38 @@
+\section{Testing}
+\label{sec:testing}
+%  Explain unit tests conducted in this project
+Here we describe an extensive test suite that verifies ScriptButtler's implementation works according to its design. We describe how the suite tests different parts of the tool and what the test results are. We validate and verify our tool using two separate methods. We describe validation Chapter \ref{ch:case} and verification in this chapter. The test suite consists of a dozen sections that test each section of our PuzzleScript implementation. The tests can be found on the GitHub repository\footnote{\url{https://github.com/ClementJ18/Rascal-PuzzleScript/tree/main/src/PuzzleScript/Test}}.
+
+Each section consists of several PuzzleScript files containing mock data and one Rascal file that conducts the tests. The test files are intended to either verify correctness or error handling. Verifying correctness consists of running valid code through the section we are testing. Verifying error consists of running invalid code and testing to see if a controlled error message is raised. The test files consist of mock data which represent games, sections and atomic components of PuzzleScript. The complexity of the mock data varies based on the test requirements.
+
+\paragraph{Parser}
+The test suite verifying the Parsing phase is the most extensive but also has the simplest mocking data. We test individual elements of a game such as objects, rules parts and levels; complete sections and full games. We test for the correctness of this phase by checking whether or not our grammar successfully parses the mock data. Conducting additional tests to verify the integrity of the parsed data during this phase is unnecessary, the data is verified in future phases. In the cases where the parsed data is invalid, then the Abstract Syntax Tree (AST) itself will raise an error, therefore, we verify the parsed data in the phase where we verify the AST. We reuse the mock data from the parsing test suite quite frequently as mock data for our other test suites. 
+
+
+\paragraph{Static Checker}
+The next suite performs verification on the functionality of the static checker by purposefully triggering errors. The mock data consists of sections of PuzzleScript games plus a few additional cases that do not fit in any particular section. Throughout our test suite, we also have mock data which specifically focus on getting a correct result, and this mock data is used both for verification and to guide us during development.
+
+\paragraph{Test-Driven Development}
+Our approach to development is test-driven, so we develop by designing tests first and then writing code that passes those tests. Test-driven development requires the test suite to be designed with intent. We focus on creating tests that provide coverage for both high-level and low-level functions.  The test suite grows in complexity as it progresses through the phases of compilation. The time running the suite takes also increases as the tests run increasingly more code. Running tests for the dynamic analysis phase is the most expensive currently.
+
+\paragraph{Results}
+Running our tests gives us feedback on the quality of our tool's source code. ScriptButler is able to parse and statically check the majority of valid source code with an insignificant amount of incorrect error reporting. However, the tool struggles when it has to parse code that has severe structural issues. This causes exception in the runtime of the tool usually resulting in a crash. There is no application with native support for counting of code lines in Rascal. However, we can use \emph{cloc} and count it as if it was Java code to get an estimate. The core of our PuzzleScript implementation totals 9 files and 2317 lines of code. As a reminder, PuzzleScript's official implementation had 3 core files that totaled 5820 lines of code. In Table \ref{tab:test_suite_results} we show the number of tests associated with each section and the percentage of those tests that pass. Note that some tests are used in multiple phases. If a phase does not have any test files, then that means it reuses mock data from previous phases.
+
+\begin{table}
+\centering
+\caption{Results of our test suite}
+\label{tab:test_suite_results}
+\begin{tabular}{l|l|l|l|l}
+Phase            & \# of test files & \# of tests & Tests passed & Comments                                                                                               \\ \hline
+Parser           & 28               & 28          & 24/28        & \begin{tabular}[c]{@{}l@{}}Failing tests all relate to \\ comment parsing\end{tabular}                 \\
+Post-processing  & 0                & 16          & 15/16        & \begin{tabular}[c]{@{}l@{}}Failing test relates to comment \\ parsing\end{tabular}                    \\
+Checker          & 9                & 9           & 9/9          &                                                                                                        \\
+Compiler         & 0                & 0           & 0/0          & \begin{tabular}[c]{@{}l@{}}Verified through the engine \\ behavior\end{tabular}                       \\
+Engine           & 11               & 12          & 10/12        & \begin{tabular}[c]{@{}l@{}}Advanced games do not properly \\ run\end{tabular}                          \\
+Dynamic Analyser & 7                & 6           &              &                                                                                                        \\
+IDE              & 1                & 1           & 1/1          &                                                                                                        \\
+Interface        & 0                & 1           & 1/1          &                                                                                                        \\
+Comment Parsing  & 7                & 7           & 6/7          & \begin{tabular}[c]{@{}l@{}}Tests are relatively simple, not\\ representative of all cases\end{tabular} \\
+General Parsing  & 83               & 1           & 72/83        & \begin{tabular}[c]{@{}l@{}}Only tests whether games parse, \\ no data validation\end{tabular}              
+\end{tabular}
+\end{table}

@@ -1,0 +1,77 @@
+\chapter{ScriptButler}
+\label{ch:research}
+Here we present ScriptButler, a prototype tool for analyzing PuzzleScript games. The tool aims to give game designers a better understanding of how code changes affect gameplay. As previously mentioned, we created this prototype because the official PuzzleScript implementation is unsuitable for our research goals. Therefore, to resolve this issue we create our own design and implementation of PuzzleScript. We base our implementation on the design document we reverse engineered in the previous chapter. In this chapter, we discuss the design decisions we take. Our aim with this implementation is to create a general-purpose tool capable of parsing, validating, and running games. Additionally, for the purpose of this project, we also design a dynamic analysis module to provide support for analyzing gameplay. The dynamic analysis module also demonstrates the extensibility of our prototype.
+
+Figure \ref{fig:scriptbutler_flow} shows an overview of our tool's architecture. The game designer interact with the tool through the IDE and the Web GUI. These two components provide user-friendly endpoints to our tool and are responsible for sending inputs from the game designer to the tool. ScriptButler is split up into multiple phases, this is done to reduce issues tied to coupling. The parser is our grammar, it reads PuzzleScript code and converts it into Rascal data structures. The post-process phase cleans up those data structures and annotates them to provide an outline and syntax coloring. The static checker verifies the validity of the code and provides error messages that the IDE can display to the game designer. The compiler further transforms the data structures, removing unnecessary content and making them more efficient to run in our engine. The engine run the game and displays the result in the Web GUI. The user can send inputs to the engine using that GUI and get debugging information. Finally, the dynamic analyzer runs tests on the compiled version of the game and provides feedback on the gameplay as messages that the IDE can display. We explain all the sections in greater detail in the following sections. 
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=1\textwidth]{images/ScriptButler Flow.png}
+    \caption{The data flow through ScriptButler and its extensions}
+    \label{fig:scriptbutler_flow}
+\end{figure}
+
+\section{Redesigning PuzzleScript with Rascal}
+\newcommand{\dd}{\textsuperscript{[D]}}
+Here we present the design of the PuzzleScript implementation we created using the design document we obtained by reverse-engineering the JavaScript implementation. Design decisions that arise from that understanding and that differ from the design decisions of the original implementation are marked with "\dd". When designing the implementation, we use a test-driven approach. We write the tests and their expected results based on the reverse engineering of the original implementation. We then implement PuzzleScript's design and frequently test our implementation against the tests. One of the goals for our implementation is to be compatible with existing games and the tests ensure we keep in line with that goal.
+
+Our second goal is to create a design that is more maintainable than the original JavaScript one. Rascal satisfies part of that goal as a statically typed language. This makes it easier for programmers to understand the data flow. We also leverage good engineering practices such as self-documentation through the use of relevant variables and function names. Our third and final goal is creating an extensible design. To achieve this, we design our implementation with loose coupling between modules. Instead of creating a monolithic structure, we create a collection of plugins that are handled by a general function in charge of passing the data from one plugin to the other. Our approach makes it easy to add, remove or modify plugins. In the rest of this chapter, these plugins are called phases as they mirror, to an extent, the phases of compilation.
+
+We split up the design of our implementation into separate phases\dd. Each phase has progressively stricter requirements on what counts as valid code. The phases are the following:
+\begin{itemize}
+    \item Parsing: Using a flexible formalized grammar, a PuzzleScript file is read and transformed into a parsed tree
+    \item Post-process: The parsed tree is cleaned up and enriched with meta-data
+    \item Static Check: Components of the file are checked for validity according to the specifications extracted from the JavaScript implementation.
+    \item Compilation: The game is compiled into a form the engine can run, converting the AST to more efficient Rascal data structures
+    % \item Dynamic Check: By running sections of the game using the engine, additional messages are generated on the gameplay
+    \item Run: The game is running, allowing for the player to interact with it
+    % \item Post-game analysis: Stats collected during the running phase are displayed
+\end{itemize}
+
+Splitting the compilation process into separate phases enables us to parse invalid code without the process aborting at the first error. The behavior assists designers in identifying multiple issues simultaneously.  We also separate the backend (parsing, checking, compiling) from the frontend (editor, interface)\dd. The backend is designed to accept source code, generate the data structures, and alter those data structures based on user input. The front end acts as a wrapper around the backend, communicating through specific endpoints. The approach allows us to decouple the user interface and engine, making it easier to alter either without impacting the other. Developers can even create their own implementation of the frontend or backend with seamless integration.
+
+The design document of PuzzleScript is subject to errors of misinterpretation because it is based on reverse engineering. We mitigate these interpretation issues by verifying the design of our implementation against the behaviors of the official implementation. We go further into our verification process in Section \ref{sec:testing}.
+
+\input{sections/design/parsing}
+\input{sections/design/post_processing}
+\input{sections/design/static_checking}
+\input{sections/design/compiling}
+\input{sections/design/engine}
+
+\section{Extending our implementation}
+We extend the design of our PuzzleScript implementation with several features to support iterative game design. First, we design a dynamic analyzer that provides the game designers with feedback on their gameplay. Second, we implement a plugin that provides syntax highlighting and error reporting within Eclipse. Finally, we design a user-facing interface using Salix to run games. Below, we detail these functionalities one by one. 
+
+\input{sections/extension/dynamic_checking}
+\input{sections/extension/ide}
+\input{sections/extension/interface}
+\input{sections/testing}
+
+\begin{figure}[ht]
+    \label{fig:checker_remaining}
+    \begin{subfigure}{1\textwidth}
+        \centering
+        \includegraphics[scale=0.45]{images/checker/Layer.png}
+        \caption{Flow diagram when validating a Layer}
+    \end{subfigure}
+    \begin{subfigure}{1\textwidth}
+        \centering
+        \includegraphics[scale=0.45]{images/checker/Legend.png}
+        \caption{Flow diagram when validating a Legend}
+    \end{subfigure}
+    \begin{subfigure}{1\textwidth}
+        \centering
+        \includegraphics[scale=0.45]{images/checker/Level.png}
+        \caption{Flow diagram when validating a Level}
+    \end{subfigure}
+    \begin{subfigure}{1\textwidth}
+        \centering
+        \includegraphics[scale=0.55]{images/checker/Rule.png}
+        \caption{Flow diagram when validating a Rule}
+    \end{subfigure}
+    \begin{subfigure}{1\textwidth}
+        \centering
+        \includegraphics[scale=0.45]{images/checker/Sound.png}
+        \caption{Flow diagram when validating a Sound}
+    \end{subfigure}
+    \caption{Flow diagrams for checker validation.}
+\end{figure}

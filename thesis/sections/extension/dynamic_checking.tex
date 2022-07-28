@@ -1,0 +1,23 @@
+\subsection{Dynamic Analyzer}
+Our dynamic analyzer phase runs after the engine phase, allowing game designers to gather gameplay-related feedback. The phase runs subsets of the compiled code in the background when the project is built. This process is more expensive than a static check but not required as often. Messages are generated the same way as the static checker and can be manipulated similarly by IDEs.
+
+We perform two types of dynamic analysis, standard dynamic analysis that checks for general gameplay quality and "trivial solutions". The standard dynamic analysis either checks components individually or by seeing how a few different ones interact together. Our "trivial solutions" follow in the line of thinking of our original questions on the complexity of finding fun. Finding a solution to a level is similarly complex, checking if a level can be solved is more of an AI question. Our design makes it possible to implement an AI plugin to solve this problem but that is not the focus of this thesis. Therefore, instead of trying to determine if a game is fun by checking if a level is solvable in an interesting way, we make check whether a game could be unfun by checking if a level is solvable using uninteresting solutions.
+
+Currently, two trivial solutions exist:
+\begin{itemize}
+    \item Unidirectional: Is it possible to win the level by only going in one direction
+    \item Unruled: Is it possible to win the level without using any rules.
+\end{itemize}
+
+\textbf{Unidirectional} is done by running a level in the background with the four directional inputs. If after submitting the length of level times two in inputs the level is not won then it is not considered \textbf{unidirectional} in that direction. If none of the four inputs come up positive, the level passes. For \textbf{unruled}, we use the compiled version of Levels and WinConditions to check whether all objects required are present on the map. This does not, however, check if they are reachable, simply whether they are present or not. 
+
+When performing our standard dynamic check, we verify the following:
+\begin{itemize}
+    \item Instant Victory: Is the win condition already fulfilled for the level before player interaction
+    \item Impossible Victory: Does the win condition require objects that are not present and not supplied by any rules
+    \item Rule Similarity: A deeper check where we compare the compiled forms of the rules to see if they are similar
+    \item Metrics: We provide various metrics to the game designer that might be useful. This data is provided without analysis to avoid possible misinterpretation. 
+    \item Unusable Rule: Similarly to Impossible Victory, we check whether the prerequisites for a rule can be spawned by another rule. 
+\end{itemize}
+
+Our dynamic analysis is done similarly to our static checking, it is its own phase, but instead of taking an AST of the game, it takes a compiled engine. The same maintainability and extensibility principles apply as with the rest of the tool. Adding more dynamic checks is a simple matter of writing the logic, adding messages and calling the logic from the main function. The result is also similar, a list of messages to be manipulated as the tool designer desires. The common next step is to display those messages in the IDE.
