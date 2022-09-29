@@ -579,7 +579,16 @@ Checker check_rulepart(RULEPART p: prefix(str prefix), Checker c, bool late, boo
 //	invalid_rule_part_size
 //	invalid_rule_content_size
 //	invalid_rule_ellipsis_size
-Checker check_rule(RULEDATA r, Checker c){
+
+
+Checker check_rule(RULEDATA r: loop(str _, list[RULEDATA] loop, str _), Checker c){
+  for(RULEDATA childRule <- loop){
+    check_rule(childRule, c);
+  }
+  return c;
+}
+
+Checker check_rule(RULEDATA r: rule_data(_, _, _, _), Checker c){
 	bool late = any(RULEPART p <- r.left, p is prefix && toLowerCase(p.prefix) == "late");
 	
 	bool redundant = any(RULEPART p <- r.right, p is prefix && toLowerCase(p.prefix) in ["win", "restart"]);

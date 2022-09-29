@@ -32,7 +32,7 @@ public list[str] rulepart_keywords =
 	rulepart_keywords_other;
 
 public list[str] rule_prefix = ["late", "random", "rigid"] + absolute_directions;
-public list[str] rule_commands = ["cancel", "checkpoint", "restart", "win"];
+public list[str] rule_commands = ["cancel", "checkpoint", "restart", "win", "again"]; //rozen: added again
 public list[str] rule_keywords = rulepart_keywords + rule_prefix + rule_commands;
 
 

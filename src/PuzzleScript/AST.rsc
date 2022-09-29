@@ -59,7 +59,7 @@ data PSGAME
  		list[CONDITIONDATA] conditions,
  		list[LEVELDATA] levels,
  		list[SECTION] sections
- 	)	
+ 	)
  	| empty(str)
  	;
  	
@@ -136,7 +136,7 @@ data RULES
 
 data RULEDATA
 	= rule_data(list[RULEPART] left, list[RULEPART] right, list[str] message, str)
-	| loop(list[RULEDATA] loop)
+	| loop(str, list[RULEDATA] loop, str)
 	;
 
 str toString(RULECONTENT _: content(list[str] cnt)){

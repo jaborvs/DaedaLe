@@ -5,15 +5,16 @@ lexical LAYOUT
 	| ^ Comment Newlines
 	> Comment //nested in code
 	;
+	
 layout LAYOUTLIST = LAYOUT* !>> [\t\r\ )];
 
 lexical SectionDelimiter = [=]+ Newlines;
 lexical Newlines = Newline+ !>> [\n];
-lexical Comment = @lineComment @category="Comment" "(" (![()]|Comment)+ ")";
+lexical Comment = @lineComment @category="Comment" "(" (![()]|Comment)* ")";
 lexical Newline = [\n];
 lexical ID = [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
-lexical Pixel = [a-zA-Z.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]];
-lexical LegendKey = @category="LegendKey" Pixel+ !>> [a-zA-Z.!@#$%&*\-,`\'~_\"§è!çàé;?:/+°0-9£^{}|\>\<^v¬\[\]] \ Keywords;
+lexical Pixel = [a-zA-Zぁ-㍿.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]˅\\±]; //rozen: added Japonse and several other characers
+lexical LegendKey = @category="LegendKey" Pixel+ !>> Pixel \ Keywords;
 lexical SpriteP = [0-9.];
 lexical LevelPixel = @category="LevelPixel" Pixel;
 lexical Levelline = LevelPixel+ !>> LevelPixel \ Keywords;
@@ -131,15 +132,12 @@ syntax LayerData
 	;
 
 syntax Rules
-	= rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? (RuleData|Loop)+
-	;
-	
-syntax Loop
-	= @Foldable 'startloop' Newlines RuleData+ 'endloop' Newlines
+	= rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+
 	;
 	
 syntax RuleData
 	= rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newlines
+	| @Foldable loop: 'startloop' Newlines RuleData+ 'endloop' Newlines	
 	;
 
 syntax RuleContent
