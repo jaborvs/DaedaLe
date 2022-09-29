@@ -1,0 +1,195 @@
+title BROKEN Rigid Body example
+author Anonymous
+homepage www.puzzlescript.net
+
+verbose_logging
+
+
+
+========
+OBJECTS
+========
+
+Background
+white
+
+Target
+DarkBlue
+
+Wall
+DarkGrey
+
+Player
+Blue
+..0..
+..0.0
+00000
+.000.
+.0.0.
+
+Shadow
+Black
+..0..
+0.0..
+00000
+.000.
+.0.0.
+
+
+Crate
+orange
+
+Chest
+green
+
+Box
+red
+
+
+Small
+darkred
+.....
+.000.
+.000.
+.000.
+.....
+
+
+Glue
+pink
+.000.
+00000
+00000
+00000
+.000.
+
+
+Wanna_Move
+#ff00ff
+.....
+.....
+..0..
+.....
+.....
+
+=======
+LEGEND
+=======
+
+. = Background
+# = Wall
+P = Player
+S = Shadow
+* = Crate
++ = Box
+% = Chest
+o = Small
+g = Glue
+
+
+Movable = Crate or Box or Chest or Small or Glue
+
+
+Mover = Player or Shadow or Movable
+
+
+Obstacle = Wall or Mover
+
+=======
+SOUNDS
+=======
+
+================
+COLLISIONLAYERS
+================
+
+Background
+Target
+Obstacle
+Wanna_Move
+
+======
+RULES
+======
+
+[ > player ] [ stationary shadow ] -> [ > player ] [ < shadow ]
+
+
+[ > Mover | stationary Movable ] -> [ > Mover | > Movable  ]
++ [ > Box    ] [ stationary Box   ] -> [ > Box    ] [ > Box    ]
++ [ > Crate  ] [ stationary Crate ] -> [ > Crate  ] [ > Crate  ]
++ [ > Chest  ] [ stationary Chest ] -> [ > Chest  ] [ > Chest  ]
++ [ moving Glue | stationary Glue ] -> [ moving Glue | moving Glue ]
+
+
+[ > Mover  | stationary Obstacle ] -> [ stationary Mover | Obstacle ]
+
+
++ [ ^ Crate | < Crate ] -> [ stationary Crate | stationary Crate ]
++ [ ^ Crate | > Crate ] -> [ stationary Crate | stationary Crate ]
++ [ ^ Crate | v Crate ] -> [ stationary Crate | stationary Crate ]
+
++ [ v Crate | < Crate ] -> [ stationary Crate | stationary Crate ]
++ [ v Crate | > Crate ] -> [ stationary Crate | stationary Crate ]
++ [ v Crate | ^ Crate ] -> [ stationary Crate | stationary Crate ]
+
++ [ < Crate | > Crate ] -> [ stationary Crate | stationary Crate ]
++ [ < Crate | ^ Crate ] -> [ stationary Crate | stationary Crate ]
++ [ < Crate | v Crate ] -> [ stationary Crate | stationary Crate ]
+
++ [ > Crate | < Crate ] -> [ stationary Crate | stationary Crate ]
++ [ > Crate | ^ Crate ] -> [ stationary Crate | stationary Crate ]
++ [ > Crate | v Crate ] -> [ stationary Crate | stationary Crate ]
+
+
++ [ > Mover | |  < Mover ] -> [ stationary Mover | |  < Mover ]
+
++ [ > Crate  ] [ stationary Crate ] -> [ stationary Crate ] [ Crate ]
++ [ > Box    ] [ stationary Box   ] -> [ stationary Box   ] [ Box   ]
++ [ > Chest  ] [ stationary Chest ] -> [ stationary Chest ] [ Chest ]
++ [ moving Glue | stationary Glue ] -> [ stationary Glue | Glue ]
+
+
+[ > Movable ] -> [ Movable wanna_move ]
+
+
+
+[ > Mover  | stationary Movable WANNA_MOVE ] -> [ > Mover | > Movable ]
++ [ > Box   ] [ stationary Box   ] -> [ > Box   ] [ > Box   ]
++ [ > Crate ] [ stationary Crate ] -> [ > Crate ] [ > Crate ]
++ [ > Chest ] [ stationary Chest ] -> [ > Chest ] [ > Chest ]
++ [ moving Glue | stationary Glue ] -> [ moving Glue | moving Glue ]
+
+
+[ wanna_move ] -> [ ]
+
+
+==============
+WINCONDITIONS
+==============
+
+=======
+LEVELS
+=======
+
+#########
+#.......#
+#..p...p#
+#.......#
+#.......#
+#..***..#
+#.......#
+#s...S..#
+#.......#
+#########
+
+#########
+#.......#
+#.......#
+#.......#
+#...s...#
+#..+++..#
+#...p...#
+#.......#
+#.......#
+#########
