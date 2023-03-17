@@ -1,32 +1,42 @@
 # ScriptButler
+PuzzleScript is a textual language for Puzzle game design created by Stephen Lavelle.
+The PuzzleScript engine can be found here: https://github.com/increpare/PuzzleScript
 
-ScriptButler was an attempt at using meta-programming principles and Rascal to allow for rapid iterative game design. It was the 
-project on which I based my master thesis. The full thesis can be read in thesis/Master_Thesis.pdf
+ScriptButler is a tool for analyzing PuzzleScript source code. Its objectives are:
+1. *Empower designers.* ScriptButler's analyzers provide feedback about the source code during a game's design, directy in the IDE.
+2. *Enable empirical studies.* ScriptButler also supports bulk analyses, which is needed for empirical studies.
 
-## Abstract
-The digital game industry is a thriving multi-billion dollar industry. Creating interesting and interactive
-games is a complex process with two major parts: game design and game development. Game design
-is the art of applying design to create games on a conceptual level. Game development is the process
-of bringing the game design to life. Part of the game design process is the creation of game mechanics,
-rules that define how the player interacts with the game. Playtesting is the process of evaluating the
-impact of these rules on the player experience, with the goal being a net positive impact. However,
-playtesting has a significant resource and time cost associated with it, as such game designers must
-sometimes make decisions when evolving their game without the necessary knowledge of the impact on
-the player experience.
+## Research Paper
+ScriptButler has been used in the following research paper:
 
-We approach the study of this problem from a meta-programming perspective. We aim to empower
-game designers with tools and techniques that give feedback about the quality of the games. In particular,
-we study how dynamic analyses can provide live feedback about a game’s rules. We focus our efforts on
-a concrete problem by studying PuzzleScript and evaluating our approach on a set of published games
-written using that engine.
+* Clement Julia and Riemer van Rozen. 2023. ScriptButler serves an Empirical Study of PuzzleScript: Analyzing the Expressive Power of a Game DSL through Source Code Analysis. In Foundations of Digital Games 2023 (FDG 2023), April 12-14, 2023, Lisbon, Portugal. ACM, New York, NY, USA, 11 pages. https://doi.org/10.1145/3582437.3582467
 
-We formalize the design of PuzzleScript and implement a redesign of the technical implementation
-using Rascal, a language workbench designed to facilitate meta-programming. This more extensible
-and maintainable prototype implementation of PuzzleScript aids us in our initial goal and in future
-PuzzleScript research. We then extend our implementation with our system of game mechanics analysis
-and test games for game mechanic errors. Finally, we validate our approach on a set of real-world
-published games and modify games to test for gameplay decay, the fall in gameplay quality as a result
-of evolution in-game mechanics.
+### Running the analysis
+Here we describe how to reproduce the automated part of this study.
 
-## Disclaimer
-The code here is only a proof of concept and is in no way ready for mainstream use.
+ScriptButler is built using the Rascal meta-programming language and language workbench.
+More information about setting up Rascal can be found here: https://www.rascal-mpl.org
+
+1. The project must be stored in a directory called AutomatedPuzzleScript.
+
+2. The analyzed PuzzleScript source code repository and the generated report are stored in the following directories.
+```
+loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo|;
+loc ReportFile = |project://AutomatedPuzzleScript/src/PuzzleScript/report.csv|;
+```
+
+3. Running the analysis requires executing the following commands in Rascal's REPL.
+```
+import PuzzleScript::Report;
+generateReport(DemoDir, ReportFile);
+```
+The result will be a report that stores the data as comma separated values.
+
+4. The manual part of our analysis can be found in an Excel sheet: paper/report_analysis.xlsx
+
+## Thesis
+ScriptButler was developed as part of the Master's thesis of Clement Julia.
+
+This repository is a branch of the orgignal: https://github.com/ClementJ18/ScriptButler
+
+The version provided here has an improved PuzzleScript grammar and adds a report generator.
