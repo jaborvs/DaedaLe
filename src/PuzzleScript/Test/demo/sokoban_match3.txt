@@ -1,13 +1,10 @@
-title Spriteaporter
+title Match 3 Block Push
 author increpare
 homepage www.puzzlescript.net
 
 ========
 OBJECTS
 ========
-
-Temp
-black
 
 Background
 lightgreen green
@@ -16,6 +13,7 @@ lightgreen green
 11101
 11111
 10111
+
 
 Target
 darkblue
@@ -41,13 +39,14 @@ black orange white blue
 .333.
 .3.3.
 
-Sprite
-pink blue red
-.....
-.000.
-00100
-01110
-.202.
+Crate
+orange yellow
+00000
+0...0
+0...0
+0...0
+00000
+
 
 =======
 LEGEND
@@ -56,33 +55,38 @@ LEGEND
 . = Background
 # = Wall
 P = Player
-O = Sprite
+* = Crate
+@ = Crate and Target
+O = Target
+
 
 =======
 SOUNDS
 =======
 
-sfx0 67117309
+Crate MOVE 36772507
 
 ================
 COLLISIONLAYERS
 ================
 
-Temp
 Background
 Target
-Player, Wall, Sprite
+Player, Wall, Crate
 
 ======
 RULES
 ======
 
-late [ Sprite | ... | Player ] -> [ Temp | ... | Sprite ] 
-late [ Temp ] -> [ Player ] 
+[ >  Player | Crate ] -> [  >  Player | > Crate  ]
+
+late [ Crate | Crate | Crate ] -> [ | | ]
 
 ==============
 WINCONDITIONS
 ==============
+
+all Crate on Target
 
 =======
 LEVELS
@@ -90,8 +94,17 @@ LEVELS
 
 #########
 #.......#
-#....O..#
+#.*.*.@.#
+#.P...O.#
+#...*.*.#
+#.......#
+#########
+
+.#######.
+.#.....#.
+.#O##..##
+##.##.*.#
+#.*..**.#
+#.OOO.#.#
 #.P.....#
-#.......#
-#.......#
 #########
