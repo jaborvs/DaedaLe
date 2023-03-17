@@ -1,19 +1,15 @@
 module PuzzleScript::Syntax
 
-lexical LAYOUT 
-	= [\t\r\ ]
-	| ^ Comment Newlines
-	> Comment //nested in code
-	;
-	
-layout LAYOUTLIST = LAYOUT* !>> [\t\r\ )];
+layout LAYOUTLIST = LAYOUT* !>> [\t\ \r(];
+lexical LAYOUT
+  = [\t\ \r]
+  | Comment;
 
-lexical SectionDelimiter = [=]+ Newlines;
-lexical Newlines = Newline+ !>> [\n];
 lexical Comment = @lineComment @category="Comment" "(" (![()]|Comment)* ")";
+lexical Delimiter = [=]+;
 lexical Newline = [\n];
 lexical ID = [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
-lexical Pixel = [a-zA-Zぁ-㍿.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]˅\\±]; //rozen: added Japonse and several other characers
+lexical Pixel = [a-zA-Zぁ-㍿.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]˅\\±];
 lexical LegendKey = @category="LegendKey" Pixel+ !>> Pixel \ Keywords;
 lexical SpriteP = [0-9.];
 lexical LevelPixel = @category="LevelPixel" Pixel;
@@ -25,159 +21,116 @@ lexical IDOrDirectional = @category="IDorDirectional" [\>\<^va-z0-9.A-Z#_+]+ !>>
 
 keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
 keyword PreludeKeyword 
-	= 'title' | 'author' | 'homepage' | 'color_palette' | 'again_interval' | 'background_color' 
-	| 'debug' | 'flickscreen' | 'key_repeat_interval' | 'noaction' | 'norepeat_action' | 'noundo'
-	| 'norestart' | 'realtime_interval' | 'require_player_movement' | 'run_rules_on_level_start' 
-	| 'scanline' | 'text_color' | 'throttle_movement' | 'verbose_logging' | 'youtube ' | 'zoomscreen';
+  = 'title' | 'author' | 'homepage' | 'color_palette' | 'again_interval' | 'background_color' 
+  | 'debug' | 'flickscreen' | 'key_repeat_interval' | 'noaction' | 'norepeat_action' | 'noundo'
+  | 'norestart' | 'realtime_interval' | 'require_player_movement' | 'run_rules_on_level_start' 
+  | 'scanline' | 'text_color' | 'throttle_movement' | 'verbose_logging' | 'youtube ' | 'zoomscreen';
 
 keyword LegendKeyword = 'or' | 'and';
 keyword CommandKeyword = 'again' | 'cancel' | 'checkpoint' | 'restart' | 'win';
-
 keyword Keywords = SectionKeyword | PreludeKeyword | LegendKeyword | CommandKeyword;
 
-syntax Sound
-	= sound: 'sfx' SoundIndex
-	;
-
 start syntax PSGame
- 	= @Foldable game: Prelude? Section+
- 	| empty: Newlines
- 	;
- 	
+   = @Foldable game: Prelude? Section+
+   | game_empty: Newlines;
+
+syntax Newlines = Newline+ !>> [\n];
+syntax SectionDelimiter = Delimiter Newline;
+
 syntax Section
- 	= @Foldable objects: Objects
- 	| @Foldable legend: Legend
- 	| @Foldable sounds: Sounds
- 	| @Foldable layers: Layers
- 	| @Foldable rules: Rules
- 	| @Foldable conditions: WinConditions
- 	| @Foldable levels: Levels
- 	| empty: SectionDelimiter? SectionKeyword Newlines SectionDelimiter?
- 	;
+   = @Foldable s_objects: SectionDelimiter? 'OBJECTS' Newlines SectionDelimiter? ObjectData+ objects
+   | @Foldable s_legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+ legend
+   | @Foldable s_sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? SoundData+ sounds
+   | @Foldable s_layers: SectionDelimiter? 'COLLISIONLAYERS' Newlines SectionDelimiter? LayerData+ layers
+   | @Foldable s_rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+ rules
+   | @Foldable s_conditions: SectionDelimiter? 'WINCONDITIONS' Newlines SectionDelimiter? ConditionData+ conditions
+   | @Foldable s_levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? LevelData+ levels
+   | s_empty: SectionDelimiter? SectionKeyword Newlines SectionDelimiter?
+   ;
  	
 syntax Prelude
-	= prelude: PreludeData+
-	| empty: Newlines
-	;
+  = prelude: PreludeData+
+  ;
 	
 syntax PreludeData
-	= prelude_data: KeywordID String* Newlines
-	;
-
-syntax Objects
-	= objects: SectionDelimiter? 'OBJECTS' Newlines SectionDelimiter? ObjectData+
-	;
-	
+  = prelude_data: KeywordID key String* string Newline
+  | prelude_empty: Newline;
+  
+syntax Sound
+  = sound: 'sfx' SoundIndex;	
+		
 syntax Color
-	= @category="Color" ID
-	;
-
-syntax Colors
-	= Color+
-	;
+  = @category="Color" ID;
 	
 syntax ObjectName
-	= @category="ObjectName" ID
-	;
+  = @category="ObjectName" ID;
 
 syntax ObjectData
-	= @Foldable object_data: ObjectName LegendKey? Newline Colors Newline Sprite?
-	| object_empty: Newlines
-	;
+  = @Foldable object_data: ObjectName LegendKey? Newline Colors Newline Sprite?
+  | object_empty: Newline;
 	
 syntax SpritePixel
-	= @category="SpritePixel" SpriteP
-	;
+  = @category="SpritePixel" SpriteP;
+
+syntax Colors
+  = Color+;
 
 syntax Sprite 
-    =  @Foldable sprite: 
-       SpritePixel+ Newline
-       SpritePixel+ Newline
-       SpritePixel+ Newline 
-       SpritePixel+ Newline
-       SpritePixel+ Newline
-    ;
-
-syntax Legend
-	= legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+
-	;
+  = @Foldable sprite: 
+    SpritePixel+ Newline
+    SpritePixel+ Newline
+    SpritePixel+ Newline 
+    SpritePixel+ Newline
+    SpritePixel+ Newline;
 	
 syntax LegendOperation
-	= legend_or: 'or' ObjectName
-	| legend_and: 'and' ObjectName
-	;
+  = legend_or: 'or' ObjectName
+  | legend_and: 'and' ObjectName;
 
 syntax LegendData
-	= legend_data: LegendKey '=' ObjectName LegendOperation*  Newlines
-	;
-
-syntax Sounds
-	= sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? (SoundData Newlines)+
-	;
+  = legend_data: LegendKey '=' ObjectName LegendOperation*  Newline
+  | legend_empty: Newline;
 	
 syntax SoundID
-	= @category="SoundID" ID
-	;
+  = @category="SoundID" ID;
 	
 syntax SoundData
-	= sound_data: SoundID+
-	;
-
-syntax Layers
-	= layers: SectionDelimiter? 'COLLISIONLAYERS' Newlines SectionDelimiter? LayerData+
-	;
+  = sound_data: SoundID+ Newline
+  | sound_empty: Newline;
 
 syntax LayerData
-	= layer_data: (ObjectName ','?)+ Newlines
-	;
-
-syntax Rules
-	= rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+
-	;
+  = layer_data: (ObjectName ','?)+ Newline
+  | layer_empty: Newline;
 	
 syntax RuleData
-	= rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newlines
-	| @Foldable loop: 'startloop' Newlines RuleData+ 'endloop' Newlines	
-	;
+  = rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newline
+  | @Foldable rule_loop: 'startloop' RuleData+ 'endloop' Newline
+  | rule_empty: Newline;
 
 syntax RuleContent
-	= content: IDOrDirectional*
-	;
+  = content: IDOrDirectional*;
 	
 syntax RulePart
-	= part: '[' {RuleContent '|'}+ ']'
-	;
+  = part: '[' {RuleContent '|'}+ ']';
 
 syntax Prefix
-	= @category="Keyword" prefix: ID
-	;
+  = @category="Keyword" prefix: ID;
 
 syntax Command
-	= @category="Keyword" command: CommandKeyword
-	| @category="Keyword" sound: Sound
-	;
-
-syntax WinConditions
-	= conditions: SectionDelimiter? 'WINCONDITIONS' Newlines SectionDelimiter? ConditionData+
-	;
+  = @category="Keyword" command: CommandKeyword
+  | @category="Keyword" sound: Sound;
 	
 syntax ConditionID
-	= @category="ConditonID" ID
-	;
+  = @category="ConditonID" ID;
 
 syntax ConditionData
-	= condition_data: ConditionID+ Newlines
-	;
-
-syntax Levels
-	= levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? {LevelData Newlines}+ Newlines?
-	;
-	
+  = condition_data: ConditionID+ Newline
+  | condition_empty: Newline;
+  
 syntax Message
-	=	'message' String*
-	;
+  = 'message' String*;
 
 syntax LevelData
-	= @Foldable level_data_raw: (Levelline Newline)+
-	| message: Message
-	;
+  = @Foldable level_data_raw: (Levelline Newline)+ lines Newline
+  | message: 'message' String*
+  | level_empty: Newline;

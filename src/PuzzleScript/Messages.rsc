@@ -96,7 +96,7 @@ data Msg
 	
 	| existing_object(str name, MsgType t, loc pos)
 	| existing_legend(str legend, list[str] current, list[str] new, MsgType t, loc pos)
-	| existing_section(SECTION section, int dupe, MsgType t, loc pos)
+	| existing_section(Section section, int dupe, MsgType t, loc pos)
 	| existing_mask(str new_mask, str existing_mask, MsgType t, loc pos)
 	| existing_sound_seed(str new_seed, str existing_seed, MsgType t, loc pos)
 	| existing_sound_object(MsgType t, loc pos)

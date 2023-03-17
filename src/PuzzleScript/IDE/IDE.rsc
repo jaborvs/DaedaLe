@@ -25,23 +25,23 @@ private str PS_EXT = "PS";
 
 public Tree ps_check(Tree tree){
 	tree = annotate(tree);
-	PSGAME g = ps_implode(tree);
+	PSGame g = ps_implode(tree);
 	Checker c = check_game(g);
 	
 	return tree[@messages = toMessages(c.msgs)];
 }
 
-loc localize(str section, loc default_loc, list[SECTION] sections){
-	for (SECTION sect <- sections){
+loc localize(str section, loc default_loc, list[Section] sections){
+	for (Section sect <- sections){
 		switch(sect) {
-			case SECTION::objects(_): if (section == "objects") return sect@location;
-			case SECTION::legend(_): if (section == "legend") return sect@location;
-			case SECTION::sounds(_): if (section == "sounds") return sect@location;
-			case SECTION::layers(_): if (section == "layers") return sect@location;
-			case SECTION::rules(_): if (section == "rules") return sect@location;
-			case SECTION::conditions(_): if (section == "conditions") return sect@location;
-			case SECTION::levels(_): levels = if (section == "levels") return sect@location;
-			case SECTION::empty(_, name, _, _): if (section == toLowerCase(name)) return sect@location;
+			case Section::objects(_): if (section == "objects") return sect@location;
+			case Section::legend(_): if (section == "legend") return sect@location;
+			case Section::sounds(_): if (section == "sounds") return sect@location;
+			case Section::layers(_): if (section == "layers") return sect@location;
+			case Section::rules(_): if (section == "rules") return sect@location;
+			case Section::conditions(_): if (section == "conditions") return sect@location;
+			case Section::levels(_): levels = if (section == "levels") return sect@location;
+			case Section::empty(_, name, _, _): if (section == toLowerCase(name)) return sect@location;
 			default: return default_loc;
 		}
 	}
@@ -50,7 +50,7 @@ loc localize(str section, loc default_loc, list[SECTION] sections){
 }
 
 public node ps_outline(Tree x){
-	PSGAME g = implode(#PSGAME, x);
+	PSGAME g = implode(#PsGame, x);
 	
 	loc pr_loc;
 	if (isEmpty(g.pr)) {
@@ -62,14 +62,14 @@ public node ps_outline(Tree x){
 	g = post(g);
 		
 	n = "Game";
-	list[node] levels = [l@label()[@\loc = l@location] | LEVELDATA l <- g.levels];
-	list[node] prelude = [pr.key()[@\loc = pr@location] | PRELUDEDATA pr <- g.prelude]; 
-	list[node] objects = [obj.name()[@\loc = obj@location] | OBJECTDATA obj <- g.objects];
-	list[node] legends = [l.legend()[@\loc = l@location] | LEGENDDATA l <- g.legend];
-	list[node] sounds = ["Sound"()[@\loc = s@location] | SOUNDDATA s <- g.sounds];
-	list[node] layers = [intercalate(", ", l.layer)()[@\loc = l@location] | LAYERDATA l <- g.layers];
-	list[node] rules = ["Rule"()[@\loc = r@location] | RULEDATA r <- g.rules];	
-	list[node] conditions = [c.condition[0]()[@\loc = c@location] | CONDITIONDATA c <- g.conditions];
+	list[node] levels = [l@label()[@\loc = l@location] | LevelData l <- g.levels];
+	list[node] prelude = [pr.key()[@\loc = pr@location] | PreludeData pr <- g.prelude]; 
+	list[node] objects = [obj.name()[@\loc = obj@location] | ObjectData obj <- g.objects];
+	list[node] legends = [l.legend()[@\loc = l@location] | LegendData l <- g.legend];
+	list[node] sounds = ["Sound"()[@\loc = s@location] | SoundData s <- g.sounds];
+	list[node] layers = [intercalate(", ", l.layer)()[@\loc = l@location] | LayerData l <- g.layers];
+	list[node] rules = ["Rule"()[@\loc = r@location] | RuleData r <- g.rules];	
+	list[node] conditions = [c.condition[0]()[@\loc = c@location] | ConditionData c <- g.conditions];
 		
 	return n(
 		"Prelude"(prelude)[@label="Prelude (<size(prelude)>)"][@\loc = pr_loc],

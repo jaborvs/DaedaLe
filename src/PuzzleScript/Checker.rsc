@@ -22,7 +22,7 @@ alias Checker = tuple[
 	map[str, str] prelude,
 	list[str] used_objects,
 	list[str] used_references,
-	PSGAME game
+	PSGame game
 ];
 
 alias Reference = tuple[
@@ -32,11 +32,11 @@ alias Reference = tuple[
 ];
 
 data Condition
-	= some_objects(list[str] objects, CONDITIONDATA original)
-	| no_objects(list[str] objects, CONDITIONDATA original)
-	| all_objects_on(list[str] objects, list[str] on, CONDITIONDATA original)
-	| some_objects_on(list[str] objects, list[str] on, CONDITIONDATA original)
-	| no_objects_on(list[str] objects, list[str] on, CONDITIONDATA original)
+	= some_objects(list[str] objects, ConditionData original)
+	| no_objects(list[str] objects, ConditionData original)
+	| all_objects_on(list[str] objects, list[str] on, ConditionData original)
+	| some_objects_on(list[str] objects, list[str] on, ConditionData original)
+	| no_objects_on(list[str] objects, list[str] on, ConditionData original)
 	;
 
 anno loc Condition@location;
@@ -46,6 +46,7 @@ map[str, str] COLORS = (
 	"white"			: "#FFFFFF",
 	"grey"			: "#555555",
 	"darkgrey"		: "#555500",
+	"transparent"   : "#555500",
 	"lightgrey"		: "#AAAAAA",
 	"gray"			: "#555555",
 	"darkgray"		: "#555500",
@@ -70,12 +71,12 @@ map[str, str] COLORS = (
 
 str default_mask = "@None@";
 		
-Checker new_checker(bool debug_flag, PSGAME game){		
+Checker new_checker(bool debug_flag, PSGame game){		
 	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], game>;
 }
 
 //get a value from the prelude if it exists, else return the default
-str get_prelude(list[PRELUDEDATA] values, str key, str default_str){
+str get_prelude(list[PreludeData] values, str key, str default_str){
 	v = [x | x <- values, toLowerCase(x.key) == toLowerCase(key)];
 	if (!isEmpty(v)) return v[0].string;
 	
@@ -181,7 +182,7 @@ bool check_valid_real(str v) {
 //	missing_prelude_value
 //	invalid_prelude_value
 // warnings
-Checker check_prelude(PRELUDEDATA pr, Checker c){
+Checker check_prelude(PreludeData pr, Checker c){
 	str key = toLowerCase(pr.key);
 	if (!(key in prelude_keywords)){
 		c.msgs += [invalid_prelude_key(pr.key, error(), pr@location)];
@@ -229,7 +230,7 @@ Checker check_prelude(PRELUDEDATA pr, Checker c){
 //  invalid_index
 // warnings
 //	unused_colors
-Checker check_object(OBJECTDATA obj, Checker c) {
+Checker check_object(ObjectData obj, Checker c) {
 	int max_index = 0;
 	str id = toLowerCase(obj.name);	
 	
@@ -266,12 +267,12 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 	if (isEmpty(obj.sprite)) return c;
 	bool valid_length = true;
 	if (size(obj.sprite) != 5) valid_length = false;
-	for(list[PIXEL] line <- obj.sprite){		
+	for(list[Pixel] line <- obj.sprite){		
 		// check if the sprite is of valid length
 		if (size(line) != 5) valid_length = false;
 	
 		// check if all pixels have the correct index
-		for(PIXEL pix <- line){
+		for(Pixel pix <- line){
 			str pixel = pix.pixel;
 			if (pixel == ".") continue;
 			
@@ -302,7 +303,7 @@ Checker check_object(OBJECTDATA obj, Checker c) {
 // warnings
 //  self_reference
 //  
-Checker check_legend(LEGENDDATA l, Checker c) {
+Checker check_legend(LegendData l, Checker c) {
 	if (!check_valid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l@location)];
 	c.msgs += check_existing_legend(l.legend, l.values, l@location, c);
 	
@@ -378,7 +379,7 @@ Checker check_legend(LEGENDDATA l, Checker c) {
 // 	undefined_sound_seed
 // warnings
 //	existing_sound
-Checker check_sound(SOUNDDATA s, Checker c){
+Checker check_sound(SoundData s, Checker c){
 	int seed;
 	
 	if (size(s.sound) == 2 && toLowerCase(s.sound[0]) in sound_events) {
@@ -473,7 +474,7 @@ Checker check_sound(SOUNDDATA s, Checker c){
 //	undefined_object
 // warnings
 //	multilayered_object
-Checker check_layer(LAYERDATA l, Checker c){
+Checker check_layer(LayerData l, Checker c){
 	Reference r = resolve_references(l.layer, c, l@location);
 	c = r.c;
 	for (str obj <- r.objs){
@@ -485,8 +486,8 @@ Checker check_layer(LAYERDATA l, Checker c){
 	return c;
 }
 
-Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c, bool late, bool pattern){
-	for (RULECONTENT cont <- contents) {
+Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, bool late, bool pattern){
+	for (RuleContent cont <- contents) {
 		if ("..." in cont.content) {
 			if (cont.content != ["..."]) c.msgs += [invalid_ellipsis(error(), cont@location)];
 			continue;
@@ -541,14 +542,14 @@ Checker check_rulepart(RULEPART p: part(list[RULECONTENT] contents), Checker c, 
 	return c;
 }
 
-Checker check_rulepart(RULEPART p: command(str command), Checker c, bool late, bool pattern){
+Checker check_rulepart(RulePart p: command(str command), Checker c, bool late, bool pattern){
 	if (!(toLowerCase(command) in rule_commands)) 
 		c.msgs += [invalid_rule_command(command, error(), p@location)];
 	
 	return c;
 }
 
-Checker check_rulepart(RULEPART p: sound(str snd), Checker c, bool late, bool pattern){
+Checker check_rulepart(RulePart p: sound(str snd), Checker c, bool late, bool pattern){
 	if (/sfx([0-9]|'10')/i := snd && toLowerCase(snd) in c.sound_events) {
 		c.used_sounds += [toLowerCase(snd)];
 	} else if (/sfx([0-9]|10)/i := snd) {
@@ -562,7 +563,7 @@ Checker check_rulepart(RULEPART p: sound(str snd), Checker c, bool late, bool pa
 	return c;
 }
 
-Checker check_rulepart(RULEPART p: prefix(str prefix), Checker c, bool late, bool pattern){
+Checker check_rulepart(RulePart p: prefix(str prefix), Checker c, bool late, bool pattern){
 	if (!(toLowerCase(p.prefix) in rule_prefix)) c.msgs += [invalid_rule_prefix(p.prefix, error(), p@location)];
 	
 	return c;
@@ -581,27 +582,27 @@ Checker check_rulepart(RULEPART p: prefix(str prefix), Checker c, bool late, boo
 //	invalid_rule_ellipsis_size
 
 
-Checker check_rule(RULEDATA r: loop(str _, list[RULEDATA] loop, str _), Checker c){
-  for(RULEDATA childRule <- loop){
+Checker check_rule(RuleData r: rule_loop(_,_), Checker c){
+  for(RuleData childRule <- r.rules){
     check_rule(childRule, c);
   }
   return c;
 }
 
-Checker check_rule(RULEDATA r: rule_data(_, _, _, _), Checker c){
-	bool late = any(RULEPART p <- r.left, p is prefix && toLowerCase(p.prefix) == "late");
+Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
+	bool late = any(RulePart p <- r.left, p is prefix && toLowerCase(p.prefix) == "late");
 	
-	bool redundant = any(RULEPART p <- r.right, p is prefix && toLowerCase(p.prefix) in ["win", "restart"]);
+	bool redundant = any(RulePart p <- r.right, p is prefix && toLowerCase(p.prefix) in ["win", "restart"]);
 	if (redundant && size(r.right) > 1) c.msgs += [redundant_keyword(warn(), r@location)];
 
 	int msgs = size([x | x <- c.msgs, x.t is error]);
 	if ([*_, part(_), prefix(_), *_] := r.left) c.msgs += [invalid_rule_direction(warn(), r@location)];
 	
-	for (RULEPART p <- r.left){
+	for (RulePart p <- r.left){
 		c = check_rulepart(p, c, late, true);
 	}
 	
-	for (RULEPART p <- r.right){
+	for (RulePart p <- r.right){
 		c = check_rulepart(p, c, late, false);
 	}
 	
@@ -609,10 +610,10 @@ Checker check_rule(RULEDATA r: rule_data(_, _, _, _), Checker c){
 	// for now until they fixed the rest
 	if (size([x | x <- c.msgs, x.t is error]) > msgs) return c;
 	
-	list[RULEPART] part_right = [x | RULEPART x <- r.right, x is part];
+	list[RulePart] part_right = [x | RulePart x <- r.right, x is part];
 	if (isEmpty(part_right)) return c;
 	
-	list[RULEPART] part_left = [x | RULEPART x <- r.left, x is part];
+	list[RulePart] part_left = [x | RulePart x <- r.left, x is part];
 	if (isEmpty(part_left)) return c;
 	
 	//check if there are equal amounts of parts on both sides
@@ -643,7 +644,7 @@ Checker check_rule(RULEDATA r: rule_data(_, _, _, _), Checker c){
 }
 
 Checker check_stackable(list[str] objs1, list[str] objs2, Checker c, loc pos){
-	for (LAYERDATA l <- c.game.layers){
+	for (LayerData l <- c.game.layers){
 		list[str] lw = [toLowerCase(x) | x <- l.layer];		
 		if (!isEmpty(objs1 & lw) && !isEmpty(objs2 & lw)){
 			c.msgs += [impossible_condition_unstackable(error(), pos)];
@@ -661,7 +662,7 @@ Checker check_stackable(list[str] objs1, list[str] objs2, Checker c, loc pos){
 // 	impossible_condition_unstackable
 //	impossible_condition_duplicates
 // warnings
-Checker check_condition(CONDITIONDATA w, Checker c){
+Checker check_condition(ConditionData w, Checker c){
 	if (!(size(w.condition) in [2, 4])){
 		c.msgs += [invalid_condition_length(error(), w@location)];
 		return c;
@@ -745,7 +746,7 @@ Checker check_condition(CONDITIONDATA w, Checker c){
 //	unefined_object
 //warnings
 //	message_too_long
-Checker check_level(LEVELDATA l, Checker c){
+Checker check_level(LevelData l, Checker c){
 	switch(l) {
 		case message(str msg): if (size(split(" ", msg)) > 12) c.msgs += [message_too_long(warn(), l@location)];
 		case level_data(_): {
@@ -779,35 +780,35 @@ Checker check_level(LEVELDATA l, Checker c){
 //	unlayered_objects
 // warning
 //	no_levels
-Checker check_game(PSGAME g, bool debug=false) {
+Checker check_game(PSGame g, bool debug=false) {
 	Checker c = new_checker(debug, g);
 	
-	map[SECTION, int] dupes = distribution(g.sections);
-	for (SECTION s <- dupes) {
+	map[Section, int] dupes = distribution(g.sections);
+	for (Section s <- dupes) {
 		if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], warn(), s@location)];
 	}
 	
-	for (PRELUDEDATA pr <- g.prelude){
+	for (PreludeData pr <- g.prelude){
 		c = check_prelude(pr, c);
 	}
 	
-	for (OBJECTDATA obj <- g.objects){
+	for (ObjectData obj <- g.objects){
 		c = check_object(obj, c);
 	}
 	
-	for (LEGENDDATA l <- g.legend){
+	for (LegendData l <- g.legend){
 		c = check_legend(l, c);
 	}
 	
-	for (SOUNDDATA s <- g.sounds) {
+	for (SoundData s <- g.sounds) {
 		c = check_sound(s, c);
 	}
 	
-	for (LAYERDATA l <- g.layers) {
+	for (LayerData l <- g.layers) {
 		c = check_layer(l, c);
 	}
 	
-	for (RULEDATA r <- g.rules) {
+	for (RuleData r <- g.rules) {
 		c = check_rule(r, c);
 	}
 	
@@ -815,24 +816,24 @@ Checker check_game(PSGAME g, bool debug=false) {
 		if (startsWith(event, "sfx") && event notin c.used_sounds) c.msgs += [unused_sound_event(warn(), c.sound_events[event].pos)];
 	}
 	
-	for (CONDITIONDATA w <- g.conditions) {
+	for (ConditionData w <- g.conditions) {
 		c = check_condition(w, c);
 	}
 	
-	for (LEVELDATA l <- g.levels) {
+	for (LevelData l <- g.levels) {
 		c = check_level(l, c);
 	}
 	
-	for (OBJECTDATA x <- g.objects){
+	for (ObjectData x <- g.objects){
 		if (!(toLowerCase(x.name) in c.layer_list)) c.msgs += [unlayered_objects(x.name, error(), x@location)];
 		if (!(toLowerCase(x.name) in c.used_objects)) c.msgs += [unused_object(x.name, warn(), x@location)];
 	}
 	
-	for (LEGENDDATA x <- g.legend){
+	for (LegendData x <- g.legend){
 		if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x@location)];
 	}
 	
-	if (isEmpty(g.levels)) c.msgs += no_levels(warn(), g@location);
+	if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g@location)];
 	
 	return c;
 }
