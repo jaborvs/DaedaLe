@@ -37,6 +37,6 @@ The result will be a report that stores the data as comma separated values.
 ## Thesis
 ScriptButler was developed as part of the Master's thesis of Clement Julia.
 
-This repository is a branch of the orgignal: https://github.com/ClementJ18/ScriptButler
+The original repository can be found here: https://github.com/ClementJ18/ScriptButler
 
-The version provided here has an improved PuzzleScript grammar and adds a report generator.
+The ScriptButler version provided here has an improved PuzzleScript grammar, and adds a report generator.
