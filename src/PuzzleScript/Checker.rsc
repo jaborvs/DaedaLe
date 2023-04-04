@@ -31,7 +31,7 @@ alias Reference = tuple[
 	list[str] references
 ];
 
-data Condition
+data Condition (loc src = |unknown:///|)
 	= some_objects(list[str] objects, ConditionData original)
 	| no_objects(list[str] objects, ConditionData original)
 	| all_objects_on(list[str] objects, list[str] on, ConditionData original)
@@ -39,7 +39,7 @@ data Condition
 	| no_objects_on(list[str] objects, list[str] on, ConditionData original)
 	;
 
-anno loc Condition@location;
+// anno loc Condition.src;
 
 map[str, str] COLORS = (
 	"black"   		: "#000000",
@@ -185,28 +185,28 @@ bool check_valid_real(str v) {
 Checker check_prelude(PreludeData pr, Checker c){
 	str key = toLowerCase(pr.key);
 	if (!(key in prelude_keywords)){
-		c.msgs += [invalid_prelude_key(pr.key, error(), pr@location)];
+		c.msgs += [invalid_prelude_key(pr.key, error(), pr.src)];
 		return c;
 	}
 	
 	if (key in c.prelude){
-		c.msgs += [existing_prelude_key(pr.key, error(), pr@location)];
+		c.msgs += [existing_prelude_key(pr.key, error(), pr.src)];
 	}
 	
 	if (key in prelude_without_arguments){
-		if (pr.string != "") c.msgs += [redundant_prelude_value(pr.key, warn(), pr@location)];
+		if (pr.string != "") c.msgs += [redundant_prelude_value(pr.key, warn(), pr.src)];
 		c.prelude[key] = "None";
 	} else {
 		if (pr.string == ""){
-			c.msgs += [missing_prelude_value(pr.key, error(), pr@location)];
+			c.msgs += [missing_prelude_value(pr.key, error(), pr.src)];
 			return c;
 		}
 		if (key in prelude_with_arguments_int) {
-			if (!(check_valid_real(pr.string))) c.msgs += [invalid_prelude_value(key, pr.string, "real", error(), pr@location)];
+			if (!(check_valid_real(pr.string))) c.msgs += [invalid_prelude_value(key, pr.string, "real", error(), pr.src)];
 			c.prelude[key] = pr.string;
 		} else {
 			if (key in prelude_with_arguments_str_dim) {
-				if (!(/[0-9]+x[0-9]+/i := pr.string)) c.msgs += [invalid_prelude_value(key, pr.string, "height code", error(), pr@location)];
+				if (!(/[0-9]+x[0-9]+/i := pr.string)) c.msgs += [invalid_prelude_value(key, pr.string, "height code", error(), pr.src)];
 				c.prelude[key] = pr.string;
 			} else if (key in prelude_with_arguments_str_color) {
 				// complicated to validate since it can be both an hex code or a color name
@@ -234,11 +234,11 @@ Checker check_object(ObjectData obj, Checker c) {
 	int max_index = 0;
 	str id = toLowerCase(obj.name);	
 	
-	if (!check_valid_name(id)) c.msgs += [invalid_name(id, error(), obj@location)];
+	if (!check_valid_name(id)) c.msgs += [invalid_name(id, error(), obj.src)];
 
 	// check for duplicate object names
 	if (id in c.objects) {
-		c.msgs += [existing_object(obj.name, error(), obj@location)];
+		c.msgs += [existing_object(obj.name, error(), obj.src)];
 	} else {
 		c.objects += [id];
 	}
@@ -246,7 +246,7 @@ Checker check_object(ObjectData obj, Checker c) {
 	// add references
 	c.references[id] = [id];
 	if (!isEmpty(obj.legend)) {
-		msgs = check_existing_legend(obj.legend[0], [obj.name], obj@location, c);
+		msgs = check_existing_legend(obj.legend[0], [obj.name], obj.src, c);
 		if (!isEmpty(msgs)){
 			c.msgs += msgs;
 		} else {
@@ -260,7 +260,7 @@ Checker check_object(ObjectData obj, Checker c) {
 		if (toLowerCase(color) in COLORS) continue;
 		if (/^#(?:[0-9a-fA-F]{3}){1,2}$/ := color) continue;
 		
-		c.msgs += [invalid_color(obj.name, color, error(), obj@location)];
+		c.msgs += [invalid_color(obj.name, color, error(), obj.src)];
 	}
 
 	// check if it has a sprite
@@ -278,17 +278,17 @@ Checker check_object(ObjectData obj, Checker c) {
 			
 			int converted = toInt(pixel);
 			if (converted + 1 > size(obj.colors)) {
-				c.msgs += [invalid_index(obj.name, converted, error(), obj@location)];
+				c.msgs += [invalid_index(obj.name, converted, error(), obj.src)];
 			} else if (converted > max_index) max_index = converted;
 		}
 	}
 	
 	
-	if (!valid_length) c.msgs += [invalid_sprite(obj.name, error(), obj@location)];
+	if (!valid_length) c.msgs += [invalid_sprite(obj.name, error(), obj.src)];
 	
 	// check if we are making use of all the colors defined
 	if (size(obj.colors) > max_index + 1) {
-		c.msgs += [unused_colors(obj.name, intercalate(", ", obj.colors[max_index+1..size(obj.colors)]), warn(), obj@location)];
+		c.msgs += [unused_colors(obj.name, intercalate(", ", obj.colors[max_index+1..size(obj.colors)]), warn(), obj.src)];
 	}
 	
 	return c;
@@ -304,10 +304,10 @@ Checker check_object(ObjectData obj, Checker c) {
 //  self_reference
 //  
 Checker check_legend(LegendData l, Checker c) {
-	if (!check_valid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l@location)];
-	c.msgs += check_existing_legend(l.legend, l.values, l@location, c);
+	if (!check_valid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l.src)];
+	c.msgs += check_existing_legend(l.legend, l.values, l.src, c);
 	
-	Reference r = resolve_references(l.values, c, l@location);
+	Reference r = resolve_references(l.values, c, l.src);
 	list[str] values = r[0];
 	c = r[1];
 	c.used_references += r.references[1..];
@@ -317,7 +317,7 @@ Checker check_legend(LegendData l, Checker c) {
 	if (check_valid_name(l.legend)) c.objects += [legend];
 	for (str v <- values){
 		if (!(v in c.objects)) {
-			c.msgs += [undefined_object(v, error(), l@location)];
+			c.msgs += [undefined_object(v, error(), l.src)];
 		} else {
 			c.used_objects += [v];
 		}
@@ -325,13 +325,13 @@ Checker check_legend(LegendData l, Checker c) {
 	
 	// if it's just one thing being defined with check it and return
 	if (size(values) == 1) {
-		msgs = check_undefined_object(l.values[0], l@location, c);
+		msgs = check_undefined_object(l.values[0], l.src, c);
 		if (!isEmpty(msgs)) {
 			c.msgs += msgs;
 		} else {
 			// check if it's a self definition and warn as need be
 			if (legend == values[0]){
-				c.msgs += [self_reference(l.legend, warn(), l@location)];
+				c.msgs += [self_reference(l.legend, warn(), l.src)];
 			} else {
 				c.references[legend] = values;
 			}
@@ -346,7 +346,7 @@ Checker check_legend(LegendData l, Checker c) {
 			// if our alias makes use of combinations that's a bonk
 			list[str] mixed = [x | x <- values, x in c.combinations];
 			if (!isEmpty(mixed)) {
-				c.msgs += [mixed_legend(l.legend, mixed, "alias", "combination", error(), l@location)];
+				c.msgs += [mixed_legend(l.legend, mixed, "alias", "combination", error(), l.src)];
 			} else {
 				c.references[legend] = values;
 			}
@@ -355,12 +355,12 @@ Checker check_legend(LegendData l, Checker c) {
 			// if our combination makes use of aliases that's a bonk (just gotta make sure it's actually an alias)
 			list[str] mixed = [x | x <- values, x in c.references && size(c.references[x]) > 1];
 			if (!isEmpty(mixed)) {
-				c.msgs += [mixed_legend(l.legend, mixed, "combination", "alias", error(), l@location)];
+				c.msgs += [mixed_legend(l.legend, mixed, "combination", "alias", error(), l.src)];
 			} else {
 				c.combinations[legend] = values;
 			}
 		}
-		case legend_error(_, _): c.msgs += [mixed_legend(l.legend, l.values, error(), l@location)];	
+		case legend_error(_, _): c.msgs += [mixed_legend(l.legend, l.values, error(), l.src)];	
 	}
 
 	return c;
@@ -384,22 +384,22 @@ Checker check_sound(SoundData s, Checker c){
 	
 	if (size(s.sound) == 2 && toLowerCase(s.sound[0]) in sound_events) {
 		if (!check_valid_sound(s.sound[1])) {
-			c.msgs += [invalid_sound_seed(s.sound[1], error(), s@location)];
+			c.msgs += [invalid_sound_seed(s.sound[1], error(), s.src)];
 			seed = -1;
 		} else {
 			seed = toInt(s.sound[1]);
 		}
 		
 		if (toLowerCase(s.sound[0]) in c.sound_events) {
-			c.msgs += [existing_sound(s.sound[0], warn(), s@location)];
+			c.msgs += [existing_sound(s.sound[0], warn(), s.src)];
 			c.sound_events[toLowerCase(s.sound[0])].seeds += [seed];
 		} else {
-			c.sound_events[toLowerCase(s.sound[0])] = <[seed], s@location>;
+			c.sound_events[toLowerCase(s.sound[0])] = <[seed], s.src>;
 		}
 		
 		return c;
 	} else if (size(s.sound) < 3) {
-		c.msgs += [invalid_sound_length(error(), s@location)];
+		c.msgs += [invalid_sound_length(error(), s.src)];
 		return c;
 	}
 	
@@ -412,39 +412,39 @@ Checker check_sound(SoundData s, Checker c){
 		str v = toLowerCase(verb);
 		if (v in c.objects) {
 			if (isEmpty(objects)) {
-				Reference r = resolve_reference(verb, c, s@location);
+				Reference r = resolve_reference(verb, c, s.src);
 				c = r.c;
 				objects = r.objs;
 			} else {
-				c.msgs += [existing_sound_object(error, s@location)];
+				c.msgs += [existing_sound_object(error, s.src)];
 			}
 		} else if (v in sound_masks) {
 			if (mask == default_mask) {
 				mask = v;
 			} else {
-				c.msgs += [existing_mask(v, mask, error(), s@location)];
+				c.msgs += [existing_mask(v, mask, error(), s.src)];
 			}
 			
 		} else if (v in absolute_directions_single){
 			if (!(mask in directional_sound_masks)) {
-				c.msgs += [mask_not_directional(mask, error(), s@location)];
+				c.msgs += [mask_not_directional(mask, error(), s.src)];
 			} else {
 				directions += [v];
 			}
 		} else if (check_valid_sound(v)) {
 			if (seed != -1){
-				c.msgs += [existing_sound_seed(toString(seed), v, error(), s@location)];
+				c.msgs += [existing_sound_seed(toString(seed), v, error(), s.src)];
 			} else {
 				seed = toInt(v);
 			}
 		} else {
-			c.msgs += [invalid_sound_verb(verb, error(), s@location)];
+			c.msgs += [invalid_sound_verb(verb, error(), s.src)];
 		}
 	}
 	
-	if (isEmpty(objects)) c.msgs += [undefined_sound_objects(error(), s@location)];
-	if (mask == default_mask) c.msgs += [undefined_sound_mask(error(), s@location)];
-	if (seed < 0) c.msgs += [undefined_sound_seed(error(), s@location)];
+	if (isEmpty(objects)) c.msgs += [undefined_sound_objects(error(), s.src)];
+	if (mask == default_mask) c.msgs += [undefined_sound_mask(error(), s.src)];
+	if (seed < 0) c.msgs += [undefined_sound_seed(error(), s.src)];
 	
 	//object_mask_direction
 	for (str obj <- objects){
@@ -459,10 +459,10 @@ Checker check_sound(SoundData s, Checker c){
 		
 		for (str e <- events){
 			if (e in c.sound_events) {
-				c.msgs += [existing_sound(e, warn(), s@location)];
+				c.msgs += [existing_sound(e, warn(), s.src)];
 				c.sound_events[e].seeds += [seed];
 			} else {
-				c.sound_events[e] = <[seed], s@location>;
+				c.sound_events[e] = <[seed], s.src>;
 			}
 		}
 	}
@@ -475,10 +475,10 @@ Checker check_sound(SoundData s, Checker c){
 // warnings
 //	multilayered_object
 Checker check_layer(LayerData l, Checker c){
-	Reference r = resolve_references(l.layer, c, l@location);
+	Reference r = resolve_references(l.layer, c, l.src);
 	c = r.c;
 	for (str obj <- r.objs){
-		if (obj in c.layer_list) c.msgs += [multilayered_object(obj, warn(), l@location)];
+		if (obj in c.layer_list) c.msgs += [multilayered_object(obj, warn(), l.src)];
 	}
 	
 	c.layer_list += r.objs;
@@ -489,21 +489,21 @@ Checker check_layer(LayerData l, Checker c){
 Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, bool late, bool pattern){
 	for (RuleContent cont <- contents) {
 		if ("..." in cont.content) {
-			if (cont.content != ["..."]) c.msgs += [invalid_ellipsis(error(), cont@location)];
+			if (cont.content != ["..."]) c.msgs += [invalid_ellipsis(error(), cont.src)];
 			continue;
 		}
 	
 		list[str] objs = [toLowerCase(x) | x <- cont.content, !(toLowerCase(x) in rulepart_keywords)];
 		list[str] verbs = [toLowerCase(x) | x <- cont.content, toLowerCase(x) in rulepart_keywords];
-		if(any(str x <- verbs, x notin ["no"]) && late) c.msgs += [invalid_rule_movement_late(error(), cont@location)];
+		if(any(str x <- verbs, x notin ["no"]) && late) c.msgs += [invalid_rule_movement_late(error(), cont.src)];
 		
 		if (pattern){
-			if(any(str rand <- rulepart_random, rand in verbs)) c.msgs += [invalid_rule_random(error(), cont@location)];
+			if(any(str rand <- rulepart_random, rand in verbs)) c.msgs += [invalid_rule_random(error(), cont.src)];
 		}
 		
 		list[list[str]] references = [];
 		for (str obj <- objs) {
-			Reference r = resolve_reference(obj, c, cont@location);
+			Reference r = resolve_reference(obj, c, cont.src);
 			c = r.c;
 			c.used_references += r.references;
 			c.used_objects += r.objs;
@@ -513,7 +513,7 @@ Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, 
 		if (size(objs) > 1){
 			for (int i <- [0..size(references)-1]){
 				for (int j <- [i+1..size(references)]){
-					c = check_stackable(references[i], references[j], c, cont@location);
+					c = check_stackable(references[i], references[j], c, cont.src);
 				}
 			}
 		}
@@ -521,22 +521,22 @@ Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, 
 		// if we have a mismatch between verbs and objs we skip
 		// else we check to make sure that only one force is applied to any one object
 		if (size(verbs) > size(objs)) {
-			c.msgs += [invalid_rule_keyword_amount(error(), cont@location)];
+			c.msgs += [invalid_rule_keyword_amount(error(), cont.src)];
 		} else {
 			for (int i <- [0..size(cont.content)]){
 				if (toLowerCase(cont.content[i]) in verbs && i == size(cont.content) - 1) {
 					//leftover force on the end
-					c.msgs += [invalid_rule_keyword_placement(false, error(), cont@location)];
+					c.msgs += [invalid_rule_keyword_placement(false, error(), cont.src)];
 				} else if (toLowerCase(cont.content[i]) in verbs && !(toLowerCase(cont.content[i+1]) in objs)){
 					//force not followed by object
-					c.msgs += [invalid_rule_keyword_placement(true, error(), cont@location)];
+					c.msgs += [invalid_rule_keyword_placement(true, error(), cont.src)];
 				}
 			}
 		}					
 	}
 	
 	if (!isEmpty(contents)) {
-		if ("..." in contents[0].content || "..." in contents[-1].content) c.msgs += [invalid_ellipsis_placement(error(), p@location)];
+		if ("..." in contents[0].content || "..." in contents[-1].content) c.msgs += [invalid_ellipsis_placement(error(), p.src)];
 	}
 	
 	return c;
@@ -544,7 +544,7 @@ Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, 
 
 Checker check_rulepart(RulePart p: command(str command), Checker c, bool late, bool pattern){
 	if (!(toLowerCase(command) in rule_commands)) 
-		c.msgs += [invalid_rule_command(command, error(), p@location)];
+		c.msgs += [invalid_rule_command(command, error(), p.src)];
 	
 	return c;
 }
@@ -554,17 +554,17 @@ Checker check_rulepart(RulePart p: sound(str snd), Checker c, bool late, bool pa
 		c.used_sounds += [toLowerCase(snd)];
 	} else if (/sfx([0-9]|10)/i := snd) {
 		//correct format but undefined
-		c.msgs += [undefined_sound(snd, error(), p@location)];
+		c.msgs += [undefined_sound(snd, error(), p.src)];
 	} else {
 		//wrong format
-		c.msgs += [invalid_sound(snd, error(), p@location)];
+		c.msgs += [invalid_sound(snd, error(), p.src)];
 	}
 
 	return c;
 }
 
 Checker check_rulepart(RulePart p: prefix(str prefix), Checker c, bool late, bool pattern){
-	if (!(toLowerCase(p.prefix) in rule_prefix)) c.msgs += [invalid_rule_prefix(p.prefix, error(), p@location)];
+	if (!(toLowerCase(p.prefix) in rule_prefix)) c.msgs += [invalid_rule_prefix(p.prefix, error(), p.src)];
 	
 	return c;
 }
@@ -590,13 +590,18 @@ Checker check_rule(RuleData r: rule_loop(_,_), Checker c){
 }
 
 Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
+
+    print("\n Rule data = ");
+    println(r);
+    print("\n");
+
 	bool late = any(RulePart p <- r.left, p is prefix && toLowerCase(p.prefix) == "late");
 	
 	bool redundant = any(RulePart p <- r.right, p is prefix && toLowerCase(p.prefix) in ["win", "restart"]);
-	if (redundant && size(r.right) > 1) c.msgs += [redundant_keyword(warn(), r@location)];
+	if (redundant && size(r.right) > 1) c.msgs += [redundant_keyword(warn(), r.src)];
 
 	int msgs = size([x | x <- c.msgs, x.t is error]);
-	if ([*_, part(_), prefix(_), *_] := r.left) c.msgs += [invalid_rule_direction(warn(), r@location)];
+	if ([*_, part(_), prefix(_), *_] := r.left) c.msgs += [invalid_rule_direction(warn(), r.src)];
 	
 	for (RulePart p <- r.left){
 		c = check_rulepart(p, c, late, true);
@@ -618,14 +623,14 @@ Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
 	
 	//check if there are equal amounts of parts on both sides
 	if (size(part_left) != size(part_right)) {
-		c.msgs += [invalid_rule_part_size(error(), r@location)];
+		c.msgs += [invalid_rule_part_size(error(), r.src)];
 		return c;
 	}
 	
 	//check if each part, and its equivalent have the same number of sections
 	for (int i <- [0..size(part_left)]){
 		if (size(part_left[i].contents) != size(part_right[i].contents)) {
-			c.msgs += [invalid_rule_content_size(error(), r@location)];
+			c.msgs += [invalid_rule_content_size(error(), r.src)];
 			continue;
 		}
 		
@@ -634,8 +639,8 @@ Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
 			list[str] left = part_left[i].contents[j].content;
 			list[str] right = part_right[i].contents[j].content;
 			
-			if (left == ["..."] && right != ["..."]) invalid_rule_ellipsis_size(error(), r@location);
-			if (right == ["..."] && left != ["..."]) invalid_rule_ellipsis_size(error(), r@location);
+			if (left == ["..."] && right != ["..."]) invalid_rule_ellipsis_size(error(), r.src);
+			if (right == ["..."] && left != ["..."]) invalid_rule_ellipsis_size(error(), r.src);
 			
 		}
 	}
@@ -664,12 +669,12 @@ Checker check_stackable(list[str] objs1, list[str] objs2, Checker c, loc pos){
 // warnings
 Checker check_condition(ConditionData w, Checker c){
 	if (!(size(w.condition) in [2, 4])){
-		c.msgs += [invalid_condition_length(error(), w@location)];
+		c.msgs += [invalid_condition_length(error(), w.src)];
 		return c;
 	}
 	
 	bool has_on = size(w.condition) == 4;
-	Reference r = resolve_reference(w.condition[1], c, w@location);
+	Reference r = resolve_reference(w.condition[1], c, w.src);
 	list[str] objs = r.objs;
 	c = r.c; 
 	c.used_references += r.references;
@@ -678,23 +683,23 @@ Checker check_condition(ConditionData w, Checker c){
 	// multiple objects once we're done resolving references
 	list[str] on = [];
 	if (has_on) {
-		Reference r2 = resolve_reference(w.condition[3], c, w@location);
+		Reference r2 = resolve_reference(w.condition[3], c, w.src);
 		on = r2.objs;
 		c = r2.c;
 		c.used_references += r2.references; 
 	}
 	
 	for (str obj <- objs + on) {
-		if (toLowerCase(obj) in c.combinations) c.msgs += [invalid_object_type("combinations", obj, error(), w@location)];
+		if (toLowerCase(obj) in c.combinations) c.msgs += [invalid_object_type("combinations", obj, error(), w.src)];
 	}
 	
 	
 	list[str] dupes = [x | str x <- objs, x in on];
 	if (!isEmpty(dupes)){
-		c.msgs += [impossible_condition_duplicates(dupes, error(), w@location)];
+		c.msgs += [impossible_condition_duplicates(dupes, error(), w.src)];
 	}
 	
-	c = check_stackable(objs, on, c, w@location);
+	c = check_stackable(objs, on, c, w.src);
 	
 	Condition cond;
 	bool valid = true;
@@ -704,7 +709,7 @@ Checker check_condition(ConditionData w, Checker c){
 				cond = all_objects_on(objs, on, w);
 			} else {
 				valid = false;
-				c.msgs += [invalid_condition(error(), w@location)];
+				c.msgs += [invalid_condition(error(), w.src)];
 			}
 		}
 		case /some|any/: {
@@ -724,16 +729,17 @@ Checker check_condition(ConditionData w, Checker c){
 		
 		default: {
 			valid = false;
-			c.msgs += invalid_condition_verb(w.condition[0], error(), w@location);
+			c.msgs += invalid_condition_verb(w.condition[0], error(), w.src);
 		}
 	}
 	
 	if (valid){
 		if (cond in c.conditions) {
-			loc original = c.conditions[indexOf(c.conditions, cond)]@location;
-			c.msgs += [existing_condition(original, warn(), w@location)];
+			loc original = c.conditions[indexOf(c.conditions, cond)].src;
+			c.msgs += [existing_condition(original, warn(), w.src)];
 		}
-		c.conditions += [cond[@location = w@location]];
+        cond.src = w.src;
+		c.conditions += [cond];
 	}
 	
 	return c;
@@ -748,7 +754,7 @@ Checker check_condition(ConditionData w, Checker c){
 //	message_too_long
 Checker check_level(LevelData l, Checker c){
 	switch(l) {
-		case message(str msg): if (size(split(" ", msg)) > 12) c.msgs += [message_too_long(warn(), l@location)];
+		case message(str msg): if (size(split(" ", msg)) > 12) c.msgs += [message_too_long(warn(), l.src)];
 		case level_data(_): {
 			int length = size(l.level[0]);
 			bool invalid = false;
@@ -758,17 +764,17 @@ Checker check_level(LevelData l, Checker c){
 				
 				list[str] char_list = split("", line);
 				for (str legend <- char_list) {
-					Reference r = resolve_reference(legend, c, l@location);
+					Reference r = resolve_reference(legend, c, l.src);
 					c = r.c;
 					c.used_references += r.references;
 					
 					if (toLowerCase(legend) in c.references && size(r.objs) > 1) {
-						c.msgs += [ambiguous_pixel(legend, r.objs, error(), l@location)];
+						c.msgs += [ambiguous_pixel(legend, r.objs, error(), l.src)];
 					}
 					
 				}
 			}
-			if (invalid) c.msgs += [invalid_level_row(error(), l@location)];
+			if (invalid) c.msgs += [invalid_level_row(error(), l.src)];
 		}
 	}
 
@@ -785,7 +791,7 @@ Checker check_game(PSGame g, bool debug=false) {
 	
 	map[Section, int] dupes = distribution(g.sections);
 	for (Section s <- dupes) {
-		if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], warn(), s@location)];
+		if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], warn(), s.src)];
 	}
 	
 	for (PreludeData pr <- g.prelude){
@@ -825,15 +831,15 @@ Checker check_game(PSGame g, bool debug=false) {
 	}
 	
 	for (ObjectData x <- g.objects){
-		if (!(toLowerCase(x.name) in c.layer_list)) c.msgs += [unlayered_objects(x.name, error(), x@location)];
-		if (!(toLowerCase(x.name) in c.used_objects)) c.msgs += [unused_object(x.name, warn(), x@location)];
+		if (!(toLowerCase(x.name) in c.layer_list)) c.msgs += [unlayered_objects(x.name, error(), x.src)];
+		if (!(toLowerCase(x.name) in c.used_objects)) c.msgs += [unused_object(x.name, warn(), x.src)];
 	}
 	
 	for (LegendData x <- g.legend){
-		if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x@location)];
+		if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x.src)];
 	}
 	
-	if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g@location)];
+	if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g.src)];
 	
 	return c;
 }

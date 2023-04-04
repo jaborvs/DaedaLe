@@ -79,6 +79,7 @@ public str generateReport(loc dir, loc outFile){
     "sloc, comment lines, blank lines," +    
     "parse result,"+
     "check result, errors, warnings, file\n";
+
   set[GameData] results = analyzeAll(dir);
   for(GameData g <- results) {
     report = report + 
@@ -117,25 +118,36 @@ private str csvLine(Summary s: summary_error()) =
 private str csvLine(Summary s: summary(str title, str author, int objects, int layers, int collisions, int rules, int conditions, int levels, bool zoom)) =
   "<title>, <author>, <objects>, <layers>, <collisions>, <rules>, <conditions>, <levels>, <zoom>";
 
+
 public set[GameData] analyzeAll(loc dir){  
   set[ParseResult] parseResults = {};
   set[GameData] results = {};
 
+  // For every game
   for(loc file <- dir.ls){
     if(file.extension == "txt"){
+    
+      // Creates ast
       ParseResult p = parseFile(file);
       CheckResult c = chk_error();
       Summary s = summary_error();
       
+      // If parseresult is success (has the tree and ast):
       if(src_success(loc file, start[PSGame] tree, PSGame game) := p) {
+        // Returns all messages (for example rule too long)
         c = checkGame(game);
+
+        // Returns all rules and collisions
         s = summarize(game);
       }
       
       Volume v = countLines(file);
       
       results = results + {<file, p, c, v, s>};
-	}
+
+      // Only do one level for now
+      break;
+    }
   }
   
   return results;
@@ -270,15 +282,20 @@ private CheckResult checkGame(PSGame game){
   return c;
 }
 
+// Returns result with hopefully ast
 public ParseResult parseFile(loc file) {
   str src = readFile(file);
   loc preFile = file;  
+  println(preFile);
   preFile.extension = "PS";
   writeFile(preFile, src);
 
   ParseResult result = src_parse_error(preFile);
   try {
-    start[PSGame] tree = ps_parse(preFile); 
+
+    // Create tree and AST
+    start[PSGame] tree = ps_parse(preFile);
+
     PSGame ast = ps_implode(tree);
     try {
       result = src_success(preFile, tree, ast);      

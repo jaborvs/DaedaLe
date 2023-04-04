@@ -33,6 +33,8 @@ start[PSGame] ps_parse_amb(loc path){
   return t;
 }*/
 
+
+// parse takes 2 arguments: nonterminal in grammar and string to be parsed
 start[PSGame] ps_parse(str src){
   str src2 = src + "\n\n\n";
   return parse(#start[PSGame], src2);
@@ -124,7 +126,7 @@ LegendData process_legend(LegendData l) {
   } else if (size(combined) > 0) {
     new_l = legend_combined(legend, values + combined);
   }
-  new_l @ location = l@location;
+  new_l.src = l.src;
   new_l @ label = l.legend;
   return new_l;
 }
@@ -151,7 +153,10 @@ ObjectData process_object(ObjectData obj, int index){
   }
 	
   ObjectData new_obj = object_data(obj.name, obj.legend, obj.colors, sprite_line, index);
-  new_obj @ location = obj@location;
+
+  print("Obj = ");
+  println(obj);
+  new_obj.src = new_obj.src;
   new_obj @ label = obj.name;
   return new_obj;
 }
@@ -169,7 +174,7 @@ LayerData process_layer(LayerData l) {
   }
 
   LayerData new_l = layer_data(new_layer);
-  new_l @ location = l@location;
+  new_l.src = l.src;
   new_l @ label = intercalate(", ", new_layer);
   return new_l;
 }
@@ -181,7 +186,7 @@ LevelData process_level(LevelData l : message(_)) {
 
 LevelData process_level(LevelData l : level_data_raw(list[tuple[str, str]] lines, str _)) {
   LevelData new_l = level_data([x[0] | x <- lines]);
-  new_l @ location = l@location;
+  new_l.src = l.src;
   new_l @ label = "Level";
   return new_l;
 }
@@ -203,6 +208,7 @@ PSGame post(PSGame game) {
   list[PreludeData] prelude = [];
    
   PSGame game2 = visit(game){
+    
     case list[PreludeData] prelude =>
       [p | p <- prelude, !(prelude_empty(_) := p)]
     case list[ObjectData] objects => 
@@ -267,6 +273,8 @@ PSGame post(PSGame game) {
     processed_levels, 
     game.sections
   );
+
+  new_game.src = game.src;
 	
-  return new_game[@location = game@location];
+  return new_game;
 }
