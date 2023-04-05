@@ -16,7 +16,7 @@ alias DynamicChecker = tuple[
 	list[int] difficulty
 ];
 
-data RuleType 
+data RuleType (loc src = |unknown:///|)
 	= transform_items(list[str] left, list[str] right) // transforms items (movement)
 	| remove_items(list[str] left, list[str] right) // deletes items
 	| add_items(list[str] left, list[str] right) //add items
@@ -31,7 +31,8 @@ DynamicChecker new_dynamic_checker()
 RuleType get_rule_type(Rule rule){
 	list[str] refs_right = [];
 	list[str] refs_left = [];
-	for (RulePart rp <- rule.converted_left){
+    println(rule.converted_left);
+	for (RulePartLol rp <- rule.converted_left){
 		for (RuleContent cont <- rp){
 			if (!(cont is references)) continue;
 			
@@ -43,7 +44,7 @@ RuleType get_rule_type(Rule rule){
 		}
 	}
 	
-	for (RulePart rp <- rule.converted_right){
+	for (RulePartLol rp <- rule.converted_right){
 		for (RuleContent cont <- rp){
 			if (!(cont is references)) continue;
 			
@@ -71,7 +72,7 @@ DynamicChecker check_ruleability(DynamicChecker c, Condition cond, Level level, 
 			RuleType rule <- rule_types, 
 			!(obj in rule.left) && obj in rule.right
 		)
-	)) c.msgs += [missing_objects(objs, warn(), level.original@location)];
+	)) c.msgs += [missing_objects(objs, warn(), level.original.src)];
 	}
 	
 	return c;
@@ -83,7 +84,7 @@ DynamicChecker anaylyse_impossible_victory(DynamicChecker c, Engine engine, Leve
 	
 	for (Condition cond <- engine.conditions){
 		switch (cond){
-			case all_objects_on(list[str] objs, list[str] on, CONDITIONDATA _): {
+			case all_objects_on(list[str] objs, list[str] on, ConditionData _): {
 				c = check_ruleability(c, cond, level, rule_types, objs);
 				c = check_ruleability(c, cond, level, rule_types, on);
 			}
@@ -108,7 +109,7 @@ DynamicChecker analyse_unrulable_condition(DynamicChecker c, Engine engine, Cond
 					RuleType rule <- rule_types, 
 					obj in rule.left && !(obj in rule.right)
 				)
-			)) c.msgs += [unrulable_condition(warn(), cond.original@location)];
+			)) c.msgs += [unrulable_condition(warn(), cond.original.src)];
 		}
 		case no_objects_on: ; // check if objects can disappear or move
 		case some_objects: {
@@ -118,7 +119,7 @@ DynamicChecker analyse_unrulable_condition(DynamicChecker c, Engine engine, Cond
 					RuleType rule <- rule_types, 
 					!(obj in rule.left) && obj in rule.right
 				)
-			)) c.msgs += [unrulable_condition(warn(), cond.original@location)];
+			)) c.msgs += [unrulable_condition(warn(), cond.original.src)];
 		}
 		case some_objects_on: ; // check if objects can appear or move
 		case all_objects_on: ; // check if objects can appear or move
@@ -133,10 +134,10 @@ DynamicChecker analyse_unrulable_condition(DynamicChecker c, Engine engine, Cond
 DynamicChecker analyse_instant_victory(DynamicChecker c, Engine engine, Level l){
 	if (!(l is level)) return c;	
 	if (is_victorious(engine, l)) {
-		c.msgs += [instant_victory(warn(), l.original@location)];
+		c.msgs += [instant_victory(warn(), l.original.src)];
 	} else {
 		for (Condition cond <- engine.conditions){
-			if (is_met(cond, l)) c.msgs += [condition_met(cond.original@location, warn(), l.original@location)];
+			if (is_met(cond, l)) c.msgs += [condition_met(cond.original.src, warn(), l.original.src)];
 		}
 	}
 	
@@ -144,14 +145,14 @@ DynamicChecker analyse_instant_victory(DynamicChecker c, Engine engine, Level l)
 }
 
 DynamicChecker analyse_rules(DynamicChecker c, Rule r1, Rule r2){
-	if (any(RulePart x <- r1.converted_left, x in r2.converted_left)){
-		 c.msgs += [similar_rules("left", warn(), r2.original@location, r1.original@location)];
-		 c.msgs += [similar_rules("left", warn(), r1.original@location, r2.original@location)];
+	if (any(RulePartLol x <- r1.converted_left, x in r2.converted_left)){
+		 c.msgs += [similar_rules("left", warn(), r2.original.src, r1.original.src)];
+		 c.msgs += [similar_rules("left", warn(), r1.original.src, r2.original.src)];
 	}
 	
-	if (any(RulePart x <- r1.converted_right, x in r2.converted_right)) {
-		c.msgs += [similar_rules("right", warn(), r2.original@location, r1.original@location)];
-		c.msgs += [similar_rules("right", warn(), r1.original@location, r2.original@location)];
+	if (any(RulePartLol x <- r1.converted_right, x in r2.converted_right)) {
+		c.msgs += [similar_rules("right", warn(), r2.original.src, r1.original.src)];
+		c.msgs += [similar_rules("right", warn(), r1.original.src, r2.original.src)];
 	}
 	
 	return c;
@@ -177,11 +178,11 @@ DynamicChecker analyse_difficulty(DynamicChecker c, list[Level] levels){
 		}
 		
 		//if ((size_check + object_check) <= 0 ){
-		//	c.msgs += [difficulty_not_increasing(warn(), level.original@location)];
+		//	c.msgs += [difficulty_not_increasing(warn(), level.original.src)];
 		//}
 		
 		//instead of trying to create a difficulty metrics that probably wouldn't work we just give the raw stats to the user
-		c.msgs += [metrics(level_size, object_size, size_check, object_check, warn(), level.original@location)];
+		c.msgs += [metrics(level_size, object_size, size_check, object_check, warn(), level.original.src)];
 		
 		
 		level_sizes += [level_size];
@@ -205,11 +206,11 @@ DynamicChecker analyse_impossible_conditions(DynamicChecker c, list[Condition] c
 			Condition c2 = conditions[j];
 
 			if (c1 is some_objects && c2 is no_objects){
-				if (any(str obj <- c1.objects, obj in c2.objects)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, error(), c1.original@location)];
+				if (any(str obj <- c1.objects, obj in c2.objects)) c.msgs += [impossible_victory(<c1.original.src, c2.original.src>, error(), c1.original.src)];
 			} else if (c2 is no_objects_on && (c1 is some_objects_on || c1 is all_objects_on)){
-				if (any(str obj <- c1.objects, obj in c2.objects) && any(str obj <- c1.on, obj in c2.on)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, error(), c1.original@location)];
+				if (any(str obj <- c1.objects, obj in c2.objects) && any(str obj <- c1.on, obj in c2.on)) c.msgs += [impossible_victory(<c1.original.src, c2.original.src>, error(), c1.original.src)];
 			} else if (c1 is all_objects_on && c2 is some_objects_on) {
-				if (any(str obj <- c1.objects, obj in c2.objects) && any(str obj <- c1.on, obj in c2.on)) c.msgs += [impossible_victory(<c1.original@location, c2.original@location>, error(), c1.original@location)];
+				if (any(str obj <- c1.objects, obj in c2.objects) && any(str obj <- c1.on, obj in c2.on)) c.msgs += [impossible_victory(<c1.original.src, c2.original.src>, error(), c1.original.src)];
 			}
 		}
 	}
@@ -269,8 +270,8 @@ DynamicChecker analyse_unidirectional_solution(DynamicChecker c, Engine engine, 
 		level.layers = old_layers;
 		
 		if (victory) {
-		 	c.solutions += [unidirectional(dir, warn(), level.original@location)];
-		 	println(toString(unidirectional(dir, warn(), level.original@location)));
+		 	c.solutions += [unidirectional(dir, warn(), level.original.src)];
+		 	println(toString(unidirectional(dir, warn(), level.original.src)));
 		 	return c;
 		}
 	}

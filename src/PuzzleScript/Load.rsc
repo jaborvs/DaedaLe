@@ -154,8 +154,6 @@ ObjectData process_object(ObjectData obj, int index){
 	
   ObjectData new_obj = object_data(obj.name, obj.legend, obj.colors, sprite_line, index);
 
-  print("Obj = ");
-  println(obj);
   new_obj.src = new_obj.src;
   new_obj @ label = obj.name;
   return new_obj;

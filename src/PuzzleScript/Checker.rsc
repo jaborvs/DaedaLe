@@ -114,19 +114,33 @@ list[Msg] check_undefined_object(str name, loc pos, Checker c){
 	return msgs;
 }
 
+
 Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]){
 	Reference r;
+
+    println("In resolve reference met raw_name: <raw_name>");
+    println(c.references);
 	
 	list[str] objs = [];
 	list[str] references = [];	
 	str name = toLowerCase(raw_name);
 	
+    // If there is already a reference to the name
 	if (name in c.references && c.references[name] == [name]) return <[name], c, references>;
 	
 	references += [toLowerCase(name)];
+
+    println("Als name in c.combinations: <c.combinations>");
+
 	if (name in c.combinations) {
+
+        println(allowed);
+
 		if ("combinations" in allowed) {
 			for (str n <- c.combinations[name]) {
+
+                println("Weer naar resolve_reference met <n> en <c> en <pos>");
+
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
 				c = r.c;
@@ -136,8 +150,17 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 			c.msgs += [invalid_object_type("combinations", name, error(), pos)];
 		}
 	} else if (name in c.references) {
+
+        println("Name <name> is in references");
+
 		if ("properties" in allowed) {
+
+            println("For-loop uit <c.references[name]>");
+
 			for (str n <- c.references[name]) {
+
+                println(n);
+
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
 				references += r.references;
@@ -157,6 +180,9 @@ Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allo
 	list[str] objs = [];
 	list[str] references = [];
 	Reference r;
+
+    println("\n\n IN RESOLVE REFERENCES \n\n");
+    println("Names = <names>");
 	
 	for (str name <- names) {
 		r = resolve_reference(name, c, pos, allowed=allowed);
@@ -246,6 +272,7 @@ Checker check_object(ObjectData obj, Checker c) {
 	// add references
 	c.references[id] = [id];
 	if (!isEmpty(obj.legend)) {
+
 		msgs = check_existing_legend(obj.legend[0], [obj.name], obj.src, c);
 		if (!isEmpty(msgs)){
 			c.msgs += msgs;
@@ -307,13 +334,21 @@ Checker check_legend(LegendData l, Checker c) {
 	if (!check_valid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l.src)];
 	c.msgs += check_existing_legend(l.legend, l.values, l.src, c);
 	
+    println("\n In check_legend naar resolve_references");
+
 	Reference r = resolve_references(l.values, c, l.src);
+
+    println("resolve references met input <l.values> en c komt: <r.objs> en <r.references>");
+
+    println("r[0] = <r[0]>");
+
 	list[str] values = r[0];
 	c = r[1];
 	c.used_references += r.references[1..];
 	
 	str legend = toLowerCase(l.legend);
-	
+
+    // Check if object in legend is defined in objects section
 	if (check_valid_name(l.legend)) c.objects += [legend];
 	for (str v <- values){
 		if (!(v in c.objects)) {
@@ -591,10 +626,6 @@ Checker check_rule(RuleData r: rule_loop(_,_), Checker c){
 
 Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
 
-    print("\n Rule data = ");
-    println(r);
-    print("\n");
-
 	bool late = any(RulePart p <- r.left, p is prefix && toLowerCase(p.prefix) == "late");
 	
 	bool redundant = any(RulePart p <- r.right, p is prefix && toLowerCase(p.prefix) in ["win", "restart"]);
@@ -788,36 +819,60 @@ Checker check_level(LevelData l, Checker c){
 //	no_levels
 Checker check_game(PSGame g, bool debug=false) {
 	Checker c = new_checker(debug, g);
-	
+    println("In check_game!");
+
 	map[Section, int] dupes = distribution(g.sections);
 	for (Section s <- dupes) {
+        println("<s>");
 		if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], warn(), s.src)];
 	}
+
+    println("\n\n check preludes!");
 	
 	for (PreludeData pr <- g.prelude){
 		c = check_prelude(pr, c);
 	}
 	
+    println("\n\n check objects!");
+
+    // Here the object references are added
 	for (ObjectData obj <- g.objects){
 		c = check_object(obj, c);
 	}
+    println("c.references = <c.references>");
+
+    println("\n\n check legend!");
 	
 	for (LegendData l <- g.legend){
+
+        println(l);
+
 		c = check_legend(l, c);
 	}
-	
+
+    println("\n\n check sounds!");
+
+
 	for (SoundData s <- g.sounds) {
 		c = check_sound(s, c);
 	}
 	
+    println("\n\n check layers!");
+
 	for (LayerData l <- g.layers) {
 		c = check_layer(l, c);
 	}
-	
+
+    println("\n\n check rules!");
+
 	for (RuleData r <- g.rules) {
+        println("Checking rule");
 		c = check_rule(r, c);
+        println("Yuppie");
 	}
 	
+    println("\n\n checked rules!");
+
 	for (str event <- c.sound_events) {
 		if (startsWith(event, "sfx") && event notin c.used_sounds) c.msgs += [unused_sound_event(warn(), c.sound_events[event].pos)];
 	}

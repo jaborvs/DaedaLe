@@ -451,10 +451,13 @@ list[Layer] deep_copy(list[Layer] lyrs){
 }
 
 Level plan_move(Level level, str direction){	
+
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];
+
 		for(int j <- [0..size(layer)]){
 			Line line = layer[j];
+
 			for(int k <- [0..size(line)]){
 				Object obj = line[k];
 				if (line[k].name in level.player){

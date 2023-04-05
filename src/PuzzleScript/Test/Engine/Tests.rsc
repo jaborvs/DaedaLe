@@ -17,27 +17,50 @@ Object randomObject(list[Object] objs){
 	}
 
 void main() {
-	PSGAME game;
+	PSGame game;
 	Checker checker;
 	Engine engine;
 	Level level;
 
 	println("Engine Test");
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+    println("Voor check_game");
 	checker = check_game(game);
+    println("Na check game");
 	engine = compile(checker);
-	level = plan_move(engine.levels[0], "right");
-	print_level(level);
+
+    for (int i <- [0..size(engine.levels)]){
+        if (engine.levels[i] is message) {
+            continue;
+        }
+        level = plan_move(engine.levels[i], "right");
+	    print_level(level);
+        break;
+    }
 	
 	println("Rule Test");
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/IntermediateGame1.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
-	level = engine.levels[0];
+
+    for (int i <- [0..size(engine.levels)]){
+        if (engine.levels[i] is message) {
+            continue;
+        }
+        // level = plan_move(engine.levels[i], "right");
+	    print_level(level);
+        break;
+    }
+	// level = engine.levels[0];
 	
+    println("0 right = <engine.rules[0].right>");
+    println("1 right = <engine.rules[1].right>");
+
 	println(engine.rules[1].left[0]);
 	println();
 	println(engine.rules[1].right[0]);
+
+    return;
 
 	<engine, level> = rewrite(engine, level, false);
 	level = plan_move(level, "right");
