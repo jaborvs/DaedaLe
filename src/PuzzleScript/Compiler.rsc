@@ -296,7 +296,7 @@ str format_compiled_layers(list[list[str]] compiled_layer, bool is_pattern){
     return "[ \n\t" + intercalate(", \n\t", comp) + "\n ]";
 } 
 
-Rule compile_RulePartContents_left(Rule rule, Engine engine, RulePart left_contents, RulePart right_contents){
+Rule compile_RulePartContents_left(Rule rule, Engine engine, RulePart l : part(left_contents), RulePart r : part(right_contents)){
 	list[list[str]] compiled_layer = [];
 	list[set[str]] layers = engine.layers;
 	
@@ -335,7 +335,7 @@ Rule compile_RulePartContents_left(Rule rule, Engine engine, RulePart left_conte
 	return rule;
 }
 
-Rule compile_RulePartContents_right(Rule rule, Engine engine, RulePart left_contents, RulePart right_contents){
+Rule compile_RulePartContents_right(Rule rule, Engine engine, RulePart l : part(left_contents), RulePart r : part(right_contents)){
 	list[list[str]] compiled_layer = [];
 	list[set[str]] layers = engine.layers;
 	
@@ -385,9 +385,9 @@ Rule compile_RulePartContents_right(Rule rule, Engine engine, RulePart left_cont
 	return rule;
 }
 
-Rule compile_RulePartContents(Rule rule, Engine engine, RulePart left, RulePart right){
-	rule = compile_RulePartContents_left(rule, engine, left, right);
-	if (!isEmpty(right)) rule = compile_RulePartContents_right(rule, engine, left, right);
+Rule compile_RulePartContents(Rule rule, Engine engine, RulePart l : part(left), RulePart r : part(right)){
+	rule = compile_RulePartContents_left(rule, engine, l, r);
+	if (!isEmpty(right)) rule = compile_RulePartContents_right(rule, engine, l, r);
 	
 	return rule;
 }
@@ -464,30 +464,33 @@ Rule convert_rule(RuleData r, Checker c, Engine engine){
 	rule.directions = generate_directions(keywords);
 	
 	list[RuleContent] left  = [];
-	for (RuleContent p <- [x.contents | RulePart x <- r.left, x is part]){
-		left += [convert_RulePartContents(p, rule, c, engine, true)];
+	for (RulePart p <- [x | RulePart x <- r.left, x is part]){
+        println("p = <p>");
+		left += convert_RulePartContents(p, rule, c, engine, true).contents;
 	}
+    println("left = <left>\n");
 	
 	list[RuleContent] right = [];
-	for (RuleContent p <- [x.contents | RulePart x <- r.right, x is part]){
-		right += [convert_RulePartContents(p, rule, c, engine, false)];
+	for (RulePart p <- [x | RulePart x <- r.right, x is part]){
+		right += convert_RulePartContents(p, rule, c, engine, false).contents;
 	}
 	
 	for (int i <- [0..size(left)]){
-		RuleContent right_part;
+		RulePart right_part;
 		if (i < size(right)){
-			right_part = right[i];
+            println(right[i]);
+			right_part = part([right[i]]);
 		} else {
-			right_part = [];
+			right_part = part([]);
 		}
 
         println(right_part);
 		
-		rule = compile_RulePartContents(rule, engine, left[i], right_part);
+		rule = compile_RulePartContents(rule, engine, part([left[i]]), right_part);
 	}
 
-	rule.converted_left = left;
-	rule.converted_right = right;
+	rule.converted_left = [left];
+	rule.converted_right = [right];
 	rule.commands = {convert_command(x) | RulePartContents x <- r.right, x is command || x is sound};
 	if (!isEmpty(r.message)) rule.commands += {Command::message(r.message[0])};
 	

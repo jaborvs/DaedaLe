@@ -460,6 +460,7 @@ Level plan_move(Level level, str direction){
 
 			for(int k <- [0..size(line)]){
 				Object obj = line[k];
+                if (obj is moving_object) println("Wel declared");
 				if (line[k].name in level.player){
 					level.layers[i][j][k] = moving_object(obj.name, obj.id, direction, <j, k, i>);
 				}
