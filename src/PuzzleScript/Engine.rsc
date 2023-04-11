@@ -115,23 +115,54 @@ bool eval_pattern(str pattern, str relatives)
 	=	eval(#bool, [EVAL_PRESET, relatives, pattern]).val;
 
 list[str] ROTATION_ORDER = ["right", "up", "left", "down"];
+
+// Applies the rule
 tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
+
+    // println("### Rule to be applied ###\nLeft: <rule.converted_left>\nRight: <rule.converted_right>\n");
+
 	int loops = 0;
 	list[Layer] layers = level.layers;
 	bool changed = false;
 	for (str dir <- ROTATION_ORDER){
 		if (dir in rule.directions){
+
 			str relatives = format_relatives(directional_absolutes[dir]);
+
+            // My debugging code, can be removed
+            // int index = 1;
+            // for (str pattern <- rule.left) {
+            //     println("Pattern = <pattern> <index>");
+            //     // println("Layers:");
+            //     // for (Layer layer <- layers) {
+            //     //     println("\n<layer>\n");
+            //     // }
+            //     index += 1;
+            // }
+
+            // eval_pattern takes a list of compiled layers (from compile_RulePartContents) defined in compiler
+            // then checks of this pattern matches the layers
 			while (all(str pattern <- rule.left, eval_pattern(format_pattern(pattern, layers), relatives))){
-				rule.used += 1;				
+                
+				rule.used += 1;
 				if (isEmpty(rule.right)){
 					break;
 				}
+                // println("level voor eval");
+                level.layers = layers;
+                // print_level(level);
 				
+                // println("Level per veranderende layer:");
 				for (int i <- [0..size(rule.left)]){
+                    // println("Rule left[i] = <rule.left[i]> en rule right[i] = <rule.right[i]>");
 					layers = eval(#list[Layer], [EVAL_PRESET, relatives, format_replacement(rule.left[i], rule.right[i], layers)]).val;
+                    // level.layers = layers;
+                    // print_level(level);
 				}
-				
+
+                // println("level na eval");
+                level.layers = layers;
+                // print_level(level);
 				
 				loops += 1;
 				
@@ -158,6 +189,7 @@ tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
 	return <engine, level, rule>;
 }
 
+// Applies rules
 tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
 	for (int i <- [0..size(engine.rules)]){
 		Rule rule = engine.rules[i];
@@ -251,11 +283,16 @@ default Coords shift_coords(_, _, str dir) {
 
 Level move_obstacle(Level level, Coords coords, Coords other_neighbor_coords){
 	Object obj = level.layers[coords.z][coords.x][coords.y];
+
+    // println("In move_obstacle is <obj.name>: <obj>");
+
 	if (!(obj is moving_object)) return level;
 	
+    // Get coords if were to move in direction stored in moving_object
 	Coords neighbor_coords = shift_coords(level.layers[coords.z], coords, obj.direction);
 	if (coords == neighbor_coords) return level;
 	
+    // Get object at this position
 	Object neighbor_obj = level.layers[neighbor_coords.z][neighbor_coords.x][neighbor_coords.y];
 	if (!(neighbor_obj is transparent) && neighbor_coords != other_neighbor_coords) level = move_obstacle(level, neighbor_coords, coords);
 	
@@ -268,6 +305,7 @@ Level move_obstacle(Level level, Coords coords, Coords other_neighbor_coords){
 	return level;
 }
 
+// Executes the move that is set in plan_move (moving_object) 
 Level do_move(Level level){
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];
@@ -450,6 +488,7 @@ list[Layer] deep_copy(list[Layer] lyrs){
 	return layers;
 }
 
+
 Level plan_move(Level level, str direction){	
 
 	for (int i <- [0..size(level.layers)]){
@@ -460,7 +499,9 @@ Level plan_move(Level level, str direction){
 
 			for(int k <- [0..size(line)]){
 				Object obj = line[k];
-                if (obj is moving_object) println("Wel declared");
+
+                // println("Object with name <obj.name> is <obj>");
+
 				if (line[k].name in level.player){
 					level.layers[i][j][k] = moving_object(obj.name, obj.id, direction, <j, k, i>);
 				}

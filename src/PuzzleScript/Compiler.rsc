@@ -39,6 +39,9 @@ data Object (loc src = |unknown:///|)
 	;
 
 // TODO: play around with imports	
+
+// All kinds of functions to be executed if for example move is random
+
 public str EVAL_PRESET = "
 	'import List;
 	'import util::Math;
@@ -286,9 +289,15 @@ str format_compiled_layers(list[list[str]] compiled_layer, bool is_pattern){
 	list[str] comp = [];
     for (int l <- [0..size(compiled_layer)]){
     	list[str] lyr = compiled_layer[l];
+
+        // println("Lijst string layer = <lyr>");
+
     	if (isEmpty(lyr)) {
     		comp += [empty_layer(l, is_pattern)];
     	} else {
+
+
+
     		comp += [layer(l, lyr, is_pattern)];
     	}
     }
@@ -338,36 +347,54 @@ Rule compile_RulePartContents_left(Rule rule, Engine engine, RulePart l : part(l
 Rule compile_RulePartContents_right(Rule rule, Engine engine, RulePart l : part(left_contents), RulePart r : part(right_contents)){
 	list[list[str]] compiled_layer = [];
 	list[set[str]] layers = engine.layers;
-	
+
 	for (int b <- [0..size(layers)]){
+
+        // println("Layer: <layers[b]>\n");
+
 		set[str] lyr = layers[b];
 		list[str] compiled_lines = [];
 		for (int i <- [0..size(right_contents)]){
 			RuleContent cont = right_contents[i];
+
 			if (cont is references){
 				list[RuleReference] refs = cont.refs;
+
 				for (int j <- [0..size(refs)]){
 					// index = <section_index, content_index, layer_index>;
 					Coords index = <i, j, b>;
 					RuleReference ref = refs[j];
+
 					if (!any(str x <- ref.objects, x in lyr)) continue;
+
 			        if (ref.force in ["none", "stationary"]){
+
 			            compiled_lines += [object(index, ref, engine, false)];
+
 			        } else if (ref.force == "random"){
+
 			        	list[str] objlist = [object(index, <[obj], ref.reference, "none">, engine, false) | str obj <- ref.objects];
 			        	str str_objlist = "[" + intercalate(", ", objlist) + "]";
 			        	compiled_lines += ["randomObject(<str_objlist>)"];
+
 			        } else {
+                        
+                        // Force is not none or stationary so moving object
 			            compiled_lines += [moving_object(index, ref, engine, false)];
+
 			        }
 			        // only one item from each layer should exist so if we found the one for the
 			        // current layer we can just return, if not, then it's on the user
 			        break;
 				}
 			} else if (cont is ellipsis){
+
 				compiled_lines += ["*ellipsis<b>"];
+
 			} else if (cont is empty){
+
 				list[RuleReference] refs = left_contents[i].refs;
+
 				for (int j <- [0..size(refs)]){
 					// index = <section_index, content_index, layer_index>;
 					Coords index = <i, j, b>;
@@ -378,9 +405,11 @@ Rule compile_RulePartContents_right(Rule rule, Engine engine, RulePart l : part(
 			    }
 			}
 		}
+        // println("\n\nUiteindelijk ziet een compiled line er zo uit: <compiled_lines>\n");
 		compiled_layer += [compiled_lines];
 	}
 	
+    // println("Dat wordt geformat naar:");
 	rule.right += [format_compiled_layers(compiled_layer, false)];
 	return rule;
 }
@@ -392,16 +421,24 @@ Rule compile_RulePartContents(Rule rule, Engine engine, RulePart l : part(left),
 	return rule;
 }
 
+// Converts strings in rulepart to objects
 RulePart convert_RulePartContents(RulePart p: part(list[RuleContent] _), Rule rule, Checker c, Engine engine, bool is_pattern) {
 	list[RuleContent] contents = [];
+
 	if (isEmpty(p.contents)) contents += [empty()];
 	
 	for (int j <- [0..size(p.contents)]){
 		RuleContent cont = p.contents[j];
+
+        // If ... is part of content add ellipsis object
 		if ("..." in cont.content){
 			contents += [ellipsis()];
+        
+        // Add empty
 		} else if (isEmpty(cont.content)){
 			contents += [empty()];
+
+        // Add corresponding object by resolving reference
 		} else {
 			list[RuleReference] refs = [];
 			//processing direction
@@ -410,6 +447,8 @@ RulePart convert_RulePartContents(RulePart p: part(list[RuleContent] _), Rule ru
 				list[str] objs = resolve_reference(cont.content[i], c, p.src).objs;
 				str force = "none";
 				if (i != 0 && toLowerCase(cont.content[i-1]) in rulepart_keywords) force = toLowerCase(cont.content[i-1]);
+
+                // println("Force voor <cont.content> is <force>");
 				
 				if (toLowerCase(cont.content[i]) in c.combinations){
 					for (str obj <- objs){
@@ -444,31 +483,25 @@ Command convert_command(RulePartContents _: sound(str snd)) {
 	return Command::sound(snd);
 }
 
+
+// rule.converted left and right contains objects that is referenced
+// rule.left and right contain the strings defined above
 Rule convert_rule(RuleData r, Checker c, Engine engine){
+
+    // Create new rule
 	Rule rule = new_rule(r);
 
-    // list[str] hoi = [x.prefix | RulePart x <- r.left, x is prefix];
-    // println("\n\n SIZE VAN HOI = <size(hoi)>\n SIZE VAN r.left = <size(r.left)>");
-    // for (int i <- [0..(size(hoi))]) {
-    //     println(hoi[i]);
-    // }
-
 	list[str] keywords = [toLowerCase(x.prefix) | RulePart x <- r.left, x is prefix];
-
-    println("Coverting rules!");
-    println("Keywords = <keywords>");
-    println("r.left = <r.left>");
-    println("r.right = <r.right>");
 
 	rule.late = "late" in keywords;
 	rule.directions = generate_directions(keywords);
 	
+    // Add corresponding objects to rule statements
 	list[RuleContent] left  = [];
 	for (RulePart p <- [x | RulePart x <- r.left, x is part]){
-        println("p = <p>");
+        // println("Converting rulepart: <p>");
 		left += convert_RulePartContents(p, rule, c, engine, true).contents;
 	}
-    println("left = <left>\n");
 	
 	list[RuleContent] right = [];
 	for (RulePart p <- [x | RulePart x <- r.right, x is part]){
@@ -478,16 +511,14 @@ Rule convert_rule(RuleData r, Checker c, Engine engine){
 	for (int i <- [0..size(left)]){
 		RulePart right_part;
 		if (i < size(right)){
-            println(right[i]);
 			right_part = part([right[i]]);
 		} else {
 			right_part = part([]);
 		}
-
-        println(right_part);
 		
 		rule = compile_RulePartContents(rule, engine, part([left[i]]), right_part);
 	}
+
 
 	rule.converted_left = [left];
 	rule.converted_right = [right];
@@ -499,42 +530,29 @@ Rule convert_rule(RuleData r, Checker c, Engine engine){
 
 Object new_transparent(Coords coords) = transparent("trans", -1, coords);
 
-// 
 Level convert_level(LevelData l: level_data(list[str] level), Checker c, Engine engine){
-
-    println("\n\n IN CONVERT LEVEL \n\n");
 
 	list[Layer] layers = [];
 	list[str] objectdata = [];
 	for (int i <- [0..size(engine.layers)]){
 		set[str] lyr = engine.layers[i];
 
-        println("set lyr = <lyr>");
-
 		Layer layer = [];
 		for (int j <- [0..size(l.level)]){
 			str charline = l.level[j];
-
-            println("Charline = <charline>");
 
 			Line line = [];
 			list[str] chars = split("", charline);
 			for (int k <- [0..size(chars)]){
 				str ch = chars[k];
 
-                println("\n\n Voor elke char ch: <ch>\n\nDoen we:\n");
-
                 // Get the object the char references
 				list[str] objs = resolve_reference(ch, c, l.src).objs;
 
 				pix = [x | str x <- objs, x in lyr];
 				if (isEmpty(pix)){
-
-                    println("Empty!");
-
 					line += [new_transparent(<j, k, i>)];
 				} else {
-                    println("<pix> zit allemaal in <lyr>\nInserting: <object(pix[0], get_object(pix[0], engine).id, <j, k, i>)>");
 					line += [object(pix[0], get_object(pix[0], engine).id, <j, k, i>)];
 					objectdata += [pix[0]];
 				}
@@ -545,9 +563,8 @@ Level convert_level(LevelData l: level_data(list[str] level), Checker c, Engine 
 		
 		layers += [layer];
 	}
-
-    println("\nUiteindelijk returnen we een level met oa: \nLayers = <layers>\n\nObjectdata = <objectdata>");
 	
+    // Returns level with all the objects + it's positions as well as other data
 	return Level::level(
 		layers, 
 		[layers], 
@@ -580,11 +597,8 @@ Engine compile(Checker c){
 	engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
 	engine.conditions = c.conditions;
 
-    println("Converting layers:");
-
 	engine.layers = [convert_layer(x, c) | x <- c.game.layers];
 	
-    println("In compile\n\nConverting levels");
 	for (LevelData l <- c.game.levels){
         if (l is level_empty) continue;
 		engine.levels += [convert_level(l, c, engine)];
@@ -594,14 +608,10 @@ Engine compile(Checker c){
 	if (!isEmpty(engine.levels)){
 		engine.current_level = engine.levels[0];
 	}
-
-    println("\nConverting the following rules: <c.game.rules>\n");
 	
 	for (RuleData r <- c.game.rules){
 		engine.rules += [convert_rule(r, c, engine)];
 	}
-
-    println("New rules = <engine.rules>");
 	
 	engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
 	

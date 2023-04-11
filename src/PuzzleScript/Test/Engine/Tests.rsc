@@ -22,51 +22,69 @@ void main() {
 	Engine engine;
 	Level level;
 
-	println("Engine Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
-    println("Voor check_game");
-	checker = check_game(game);
-    println("Na check game");
-	engine = compile(checker);
+	// println("Engine Test");
+	// game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+	// checker = check_game(game);
+	// engine = compile(checker);
 
-    for (int i <- [0..size(engine.levels)]){
-        if (engine.levels[i] is message) {
-            continue;
-        }
-        level = plan_move(engine.levels[i], "right");
-	    print_level(level);
-        break;
-    }
+    // for (int i <- [0..size(engine.levels)]){
+    //     if (engine.levels[i] is message) {
+    //         continue;
+    //     }
+    //     level = plan_move(engine.levels[i], "right");
+	//     print_level(level);
+    //     break;
+    // }
 	
 	println("Rule Test");
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/IntermediateGame1.PS|);
-	checker = check_game(game);
+    checker = check_game(game);
+
+    println("c references = <checker.references>");
+
+    checker.level_data = check_game_per_level(checker);
+    return;
 	engine = compile(checker);
 
     for (int i <- [0..size(engine.levels)]){
         if (engine.levels[i] is message) {
             continue;
         }
-        // level = plan_move(engine.levels[i], "right");
+        level = engine.levels[i];
 	    print_level(level);
         break;
     }
 	// level = engine.levels[0];
 	
-    println("0 right = <engine.rules[0].right>");
-    println("1 right = <engine.rules[1].right>");
+    // println("0 right = <engine.rules[0].right>");
+    // println("1 right = <engine.rules[1].right>");
 
-	println(engine.rules[1].left[0]);
-	println();
-	println(engine.rules[1].right[0]);
+	// println(engine.rules[1].left[0]);
+	// println();
+	// println(engine.rules[1].right[0]);
 
-    return;
+    println("Level before move: \n");
+    print_level(level);
 
 	<engine, level> = rewrite(engine, level, false);
 	level = plan_move(level, "right");
-	<engine, level> = rewrite(engine, level, false);
+    println("Na plan_move");
+    print_level(level);
+	
+    <engine, level> = rewrite(engine, level, false);
+
+
+    // Do_move suddenly has moving_objects that weren't moving_objects before, rewrite must have changed
 	level = do_move(level);
-	<engine, level> = rewrite(engine, level, true);	
+    println("Na do_move");
+	print_level(level);
+    
+    <engine, level> = rewrite(engine, level, true);
+
+    println("Executed move, level looks the following now: \n");
+    print_level(level);	
+
+    return;
 	
 	
 	println("Rotate Test");

@@ -17,6 +17,7 @@ public list[str] sound_keywords = sound_masks + absolute_directions_single;
 public list[str] conditions = ["all", "some", "no", "any"];
 public list[str] condition_keywords = conditions + ["on"];
 
+
 public list[str] rulepart_random = ["randomdir","random"];
 public list[str] relative_directions_single = ["^","v","\>","\<"];
 public list[str] relative_directions_duo = ["parallel", "perpendicular"];
@@ -30,6 +31,8 @@ public list[str] rulepart_keywords =
 	absolute_directions + 
 	relative_directions +
 	rulepart_keywords_other;
+
+public list[str] moveable_keywords = relative_directions_single + absolute_directions + ["randomdir"];
 
 public list[str] rule_prefix = ["late", "random", "rigid"] + absolute_directions;
 public list[str] rule_commands = ["cancel", "checkpoint", "restart", "win", "again"]; //rozen: added again

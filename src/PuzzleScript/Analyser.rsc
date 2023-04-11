@@ -31,7 +31,6 @@ DynamicChecker new_dynamic_checker()
 RuleType get_rule_type(Rule rule){
 	list[str] refs_right = [];
 	list[str] refs_left = [];
-    println(rule.converted_left);
 	for (RulePartLol rp <- rule.converted_left){
 		for (RuleContent cont <- rp){
 			if (!(cont is references)) continue;

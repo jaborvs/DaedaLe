@@ -22,7 +22,14 @@ alias Checker = tuple[
 	map[str, str] prelude,
 	list[str] used_objects,
 	list[str] used_references,
+    list[str] all_moveable_objects,
+    map[LevelData, LevelChecker] level_data,
 	PSGame game
+];
+
+alias LevelChecker = tuple[
+    list[str] moveable_objects,
+    int size
 ];
 
 alias Reference = tuple[
@@ -72,7 +79,11 @@ map[str, str] COLORS = (
 str default_mask = "@None@";
 		
 Checker new_checker(bool debug_flag, PSGame game){		
-	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], game>;
+	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], [], (), game>;
+}
+
+LevelChecker new_level_checker() {
+    return <[], 0>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -117,9 +128,6 @@ list[Msg] check_undefined_object(str name, loc pos, Checker c){
 
 Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]){
 	Reference r;
-
-    println("In resolve reference met raw_name: <raw_name>");
-    println(c.references);
 	
 	list[str] objs = [];
 	list[str] references = [];	
@@ -130,16 +138,14 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 	
 	references += [toLowerCase(name)];
 
-    println("Als name in c.combinations: <c.combinations>");
+    // println("name = <name>");
 
 	if (name in c.combinations) {
 
-        println(allowed);
+        println("1");
 
 		if ("combinations" in allowed) {
 			for (str n <- c.combinations[name]) {
-
-                println("Weer naar resolve_reference met <n> en <c> en <pos>");
 
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
@@ -150,17 +156,10 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 			c.msgs += [invalid_object_type("combinations", name, error(), pos)];
 		}
 	} else if (name in c.references) {
-
-        println("Name <name> is in references");
-
+        println("2");
 		if ("properties" in allowed) {
 
-            println("For-loop uit <c.references[name]>");
-
 			for (str n <- c.references[name]) {
-
-                println(n);
-
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
 				references += r.references;
@@ -170,6 +169,7 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 			c.msgs += [invalid_object_type("properties", name, error(), pos)];
 		}
 	} else {
+        println("3");
 		c.msgs += [undefined_object(raw_name, error(), pos)];
 	}
 	
@@ -181,9 +181,6 @@ Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allo
 	list[str] references = [];
 	Reference r;
 
-    println("\n\n IN RESOLVE REFERENCES \n\n");
-    println("Names = <names>");
-	
 	for (str name <- names) {
 		r = resolve_reference(name, c, pos, allowed=allowed);
 		objs += r.objs;
@@ -334,13 +331,7 @@ Checker check_legend(LegendData l, Checker c) {
 	if (!check_valid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l.src)];
 	c.msgs += check_existing_legend(l.legend, l.values, l.src, c);
 	
-    println("\n In check_legend naar resolve_references");
-
 	Reference r = resolve_references(l.values, c, l.src);
-
-    println("resolve references met input <l.values> en c komt: <r.objs> en <r.references>");
-
-    println("r[0] = <r[0]>");
 
 	list[str] values = r[0];
 	c = r[1];
@@ -527,11 +518,25 @@ Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, 
 			if (cont.content != ["..."]) c.msgs += [invalid_ellipsis(error(), cont.src)];
 			continue;
 		}
-	
+
+        println("Content = <cont.content>");
 		list[str] objs = [toLowerCase(x) | x <- cont.content, !(toLowerCase(x) in rulepart_keywords)];
 		list[str] verbs = [toLowerCase(x) | x <- cont.content, toLowerCase(x) in rulepart_keywords];
+
+        println("Verbs = <verbs>");
+
 		if(any(str x <- verbs, x notin ["no"]) && late) c.msgs += [invalid_rule_movement_late(error(), cont.src)];
 		
+        int index = 0;
+        for (str verb <- verbs) {
+
+            println("Resolve reference objs = <(resolve_reference(objs[index], c, cont.src)).objs>");
+            println("Resolve reference references = <(resolve_reference(objs[index], c, cont.src)).references>");
+            if (verb in moveable_keywords && !(objs[index] in c.all_moveable_objects)) c.all_moveable_objects += [toLowerCase(objs[index])];
+            index += 1;
+
+        }
+
 		if (pattern){
 			if(any(str rand <- rulepart_random, rand in verbs)) c.msgs += [invalid_rule_random(error(), cont.src)];
 		}
@@ -635,10 +640,12 @@ Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
 	if ([*_, part(_), prefix(_), *_] := r.left) c.msgs += [invalid_rule_direction(warn(), r.src)];
 	
 	for (RulePart p <- r.left){
+        println("ruleparts left:");
 		c = check_rulepart(p, c, late, true);
 	}
 	
 	for (RulePart p <- r.right){
+        println("ruleparts right:");
 		c = check_rulepart(p, c, late, false);
 	}
 	
@@ -817,62 +824,106 @@ Checker check_level(LevelData l, Checker c){
 //	unlayered_objects
 // warning
 //	no_levels
+
+
+// data Level (loc src = |unknown:///|)
+// 	= level(
+// 		list[Layer] layers, 
+// 		list[list[Layer]] states,
+// 		list[Layer] checkpoint,
+// 		list[set[str]] layerdata,
+// 		list[str] objectdata,
+// 		list[str] player,
+// 		list[str] background,
+// 		tuple[int height, int width] size,
+// 		LevelData original
+// 	)
+// 	| message(str msg, LevelData original)
+// 	;
+
+// map[Level, Checker] check_game_per_level(PSGame g, bool debug=false) {
+map[LevelData, LevelChecker] check_game_per_level(Checker allData, bool debug=false) {
+
+    map[LevelData, LevelChecker] allLevelData = ();
+    PSGame g = allData.game;
+
+    for (LevelData ld <- g.levels) {
+
+        if (ld is message || ld is level_empty) continue;
+
+        LevelChecker lc = new_level_checker();
+        println(ld.level[0]);
+        lc.size = size(ld.level) * size(ld.level[0]);
+        lc = moveable_objects_in_level(ld, lc, allData);
+        allLevelData += (ld: lc);
+
+    }
+    // Checker c = new_checker(debug, g);
+
+    println(allLevelData);
+    return allLevelData;
+
+}
+
+LevelChecker moveable_objects_in_level(LevelData ld, LevelChecker lc, Checker c) {
+
+
+    for (str line <- ld.level) {
+
+        list[str] char_list = split("", line);
+        for (str char <- char_list) {
+
+            char = toLowerCase(char);
+            if (char in c.combinations) lc.moveable_objects += [x | x <- c.combinations[char], x in c.all_moveable_objects];
+            if (char in c.references) lc.moveable_objects += [x | x <- c.references[char], x in c.all_moveable_objects, !(x in lc.moveable_objects)];
+
+        }
+
+    }
+
+    println("All moveable objects in c are now: <c.all_moveable_objects>");
+    println("Moveable objects in lc are now: <lc.moveable_objects>");
+    return lc;
+
+
+}
+
+
+
 Checker check_game(PSGame g, bool debug=false) {
+
 	Checker c = new_checker(debug, g);
-    println("In check_game!");
 
 	map[Section, int] dupes = distribution(g.sections);
 	for (Section s <- dupes) {
-        println("<s>");
 		if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], warn(), s.src)];
 	}
-
-    println("\n\n check preludes!");
 	
 	for (PreludeData pr <- g.prelude){
 		c = check_prelude(pr, c);
 	}
 	
-    println("\n\n check objects!");
-
     // Here the object references are added
 	for (ObjectData obj <- g.objects){
 		c = check_object(obj, c);
 	}
-    println("c.references = <c.references>");
-
-    println("\n\n check legend!");
 	
 	for (LegendData l <- g.legend){
-
-        println(l);
-
 		c = check_legend(l, c);
 	}
-
-    println("\n\n check sounds!");
-
 
 	for (SoundData s <- g.sounds) {
 		c = check_sound(s, c);
 	}
-	
-    println("\n\n check layers!");
 
 	for (LayerData l <- g.layers) {
 		c = check_layer(l, c);
 	}
 
-    println("\n\n check rules!");
-
 	for (RuleData r <- g.rules) {
-        println("Checking rule");
 		c = check_rule(r, c);
-        println("Yuppie");
 	}
 	
-    println("\n\n checked rules!");
-
 	for (str event <- c.sound_events) {
 		if (startsWith(event, "sfx") && event notin c.used_sounds) c.msgs += [unused_sound_event(warn(), c.sound_events[event].pos)];
 	}
