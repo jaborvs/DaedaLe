@@ -1,9 +1,9 @@
 module PuzzleScript::Test::Engine::Tests
 
 import PuzzleScript::Load;
-import PuzzleScript::Engine;
-import PuzzleScript::Compiler;
-import PuzzleScript::Checker;
+import PuzzleScript::EngineDennis;
+import PuzzleScript::CompilerDennis;
+import PuzzleScript::CheckerDennis;
 import PuzzleScript::AST;
 import IO;
 import util::Eval;
@@ -37,23 +37,29 @@ void main() {
     // }
 	
 	println("Rule Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/IntermediateGame1.PS|);
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game4.PS|);
     checker = check_game(game);
 
     println("c references = <checker.references>");
 
     checker.level_data = check_game_per_level(checker);
-    return;
 	engine = compile(checker);
+    // return;
+
 
     for (int i <- [0..size(engine.levels)]){
-        if (engine.levels[i] is message) {
+        if (engine.levels[i] is message || engine.levels[i] is level_empty) {
             continue;
         }
         level = engine.levels[i];
-	    print_level(level);
+	    // print_level(level);
         break;
     }
+
+    str direction = "right";
+    engine = do_move(engine, checker, direction);
+
+    return;
 	// level = engine.levels[0];
 	
     // println("0 right = <engine.rules[0].right>");
@@ -68,17 +74,13 @@ void main() {
 
 	<engine, level> = rewrite(engine, level, false);
 	level = plan_move(level, "right");
-    println("Na plan_move");
-    print_level(level);
-	
     <engine, level> = rewrite(engine, level, false);
 
 
     // Do_move suddenly has moving_objects that weren't moving_objects before, rewrite must have changed
 	level = do_move(level);
-    println("Na do_move");
-	print_level(level);
-    
+    // println("Na do_move");
+	// print_level(level);    
     <engine, level> = rewrite(engine, level, true);
 
     println("Executed move, level looks the following now: \n");

@@ -1,4 +1,4 @@
-module PuzzleScript::Checker
+module PuzzleScript::CheckerDennis
 
 import PuzzleScript::AST;
 import util::Math;
@@ -266,14 +266,12 @@ Checker check_object(ObjectData obj, Checker c) {
 	}
 	
 	// add references
-	c.references[id] = [id];
 	if (!isEmpty(obj.legend)) {
 
 		msgs = check_existing_legend(obj.legend[0], [obj.name], obj.src, c);
 		if (!isEmpty(msgs)){
 			c.msgs += msgs;
 		} else {
-			c.references[toLowerCase(obj.legend[0])] = [id];
 			c.used_objects += [id];
 		}
 	}
@@ -329,64 +327,71 @@ Checker check_object(ObjectData obj, Checker c) {
 Checker check_legend(LegendData l, Checker c) {
 	if (!check_valid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l.src)];
 	c.msgs += check_existing_legend(l.legend, l.values, l.src, c);
-	
-	Reference r = resolve_references(l.values, c, l.src);
 
-	list[str] values = r[0];
-	c = r[1];
-	c.used_references += r.references[1..];
-	
+
+    if (l is legend_alias) {
+
+        for (str object <- l.values) {
+
+            if (toLowerCase(l.legend) in c.references) c.references[toLowerCase(l.legend)] += [toLowerCase(object)];
+            else c.references += (toLowerCase(l.legend): [toLowerCase(object)]);
+
+        }
+
+    }
+
+
 	str legend = toLowerCase(l.legend);
 
     // Check if object in legend is defined in objects section
 	if (check_valid_name(l.legend)) c.objects += [legend];
-	for (str v <- values){
-		if (!(v in c.objects)) {
-			c.msgs += [undefined_object(v, error(), l.src)];
-		} else {
-			c.used_objects += [v];
-		}
-	}
+	// for (str v <- values){
+	// 	if (!(v in c.objects)) {
+	// 		c.msgs += [undefined_object(v, error(), l.src)];
+	// 	} else {
+	// 		c.used_objects += [v];
+	// 	}
+	// }
 	
-	// if it's just one thing being defined with check it and return
-	if (size(values) == 1) {
-		msgs = check_undefined_object(l.values[0], l.src, c);
-		if (!isEmpty(msgs)) {
-			c.msgs += msgs;
-		} else {
-			// check if it's a self definition and warn as need be
-			if (legend == values[0]){
-				c.msgs += [self_reference(l.legend, warn(), l.src)];
-			} else {
-				c.references[legend] = values;
-			}
-		}
+	// // if it's just one thing being defined with check it and return
+	// if (size(values) == 1) {
+	// 	msgs = check_undefined_object(l.values[0], l.src, c);
+	// 	if (!isEmpty(msgs)) {
+	// 		c.msgs += msgs;
+	// 	} else {
+	// 		// check if it's a self definition and warn as need be
+	// 		if (legend == values[0]){
+	// 			c.msgs += [self_reference(l.legend, warn(), l.src)];
+	// 		} else {
+	// 			c.references[legend] = values;
+	// 		}
+	// 	}
 		
-		return c;
-	}
+	// 	return c;
+	// }
 	
-	// if not we do a more expensive check for invalid legend and mixed types
-	switch(l) {
-		case legend_alias(_, _): {
-			// if our alias makes use of combinations that's a bonk
-			list[str] mixed = [x | x <- values, x in c.combinations];
-			if (!isEmpty(mixed)) {
-				c.msgs += [mixed_legend(l.legend, mixed, "alias", "combination", error(), l.src)];
-			} else {
-				c.references[legend] = values;
-			}
-		}
-		case legend_combined(_, _): {
-			// if our combination makes use of aliases that's a bonk (just gotta make sure it's actually an alias)
-			list[str] mixed = [x | x <- values, x in c.references && size(c.references[x]) > 1];
-			if (!isEmpty(mixed)) {
-				c.msgs += [mixed_legend(l.legend, mixed, "combination", "alias", error(), l.src)];
-			} else {
-				c.combinations[legend] = values;
-			}
-		}
-		case legend_error(_, _): c.msgs += [mixed_legend(l.legend, l.values, error(), l.src)];	
-	}
+	// // if not we do a more expensive check for invalid legend and mixed types
+	// switch(l) {
+	// 	case legend_alias(_, _): {
+	// 		// if our alias makes use of combinations that's a bonk
+	// 		list[str] mixed = [x | x <- values, x in c.combinations];
+	// 		if (!isEmpty(mixed)) {
+	// 			c.msgs += [mixed_legend(l.legend, mixed, "alias", "combination", error(), l.src)];
+	// 		} else {
+	// 			c.references[legend] = values;
+	// 		}
+	// 	}
+	// 	case legend_combined(_, _): {
+	// 		// if our combination makes use of aliases that's a bonk (just gotta make sure it's actually an alias)
+	// 		list[str] mixed = [x | x <- values, x in c.references && size(c.references[x]) > 1];
+	// 		if (!isEmpty(mixed)) {
+	// 			c.msgs += [mixed_legend(l.legend, mixed, "combination", "alias", error(), l.src)];
+	// 		} else {
+	// 			c.combinations[legend] = values;
+	// 		}
+	// 	}
+	// 	case legend_error(_, _): c.msgs += [mixed_legend(l.legend, l.values, error(), l.src)];	
+	// }
 
 	return c;
 }
@@ -880,7 +885,6 @@ Checker check_game(PSGame g, bool debug=false) {
 		c = check_prelude(pr, c);
 	}
 	
-    // Here the object references are added
 	for (ObjectData obj <- g.objects){
 		c = check_object(obj, c);
 	}

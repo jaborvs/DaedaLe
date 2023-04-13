@@ -23,6 +23,7 @@ data Level (loc src = |unknown:///|)
 		list[str] player,
 		list[str] background,
 		tuple[int height, int width] size,
+        LevelChecker additional_info,
 		LevelData original
 	)
 	| message(str msg, LevelData original)
@@ -38,10 +39,7 @@ data Object (loc src = |unknown:///|)
 	| transparent(str name, int id, Coords coords)
 	;
 
-// TODO: play around with imports	
-
 // All kinds of functions to be executed if for example move is random
-
 public str EVAL_PRESET = "
 	'import List;
 	'import util::Math;
@@ -126,7 +124,7 @@ alias Engine = tuple[
 Engine new_engine(PSGame game)		
 	= <
 		[], 
-		level([], [], [], [], [], [], [], <0,0>, level_data([])), 
+		level([], [], [], [], [], [], [], <0,0>, <[], 0>, level_data([])), 
 		(), 
 		[], 
 		[],
@@ -447,8 +445,6 @@ RulePart convert_RulePartContents(RulePart p: part(list[RuleContent] _), Rule ru
 				list[str] objs = resolve_reference(cont.content[i], c, p.src).objs;
 				str force = "none";
 				if (i != 0 && toLowerCase(cont.content[i-1]) in rulepart_keywords) force = toLowerCase(cont.content[i-1]);
-
-                // println("Force voor <cont.content> is <force>");
 				
 				if (toLowerCase(cont.content[i]) in c.combinations){
 					for (str obj <- objs){
@@ -494,12 +490,12 @@ Rule convert_rule(RuleData r, Checker c, Engine engine){
 	list[str] keywords = [toLowerCase(x.prefix) | RulePart x <- r.left, x is prefix];
 
 	rule.late = "late" in keywords;
+
 	rule.directions = generate_directions(keywords);
 	
     // Add corresponding objects to rule statements
 	list[RuleContent] left  = [];
 	for (RulePart p <- [x | RulePart x <- r.left, x is part]){
-        // println("Converting rulepart: <p>");
 		left += convert_RulePartContents(p, rule, c, engine, true).contents;
 	}
 	
@@ -530,10 +526,13 @@ Rule convert_rule(RuleData r, Checker c, Engine engine){
 
 Object new_transparent(Coords coords) = transparent("trans", -1, coords);
 
-Level convert_level(LevelData l: level_data(list[str] level), Checker c, Engine engine){
+Level convert_level(LevelData l: level_data(list[str] level), Checker c, map[LevelData, LevelChecker] ld, Engine engine){
+
+    LevelChecker lc = ld[l];
 
 	list[Layer] layers = [];
 	list[str] objectdata = [];
+
 	for (int i <- [0..size(engine.layers)]){
 		set[str] lyr = engine.layers[i];
 
@@ -546,10 +545,11 @@ Level convert_level(LevelData l: level_data(list[str] level), Checker c, Engine 
 			for (int k <- [0..size(chars)]){
 				str ch = chars[k];
 
-                // Get the object the char references
+                // Get the objects the char references
 				list[str] objs = resolve_reference(ch, c, l.src).objs;
 
 				pix = [x | str x <- objs, x in lyr];
+
 				if (isEmpty(pix)){
 					line += [new_transparent(<j, k, i>)];
 				} else {
@@ -574,11 +574,12 @@ Level convert_level(LevelData l: level_data(list[str] level), Checker c, Engine 
 		c.references["player"],
 		c.references["background"],
 		<size(layers[0]), size(layers[0][0])>,
+        lc,
 		l
 	);
 }
 
-Level convert_level(LevelData l: message(str msg), Checker c, Engine engine){
+Level convert_level(LevelData l: message(str msg), Checker c, map[LevelData, LevelChecker] lc, Engine engine){
 	
     return Level::message(msg, l);
 }
@@ -593,6 +594,7 @@ set[str] convert_layer(LayerData l, Checker c){
 }
 
 Engine compile(Checker c){
+
 	Engine engine = new_engine(c.game);
 	engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
 	engine.conditions = c.conditions;
@@ -601,7 +603,8 @@ Engine compile(Checker c){
 	
 	for (LevelData l <- c.game.levels){
         if (l is level_empty) continue;
-		engine.levels += [convert_level(l, c, engine)];
+
+		engine.levels += [convert_level(l, c, c.level_data, engine)];
 		engine.input_log += [[]];
 	}
 	

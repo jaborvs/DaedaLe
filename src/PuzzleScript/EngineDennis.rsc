@@ -1,4 +1,4 @@
-module PuzzleScript::Engine
+module PuzzleScript::EngineDennis
 
 import String;
 import List;
@@ -8,7 +8,7 @@ import IO;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Utils;
-import PuzzleScript::Compiler;
+import PuzzleScript::CompilerDennis;
 import util::Eval;
 import util::Math;
 
@@ -305,20 +305,20 @@ Level move_obstacle(Level level, Coords coords, Coords other_neighbor_coords){
 }
 
 // Executes the move that is set in plan_move (moving_object) 
-Level do_move(Level level){
-	for (int i <- [0..size(level.layers)]){
-		Layer layer = level.layers[i];
-		for(int j <- [0..size(layer)]){
-			Line line = layer[j];
-			for(int k <- [0..size(line)]){
-				level = move_obstacle(level, <j, k, i>, <j, k, i>); 
-			}
-		}
-	}
+// Level do_move(Level level){
+// 	for (int i <- [0..size(level.layers)]){
+// 		Layer layer = level.layers[i];
+// 		for(int j <- [0..size(layer)]){
+// 			Line line = layer[j];
+// 			for(int k <- [0..size(line)]){
+// 				level = move_obstacle(level, <j, k, i>, <j, k, i>); 
+// 			}
+// 		}
+// 	}
 	
-	if (level.states[-1] != level.layers) level.states += [deep_copy(level.layers)];
-	return level;
-}
+// 	if (level.states[-1] != level.layers) level.states += [deep_copy(level.layers)];
+// 	return level;
+// }
 
 list[bool] is_on(Level level, list[str] objs, list[str] on){
 	list[bool] results = [];	
@@ -435,43 +435,11 @@ Engine run_command(Command cmd : restart(), Engine engine){
 	return engine;
 }
 
-Engine run_command(Command cmd : message(str string), Engine engine){
-	engine.msg_queue += [string];
-	return engine;
-}
-
-Engine run_command(Command cmd : sound(str event), Engine engine){
-	engine.sound_queue += [event];
-	return engine;
-}
 
 void print_level(Level l: message(str msg, _)){
 	print_message(msg);
 }
 
-void print_level(Level l : level){
-
-	str pixel(str p : "trans") = ".";
-	default str pixel(str p) = p[0];
-	
-	//for (Layer lyr <- l.layers){
-	//	for (Line line <- lyr) {
-	//		print(intercalate("", [pixel(x.name) | x <- line]));
-	//		//print("   ");
-	//		//print(intercalate(" ", line));
-	//		println();
-	//	}
-	//	println();
-	//}
-	
-	for (Line line <- l.layers[-1]) {
-		print(intercalate("", [pixel(x.name) | x <- line]));
-		//print("   ");
-		//print(intercalate(" ", line));
-		println();
-	}
-	println();
-}
 
 list[Layer] deep_copy(list[Layer] lyrs){
 	list[Layer] layers = [];
@@ -488,82 +456,33 @@ list[Layer] deep_copy(list[Layer] lyrs){
 }
 
 
-Level plan_move(Level level, str direction){	
-
-    println("level player = <level.player>");
-
-	for (int i <- [0..size(level.layers)]){
-		Layer layer = level.layers[i];
-
-		for(int j <- [0..size(layer)]){
-			Line line = layer[j];
-
-			for(int k <- [0..size(line)]){
-				Object obj = line[k];
-
-				if (line[k].name in level.player){
-					level.layers[i][j][k] = moving_object(obj.name, obj.id, direction, <j, k, i>);
-				}
-			}
-		}
-	}
-	
-	return level;
-}
-
-Engine do_victory(Engine engine){
-	engine.current_level = Level::message("VICTORY!", LEVELDATA::message("VICTORY!"));
-	
-	return engine;
-}
-
-void play_sound(Engine engine, str event){
-	if (event in engine.sounds) {
-		println(engine.sounds[event]);
-	}
-}
-
 void print_message(str string){
 	println("#####################################################");
 	println(string);
 	println("#####################################################");
 }
 
-tuple[Engine, Level] do_post_turn(Engine engine, Level level){
-	for (str event <- engine.sound_queue){
-		play_sound(engine, event);
-	}
-	engine.sound_queue = [];
-	
-	for (str msg <- engine.msg_queue){
-		print_message(msg);
-	}
-	engine.msg_queue = [];
-	
-	print_level(level);
-	engine.abort = false;
-	
-	return <engine, level>;
+
+
+Engine do_move(Engine engine, Checker c, str direction) {
+
+
+    println(direction);
+
+    
+
+    // for (str player <- c.references["player"]) {
+
+
+
+
+    // }
+
+    return engine;
+
+
+
 }
 
-void game_loop(Checker c, list[str] moves){
-	Engine engine = compile(c);
-	
-	print_level(engine.current_level);
-	int index = 0;
-	str input;
-	while (true){
-		<input, index> = get_input(moves, index);
-		<engine, engine.current_level> = do_turn(engine, engine.current_level, input);
-		<engine, engine.current_level> = do_post_turn(engine, engine.current_level);
-		
-		bool victory = is_victorious(engine, engine.current_level);
-		if (victory && is_last(engine)){
-			break;
-		} else if (victory) {
-			engine = change_level(engine, engine.index + 1);
-		}
-	}
-	
-	println("VICTORY");
-}
+
+
