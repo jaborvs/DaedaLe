@@ -5,7 +5,7 @@ import List;
 import Type;
 import Set;
 import IO;
-import PuzzleScript::Checker;
+import PuzzleScript::CheckerDennis;
 import PuzzleScript::AST;
 import PuzzleScript::Utils;
 import PuzzleScript::CompilerDennis;
@@ -462,21 +462,51 @@ void print_message(str string){
 	println("#####################################################");
 }
 
+void apply_forces(Engine engine, str direction) {
+
+    for (RuleData rd <- engine.rules) {
+
+        println("");
+    }    
+
+
+}
+
+void apply_rules(Engine engine) {
+
+
+    for (RuleData rd <- engine.rules) {
+
+        println("");
+    }
+
+
+}
+
+void apply_late_rules(Engine engine) {
+
+    for (RuleData rd <- engine.late_rules) {
+        println("");
+    }
+
+}
 
 
 Engine do_move(Engine engine, Checker c, str direction) {
 
 
-    println(direction);
 
-    
+    for (LevelData current_level <- engine.levels) {
 
-    // for (str player <- c.references["player"]) {
+        if (current_level is message) {
+            println(current_level.message);
+        } else if (current_level is level_data) {
+            apply_forces(engine, direction);
+            apply_rules(engine);
+        }
+        engine.current_level += 1;
 
-
-
-
-    // }
+    }
 
     return engine;
 

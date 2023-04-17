@@ -29,7 +29,7 @@ alias Checker = tuple[
 
 alias LevelChecker = tuple[
     list[str] moveable_objects,
-    int size
+    tuple[int width, int height] size
 ];
 
 alias Reference = tuple[

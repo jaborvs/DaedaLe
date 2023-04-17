@@ -4,7 +4,7 @@ import String;
 import List;
 import Type;
 import Set;
-import PuzzleScript::Checker;
+import PuzzleScript::CheckerDennis;
 import PuzzleScript::AST;
 import PuzzleScript::Utils;
 
@@ -18,11 +18,8 @@ data Level (loc src = |unknown:///|)
 		list[Layer] layers, 
 		list[list[Layer]] states,
 		list[Layer] checkpoint,
-		list[set[str]] layerdata,
 		list[str] objectdata,
 		list[str] player,
-		list[str] background,
-		tuple[int height, int width] size,
         LevelChecker additional_info,
 		LevelData original
 	)
@@ -31,41 +28,12 @@ data Level (loc src = |unknown:///|)
 	
 alias Coords = tuple[int x, int y, int z];
 	
-	
-// CHANGES DONE TO THIS DATA STRUCTURE NEED TO BE MIRRORED BELOW TO 'EVAL_PRESET'
 data Object (loc src = |unknown:///|)
 	= object(str name, int id, Coords coords)
 	| moving_object(str name, int id, str direction, Coords coords)
 	| transparent(str name, int id, Coords coords)
 	;
 
-// All kinds of functions to be executed if for example move is random
-public str EVAL_PRESET = "
-	'import List;
-	'import util::Math;
-	'
-	'str randomDir(){
-	'	int rand = arbInt(4);
-	'	return <MOVES>[rand];
-	'}
-	'
-	'alias Coords = <#Coords>;
-	'data Object
-	'= object(str name, int id, Coords coords)
-	'| moving_object(str name, int id, str direction, Coords coords)
-	'| transparent(str name, int id, Coords coords)
-	';
-	'alias Line = <#Line>;
-	'alias Layer = <#Layer>;
-	'
-	'Object randomObject(list[Object] objs){
-	'	int rand = arbInt(size(objs));
-	'	return objs[rand];
-	'}
-	'
-	'
-	'";
-	
 data Command (loc src = |unknown:///|)
 	= message(str string)
 	| sound(str event)
@@ -102,7 +70,8 @@ Rule new_rule(RuleData r)
 
 alias Engine = tuple[
 	list[LevelData] levels,
-	LevelData current_level,
+	int current_level,
+    map[int, LevelData] level_states,
 	map[str, list[int]] sounds,
 	list[Condition] conditions,
 	list[set[str]] layers,
@@ -123,7 +92,8 @@ alias Engine = tuple[
 Engine new_engine(PSGame game)		
 	= < 
 		[level_data([])], 
-		level_data([]), 
+		0,
+        (), 
         (),
 		[], 
 		[],
@@ -264,7 +234,9 @@ Engine compile(Checker c) {
 	Engine engine = new_engine(c.game);
 	engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
 	engine.conditions = c.conditions;
+
     engine.levels = c.game.levels;
+    engine.current_level = 1;
 
     list[RuleData] rules = c.game.rules;
 
@@ -279,9 +251,9 @@ Engine compile(Checker c) {
 
 	engine.layers = [convert_layer(x, c) | x <- c.game.layers];
 	
-	if (!isEmpty(engine.levels)){
-		engine.current_level = engine.levels[0];
-	}
+	// if (!isEmpty(engine.levels)){
+	// 	engine.current_level = engine.levels[0];
+	// }
 	
 	engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
 	

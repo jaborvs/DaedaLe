@@ -29,7 +29,9 @@ alias Checker = tuple[
 
 alias LevelChecker = tuple[
     list[str] moveable_objects,
-    int size
+    tuple[int width, int height] size,
+    list[RuleData] applied_rules,
+    list[LevelData] messages
 ];
 
 alias Reference = tuple[
@@ -83,7 +85,7 @@ Checker new_checker(bool debug_flag, PSGame game){
 }
 
 LevelChecker new_level_checker() {
-    return <[], 0>;
+    return <[], <0,0>, [], []>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -168,7 +170,6 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 			c.msgs += [invalid_object_type("properties", name, error(), pos)];
 		}
 	} else {
-        println("3");
 		c.msgs += [undefined_object(raw_name, error(), pos)];
 	}
 	
@@ -523,19 +524,14 @@ Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, 
 			continue;
 		}
 
-        println("Content = <cont.content>");
 		list[str] objs = [toLowerCase(x) | x <- cont.content, !(toLowerCase(x) in rulepart_keywords)];
 		list[str] verbs = [toLowerCase(x) | x <- cont.content, toLowerCase(x) in rulepart_keywords];
-
-        println("Verbs = <verbs>");
 
 		if(any(str x <- verbs, x notin ["no"]) && late) c.msgs += [invalid_rule_movement_late(error(), cont.src)];
 		
         int index = 0;
         for (str verb <- verbs) {
 
-            println("Resolve reference objs = <(resolve_reference(objs[index], c, cont.src)).objs>");
-            println("Resolve reference references = <(resolve_reference(objs[index], c, cont.src)).references>");
             if (verb in moveable_keywords && !(objs[index] in c.all_moveable_objects)) c.all_moveable_objects += [toLowerCase(objs[index])];
             index += 1;
 
@@ -644,12 +640,10 @@ Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
 	if ([*_, part(_), prefix(_), *_] := r.left) c.msgs += [invalid_rule_direction(warn(), r.src)];
 	
 	for (RulePart p <- r.left){
-        println("ruleparts left:");
 		c = check_rulepart(p, c, late, true);
 	}
 	
 	for (RulePart p <- r.right){
-        println("ruleparts right:");
 		c = check_rulepart(p, c, late, false);
 	}
 	
@@ -836,11 +830,23 @@ map[LevelData, LevelChecker] check_game_per_level(Checker allData, bool debug=fa
 
     for (LevelData ld <- g.levels) {
 
-        if (ld is message || ld is level_empty) continue;
+        if (ld is level_empty) continue;
 
         LevelChecker lc = new_level_checker();
-        lc.size = size(ld.level) * size(ld.level[0]);
+
+        if (ld is message) {
+            lc.messages += [ld];
+            continue;
+        }
+
+        lc.size = <size(ld.level[0]), size(ld.level)>;
+
         lc = moveable_objects_in_level(ld, lc, allData);
+
+        lc = applied_rules(ld, lc, allData);
+
+        
+
         allLevelData += (ld: lc);
 
     }
@@ -866,6 +872,104 @@ LevelChecker moveable_objects_in_level(LevelData ld, LevelChecker lc, Checker c)
     }
 
     return lc;
+
+
+}
+
+LevelChecker applied_rules(LevelData ld, LevelChecker lc, Checker c) {
+
+    list[RuleData] rules = c.game.rules;
+
+    list[RuleData] rules_used = [];
+    list[str] chars_used = [];
+
+    for (str line <- ld.level) {
+
+        list[str] char_list = split("", line);
+        for (str char <- char_list) {
+
+            char = toLowerCase(char);
+            if (!(char in chars_used)) {
+
+                for (RuleData rd <- rules) {
+                    
+                    list[str] char_references = get_all_references(char, c.references);
+                    rules_used += rules_referencing_char(char_references, rd);
+                }
+
+            }
+
+        }
+
+    }
+
+    println("Rules used in level: <size(rules_used)>");
+
+    return lc;
+
+}
+
+list[str] get_all_references(str char, map[str, list[str]] references) {
+
+    list[str] reference_list = [];
+
+    reference_list += references[char];
+    list[str] old_reference = references[char];
+    list[str] current_reference = [];
+
+    while(old_reference != []) {
+
+        list[str] current_reference = [];
+        for (str reference <- old_reference) {
+            for (str key <- references<0>) {
+
+                if (reference in references[key]) {
+                    reference_list += key;
+                    current_reference += key;
+                }
+
+            }
+        }
+
+        old_reference = current_reference;
+    }
+
+    return reference_list;
+
+
+
+}
+
+list[RuleData] rules_referencing_char(list[str] char_references, RuleData r: rule_data(left, right, _, _)) {
+
+    list[RuleData] used = [];
+
+    for (RulePart rule <- left) {
+        if (rule is part) {
+
+            for (RuleContent content <- rule.contents) {
+                for (str content <- content.content) {
+                    if (toLowerCase(content) in char_references) used += r;
+                }
+            }
+        }
+    }
+    
+    if (size(used) > 0) return used;
+
+    for (RulePart rule <- right) {
+        if (rule is part) {
+
+            for (RuleContent content <- rule.contents) {
+                for (str char <- char_references) {
+                    if (char in content.content) used += r;
+                }
+            }
+
+        }
+    } 
+
+    return used;
 
 
 }

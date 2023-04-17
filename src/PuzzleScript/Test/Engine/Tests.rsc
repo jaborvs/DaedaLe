@@ -40,8 +40,6 @@ void main() {
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game4.PS|);
     checker = check_game(game);
 
-    println("c references = <checker.references>");
-
     checker.level_data = check_game_per_level(checker);
 	engine = compile(checker);
     // return;
