@@ -882,6 +882,7 @@ LevelChecker applied_rules(LevelData ld, LevelChecker lc, Checker c) {
 
     list[RuleData] rules_used = [];
     list[str] chars_used = [];
+    list[str] char_references = [];
 
     for (str line <- ld.level) {
 
@@ -890,12 +891,8 @@ LevelChecker applied_rules(LevelData ld, LevelChecker lc, Checker c) {
 
             char = toLowerCase(char);
             if (!(char in chars_used)) {
-
-                for (RuleData rd <- rules) {
-                    
-                    list[str] char_references = get_all_references(char, c.references);
-                    rules_used += rules_referencing_char(char_references, rd);
-                }
+ 
+                char_references += get_all_references(char, c.references);
 
             }
 
@@ -903,6 +900,7 @@ LevelChecker applied_rules(LevelData ld, LevelChecker lc, Checker c) {
 
     }
 
+    for (RuleData rd <- rules) if (rules_referencing_char(char_references, rd)) rules_used += rd;
     println("Rules used in level: <size(rules_used)>");
 
     return lc;
@@ -940,37 +938,31 @@ list[str] get_all_references(str char, map[str, list[str]] references) {
 
 }
 
-list[RuleData] rules_referencing_char(list[str] char_references, RuleData r: rule_data(left, right, _, _)) {
+bool rules_referencing_char(list[str] char_references, RuleData r: rule_data(left, right, _, _)) {
 
     list[RuleData] used = [];
+    list[str] ruleContent = [];
 
     for (RulePart rule <- left) {
         if (rule is part) {
 
             for (RuleContent content <- rule.contents) {
                 for (str content <- content.content) {
-                    if (toLowerCase(content) in char_references) used += r;
+
+                    if (!(content in rulepart_keywords)) ruleContent += toLowerCase(content);
+                    // if (toLowerCase(content) in char_references && !(r in used)) {
+                    //     // println("<toLowerCase(content)> is in references, adding <r> to used");
+                    //     used += r;
+                    // }
                 }
+            }
+            if (ruleContent < char_references && !(r in used)) {
+                return true;
             }
         }
     }
-    
-    if (size(used) > 0) return used;
 
-    for (RulePart rule <- right) {
-        if (rule is part) {
-
-            for (RuleContent content <- rule.contents) {
-                for (str char <- char_references) {
-                    if (char in content.content) used += r;
-                }
-            }
-
-        }
-    } 
-
-    return used;
-
+    return false;
 
 }
 
