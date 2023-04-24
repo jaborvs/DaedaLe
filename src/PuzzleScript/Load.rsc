@@ -14,6 +14,9 @@ PuzzleScript::AST::PSGame load(loc path) {
 }
 
 PuzzleScript::AST::PSGame load(str src) {
+
+    println("In load");
+
   start[PSGame] t = ps_parse(src);
   PuzzleScript::AST::PSGame g = ps_implode(t);
   return g;

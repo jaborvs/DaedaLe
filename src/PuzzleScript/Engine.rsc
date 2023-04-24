@@ -119,9 +119,6 @@ list[str] ROTATION_ORDER = ["right", "up", "left", "down"];
 // Applies the rule
 tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
 
-    println("Huidige regel = <rule.left> \n<rule.right>");
-    println("converted = <rule.converted_left> \n<rule.converted_right>");
-
 	int loops = 0;
 	list[Layer] layers = level.layers;
 	bool changed = false;
@@ -155,7 +152,6 @@ tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
 				
                 // println("Level per veranderende layer:");
 				for (int i <- [0..size(rule.left)]){
-                    println("Vervangt: <rule.left[i]> met: <rule.right[i]>");
 					layers = eval(#list[Layer], [EVAL_PRESET, relatives, format_replacement(rule.left[i], rule.right[i], layers)]).val;
                     // level.layers = layers;
                     // print_level(level);
@@ -489,8 +485,6 @@ list[Layer] deep_copy(list[Layer] lyrs){
 
 
 Level plan_move(Level level, str direction){	
-
-    println("level player = <level.player>");
 
 	for (int i <- [0..size(level.layers)]){
 		Layer layer = level.layers[i];

@@ -144,8 +144,6 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 
 	if (name in c.combinations) {
 
-        println("1");
-
 		if ("combinations" in allowed) {
 			for (str n <- c.combinations[name]) {
 
@@ -331,14 +329,17 @@ Checker check_legend(LegendData l, Checker c) {
 
 
     if (l is legend_alias) {
-
         for (str object <- l.values) {
-
             if (toLowerCase(l.legend) in c.references) c.references[toLowerCase(l.legend)] += [toLowerCase(object)];
             else c.references += (toLowerCase(l.legend): [toLowerCase(object)]);
-
         }
+    }
 
+    if (l is legend_combined) {
+        for (str object <- l.values) {
+            if (toLowerCase(l.legend) in c.combinations) c.combinations[toLowerCase(l.legend)] += [toLowerCase(object)];
+            else c.combinations += (toLowerCase(l.legend): [toLowerCase(object)]);
+        }
     }
 
 
@@ -532,7 +533,20 @@ Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, 
         int index = 0;
         for (str verb <- verbs) {
 
-            if (verb in moveable_keywords && !(objs[index] in c.all_moveable_objects)) c.all_moveable_objects += [toLowerCase(objs[index])];
+            if (verb in moveable_keywords && !(objs[index] in c.all_moveable_objects)) {
+
+                // list[str] moveable_object = objs[index];
+                // for (str object <- moveable_objects) {
+                //     if (object in c.references<0>) {
+                //         for (str child_object <- c.references[object]) c.all_moveable_objects += toLowerCase(child_object);
+                //     }
+
+
+                // }
+                // println("References = <resolve_reference(objs[index], c, cont.src).references>");
+                c.all_moveable_objects += resolve_reference(objs[index], c, cont.src).references;
+            }
+            
             index += 1;
 
         }
@@ -828,29 +842,27 @@ map[LevelData, LevelChecker] check_game_per_level(Checker allData, bool debug=fa
     map[LevelData, LevelChecker] allLevelData = ();
     PSGame g = allData.game;
 
+    LevelChecker lc = new_level_checker();
+
     for (LevelData ld <- g.levels) {
 
         if (ld is level_empty) continue;
-
-        LevelChecker lc = new_level_checker();
 
         if (ld is message) {
             lc.messages += [ld];
             continue;
         }
-
         lc.size = <size(ld.level[0]), size(ld.level)>;
 
         lc = moveable_objects_in_level(ld, lc, allData);
 
         lc = applied_rules(ld, lc, allData);
-
         
-
         allLevelData += (ld: lc);
 
-    }
+        lc = new_level_checker();
 
+    }
     return allLevelData;
 
 }
@@ -864,15 +876,13 @@ LevelChecker moveable_objects_in_level(LevelData ld, LevelChecker lc, Checker c)
 
             char = toLowerCase(char);
             if (char in c.combinations) lc.moveable_objects += 
-                [x | x <- c.combinations[char], x in c.all_moveable_objects, !(x in lc.moveable_objects)];
+                [x | x <- c.combinations[char], x in c.all_moveable_objects];
             if (char in c.references) lc.moveable_objects += 
-                [x | x <- c.references[char], x in c.all_moveable_objects, !(x in lc.moveable_objects)];
-
+                [x | x <- c.references[char], x in c.all_moveable_objects];
         }
     }
 
     return lc;
-
 
 }
 
@@ -891,23 +901,23 @@ LevelChecker applied_rules(LevelData ld, LevelChecker lc, Checker c) {
 
             char = toLowerCase(char);
             if (!(char in chars_used)) {
- 
-                char_references += get_all_references(char, c.references);
+                if (char in c.references) char_references += get_all_references(char, c.references);
+                else char_references += get_all_references(char, c.combinations);
 
             }
-
         }
-
     }
 
-    for (RuleData rd <- rules) if (rules_referencing_char(char_references, rd)) rules_used += rd;
-    println("Rules used in level: <size(rules_used)>");
+    for (RuleData rd <- rules) if (rd is rule_data && rules_referencing_char(char_references, rd)) rules_used += rd;
+    lc.applied_rules = rules_used;
 
     return lc;
 
 }
 
 list[str] get_all_references(str char, map[str, list[str]] references) {
+
+    if (!(char in references<0>)) return [];
 
     list[str] reference_list = [];
 
@@ -956,13 +966,74 @@ bool rules_referencing_char(list[str] char_references, RuleData r: rule_data(lef
                     // }
                 }
             }
-            if (ruleContent < char_references && !(r in used)) {
+            if (ruleContent != [] && ruleContent < char_references && !(r in used)) {
                 return true;
             }
         }
     }
 
     return false;
+
+}
+
+// alias LevelChecker = tuple[
+//     list[str] moveable_objects,
+//     tuple[int width, int height] size,
+//     list[RuleData] applied_rules,
+//     list[LevelData] messages
+// ];
+
+
+void pretty_print(Checker c, loc reportfile) {
+
+    str levelOutput = "";
+
+    list[LevelData] levels = c.game.levels;
+    map[LevelData, LevelChecker] ld = c.level_data;
+
+    str title = "";
+    str author = "";
+
+    for(PreludeData p <- c.game.prelude){
+        if(p.key == "title") {
+        title = replaceAll(p.string, ",", " ");
+        break;
+        }
+    }
+    
+    for(PreludeData p <- c.game.prelude){
+        if(p.key == "author") {
+        author = replaceAll(p.string, ",", " ");
+        break;
+        }
+    }
+
+    appendToFile(reportfile, "===== <title>, <author> =====\n");
+    appendToFile(reportfile, "level,\t\t\tsize, \t\t\tmoveable_objects, \t\t\trules, \t\t\tmessages\n");
+
+    int levelIndex = 1;
+
+    for (LevelData level <- levels) {
+
+        if (level is level_empty || level is message) continue;
+
+        if (ld[level].size.height == 1) continue;
+        // println("Level:");
+        // for (str line <- level.level) {
+        //     println(line);
+        // }
+        // println("With size: <ld[level].size>");
+
+        // println("Has <size(ld[level].moveable_objects)> moveable objects");
+        // println("makes use of <size(ld[level].applied_rules)> rules");
+        // println("and has <size(ld[level].messages)> messages");
+        // println("");
+        appendToFile(reportfile, "<levelIndex>,\t\t\t<ld[level].size>,\t\t\t<size(ld[level].moveable_objects)>,\t\t\t<size(ld[level].applied_rules)>,\t\t\t<size(ld[level].messages)>\n");
+        levelIndex += 1;
+
+    }
+    appendToFile(reportfile, "\n");
+
 
 }
 

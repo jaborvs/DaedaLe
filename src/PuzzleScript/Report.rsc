@@ -80,6 +80,9 @@ public str generateReport(loc dir, loc outFile){
     "parse result,"+
     "check result, errors, warnings, file\n";
 
+  str staticReport = 
+    "title, author, size, rules used, moving objects, messages\n";
+
   set[GameData] results = analyzeAll(dir);
   for(GameData g <- results) {
     report = report + 
@@ -145,8 +148,8 @@ public set[GameData] analyzeAll(loc dir){
       
       results = results + {<file, p, c, v, s>};
 
-      // Only do one level for now
-      break;
+    //   // Only do one level for now
+    //   break;
     }
   }
   

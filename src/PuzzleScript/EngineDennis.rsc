@@ -117,78 +117,78 @@ bool eval_pattern(str pattern, str relatives)
 list[str] ROTATION_ORDER = ["right", "up", "left", "down"];
 
 // Applies the rule
-tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
+// tuple[Engine, Level, Rule] apply_rule(Engine engine, Level level, Rule rule){
 
-    println("Huidige regel = <rule.left> \n<rule.right>");
-    println("converted = <rule.converted_left> \n<rule.converted_right>");
+//     println("Huidige regel = <rule.left> \n<rule.right>");
+//     println("converted = <rule.converted_left> \n<rule.converted_right>");
 
-	int loops = 0;
-	list[Layer] layers = level.layers;
-	bool changed = false;
-	for (str dir <- ROTATION_ORDER){
-		if (dir in rule.directions){
+// 	int loops = 0;
+// 	list[Layer] layers = level.layers;
+// 	bool changed = false;
+// 	for (str dir <- ROTATION_ORDER){
+// 		if (dir in rule.directions){
 
-			str relatives = format_relatives(directional_absolutes[dir]);
+// 			str relatives = format_relatives(directional_absolutes[dir]);
 
-            // My debugging code, can be removed
-            // int index = 1;
-            // for (str pattern <- rule.left) {
-            //     println("Pattern = <format_pattern(pattern, layers)> <index>");
-            //     // println("Layers:");
-            //     // for (Layer layer <- layers) {
-            //     //     println("\n<layer>\n");
-            //     // }
-            //     index += 1;
-            // }
+//             // My debugging code, can be removed
+//             // int index = 1;
+//             // for (str pattern <- rule.left) {
+//             //     println("Pattern = <format_pattern(pattern, layers)> <index>");
+//             //     // println("Layers:");
+//             //     // for (Layer layer <- layers) {
+//             //     //     println("\n<layer>\n");
+//             //     // }
+//             //     index += 1;
+//             // }
 
-            // eval_pattern takes a list of compiled layers (from compile_RulePartContents) defined in compiler
-            // then checks of this pattern matches the layers
-			while (all(str pattern <- rule.left, eval_pattern(format_pattern(pattern, layers), relatives))){
+//             // eval_pattern takes a list of compiled layers (from compile_RulePartContents) defined in compiler
+//             // then checks of this pattern matches the layers
+// 			while (all(str pattern <- rule.left, eval_pattern(format_pattern(pattern, layers), relatives))){
                 
-				rule.used += 1;
-				if (isEmpty(rule.right)){
-					break;
-				}
-                // println("level voor eval");
-                level.layers = layers;
-                // print_level(level);
+// 				rule.used += 1;
+// 				if (isEmpty(rule.right)){
+// 					break;
+// 				}
+//                 // println("level voor eval");
+//                 level.layers = layers;
+//                 // print_level(level);
 				
-                // println("Level per veranderende layer:");
-				for (int i <- [0..size(rule.left)]){
-                    println("Vervangt: <rule.left[i]> met: <rule.right[i]>");
-					layers = eval(#list[Layer], [EVAL_PRESET, relatives, format_replacement(rule.left[i], rule.right[i], layers)]).val;
-                    // level.layers = layers;
-                    // print_level(level);
-				}
+//                 // println("Level per veranderende layer:");
+// 				for (int i <- [0..size(rule.left)]){
+//                     println("Vervangt: <rule.left[i]> met: <rule.right[i]>");
+// 					layers = eval(#list[Layer], [EVAL_PRESET, relatives, format_replacement(rule.left[i], rule.right[i], layers)]).val;
+//                     // level.layers = layers;
+//                     // print_level(level);
+// 				}
 
-                // println("level na eval");
-                level.layers = layers;
-                // print_level(level);
+//                 // println("level na eval");
+//                 level.layers = layers;
+//                 // print_level(level);
 				
-				loops += 1;
+// 				loops += 1;
 				
-				if (layers == level.layers || loops > MAX_LOOPS){
-					break;
-				} else {
-					changed = true;
-				}
+// 				if (layers == level.layers || loops > MAX_LOOPS){
+// 					break;
+// 				} else {
+// 					changed = true;
+// 				}
 
-			}
-		}
+// 			}
+// 		}
 		
-		layers = rotate_level(layers);
-	}
+// 		layers = rotate_level(layers);
+// 	}
 	
-	level.layers = layers;
-	if (!changed) return <engine, level, rule>;
+// 	level.layers = layers;
+// 	if (!changed) return <engine, level, rule>;
 	
-	for (Command cmd <- rule.commands){
-		if (engine.abort) return <engine, level, rule>;
-		engine = run_command(cmd, engine);
-	}
+// 	for (Command cmd <- rule.commands){
+// 		if (engine.abort) return <engine, level, rule>;
+// 		engine = run_command(cmd, engine);
+// 	}
 		
-	return <engine, level, rule>;
-}
+// 	return <engine, level, rule>;
+// }
 
 // Applies rules
 tuple[Engine, Level] rewrite(Engine engine, Level level, bool late){
@@ -462,26 +462,97 @@ void print_message(str string){
 	println("#####################################################");
 }
 
-void apply_forces(Engine engine, str direction) {
+void check_if_applies(list[str] required_objects, bool neighbor, list[str] directions) {
 
+    println(required_objects);
+
+}
+
+bool can_be_matched(Engine engine, list[str] required, bool neighbor, str direction) {
+
+    tuple[int, int] neighbor_direction = <0,0>;
+
+    int line = 0;
+
+    if (direction in ["right", "left", "horizontal"]) {
+        neighbor_direction = <0,0>;
+    }
+
+    if (neighbor) line += 1;
+
+    if (direction in ["right", "left", "horizontal", "any"]) {
+        visit(engine.converted_levels) {
+            case n: object(name, <_,line>, _, _): {
+                println(name);
+            }
+        }
+    }
+
+    return true;
+
+
+}
+
+void apply_rule() {
+    println("lol");
+}
+
+// Apply each rule as many times as possible then move on to next rule
+void apply_rules(Engine engine, str direction) {
+
+    list[str] all_objects = [];
+    for (LegendData ld <- engine.game.legend) {
+        all_objects += toLowerCase(ld.legend);
+        for (str object <- ld.values) {
+            all_objects += toLowerCase(object);
+        }
+    }
+
+    int index = 1;
     for (RuleData rd <- engine.rules) {
 
-        println("");
+        if (!(rd is rule_data)) {
+            index +=1; 
+            continue;
+        }
+
+        list[str] required_objects = [];
+        bool neighbor = true;
+        str direction = "any";
+
+        for (RulePart rulepart <- rd.left) {
+
+            if (rulepart is prefix) {
+                direction = toLowerCase(rulepart.prefix);
+            }
+
+            if (rulepart is part) {
+                for (RuleContent content <- rulepart.contents) {
+                    for (str content <- content.content) {
+                        if (toLowerCase(content) in all_objects) required_objects += toLowerCase(content);
+                        else if (content == "...") {
+                            neighbor = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (can_be_matched(engine, required_objects, neighbor, direction)) apply_rule();
+
+    //     // println(N);
+    //     // println()
+    //     // println("Left hand rule requires: <required_objects>, neighbor matters = <neighbor>, direction = <direction>");
+    //     // println("Rule <index> can be applied:");
+
+    //     // println(rd);
+
+        index += 1;
     }    
 
 
 }
 
-void apply_rules(Engine engine) {
-
-
-    for (RuleData rd <- engine.rules) {
-
-        println("");
-    }
-
-
-}
 
 void apply_late_rules(Engine engine) {
 
@@ -490,7 +561,6 @@ void apply_late_rules(Engine engine) {
     }
 
 }
-
 
 Engine do_move(Engine engine, Checker c, str direction) {
 
@@ -501,8 +571,8 @@ Engine do_move(Engine engine, Checker c, str direction) {
         if (current_level is message) {
             println(current_level.message);
         } else if (current_level is level_data) {
-            apply_forces(engine, direction);
-            apply_rules(engine);
+            apply_rules(engine, direction);
+            // apply_rules(engine);
         }
         engine.current_level += 1;
 

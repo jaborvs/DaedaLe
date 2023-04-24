@@ -23,7 +23,6 @@ data Level (loc src = |unknown:///|)
 		list[str] player,
 		list[str] background,
 		tuple[int height, int width] size,
-        LevelChecker additional_info,
 		LevelData original
 	)
 	| message(str msg, LevelData original)
@@ -124,7 +123,7 @@ alias Engine = tuple[
 Engine new_engine(PSGame game)		
 	= <
 		[], 
-		level([], [], [], [], [], [], [], <0,0>, <[], 0>, level_data([])), 
+		level([], [], [], [], [], [], [], <0,0>, level_data([])), 
 		(), 
 		[], 
 		[],
@@ -528,7 +527,7 @@ Object new_transparent(Coords coords) = transparent("trans", -1, coords);
 
 Level convert_level(LevelData l: level_data(list[str] level), Checker c, map[LevelData, LevelChecker] ld, Engine engine){
 
-    LevelChecker lc = ld[l];
+    // LevelChecker lc = ld[l];
 
 	list[Layer] layers = [];
 	list[str] objectdata = [];
@@ -574,7 +573,7 @@ Level convert_level(LevelData l: level_data(list[str] level), Checker c, map[Lev
 		c.references["player"],
 		c.references["background"],
 		<size(layers[0]), size(layers[0][0])>,
-        lc,
+        // lc,
 		l
 	);
 }

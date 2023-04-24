@@ -1,5 +1,6 @@
 module PuzzleScript::Test::Engine::Tests
 
+import PuzzleScript::Report;
 import PuzzleScript::Load;
 import PuzzleScript::EngineDennis;
 import PuzzleScript::CompilerDennis;
@@ -23,8 +24,8 @@ void main() {
 	Level level;
 
 	// println("Engine Test");
-	// game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
-	// checker = check_game(game);
+	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
+	checker = check_game(game);
 	// engine = compile(checker);
 
     // for (int i <- [0..size(engine.levels)]){
@@ -37,13 +38,43 @@ void main() {
     // }
 	
 	println("Rule Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game4.PS|);
-    checker = check_game(game);
+
+    // loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo|;
+    loc ReportFile = |project://AutomatedPuzzleScript/src/PuzzleScript/staticReport.csv|;
+
+    // for(loc file <- DemoDir.ls){
+    //     if(file.extension == "txt"){
+        
+    //         // Creates ast
+    //         ParseResult p = parseFile(file);
+    //         CheckResult c = chk_error();
+    //         Summary s = summary_error();
+        
+    //         // If parseresult is success (has the tree and ast):
+    //         if(src_success(loc file, start[PSGame] tree, PSGame game) := p) {
+            
+    //             // game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game5b.PS|);
+    //             checker = check_game(game);
+
+    //             checker.level_data = check_game_per_level(checker);
+
+    //             // engine = compile(checker);
+    //             // engine = do_move(engine, checker, "right");
+
+    //             pretty_print(checker, ReportFile);
+    //         }
+    //     }
+    // }
 
     checker.level_data = check_game_per_level(checker);
-	engine = compile(checker);
-    // return;
 
+    engine = compile(checker);
+    engine = do_move(engine, checker, "right");
+
+    // pretty_print(checker, ReportFile);
+
+    return;
+	// engine = compile(checker);
 
     for (int i <- [0..size(engine.levels)]){
         if (engine.levels[i] is message || engine.levels[i] is level_empty) {
@@ -54,38 +85,28 @@ void main() {
         break;
     }
 
-    str direction = "right";
-    engine = do_move(engine, checker, direction);
+    list[str] directions = ["up", "right", "down", "right"];
 
-    return;
-	// level = engine.levels[0];
-	
-    // println("0 right = <engine.rules[0].right>");
-    // println("1 right = <engine.rules[1].right>");
+    for (int i <- [0..size(directions)]) {
+        println("Level before move: \n");
+        print_level(level);
 
-	// println(engine.rules[1].left[0]);
-	// println();
-	// println(engine.rules[1].right[0]);
-
-    println("Level before move: \n");
-    print_level(level);
-
-	<engine, level> = rewrite(engine, level, false);
-	level = plan_move(level, "right");
-    <engine, level> = rewrite(engine, level, false);
+        <engine, level> = rewrite(engine, level, false);
+        level = plan_move(level, directions[i]);
+        <engine, level> = rewrite(engine, level, false);
 
 
-    // Do_move suddenly has moving_objects that weren't moving_objects before, rewrite must have changed
-	level = do_move(level);
-    // println("Na do_move");
-	// print_level(level);    
-    <engine, level> = rewrite(engine, level, true);
+        // Do_move suddenly has moving_objects that weren't moving_objects before, rewrite must have changed
+        level = do_move(level);
+        // println("Na do_move");
+        // print_level(level);    
+        <engine, level> = rewrite(engine, level, true);
 
-    println("Executed move, level looks the following now: \n");
-    print_level(level);	
+        println("Executed move, level looks the following now: \n");
+        print_level(level);
+    }
 
-    return;
-	
+	return;
 	
 	println("Rotate Test");
 	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Rotate.PS|);
