@@ -1,0 +1,120 @@
+title Simple Block Pushing Game
+author David Skinner
+homepage www.puzzlescript.net
+debug
+
+========
+OBJECTS
+========
+
+Background
+LIGHTGREEN GREEN
+11111
+01111
+11101
+11111
+10111
+
+
+Target
+DarkBlue
+.....
+.000.
+.0.0.
+.000.
+.....
+
+Wall
+BROWN DARKBROWN
+00010
+11111
+01000
+11111
+00010
+
+Player
+Black Orange White Blue
+.000.
+.111.
+22222
+.333.
+.3.3.
+
+Crate1
+Orange Yellow
+00000
+0...0
+0...0
+0...0
+00000
+
+Crate2
+Red Yellow
+00000
+0...0
+0...0
+0...0
+00000
+
+
+=======
+LEGEND
+=======
+
+. = Background
+# = Wall
+P = Player
+Crate = Crate1 or Crate2
+* = Crate1
+$ = Crate2
+@ = Crate1 and Target
+O = Target
+
+=======
+SOUNDS
+=======
+
+Crate MOVE 36772507
+sfx4 435345435
+
+================
+COLLISIONLAYERS
+================
+
+Background
+Target
+Player, Wall, Crate
+
+======
+RULES
+======
+
+late VERTICAL [ >  Player | ... | Crate ] [ Crate ] -> [  >  Player | ... | > Crate  ] [Crate ] sfx4 win message this is a test
+
+==============
+WINCONDITIONS
+==============
+
+All Target on Crate
+
+=======
+LEVELS
+=======
+
+
+####..
+#.O#..
+#..###
+#@P..#
+#..$.#
+#..###
+####..
+
+
+######
+#....#
+#.#P.#
+#.*@.#
+#.O@.#
+#....#
+######

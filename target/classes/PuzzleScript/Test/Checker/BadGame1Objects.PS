@@ -1,0 +1,125 @@
+title Simple Block Pushing Game
+author David Skinner
+homepage www.puzzlescript.net
+debug
+
+========
+OBJECTS
+========
+
+Background
+LIGHTGREEN GREEN
+11111
+01111
+11101
+11111
+10111
+
+Background
+LIGHTGREEN GREEN
+11111
+01111
+11101
+11111
+10111
+
+Backg.@round
+LIGHTGREEN GREEN
+11111
+01111
+11101
+11111
+10111
+
+
+Target b
+DarkBlue
+.....
+.000.
+.0.0.
+.000.
+.....
+
+Wall b
+BROWN DARKBROWN
+00010
+11111
+01004
+11111
+00010
+
+Player
+Black Bonk White Blue
+.000.
+.111.
+2222222222
+.333.
+.3.3.
+
+Crate
+Orange Yellow
+00000
+0...0
+0...0
+0...0
+00000
+
+
+=======
+LEGEND
+=======
+
+. = Background
+# = Wall
+P = Player
+* = Crate
+@ = Crate and Target
+O = Target
+
+=======
+SOUNDS
+=======
+
+Crate MOVE 36772507
+
+================
+COLLISIONLAYERS
+================
+
+Background
+Target
+Player, Wall, Crate
+
+======
+RULES
+======
+
+[ >  Player | Crate ] -> [  >  Player | > Crate  ]
+
+==============
+WINCONDITIONS
+==============
+
+All Target on Crate
+
+=======
+LEVELS
+=======
+
+
+####..
+#.O#..
+#..###
+#@P..#
+#..*.#
+#..###
+####..
+
+
+######
+#....#
+#.#P.#
+#.*@.#
+#.O@.#
+#....#
+######

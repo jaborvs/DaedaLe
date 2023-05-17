@@ -1,0 +1,33 @@
+======
+RULES
+======
+
+( multi line
+ comment
+ 
+)
+
+late [ PinkBlock | PinkBlock | PinkBlock ] -> [ | | ]
+late [ BlueBlock | BlueBlock | BlueBlock ] -> [ | | ] SFX0
+[ PurpleBlock | PurpleBlock | PurpleBlock ] -> [ | | ]
+[ > player | no activetile ] -> cancel
+[ > player |  ] -> [ | player ]
+
+[ activetile | player ] -> [ temp | player ]
+[ no temp | player ] -> [activetile | player ]
+[ temp ] -> []
+
+[activetile void ] -> [ void ]
+[ >  Moveable | Moveable ] -> [ > Moveable | > Moveable ] message tico tico
+[ >  Moveable | Moveable ] -> [ > Moveable | > Moveable ] restart checkpoint message tico tico
+[ >  Moveable | Moveable ] -> message tico tico
+[] -> [] message tico tico
+
+
+[ > Block | Grille ] -> [ Block | Grille ]
+
+late [ PinkBlock | PinkBlock | PinkBlock ] -> [ | | ]
+[ Eyeball | ... | Player ] -> [ > Eyeball | ... | Player ] SFX0
+late [ PurpleBlock | PurpleBlock | PurpleBlock ] -> [ | | ]
+late [ OrangeBlock | OrangeBlock | OrangeBlock ] -> [ | | ]
+late [ GreenBlock | GreenBlock | GreenBlock ] -> [ | | ]

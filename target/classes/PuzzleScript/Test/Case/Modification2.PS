@@ -1,0 +1,441 @@
+title Timothy Adventures 0.07
+author TimmyProductions
+homepage www.puzzlescript.net
+
+========
+OBJECTS
+========
+ 
+Background1
+LIGHTGREEN GREEN
+11111
+01111
+11101
+11111
+10111
+
+
+Background2
+GREEN darkGREEN
+11111
+01111
+11101
+11111
+10111
+
+Background3
+lightgreen darkGREEN
+11111
+01111
+11101
+11111
+10111
+
+Background4
+brown lightbrown white
+11110
+11110
+11110
+11110
+00000
+ 
+ 
+Exit
+DarkBlue
+.....
+.000.
+.0.0.
+.000.
+.....
+ 
+Wall
+BROWN DARKBROWN
+00010
+11111
+01000
+11111
+00010
+
+Teleport T
+darkblue blue Grey Purple
+.11..
+1301.
+1031.
+1301.
+.11..
+
+Player_stealth P
+Black Orange Yellow Blue
+.000.
+.111.
+10001
+.000.
+.3.3.
+ 
+Player_captured
+Black Orange Blue Red DarkRed
+..1..
+31332
+4144.
+31332
+..1..
+ 
+Guardian
+darkblue darkbrown Yellow Blue
+.323.
+.111.
+13331
+.333.
+.0.0.
+ 
+Objective
+Orange Yellow
+00000
+0.1.0
+01110
+01110
+00000
+ 
+No_Objective
+Brown Black
+00000
+0.1.0
+01110
+01110
+00000
+ 
+Door_on D
+Red grey
+10001
+01010
+00100
+01010
+10001
+ 
+Lever L
+darkgreen
+.....
+.000.
+.000.
+.000.
+.....
+
+Lever_on Q
+darkred
+.....
+.000.
+.000.
+.000.
+.....
+
+Killtrap K
+darkbrown
+.....
+.000.
+.000.
+.000.
+.....
+ 
+Door_off F
+gray
+0.0.0
+.....
+0...0
+.....
+0.0.0
+
+Temp J
+Black Orange Yellow Blue
+..0..
+.1.1.
+.0.01
+..0..
+.3.3.
+ 
+=======
+LEGEND
+=======
+Background = Background1 or Background2 or Background3 or Background4
+. = Background1
+, = Background2
+- = Background3
++ = Background4
+# = Wall
+Player = Player_stealth or Player_captured or Temp
+O = Objective
+E = Exit
+G = Guardian
+
+=======
+SOUNDS
+=======
+
+endlevel 7293908
+Guardian MOVE 69585907
+Player_captured CREATE 13911904
+Temp CREATE 62749303
+No_Objective CREATE 97557700
+Door_on CREATE 1860903
+
+
+================
+COLLISIONLAYERS
+================
+Background
+Exit
+No_Objective, Lever, Lever_on, Door_off, Teleport, Killtrap
+Player, Objective, Wall, Guardian, Door_on
+
+======
+RULES
+======
+
+[ Guardian | Background | Player_stealth ] -> [ > Guardian | Background | Player_stealth ]
+
+[ Player_captured | ] -> restart
+[ Guardian | ... | Player_stealth ] -> [ > Guardian | ... | Player_stealth ]
+[ Guardian | Player_stealth ] -> [ Guardian | < Player_captured ] message Hey, you!!
+[ Killtrap | < Player_stealth ] -> [ Killtrap | < Player_captured ] message You died
+
+[ Player_stealth Lever | ... | Door_off ] -> [ Player_stealth lever_on | ... | Door_on ]
+[ Player_stealth Lever_on | ... | Door_off ] -> [ Player_stealth lever_on | ... | Door_on ]
+[ Player_stealth Teleport | ... | Teleport no Guardian] -> [ Teleport | ... | Temp Teleport ]
+[> Temp Teleport | Background no Wall no Door_on] -> [ Teleport > Player_stealth | Background]
+[> Temp] -> [Temp]
+[> Door_on] -> [Door_on]
+
+==============
+WINCONDITIONS
+==============
+
+No Objective
+All Player on Exit
+
+=======
+LEVELS
+=======
+
+message LEVEL 1
+
+message Something shiny lies in front of you!
+
+###########
+#....O....#
+#.........#
+#.........#
+#.........#
+#....P....#
+####EEE####
+
+message LEVEL 2
+
+message Watch out, there's a guard!
+
+#####################
+#,,,,o,,,,,,,,,o,,,,#
+#,,,,,,,,,g,,,,,,,,,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,,,,,,,,,,,,,,,,,,#
+#,,,,,,,,,p,,,,,,,,,#
+#########eee#########
+
+message LEVEL 3
+
+message New Frontiers…
+
+#####################
+###,,,,,,,,,,,##,,,,#
+###,,,,,,,,,,g##,,,,#
+#,,,g##,,,,,,,,,,,,,#
+#,,,,##,,,,,,,,,,####
+e,,,,,,,,,##,,,,,#,,#
+ep,,,,,,,,##,,,,,,,o#
+e,,,,,,,,,g,,,,,,#,,#
+#,,,,,,,,,,,,,,,,####
+#,,,##g,,,,,,,,,,,,,#
+#,,,##,,,,,,g,,,,,,,#
+#,,,,,,,,,,##,,,,,,,#
+#####################
+
+message LEVEL 4
+
+message Woah! What now?
+
+############
+#O####---###
+#---------G#
+#--G-------#
+#--#-------#
+#G-#-p-----#
+####EEE#####
+
+
+
+message LEVEL 5
+
+message Master in electronics! (faithfully)
+
+###############
+#............##
+#.............#
+#.###########.#
+#..........##.#
+#..........##.#
+#......o...g#.#
+#..........##.#
+#######f#####.#
+#.....#l#.....#
+#.....#.#.....#
+#.p...........#
+#eee###########
+
+message LEVEL 6
+
+message It should be easy now...
+
+######################
+#.#..O.......#..O....#
+#.#.....L....#.......#
+#....................#
+#......#.#...L#..#####
+#...####F#...##......#
+#G..#..P.#...F.....G.#
+#####EEE##############
+
+message LEVEL 7
+
+message Careful, or you will trip on those pesky traps!
+
+###########
+#...lOl...#
+#...lg...g#
+#....ll...#
+#.g.......#
+#.........#
+#.........#
+#....P....#
+#...fffg..#
+####EEE####
+
+message LEVEL 8
+
+message Try to trap those guards!
+
+#################
+#g.....#....lll.#
+#......#........#
+#..........#fff.#
+#.######...#..f.#
+#......#..g#.gf.#
+#f....l#...#..f.#
+#.f...l#...#.gf.#
+#####.l########f#
+ep....lf.....g#o#
+#################
+
+message LEVEL 9
+
+message Wait what?!
+
+#####################
+#,,,LLLLLLLLLLLLTg#T#
+#,#################,#
+#T#,o,,,,,,,,,,,,T#,#
+#,#,FFFFFFFFFFFF#,#,#
+#,#TFggggggggggg#,#,#
+###################,#
+#,,T,,,g,,p,,,,,,,,,#
+#########eee#########
+
+message LEVEL 10
+
+message Those bageleaters won’t let you pass while they’re on a portal!
+
+##########
+####...#G#
+##.......#
+#........#
+#T.......#
+#........#
+########G#
+#T.#...#.#
+#..#GO####
+#.T#T#####
+#..#######
+#...P....#
+###EEE####
+
+message LEVEL 11
+
+message Oh my… Portal!
+
+#####################
+#..................g#
+#..#oo#..##.#######.#
+#..####..##..T...##.#
+#........#######.##.#
+#..####..#o....#.##.#
+#..L..#FF####..#F##F#
+#####.#.g..##..g.##.#
+#.T##F#....o#..F..T.#
+#..##L#.F.F##.......#
+#..L..#F.F.....F.g..#
+#..####....######...#
+#.........p..T#L....#
+#########eee#########
+
+message LEVEL 12
+
+message Try to teleport through those guardsl!
+
+###################
+#ggogglf...fg.....#
+#ggggglf..tfg..t..#
+#....tlft..fg....t#
+#fffffffl..fg...gg#
+#.....##########..#
+#.....#.....####..#
+#fffff#l....####.t#
+#t....#t...l####ff#
+#.....#..p.t####t.#
+########eee########
+
+message LEVEL 13
+
+###############
+#o..l..g#.tg.o#
+######..#..f..#
+######..#.f...#
+#####..f#######
+#####.f.......#
+####..#########
+#....####.tl..#
+#gk.f..##.kk..#
+#...###l#.lk..#
+##...t#.#tkk..#
+##....#.#######
+##....l.......#
+##.....p......#
+######eee######
+
+message LEVEL 14
+
+message Now it’s the time to prove yourself!
+
+#########################
+#kkkk#.........t#..#t.kk#
+#klll#.#.####..l#..#k..k#
+#klkl#.#k#..#..k#..#klkk#
+#llkl#.tl#..#.###..#llll#
+#.k..#f###..#t#....######
+#lklk#g###..###.........#
+#lkll#####..............#
+#lkkl###....#############
+#llkl###g####tff###ggggg#
+#k.k.###..f.#.fg###gffff#
+#k.k...#f.f.#.fft##gft..#
+#klkk#l#..fl#....##gf...#
+#kl..#ktf.fl#######gf...#
+#kkk......l.p.lk###gf..o#
+###########eee###########

@@ -1,0 +1,152 @@
+title Simple Block Pushing Game
+author David Skinner
+homepage www.puzzlescript.net
+debug
+
+========
+OBJECTS
+========
+
+Background
+LIGHTGREEN GREEN
+11111
+01111
+11101
+11111
+10111
+
+
+Target
+DarkBlue
+.....
+.000.
+.0.0.
+.000.
+.....
+
+Target2
+DarkBlue
+.....
+.000.
+.0.0.
+.000.
+.....
+
+Wall
+BROWN DARKBROWN
+00010
+11111
+01000
+11111
+00010
+
+Player
+Black Orange White Blue
+.000.
+.111.
+22222
+.333.
+.3.3.
+
+Crate
+Orange
+00000
+0...0
+0...0
+0...0
+00000
+
+Crate2
+Orange
+00000
+0...0
+0...0
+0...0
+00000
+
+
+=======
+LEGEND
+=======
+
+. = Background
+# = Wall
+P = Player
+* = Crate
+@ = Crate and Target
+O = Target
+Eyeball = Crate
+
+=======
+SOUNDS
+=======
+
+Crate MOVE 36772507
+SFX0 1231231
+
+================
+COLLISIONLAYERS
+================
+
+Background
+Target, Target2
+Player, Wall, Crate, Crate2
+
+======
+RULES
+======
+[ >  Player | Crate ] -> [  >  Player | Player > Crate > ]
+[ Eyeball | ... | Player ] -> [ > Eyeball | ... | Player ] SFX0
+late [ Crate | Crate | Crate ] -> [ | |]
+[ stationary Player ] -> [randomDir Player]
+[ Player no Target ] -> [ Player random Target ]
+late [ Target Player ] -> [ Player ] message ...
+late [ Target Player ] -> Sfx0
+[ > Player | ... | Crate ] -> [ | ... | Player ]
+Horizontal [ Target >  Player  ] -> [ Target > Player ]
+Vertical [ Target > Player ] -> [ Target > Player ]
+late [ Player Target ] -> cancel
+[ > Player | Crate2 ] -> [ > Player | > Crate Target]
+
+[ > > Player] -> [> Player ]
+[ | ] -> [ ]
+[ ] [ ] -> [ ] win
+[ Eyeball | ... | Player ] -> [ > Eyeball | Player ] SFX0
+[ ... ] -> [ ... ]
+[ | ... | ] -> []
+[ > Player | > ... | Crate ] -> [ | ... | Player ]
+late [ Target Player ] -> Sfx2
+late [ > Player Target ] -> cancel
+[ randomDir Crate ] -> [randomDir Crate]
+[ Crate ] UP [ Crate ] -> [Crate ] [Crate]
+
+
+
+
+==============
+WINCONDITIONS
+==============
+
+All Target on Crate
+
+=======
+LEVELS
+=======
+
+
+####..
+#.O#..
+#..###
+#@P..#
+#..*.#
+#..###
+####..
+
+
+######
+#....#
+#.#P.#
+#.*@.#
+#.O@.#
+#....#
+######

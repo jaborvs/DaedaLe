@@ -1,0 +1,1 @@
+In this directory are ignored the 83 games that were tested, copied straight from the PuzzleScript reposistory.

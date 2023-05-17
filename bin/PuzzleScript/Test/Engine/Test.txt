@@ -1,0 +1,10 @@
+[ >  Player | Crate ] -> [  >  Player | > Crate  ]
+
+[transparent("trans", "."), transparent("trans", "."), moving_player("player", "p", "left"), object("crate", "c"), transparent("trans", ".")]
+[*before, \moving_player("player", legend0, direction0), object("crate", legend1), *after]
+before + [moving_player("player", legend0, direction0), moving_object("crate", legend1, direction0)] + after
+
+
+[ Eyeball | ... | Player ] -> [ > Eyeball | ... | Player ]
+[*a, <x:object()>, *b, <y:player()>, *c] -> a + [moving_object()] + b + [y] + c
+
