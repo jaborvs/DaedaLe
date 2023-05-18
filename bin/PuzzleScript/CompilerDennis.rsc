@@ -374,12 +374,10 @@ Level convert_level(LevelData level, Checker c) {
 
 // }
 
-// list[str] relative_directions = ["\>", "v", "^", "\<", "horizontal", "vertical"];
 
+// ==== DIRECTIONS AND IMPLEMENTATIONS REPRODUCED FROM PUZZLESCRIPTS GITHUB ==== \\
 
-// directions and implementation reproduced from PuzzleScript"s source code \\
-
-// directionaggregates translate to multiple other directions
+// Directionaggregates translate to multiple other directions
 map[str, list[str]] directionaggregates = (
     "horizontal": ["left", "right"],
     "horizontal_par": ["left", "right"],
@@ -413,16 +411,21 @@ map[str, list[str]] relativeDict = (
 // }
 
 // Expanding rules to accompany multiple directions
-list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _)) {
+list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Checker checker) {
 
     println("New rule");
 
     list[Rule] new_rule_directions = [];
-    list[Rule] absolute_rules = [];
+    list[Rule] new_rules = [];
 
     new_rule_directions += extend_directions(rd);
     for (Rule rule <- new_rule_directions) {
-        absolute_rules += [convertRelativeDirsToAbsolute(rule)];
+        Rule absolute_rule = convertRelativeDirsToAbsolute(rule);
+        new_rules += [atomizeAggregates(checker, absolute_rule)];
+    }
+
+    for (Rule rule <- new_rules) {
+        rule.late = late;
     }
 
     return new_rule_directions;
@@ -513,7 +516,7 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
     }
     rule.left = new_rc;
 
-    list[RuleContent] new_rc = [];
+    new_rc = [];
     for (RuleContent rc <- rule.right) {
         for (int i <- [0..size(rc.content)]) {
             int index = indexOf(relativeDirs, rc.content[i]);
@@ -525,6 +528,38 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
 
     return rule;
 
+}
+
+Rule atomizeAggregates(Checker c, Rule rule) {
+
+    println("c combinations = <c.combinations>");
+
+    list[RuleContent] new_rc = [];
+    for (RuleContent rc <- rule.left) {
+        for (int i <- [1..size(rc.content)]) {
+    
+            println("Content uit left: <rc.content[i]>");
+
+            if (rc.content[i] in c.combinations<0>) {
+                
+                for (int j <- [0..size(c.combinations[rc.content[i]])]) {
+
+                    // Push direction and individual objects
+                    str direction = rc.content[0];
+                    str object = c.combinations[rc.content[i]][j];
+                    println("Adding object <object> with direction <direction> to <rc.content[i]>");
+                    rc.content[i] += [direction, object];
+
+                }
+            }
+                
+                // rc.content[i] = c.combinations[];
+        }
+        new_rc += rc;
+    }
+    rule.left = new_rc;
+
+    return rule;
 }
 
 
@@ -555,8 +590,8 @@ Engine compile(Checker c) {
 
     for (RuleData rule <- rules) {
 
-        if ("late" in [toLowerCase(x.prefix) | x <- rule.left, x is prefix]) engine.late_rules += [convert_rule(rule)];
-        else engine.rules += [convert_rule(rule)];
+        if ("late" in [toLowerCase(x.prefix) | x <- rule.left, x is prefix]) engine.late_rules += [convert_rule(rule, true, c)];
+        else engine.rules += [convert_rule(rule, false, c)];
 
     }
 
