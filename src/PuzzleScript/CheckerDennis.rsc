@@ -1,6 +1,9 @@
 module PuzzleScript::CheckerDennis
 
+// For visualizing
+import util::IDEServices;
 import vis::Charts;
+
 import PuzzleScript::AST;
 import util::Math;
 import IO;
@@ -977,7 +980,8 @@ bool rules_referencing_char(list[str] char_references, RuleData r: rule_data(lef
 
 }
 
-void generate_report_per_level(Checker c, loc directory) {
+// This function is used to generate reports and create charts for each game
+Content generate_report_per_level(Checker c, loc directory) {
 
     str levelOutput = "";
 
@@ -1029,15 +1033,11 @@ void generate_report_per_level(Checker c, loc directory) {
     // Only get level_data for visualizing purposes
     list[LevelData] level_data_ld = [x | x <- levels, x is level_data];
 
-
-    println("1, <size(ld[level_data_ld[0]].moveable_objects)>");
-
-
-    lineChart(["down"],
-            [<"<x>",(ld[level_data_ld[x]].size.width * ld[level_data_ld[x]].size.height)> | x <- [0..size(level_data_ld)]], 
+    return lineChart(["size", "moving objects", "applied rules", "messages"],
+            [<"<x>",(ld[level_data_ld[x]].size.width)> | x <- [0..size(level_data_ld)]], 
             [<"<x>",(size(ld[level_data_ld[x]].moveable_objects))> | x <- [0..size(level_data_ld)]], 
-            [<"<x>",(size(ld[level_data_ld[x]].applied_rules))> | x <- [0..size(level_data_ld)]]);
-            // [<"<x>",size(ld[level_data_ld[x]].messages)> | x <- [1..size(level_data_ld)]]);
+            [<"<x>",(size(ld[level_data_ld[x]].applied_rules))> | x <- [0..size(level_data_ld)]],
+            [<"<x>",(size(ld[level_data_ld[x]].messages))> | x <- [0..size(level_data_ld)]]);
 
 }
 

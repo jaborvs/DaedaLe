@@ -55,9 +55,10 @@ data Command (loc src = |unknown:///|)
 alias Rule = tuple[
 	bool late,
 	set[Command] commands,
+    str direction,
 	set[str] directions,
-	list[str] left,
-	list[str] right,
+	list[RuleContent] left,
+	list[RuleContent] right,
 	int used,
 	RuleData original
 ];
@@ -65,10 +66,23 @@ alias Rule = tuple[
 Rule new_rule(RuleData r)
 	= <
 		false, 
-		{}, 
+		{},
+        "", 
 		{}, 
 		[], 
 		[],
+		0, 
+		r
+	>;
+
+Rule new_rule(RuleData r, str direction, list[RuleContent] left, list[RuleContent] right)
+	= <
+		false, 
+		{},
+        direction, 
+		{}, 
+		left, 
+		right,
 		0, 
 		r
 	>;
@@ -165,14 +179,14 @@ map[str, str] relative_mapping = (
 	"^": "relative_up"
 );
 
-str format_relatives(list[str] absolutes){
-	return "
-	'str relative_right = \"<absolutes[0]>\";
-	'str relative_left = \"<absolutes[1]>\";
-	'str relative_down = \"<absolutes[2]>\";
-	'str relative_up = \"<absolutes[3]>\";
-	";
-}
+// str format_relatives(list[str] absolutes){
+// 	return "
+// 	"str relative_right = \"<absolutes[0]>\";
+// 	"str relative_left = \"<absolutes[1]>\";
+// 	"str relative_down = \"<absolutes[2]>\";
+// 	"str relative_up = \"<absolutes[3]>\";
+// 	";
+// }
 
 // matching
 str absolufy(str force) {
@@ -360,27 +374,156 @@ Level convert_level(LevelData level, Checker c) {
 
 // }
 
-list[str] relative_directions = ["\>", "v", "^", "\<", "horizontal", "vertical"];
+// list[str] relative_directions = ["\>", "v", "^", "\<", "horizontal", "vertical"];
 
+
+// directions and implementation reproduced from PuzzleScript"s source code \\
+
+// directionaggregates translate to multiple other directions
+map[str, list[str]] directionaggregates = (
+    "horizontal": ["left", "right"],
+    "horizontal_par": ["left", "right"],
+    "horizontal_perp": ["left", "right"],
+    "vertical": ["up", "down"],
+    "vertical_par": ["up", "down"],
+    "vertical_perp": ["up", "down"],
+    "moving": ["up", "down", "left", "right", "action"],
+    "orthogonal": ["up", "down", "left", "right"],
+    "perpendicular": ["^", "v"],
+    "parallel": ["\<", "\>"]
+);
+
+list[str] relativeDirections = ["^", "v", "\<", "\>", "perpendicular", "parallel"];
+list[str] simpleAbsoluteDirections = ["up", "down", "left", "right"];
+list[str] simpleRelativeDirections = ["^", "v", "\<", "\>"];
+
+list[str] relativeDirs = ["^", "v", "\<", "\>", "parallel", "perpendicular"]; //used to index the following
+map[str, list[str]] relativeDict = (
+    "right": ["up", "down", "left", "right", "horizontal_par", "vertical_perp"],
+    "up": ["left", "right", "down", "up", "vertical_par", "horizontal_perp"],
+    "down": ["right", "left", "up", "down", "vertical_par", "horizontal_perp"],
+    "left": ["down", "up", "right", "left", "horizontal_par", "vertical_perp"]
+);
+
+// bool directionalRule(list[RulePart] ruleContent) {
+
+
+
+
+// }
+
+// Expanding rules to accompany multiple directions
 list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _)) {
 
-    list[Rule] new_rules = [];
+    println("New rule");
 
-    for (RulePart rp <- left) {
-        if (rp is part) {
-            for (RuleContent content <- rp.contents) {
-                // println(content.content);
-                if (any(str content <- content.content, toLowerCase(content) in relative_directions)) {
-                    // new_rules += make_absolute();
-                    println("directional movement");
-                }
-            }
-        }
-        // println(rp);
+    list[Rule] new_rule_directions = [];
+    list[Rule] absolute_rules = [];
+
+    new_rule_directions += extend_directions(rd);
+    for (Rule rule <- new_rule_directions) {
+        absolute_rules += [convertRelativeDirsToAbsolute(rule)];
     }
 
-    return new_rules;
+    return new_rule_directions;
 
+
+}
+
+// STEP 2
+    // for (var i = 0; i < rules2.length; i++) {
+    //     var rule = rules2[i];
+    //     //remove relative directions
+    //     convertRelativeDirsToAbsolute(rule);
+    //     //optional: replace up/left rules with their down/right equivalents
+    //     rewriteUpLeftRules(rule);
+    //     //replace aggregates with what they mean
+    //     atomizeAggregates(state, rule);
+
+    //     if (state.invalid){
+    //         return;
+    //     }
+        
+    //     //replace synonyms with what they mean
+    //     rephraseSynonyms(state, rule);
+    // }
+
+list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _)) {
+
+    list[Rule] new_rule_directions = [];
+    Rule cloned_rule = new_rule(rd);
+
+    list[RuleContent] lhs = get_rulecontent(left);
+    list[RuleContent] rhs = get_rulecontent(right);
+
+    for (RulePart rp <- left) {
+        if (rp is prefix && rp.prefix != "late") {
+            str direction = toLowerCase(rp.prefix);
+
+            // AND IS DIRECTIONALRULE (moet nog gedaan worden)
+            if (direction in directionaggregates) {
+                list[str] directions = directionaggregates[toLowerCase(rp.prefix)];
+                for (str direction <- directions) {
+                    cloned_rule = new_rule(rd, direction, lhs, rhs);
+                    new_rule_directions += cloned_rule;
+                }
+            }
+            else if (direction in simpleAbsoluteDirections) {
+                cloned_rule = new_rule(rd, direction, lhs, rhs);
+                new_rule_directions += cloned_rule; 
+            } 
+        }              
+    }
+
+    // No direction prefix was registered, meaning all directions apply
+    if (cloned_rule.direction == "") {
+        list[str] directions = directionaggregates["orthogonal"];
+        for (str direction <- directions) {
+            cloned_rule = new_rule(rd, direction, lhs, rhs);
+            new_rule_directions += cloned_rule;
+        }  
+    }
+
+    return new_rule_directions;
+
+}
+
+list[RuleContent] get_rulecontent(list[RulePart] ruleparts) {
+
+    for (RulePart rp <- ruleparts) {
+        if (rp is part) return rp.contents;
+    }
+    return [];
+
+}
+
+// Not sure if works for everything. For example PuzzleScript's engine 
+// differentiates between cellrow and cell
+Rule convertRelativeDirsToAbsolute(Rule rule) {
+
+    str direction = rule.direction;
+
+    list[RuleContent] new_rc = [];
+    for (RuleContent rc <- rule.left) {
+        for (int i <- [0..size(rc.content)]) {
+            int index = indexOf(relativeDirs, rc.content[i]);
+            if (index >= 0) rc.content[i] = relativeDict[direction][index];
+        }
+        new_rc += rc;
+    }
+    rule.left = new_rc;
+
+    list[RuleContent] new_rc = [];
+    for (RuleContent rc <- rule.right) {
+        for (int i <- [0..size(rc.content)]) {
+            int index = indexOf(relativeDirs, rc.content[i]);
+            if (index >= 0) rc.content[i] = relativeDict[direction][index];
+        }
+        new_rc += rc;
+    }
+    rule.right = new_rc;
+
+    return rule;
 
 }
 

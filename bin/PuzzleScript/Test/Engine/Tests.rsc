@@ -1,5 +1,11 @@
 module PuzzleScript::Test::Engine::Tests
 
+import util::IDEServices;
+import vis::Charts;
+import vis::Presentation;
+import vis::Layout;
+import util::Web;
+
 import PuzzleScript::Report;
 import PuzzleScript::Load;
 import PuzzleScript::EngineDennis;
@@ -25,7 +31,9 @@ Object randomObject(list[Object] objs){
 void generate_reports(Checker c, loc ReportDir, loc DemoDir) {
     
     int amount = 0;
-    int maxamount = 10;
+    int maxamount = 3;
+
+    list[Content] charts = [];
 
     for(loc file <- DemoDir.ls){
         if(file.extension == "txt" && amount <= maxamount){
@@ -41,16 +49,21 @@ void generate_reports(Checker c, loc ReportDir, loc DemoDir) {
                 checker = check_game(game);
                 checker.level_data = check_game_per_level(checker);
 
-                generate_report_per_level(checker, ReportDir);
+                charts += [generate_report_per_level(checker, ReportDir)];
+
             }
             amount += 1;
         }
     }
+
+    showInteractiveContent(charts[2]);
+
+
 }
 
 void main() {
 
-    loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo|;
+    loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/Tutorials|;
     loc ReportDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results|;
 
 	PSGame game;
@@ -64,7 +77,7 @@ void main() {
 
 	engine = compile(checker);
 
-    generate_reports(checker, ReportDir, DemoDir);
+    // generate_reports(checker, ReportDir, DemoDir);
     return;
 	// engine = compile(checker);
 
