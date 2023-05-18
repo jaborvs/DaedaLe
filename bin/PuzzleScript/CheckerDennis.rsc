@@ -346,9 +346,6 @@ Checker check_legend(LegendData l, Checker c) {
         }
     }
 
-    println("Checking legend: <l>");
-
-
 	str legend = toLowerCase(l.legend);
 
     // Check if object in legend is defined in objects section

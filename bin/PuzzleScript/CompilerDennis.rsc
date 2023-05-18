@@ -413,43 +413,24 @@ map[str, list[str]] relativeDict = (
 // Expanding rules to accompany multiple directions
 list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Checker checker) {
 
-    println("New rule");
-
     list[Rule] new_rule_directions = [];
     list[Rule] new_rules = [];
 
     new_rule_directions += extend_directions(rd);
     for (Rule rule <- new_rule_directions) {
         Rule absolute_rule = convertRelativeDirsToAbsolute(rule);
-        new_rules += [atomizeAggregates(checker, absolute_rule)];
+        Rule atomized_rule = atomizeAggregates(checker, absolute_rule);
+        new_rules += [rephraseSynonyms(checker, atomized_rule)];
     }
 
     for (Rule rule <- new_rules) {
         rule.late = late;
     }
 
-    return new_rule_directions;
+    return new_rules;
 
 
 }
-
-// STEP 2
-    // for (var i = 0; i < rules2.length; i++) {
-    //     var rule = rules2[i];
-    //     //remove relative directions
-    //     convertRelativeDirsToAbsolute(rule);
-    //     //optional: replace up/left rules with their down/right equivalents
-    //     rewriteUpLeftRules(rule);
-    //     //replace aggregates with what they mean
-    //     atomizeAggregates(state, rule);
-
-    //     if (state.invalid){
-    //         return;
-    //     }
-        
-    //     //replace synonyms with what they mean
-    //     rephraseSynonyms(state, rule);
-    // }
 
 list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _)) {
 
@@ -501,7 +482,7 @@ list[RuleContent] get_rulecontent(list[RulePart] ruleparts) {
 }
 
 // Not sure if works for everything. For example PuzzleScript's engine 
-// differentiates between cellrow and cell
+// differentiates between cellrow and cell --> Cellrow is gewoon hele content, cell is individueel
 Rule convertRelativeDirsToAbsolute(Rule rule) {
 
     str direction = rule.direction;
@@ -530,36 +511,84 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
 
 }
 
+// Nog niet helemaal klaar denk ik. Doet wel al wat verwacht wordt maar
+// vertrouw het nog niet helemaal
 Rule atomizeAggregates(Checker c, Rule rule) {
-
-    println("c combinations = <c.combinations>");
 
     list[RuleContent] new_rc = [];
     for (RuleContent rc <- rule.left) {
-        for (int i <- [1..size(rc.content)]) {
-    
-            println("Content uit left: <rc.content[i]>");
+        list[str] new_content = [];
 
-            if (rc.content[i] in c.combinations<0>) {
+        for (int i <- [0..size(rc.content)]) {
+            
+            str object = toLowerCase(rc.content[i]);
+            if (object in c.combinations<0>) {
                 
-                for (int j <- [0..size(c.combinations[rc.content[i]])]) {
+                str direction = "";
+                if (rc.content[0] != "no") direction = rc.content[0];
 
-                    // Push direction and individual objects
-                    str direction = rc.content[0];
-                    str object = c.combinations[rc.content[i]][j];
-                    println("Adding object <object> with direction <direction> to <rc.content[i]>");
-                    rc.content[i] += [direction, object];
-
+                new_content += [direction];
+                for (int j <- [0..size(c.combinations[object])]) {
+                    str new_object = c.combinations[object][j];
+                    new_content += ["<new_object>"];
                 }
+            } 
+            else if (!(object in c.combinations<0>) && !(object in relativeDict["right"])){
+                new_content += [object];
             }
-                
-                // rc.content[i] = c.combinations[];
         }
+        rc.content = new_content;
         new_rc += rc;
     }
     rule.left = new_rc;
 
+    new_rc = [];
+    for (RuleContent rc <- rule.right) {
+        list[str] new_content = [];
+
+        for (int i <- [0..size(rc.content)]) {
+            
+            str object = toLowerCase(rc.content[i]);
+            if (object in c.combinations<0>) {
+                
+                str direction = "";
+                if (rc.content[0] != "no") direction = rc.content[0];
+
+                new_content += [direction];
+                for (int j <- [0..size(c.combinations[object])]) {
+                    str new_object = c.combinations[object][j];
+                    new_content += ["<new_object>"];
+                }
+            } 
+            else if (!(object in c.combinations<0>) && !(object in relativeDict["right"])){
+                new_content += [object];
+            }
+        }
+        rc.content = new_content;
+        new_rc += rc;
+    }
+    rule.right = new_rc;
+
     return rule;
+}
+
+// If name refers to a concrete name, replace
+Rule rephraseSynonyms(Checker c, Rule rule) {
+
+    for (RuleContent rc <- rule.left) {
+
+        for (int i <- [0..size(rc.content)]) {
+
+            str object = rc.content[i];
+            if (object in c.references<0> && size(c.references[object]) == 1) println("<object> references <c.references[object]>");
+
+        }
+
+    
+    }
+    
+    return rule;
+
 }
 
 
