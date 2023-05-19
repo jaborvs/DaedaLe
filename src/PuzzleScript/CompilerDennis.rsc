@@ -415,12 +415,27 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Ch
 
     list[Rule] new_rule_directions = [];
     list[Rule] new_rules = [];
+    list[Rule] new_rules2 = [];
+    list[Rule] new_rules3 = [];
+    list[Rule] new_rules4 = [];
 
+    // Step 1
     new_rule_directions += extend_directions(rd);
     for (Rule rule <- new_rule_directions) {
         Rule absolute_rule = convertRelativeDirsToAbsolute(rule);
         Rule atomized_rule = atomizeAggregates(checker, absolute_rule);
-        new_rules += [rephraseSynonyms(checker, atomized_rule)];
+        Rule synonym_rule = rephraseSynonyms(checker, atomized_rule);
+        new_rules += [synonym_rule];
+        // new_rules += [rephraseSynonyms(checker, atomized_rule)];
+    }
+
+    // Step 2
+
+    // Step 3
+    for (Rule rule <- new_rules) {
+
+        new_rules2 += [concretizePropertyRule(checker, rule)];
+
     }
 
     for (Rule rule <- new_rules) {
@@ -576,21 +591,68 @@ Rule atomizeAggregates(Checker c, Rule rule) {
 Rule rephraseSynonyms(Checker c, Rule rule) {
 
     for (RuleContent rc <- rule.left) {
-
         for (int i <- [0..size(rc.content)]) {
-
             str object = rc.content[i];
             if (object in c.references<0> && size(c.references[object]) == 1) println("<object> references <c.references[object]>");
 
         }
+    }
+    for (RuleContent rc <- rule.right) {
+        for (int i <- [0..size(rc.content)]) {
+            str object = rc.content[i];
+            if (object in c.references<0> && size(c.references[object]) == 1) println("<object> references <c.references[object]>");
 
-    
+        }
     }
     
     return rule;
 
 }
 
+Rule concretizePropertyRule(Checker c, Rule rule) {
+
+    // For later
+    for (RuleContent rc <- rule.left) {
+        rc = expandFixedProperties(c, rc);
+    }
+
+    map [str, bool] ambiguous = ();
+
+    for (int i <- [0..size(rule.right)]) {
+
+        RuleContent rc_l = rule.left[i];
+        RuleContent rc_r = rule.right[i];
+
+        // Gets all the references
+        list[str] properties_left = concat([(rc_l.content[j] in c.references<0>) ? c.references[rc_l.content[j]] : [""] | int j <- [0..size(rc_l.content)]]);
+        list[str] properties_right = concat([(rc_r.content[j] in c.references<0>) ? c.references[rc_r.content[j]] : [""] | int j <- [0..size(rc_r.content)]]);
+ 
+        for (str property <- properties_right) {
+
+            if (!(property in properties_left)) ambiguous += (property : true);
+
+        }
+
+    }
+    println(ambiguous);
+
+    return rule;
+}
+
+RuleContent expandFixedProperties(Checker c, RuleContent rc) {
+
+    list[str] expanded = [];
+
+    // for (str content <- rc.content) {
+
+    //     println("Content in expandfixed= <content>");
+
+
+    // }
+
+    return rc;
+
+}
 
 Engine compile(Checker c) {
 
