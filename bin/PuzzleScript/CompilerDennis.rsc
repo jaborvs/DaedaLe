@@ -60,6 +60,8 @@ alias Rule = tuple[
 	list[RuleContent] left,
 	list[RuleContent] right,
 	int used,
+    map[str, list[str]] movingReplacement,
+    map[str, list[str]] aggregateDirReplacement,
 	RuleData original
 ];
 
@@ -72,6 +74,8 @@ Rule new_rule(RuleData r)
 		[], 
 		[],
 		0, 
+        (),
+        (),
 		r
 	>;
 
@@ -84,6 +88,8 @@ Rule new_rule(RuleData r, str direction, list[RuleContent] left, list[RuleConten
 		left, 
 		right,
 		0, 
+        (),
+        (),
 		r
 	>;
 
@@ -403,6 +409,8 @@ map[str, list[str]] relativeDict = (
     "left": ["down", "up", "right", "left", "horizontal_par", "vertical_perp"]
 );
 
+set[value] all_directions = directionaggregates<0> + relativeDict["right"];
+
 // bool directionalRule(list[RulePart] ruleContent) {
 
 
@@ -434,7 +442,7 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Ch
     // Step 3
     for (Rule rule <- new_rules) {
 
-        new_rules2 += [concretizePropertyRule(checker, rule)];
+        new_rules2 += [concretizeMovingRule(checker, rule)];
 
     }
 
@@ -536,22 +544,22 @@ Rule atomizeAggregates(Checker c, Rule rule) {
 
         for (int i <- [0..size(rc.content)]) {
             
+            str direction = "";
+            if (rc.content[0] != "no") direction = rc.content[0];
+
             str object = toLowerCase(rc.content[i]);
             if (object in c.combinations<0>) {
-                
-                str direction = "";
-                if (rc.content[0] != "no") direction = rc.content[0];
 
-                new_content += [direction];
                 for (int j <- [0..size(c.combinations[object])]) {
                     str new_object = c.combinations[object][j];
-                    new_content += ["<new_object>"];
+                    new_content += [direction] + ["<new_object>"];
                 }
             } 
-            else if (!(object in c.combinations<0>) && !(object in relativeDict["right"])){
+            else if (!(object in all_directions)) {
                 new_content += [object];
             }
         }
+
         rc.content = new_content;
         new_rc += rc;
     }
@@ -609,6 +617,82 @@ Rule rephraseSynonyms(Checker c, Rule rule) {
 
 }
 
+Rule concretizeMovingRule(Checker c, Rule rule) {
+
+    bool shouldRemove;
+    bool modified = true;
+    list[Rule] result = [rule];
+
+    while(modified) {
+
+        modified = false;
+        for (Rule rule <- result) {
+
+            shouldRemove = false;
+            for (RuleContent row <- rule.left) {
+
+                list[list[str]] movings = getMovings(row.content);
+
+                if (size(movings) > 0) {
+                    shouldRemove = true;
+                    // modified = true;
+
+                    str name = movings[0][0];
+                    str ambiguous_dir = movings[0][1];
+                    list[str] concrete_directions = directionaggregates[ambiguous_dir];
+                    for (str concr_dir <- concrete_directions) {
+
+                        for (str key <- rule.movingReplacement<0>) {
+                            println(key);
+                        } 
+
+                        for (str key <- rule.movingReplacement<0>) {
+                            println(key);
+                        } 
+
+                    }
+
+
+                }
+                // for (str cell <- row.content) {
+
+                //     println(cell);
+
+                // }
+                // println("");
+
+            }
+
+        }
+
+    }
+
+    return rule;
+
+}
+list[list[str]] getMovings(list[str] cell) {
+
+    list[list[str]] result = [];
+
+    for (int i <- [0,2..size(cell)]) {
+
+        str direction = cell[i];
+        if (!(direction in all_directions)) continue;
+
+        str name = cell[i + 1];
+
+        if (direction in directionaggregates<0>) {
+            result += [[name, direction]];
+        }
+
+    }
+
+    return result;
+
+
+}
+
+
 Rule concretizePropertyRule(Checker c, Rule rule) {
 
     // For later
@@ -623,18 +707,29 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
         RuleContent rc_l = rule.left[i];
         RuleContent rc_r = rule.right[i];
 
-        // Gets all the references
+        // for (str content <- rc_l.content) {
+        //     content in c.references<0> ? println("Content <content> references <c.references[content]>") : println("Content <content> zit er niet in gappie");
+        // }
+
+
         list[str] properties_left = concat([(rc_l.content[j] in c.references<0>) ? c.references[rc_l.content[j]] : [""] | int j <- [0..size(rc_l.content)]]);
         list[str] properties_right = concat([(rc_r.content[j] in c.references<0>) ? c.references[rc_r.content[j]] : [""] | int j <- [0..size(rc_r.content)]]);
- 
-        for (str property <- properties_right) {
 
-            if (!(property in properties_left)) ambiguous += (property : true);
+        // for (str property <- properties_right) {
 
-        }
+        //     if (!(property in properties_left)) {
+                
+        //         println("Property <property> zit niet in <properties_left>");
+        //         ambiguous += (property : true);
+
+        //     }
+
+        // }
+
+
 
     }
-    println(ambiguous);
+    // println(ambiguous);
 
     return rule;
 }
