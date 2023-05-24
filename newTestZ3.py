@@ -29,81 +29,88 @@ distinct_objects = len(mapping)
 for x in range(width):
     for y in range(height):
         cell_val = level[x][y][0]
-        limit_objects = And(cell_val >= 0, cell_val < distinct_objects)
-        s.add(limit_objects)
+        # limit_objects = And(cell_val >= 0, cell_val < distinct_objects)
+        # s.add(limit_objects)
 
         if (x == playerpos[0] and y == playerpos[1]):
             s.add(cell_val == PLAYER[1])
+        
         elif x == 0 or x == width - 1 or y == 0 or y == height - 1:
             s.add(cell_val == WALL[1])
+
         else:
             s.add(cell_val == BACKGROUND[1])
 
-patterns = []
-replacements = []
-pattern = [(0,0, PLAYER[1]), (1,0, BACKGROUND[1]), (2,0, BACKGROUND[1])]
+
+pattern = [(0, 0, PLAYER[1]), (1, 0, BACKGROUND[1]), (2, 0, BACKGROUND[1])]
 replacement = [BACKGROUND[1], PLAYER[1], BACKGROUND[1]]
 
-replacements.append(replacement)
-patterns.append(pattern)
-
-# Now we add constraints to add the pattern in each timestep
 for t in range(1, timesteps):
 
-    pattern_match_constraints = []
+    all_patterns = []
+    skip = []
+
+    new_playerpos = (0,0)
+
+    lhs = []
+    rhs = []
+    unchanged_rhs = []
+    unchanged = []
 
     for x in range(0, width):
-        for y in range(height):
+        for y in range(0, height):
 
             cell_val = level[x][y][t]
-            limit_objects = And(cell_val >= 0, cell_val < distinct_objects)
-            s.add(limit_objects)
+            # limit_objects = (cell_val == level[x][y][t-1])
+            # s.add(limit_objects)
 
-            for i in range(len(patterns)):
+            # Check if pattern can be applied at playerpos
+            for i, (xdiff, ydiff, obj) in enumerate(pattern):
 
-                pattern = patterns[i]
+                if x + xdiff < width and y + ydiff < height and (x, y) == playerpos:
 
-                if x < len(pattern):
+                    skip.append(tuple((x + xdiff, y + ydiff)))
 
-                    lhs = []
-                    rhs = []
-                    unchanged = []
+                    lhs.append(level[x + xdiff][y + ydiff][t - 1] == obj)
+                    rhs.append(level[x + xdiff][y + ydiff][t] == replacement[i])
+                    unchanged.append(level[x + xdiff][y + ydiff][t] == level[x + xdiff][y + ydiff][t - 1])
 
-                    for j in range(len(pattern)):
+                    # Remember player obj pos so we can update later
+                    if replacement[i] == PLAYER[1]: 
+                        new_playerpos = tuple((x + xdiff, y + ydiff))       
 
-                        xdiff = pattern[j][0]
-                        ydiff = pattern[j][1]
-                        obj = pattern[j][2]
-                        repl = replacements[i][j]
+            if (x,y) in skip:
+                continue
+            else:
+                unchanged_rhs.append(level[x][y][t] == level[x][y][t - 1])
+                    
+            # s.add(Xor(Implies(lhs, And(rhs, unchanged_rhs)), Implies(Not(lhs), And(unchanged_rhs, unchanged))))
 
-                        lhs.append(level[x + xdiff][y + ydiff][t - 1] == obj)
-                        rhs.append(level[x + xdiff][y + ydiff][t] == repl)
-                        unchanged.append(level[x + xdiff][y + ydiff][t] == level[x + xdiff][y + ydiff][t - 1])
+    lhs = And(lhs)
+    rhs = And(rhs)
+    unchanged_rhs = And(unchanged_rhs)
+    unchanged = And(unchanged)
 
-                    lhs = And(lhs)
-                    rhs = And(rhs)
-                    unchanged = And(unchanged)
+    s.add(Xor(And(lhs, rhs, unchanged_rhs), And(Not(lhs), unchanged, unchanged_rhs)))
 
-                    either = [Xor((Implies(lhs, rhs)), (Implies(Not(lhs), unchanged)))]
-                    pattern_match_constraints += either
-            
-    s.add(Or(pattern_match_constraints))
+    print(f"old playerpos = {playerpos}, new playerpos = {new_playerpos}")
+    playerpos = new_playerpos
+
+    # all_patterns.append(Xor(And(lhs, rhs, unchanged_rhs), And(Not(lhs), unchanged, unchanged_rhs)))
+    # s.add(AtLeast(*all_patterns, 1))
 
 # Now we solve the problem and print the results
 if s.check() == sat:
     m = s.model()
     for t in range(timesteps):
-        objects = [ [ m[level[x][y][t]].as_long() for x in range(width) ]
-            for y in range(height) ]
+        objects = [[m[level[x][y][t]] for x in range(width)] for y in range(height)]
 
         print(f"Timestep {t}:")
-        print(objects)
         for list_objects in objects:
-            row_string = " ".join(mapping[num] for num in list_objects)
-            # row_string = " ".join(str(num) for num in list_objects)
+            row_string = " ".join(mapping[num.as_long()] if num is not None else "?" for num in list_objects)
+            # row_string = " ".join(str(num) if num is not None else "?" for num in list_objects)
             print(row_string)
-            print()
         print()
 
-else: 
+else:
     print("Unsat core:", s.unsat_core())
