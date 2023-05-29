@@ -17,11 +17,11 @@ mapping = {
 }
 
 # Define the dimensions of the level and the number of timesteps
-width = 5
-height = 5
+width = 10
+height = 10
 timesteps = 10
 playerpos = (1, 1)
-winpos = (3, 3)
+winpos = (2, 2)
 
 # Define the 3D array of Z3 integer variables
 level = [[[Int(f"level_{x}_{y}_{t}") for t in range(timesteps)] for y in range(height)] for x in range(width)]
@@ -69,12 +69,13 @@ repl_move_d = [BACKGROUND[1], PLAYER[1]]
 replacements.append(repl_move_d)
 
 for t in range(1, timesteps):
-
     all_patterns = []
 
-    new_playerpos = (0,0)
+    new_playerpos = (0, 0)
 
     choice_rule = []
+
+    last_t = []
 
     for i in range(len(patterns)):
         pattern = patterns[i]
@@ -96,28 +97,41 @@ for t in range(1, timesteps):
                         # Extract cell value at pos x, y
                         cell_val = level[x][y][t]
 
+                        # print(f"len lhs = {len(lhs)} and pattern = {len(pattern)}")
+
                         for j, (xdiff, ydiff, obj) in enumerate(pattern):
 
                             # Check if pattern fits at player position
-                            if x + xdiff < width and y + ydiff < height:
+                            if m + xdiff < width and n + ydiff < height and len(lhs) != len(pattern):
 
-                                skip.append(tuple((x + xdiff, y + ydiff)))
+                                skip.append(tuple((m + xdiff, n + ydiff)))
 
-                                lhs.append(level[x + xdiff][y + ydiff][t - 1] == obj)
-                                unchanged.append(level[x+xdiff][y + ydiff][t] == level[x+xdiff][y + ydiff][t - 1])
+                                lhs.append(level[m + xdiff][n + ydiff][t - 1] == obj)
+                                unchanged.append(
+                                    level[m + xdiff][n + ydiff][t]
+                                    == level[m + xdiff][n + ydiff][t - 1]
+                                )
 
-                                if ((x + xdiff, y + ydiff) == winpos and t == timesteps - 1):
-                                    rhs.append(level[x][y][t] == PLAYER[1])
+                                if ((m + xdiff, n + ydiff) == winpos and t == timesteps - 1):
+                                    rhs.append(level[m][n][t] == PLAYER[1])
                                 else:
-                                    rhs.append(level[x + xdiff][y + ydiff][t] == replacements[i][j])
+                                    rhs.append(
+                                        level[m + xdiff][n + ydiff][t]
+                                        == replacements[i][j]
+                                    )
 
-
-                        if (x,y) in skip:
+                        if (x, y) in skip:
                             continue
                         else:
                             unchanged_rhs.append(level[x][y][t] == level[x][y][t - 1])
-                                    
-                        # s.add(Xor(Implies(lhs, And(rhs, unchanged_rhs)), Implies(Not(lhs), And(unchanged_rhs, unchanged))))
+
+                # print(f"{lhs}\n\n\n")
+                # print(f"{rhs}\n\n\n")
+                # print(f"{unchanged}\n\n\n")
+                # print(f"{unchanged_rhs}\n\n\n")
+
+                # if (t == timesteps - 1):
+                #     print(f"Last timesteps lhs = {lhs}\nrhs = {rhs}\n unchanged rhs = {unchanged_rhs}\n\n")
 
                 lhs = And(lhs)
                 rhs = And(rhs)
@@ -126,13 +140,22 @@ for t in range(1, timesteps):
 
                 # If and else makes unsat for now...
                 if (t != timesteps - 1):
-                    choice_rule.append(Or(And(lhs, rhs, unchanged_rhs), And(Not(lhs), unchanged, unchanged_rhs)))
+                    choice_rule.append(
+                        Or(
+                            And(lhs, rhs, unchanged_rhs),
+                            And(Not(lhs), unchanged, unchanged_rhs),
+                        )
+                    )
+
+    #             break
+    #         break
+    #     break
+    # break
                 else:
                     choice_rule.append(And(lhs, rhs, unchanged_rhs))
 
-    # playerpos = new_playerpos
-
     s.add(AtLeast(*choice_rule, 1))
+
 
 
 # Now we solve the problem and print the results
