@@ -411,6 +411,12 @@ map[str, list[str]] relativeDict = (
 
 set[value] all_directions = directionaggregates<0> + relativeDict["right"];
 
+bool isDirection (str dir) {
+
+    return (dir in relativeDict["right"] || dir in relativeDirs);
+
+}
+
 // bool directionalRule(list[RulePart] ruleContent) {
 
 
@@ -432,8 +438,8 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Ch
     for (Rule rule <- new_rule_directions) {
         Rule absolute_rule = convertRelativeDirsToAbsolute(rule);
         Rule atomized_rule = atomizeAggregates(checker, absolute_rule);
-        Rule synonym_rule = rephraseSynonyms(checker, atomized_rule);
-        new_rules += [synonym_rule];
+        // Rule synonym_rule = rephraseSynonyms(checker, atomized_rule);
+        new_rules += [atomized_rule];
         // new_rules += [rephraseSynonyms(checker, atomized_rule)];
     }
 
@@ -512,6 +518,13 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
 
     list[RuleContent] new_rc = [];
     for (RuleContent rc <- rule.left) {
+
+        if (size(rc.content) == 1) {
+            rc.content = [""] + [rc.content[0]];
+            new_rc += rc;
+            continue;
+        }
+
         for (int i <- [0..size(rc.content)]) {
             int index = indexOf(relativeDirs, rc.content[i]);
             if (index >= 0) rc.content[i] = relativeDict[direction][index];
@@ -522,6 +535,16 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
 
     new_rc = [];
     for (RuleContent rc <- rule.right) {
+
+        println(rc.content);
+
+        if (size(rc.content) == 1) {
+            rc.content = [""] + [rc.content[0]];
+            new_rc += rc;
+            // println("new rc = <rc>");
+            continue;
+        }
+
         for (int i <- [0..size(rc.content)]) {
             int index = indexOf(relativeDirs, rc.content[i]);
             if (index >= 0) rc.content[i] = relativeDict[direction][index];
@@ -544,19 +567,21 @@ Rule atomizeAggregates(Checker c, Rule rule) {
 
         for (int i <- [0..size(rc.content)]) {
             
-            str direction = "";
-            if (rc.content[0] != "no") direction = rc.content[0];
+            if (i mod 2 == 1) continue;
 
-            str object = toLowerCase(rc.content[i]);
+            str direction = rc.content[i];
+            str object = toLowerCase(rc.content[i+1]);
+
             if (object in c.combinations<0>) {
 
                 for (int j <- [0..size(c.combinations[object])]) {
                     str new_object = c.combinations[object][j];
                     new_content += [direction] + ["<new_object>"];
+                    println(new_content);
                 }
             } 
-            else if (!(object in all_directions)) {
-                new_content += [object];
+            else {
+                new_content += [direction] + [object];
             }
         }
 
@@ -570,12 +595,12 @@ Rule atomizeAggregates(Checker c, Rule rule) {
         list[str] new_content = [];
 
         for (int i <- [0..size(rc.content)]) {
-            
-            str object = toLowerCase(rc.content[i]);
+            if (i mod 2 == 1) continue;
+
+            str direction = rc.content[i];
+            str object = toLowerCase(rc.content[i+1]);
+
             if (object in c.combinations<0>) {
-                
-                str direction = "";
-                if (rc.content[0] != "no") direction = rc.content[0];
 
                 new_content += [direction];
                 for (int j <- [0..size(c.combinations[object])]) {
@@ -583,8 +608,8 @@ Rule atomizeAggregates(Checker c, Rule rule) {
                     new_content += ["<new_object>"];
                 }
             } 
-            else if (!(object in c.combinations<0>) && !(object in relativeDict["right"])){
-                new_content += [object];
+            else {
+                new_content += [direction] + [object];
             }
         }
         rc.content = new_content;
@@ -592,30 +617,33 @@ Rule atomizeAggregates(Checker c, Rule rule) {
     }
     rule.right = new_rc;
 
+    // println("Left = <rule.left>\nRight = <rule.right>");
+
     return rule;
+
 }
 
-// If name refers to a concrete name, replace
-Rule rephraseSynonyms(Checker c, Rule rule) {
+// If name has synonym in object section, replace DOES NOT WORK YET
+// Rule rephraseSynonyms(Checker c, Rule rule) {
 
-    for (RuleContent rc <- rule.left) {
-        for (int i <- [0..size(rc.content)]) {
-            str object = rc.content[i];
-            if (object in c.references<0> && size(c.references[object]) == 1) println("<object> references <c.references[object]>");
+//     for (RuleContent rc <- rule.left) {
+//         for (int i <- [0..size(rc.content)]) {
+//             str object = rc.content[i];
+//             if (object in c.references<0> && size(c.references[object]) == 1) println("<object> references <c.references[object]>");
 
-        }
-    }
-    for (RuleContent rc <- rule.right) {
-        for (int i <- [0..size(rc.content)]) {
-            str object = rc.content[i];
-            if (object in c.references<0> && size(c.references[object]) == 1) println("<object> references <c.references[object]>");
+//         }
+//     }
+//     for (RuleContent rc <- rule.right) {
+//         for (int i <- [0..size(rc.content)]) {
+//             str object = rc.content[i];
+//             if (object in c.references<0> && size(c.references[object]) == 1) println("<object> references <c.references[object]>");
 
-        }
-    }
+//         }
+//     }
     
-    return rule;
+//     return rule;
 
-}
+// }
 
 Rule concretizeMovingRule(Checker c, Rule rule) {
 
@@ -626,11 +654,13 @@ Rule concretizeMovingRule(Checker c, Rule rule) {
     while(modified) {
 
         modified = false;
-        for (Rule rule <- result) {
+        for (int i <- [0..size(result)]) {
 
+            Rule rule = result[i];
             shouldRemove = false;
-            for (RuleContent row <- rule.left) {
+            for (int j <- [0..size(rule.left)]) {
 
+                RuleContent row = rule.left[j];
                 list[list[str]] movings = getMovings(row.content);
 
                 if (size(movings) > 0) {
@@ -642,6 +672,9 @@ Rule concretizeMovingRule(Checker c, Rule rule) {
                     list[str] concrete_directions = directionaggregates[ambiguous_dir];
                     for (str concr_dir <- concrete_directions) {
 
+                        newrule = new_rule(rule.original, rule.direction, rule.left, rule.right);
+                        // println(rule.right);
+
                         for (str key <- rule.movingReplacement<0>) {
                             println(key);
                         } 
@@ -649,6 +682,12 @@ Rule concretizeMovingRule(Checker c, Rule rule) {
                         for (str key <- rule.movingReplacement<0>) {
                             println(key);
                         } 
+                        // Bla bla bla, for-loops waar ik niet veel van snap.
+
+                        // println("left = <newrule.left[j].content>");
+
+                        newrule = concretizeMovingInCell(newrule, newrule.left[j].content, ambiguous_dir, name, concr_dir);
+                        newrule = concretizeMovingInCell(newrule, newrule.right[j].content, ambiguous_dir, name, concr_dir);
 
                     }
 
@@ -670,15 +709,29 @@ Rule concretizeMovingRule(Checker c, Rule rule) {
     return rule;
 
 }
+
+
+Rule concretizeMovingInCell(Rule rule, list[str] cell, str ambiguous, str name, str concr_dir) {
+
+    // println("In concretizeMovingInCell met deze makkers:");
+    // println(cell);
+    // println(ambiguous);
+    // println(name);
+    // println(concr_dir);
+
+    return rule;
+
+}
+
 list[list[str]] getMovings(list[str] cell) {
 
     list[list[str]] result = [];
 
-    for (int i <- [0,2..size(cell)]) {
+    for (int i <- [0..size(cell)]) {
+
+        if (i mod 2 == 1) continue;
 
         str direction = cell[i];
-        if (!(direction in all_directions)) continue;
-
         str name = cell[i + 1];
 
         if (direction in directionaggregates<0>) {

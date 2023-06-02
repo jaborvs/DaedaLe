@@ -77,7 +77,7 @@ void main() {
 
 	engine = compile(checker);
 
-    showInteractiveContent(generate_report_per_level(checker, ReportDir));
+    // showInteractiveContent(generate_report_per_level(checker, ReportDir));
 
 
     return;
