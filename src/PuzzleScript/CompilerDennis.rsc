@@ -60,8 +60,8 @@ alias Rule = tuple[
 	list[RuleContent] left,
 	list[RuleContent] right,
 	int used,
-    map[str, list[value]] movingReplacement,
-    map[str, list[value]] aggregateDirReplacement,
+    map[str, tuple[str, int, str, str, int, int]] movingReplacement,
+    map[str, tuple[str, int, str]] aggregateDirReplacement,
 	RuleData original
 ];
 
@@ -666,8 +666,8 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
 
                         newrule = new_rule(rule.original, rule.direction, rule.left, rule.right);
 
-                        map[str, list[value]] movingReplacement = ();
-                        map[str, list[value]] aggregateDirReplacement = ();
+                        map[str, tuple[str, int, str, str, int, int]] movingReplacement = ();
+                        map[str, tuple[str, int, str]] aggregateDirReplacement = ();
 
                         for (moveTerm <- rule.movingReplacement<0>) {
                             list[int] moveDat = rule.movingReplacement[moveTerm];
@@ -676,7 +676,6 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
 
                         for (moveTerm <- rule.aggregateDirReplacement<0>) {
                             list[int] moveDat = rule.aggregateDirReplacement[moveTerm];
-                            print(moveDat);
                             newrule.aggregateDirReplacement[moveTerm] = [moveDat[0], moveDat[1], moveDat[2]];
                         }
                         
@@ -687,8 +686,7 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
 
                         // NOT SURE IF 0 HERE CAN BE LEFT HERE.
                         if (!movingReplacement[name+ambiguous_dir]?) {
-                            println("Setting movingreplacement");
-                            newrule.movingReplacement[name+ambiguous_dir] = [concr_dir, 1, ambiguous_dir, name, j, 0];
+                            newrule.movingReplacement[name+ambiguous_dir] = <concr_dir, 1, ambiguous_dir, name, j, 0>;
                         } else {
                             list[int] mr = newrule.movingReplacement[name+ambiguous_dir];
 
@@ -698,7 +696,7 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
                         }
 
                         if (!aggregateDirReplacement[ambiguous_dir]?) {
-                            newrule.aggregateDirReplacement[ambiguous_dir] = [concr_dir, 1, ambiguous_dir];
+                            newrule.aggregateDirReplacement[ambiguous_dir] = <concr_dir, 1, ambiguous_dir>;
                         } else {
                             newrule.aggregateDirReplacement[ambiguous_dir][1] = aggregateDirReplacement[ambiguous_dir][1] + 1;
                         }
@@ -729,12 +727,11 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
         map[str, list[value]] ambiguous_movement_dict = ();
 
         for (str name <- cur_rule.movingReplacement<0>) {
-            list[value] replacementInfo = cur_rule.movingReplacement[name];
-            println(replacementInfo);
-            value concreteMovement = replacementInfo[0];
-            value occurrenceCount = replacementInfo[1];
-            value ambiguousMovement = replacementInfo[2];
-            value ambiguousMovement_attachedObject = replacementInfo[3];
+            tuple[str, int, str, str, int, int] replacementInfo = cur_rule.movingReplacement[name];
+            str concreteMovement = replacementInfo[0];
+            int occurrenceCount = replacementInfo[1];
+            str ambiguousMovement = replacementInfo[2];
+            str ambiguousMovement_attachedObject = replacementInfo[3];
 
             if (occurrenceCount == 1) {
                 //do the replacement
@@ -748,11 +745,77 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
             }
         }
 
+        map[str, str] ambiguous_movement_names_dict = ();
+        for (str name <- cur_rule.aggregateDirReplacement<0>) {
+            tuple[str, int, str] replacementInfo = cur_rule.aggregateDirReplacement[name];
+            str concreteMovement = replacementInfo[0];
+            int occurrenceCount = replacementInfo[1];
+            str ambiguousMovement = replacementInfo[2];
 
-    }
+            if ((ambiguousMovement in ambiguous_movement_names_dict) || (occurrenceCount != 1)) {
+                ambiguous_movement_names_dict[ambiguousMovement] = "INVALID";
+            } else {
+                ambiguous_movement_names_dict[ambiguousMovement] = concreteMovement;
+            }
+
+        }
+
+        for (str ambiguousMovement <- ambiguous_movement_dict<0>) {
+            if (ambiguousMovement != "INVALID") {
+                concreteMovement = ambiguous_movement_dict[ambiguousMovement];
+                if (concreteMovement == "INVALID") {
+                    continue;
+                }
+                for (int j <- [0..size(cur_rule.right)]) {
+                    RuleContent cellRow_rhs = cur_rule.rhs[j];
+                    for (int k <- [0..size(cellRow_rhs.content)]) {
+                        RuleContent cell = cellRow_rhs[k];
+                        cur_rule.right[j] = concretizeMovingInCellByAmbiguousMovementName(cell, ambiguousMovement, concreteMovement);
+                    }
+                }
+            }
+        }  
+
+        for (str ambiguousMovement <- ambiguous_movement_dict<0>) {
+            if (ambiguousMovement != "INVALID") {
+                concreteMovement = ambiguous_movement_dict[ambiguousMovement];
+                if (concreteMovement == "INVALID") {
+                    continue;
+                }
+                for (int j <- [0..size(cur_rule.right)]) {
+                    RuleContent cellRow_rhs = cur_rule.rhs[j];
+                    for (int k <- [0..size(cellRow_rhs.content)]) {
+                        RuleContent cell = cellRow_rhs[k];
+                        cur_rule.right[j] = concretizeMovingInCellByAmbiguousMovementName(cell, ambiguousMovement, concreteMovement);
+                    }
+                }
+            }
+        }
+
+    }      
 
     return result;
 
+}
+
+RuleContent concretizeMovingInCellByAmbiguousMovementName(RuleContent rc, str ambiguousMovement, str concreteDirection) {
+    
+    list[str] new_rc = [];    
+
+    for (int j <- [0..size(rc.content)]) {
+
+        if (j mod 2 == 1) continue;
+
+        if (cell[j] == ambiguousMovement) {
+            new_rc += [concr_dir] + [rc.content[i + 1]];
+        } else {
+            new_rc += [rc.content[i]] + [rc.content[i + 1]];
+        }
+    }
+
+    rc.content = new_rc;
+
+    return rc;    
 }
 
 
