@@ -60,8 +60,8 @@ alias Rule = tuple[
 	list[RuleContent] left,
 	list[RuleContent] right,
 	int used,
-    map[str, list[str]] movingReplacement,
-    map[str, list[str]] aggregateDirReplacement,
+    map[str, list[value]] movingReplacement,
+    map[str, list[value]] aggregateDirReplacement,
 	RuleData original
 ];
 
@@ -448,7 +448,7 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Ch
     // Step 3
     for (Rule rule <- new_rules) {
 
-        new_rules2 += [concretizeMovingRule(checker, rule)];
+        new_rules2 += concretizeMovingRule(checker, rule);
 
     }
 
@@ -510,8 +510,6 @@ list[RuleContent] get_rulecontent(list[RulePart] ruleparts) {
 
 }
 
-// Not sure if works for everything. For example PuzzleScript's engine 
-// differentiates between cellrow and cell --> Cellrow is gewoon hele content, cell is individueel
 Rule convertRelativeDirsToAbsolute(Rule rule) {
 
     str direction = rule.direction;
@@ -536,12 +534,9 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
     new_rc = [];
     for (RuleContent rc <- rule.right) {
 
-        println(rc.content);
-
         if (size(rc.content) == 1) {
             rc.content = [""] + [rc.content[0]];
             new_rc += rc;
-            // println("new rc = <rc>");
             continue;
         }
 
@@ -557,8 +552,6 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
 
 }
 
-// Nog niet helemaal klaar denk ik. Doet wel al wat verwacht wordt maar
-// vertrouw het nog niet helemaal
 Rule atomizeAggregates(Checker c, Rule rule) {
 
     list[RuleContent] new_rc = [];
@@ -577,7 +570,6 @@ Rule atomizeAggregates(Checker c, Rule rule) {
                 for (int j <- [0..size(c.combinations[object])]) {
                     str new_object = c.combinations[object][j];
                     new_content += [direction] + ["<new_object>"];
-                    println(new_content);
                 }
             } 
             else {
@@ -617,8 +609,6 @@ Rule atomizeAggregates(Checker c, Rule rule) {
     }
     rule.right = new_rc;
 
-    // println("Left = <rule.left>\nRight = <rule.right>");
-
     return rule;
 
 }
@@ -645,27 +635,29 @@ Rule atomizeAggregates(Checker c, Rule rule) {
 
 // }
 
-Rule concretizeMovingRule(Checker c, Rule rule) {
+list[Rule] concretizeMovingRule(Checker c, Rule rule) {
 
     bool shouldRemove;
     bool modified = true;
     list[Rule] result = [rule];
 
-    while(modified) {
+    int begin = 0;
 
+    while(modified) {
         modified = false;
-        for (int i <- [0..size(result)]) {
+        for (int i <- [begin..size(result)]) {
 
             Rule rule = result[i];
             shouldRemove = false;
             for (int j <- [0..size(rule.left)]) {
 
                 RuleContent row = rule.left[j];
+
                 list[list[str]] movings = getMovings(row.content);
 
                 if (size(movings) > 0) {
                     shouldRemove = true;
-                    // modified = true;
+                    modified = true;
 
                     str name = movings[0][0];
                     str ambiguous_dir = movings[0][1];
@@ -673,53 +665,115 @@ Rule concretizeMovingRule(Checker c, Rule rule) {
                     for (str concr_dir <- concrete_directions) {
 
                         newrule = new_rule(rule.original, rule.direction, rule.left, rule.right);
-                        // println(rule.right);
 
-                        for (str key <- rule.movingReplacement<0>) {
-                            println(key);
-                        } 
+                        map[str, list[value]] movingReplacement = ();
+                        map[str, list[value]] aggregateDirReplacement = ();
 
-                        for (str key <- rule.movingReplacement<0>) {
-                            println(key);
-                        } 
-                        // Bla bla bla, for-loops waar ik niet veel van snap.
+                        for (moveTerm <- rule.movingReplacement<0>) {
+                            list[int] moveDat = rule.movingReplacement[moveTerm];
+                            newrule.movingReplacement[moveTerm] = [moveDat[0], moveDat[1], moveDat[2], moveDat[3], moveDat[4], moveDat[5]];
+                        }
 
-                        // println("left = <newrule.left[j].content>");
+                        for (moveTerm <- rule.aggregateDirReplacement<0>) {
+                            list[int] moveDat = rule.aggregateDirReplacement[moveTerm];
+                            print(moveDat);
+                            newrule.aggregateDirReplacement[moveTerm] = [moveDat[0], moveDat[1], moveDat[2]];
+                        }
+                        
+                        newrule.left[j] = concretizeMovingInCell(newrule, newrule.left[j], ambiguous_dir, name, concr_dir);
+                        if (size(newrule.right[j].content) > 0) {
+                            newrule.right[j] = concretizeMovingInCell(newrule, newrule.right[j], ambiguous_dir, name, concr_dir);
+                        }
 
-                        newrule = concretizeMovingInCell(newrule, newrule.left[j].content, ambiguous_dir, name, concr_dir);
-                        newrule = concretizeMovingInCell(newrule, newrule.right[j].content, ambiguous_dir, name, concr_dir);
+                        // NOT SURE IF 0 HERE CAN BE LEFT HERE.
+                        if (!movingReplacement[name+ambiguous_dir]?) {
+                            println("Setting movingreplacement");
+                            newrule.movingReplacement[name+ambiguous_dir] = [concr_dir, 1, ambiguous_dir, name, j, 0];
+                        } else {
+                            list[int] mr = newrule.movingReplacement[name+ambiguous_dir];
 
+                            if (j != mr[4] || 0 != mr[5]){
+                                mr[1] = mr[1] + 1;
+                            }
+                        }
+
+                        if (!aggregateDirReplacement[ambiguous_dir]?) {
+                            newrule.aggregateDirReplacement[ambiguous_dir] = [concr_dir, 1, ambiguous_dir];
+                        } else {
+                            newrule.aggregateDirReplacement[ambiguous_dir][1] = aggregateDirReplacement[ambiguous_dir][1] + 1;
+                        }
+
+                        result += [newrule];
                     }
-
-
                 }
-                // for (str cell <- row.content) {
-
-                //     println(cell);
-
-                // }
-                // println("");
-
             }
+            if (shouldRemove) {
 
+                result = remove(result, i);
+
+                if (i >= 1) begin = i - 1;
+                else begin = 0;
+                break;
+            }
         }
+    }
+
+
+    for (int i <- [0..size(result)]) {
+
+        Rule cur_rule = result[i];
+        if (!cur_rule.movingReplacement?) {
+            continue;
+        }
+
+        map[str, list[value]] ambiguous_movement_dict = ();
+
+        for (str name <- cur_rule.movingReplacement<0>) {
+            list[value] replacementInfo = cur_rule.movingReplacement[name];
+            println(replacementInfo);
+            value concreteMovement = replacementInfo[0];
+            value occurrenceCount = replacementInfo[1];
+            value ambiguousMovement = replacementInfo[2];
+            value ambiguousMovement_attachedObject = replacementInfo[3];
+
+            if (occurrenceCount == 1) {
+                //do the replacement
+                for (int j <- [0..size(cur_rule.left)]) {
+                    RuleContent cellRow_rhs = cur_rule.right[j];
+                    for (int k <- [0..size(cellRow_rhs.content)]) {
+                        RuleContent cell = cellRow_rhs;
+                        cur_rule.right[j] = concretizeMovingInCell(cur_rule, cell, ambiguousMovement, ambiguousMovement_attachedObject, concreteMovement);
+                    }
+                }
+            }
+        }
+
 
     }
 
-    return rule;
+    return result;
 
 }
 
 
-Rule concretizeMovingInCell(Rule rule, list[str] cell, str ambiguous, str name, str concr_dir) {
+RuleContent concretizeMovingInCell(Rule rule, RuleContent rc, str ambiguous, str nametomove, str concr_dir) {
 
-    // println("In concretizeMovingInCell met deze makkers:");
-    // println(cell);
-    // println(ambiguous);
-    // println(name);
-    // println(concr_dir);
+    list[str] new_rc = [];
 
-    return rule;
+    for (int i <- [0..size(rc.content)]) {
+
+        if (i mod 2 == 1) continue;
+
+        if (rc.content[i] == ambiguous && rc.content[i+1] == nametomove) {
+            new_rc += [concr_dir] + [rc.content[i + 1]];
+        } else {
+            new_rc += [rc.content[i]] + [rc.content[i + 1]];
+        }
+    }
+
+    rc.content = new_rc;
+
+    return rc;
 
 }
 
@@ -760,11 +814,6 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
         RuleContent rc_l = rule.left[i];
         RuleContent rc_r = rule.right[i];
 
-        // for (str content <- rc_l.content) {
-        //     content in c.references<0> ? println("Content <content> references <c.references[content]>") : println("Content <content> zit er niet in gappie");
-        // }
-
-
         list[str] properties_left = concat([(rc_l.content[j] in c.references<0>) ? c.references[rc_l.content[j]] : [""] | int j <- [0..size(rc_l.content)]]);
         list[str] properties_right = concat([(rc_r.content[j] in c.references<0>) ? c.references[rc_r.content[j]] : [""] | int j <- [0..size(rc_r.content)]]);
 
@@ -772,7 +821,6 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
 
         //     if (!(property in properties_left)) {
                 
-        //         println("Property <property> zit niet in <properties_left>");
         //         ambiguous += (property : true);
 
         //     }
@@ -782,7 +830,6 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
 
 
     }
-    // println(ambiguous);
 
     return rule;
 }
