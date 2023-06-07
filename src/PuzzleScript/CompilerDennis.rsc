@@ -62,6 +62,7 @@ alias Rule = tuple[
 	int used,
     map[str, tuple[str, int, str, str, int, int]] movingReplacement,
     map[str, tuple[str, int, str]] aggregateDirReplacement,
+    map[str, tuple[str, int]] propertyReplacement,
 	RuleData original
 ];
 
@@ -76,6 +77,7 @@ Rule new_rule(RuleData r)
 		0, 
         (),
         (),
+        (),
 		r
 	>;
 
@@ -88,6 +90,7 @@ Rule new_rule(RuleData r, str direction, list[RuleContent] left, list[RuleConten
 		left, 
 		right,
 		0, 
+        (),
         (),
         (),
 		r
@@ -893,10 +896,9 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
 
     // For later
     for (int i  <- [0..size(rule.left)]) {
-        // println("<rule.left[i]>");
         rule.left[i] = expandNoPrefixedProperties(c, rule, rule.left[i]);
+        if (size(rule.right) > 0) rule.right[i] = expandNoPrefixedProperties(c, rule, rule.right[i]);
     }
-    // println("\n");
 
     map [str, bool] ambiguous = ();
 
@@ -905,31 +907,117 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
         RuleContent rc_l = rule.left[i];
         RuleContent rc_r = rule.right[i];
 
-        list[str] properties_left = concat([(rc_l.content[j] in c.references<0>) ? c.references[rc_l.content[j]] : [""] | int j <- [0..size(rc_l.content)]]);
-        list[str] properties_right = concat([(rc_r.content[j] in c.references<0>) ? c.references[rc_r.content[j]] : [""] | int j <- [0..size(rc_r.content)]]);
+        list[str] properties_left = [rc_l.content[j] | int j <- [0..size(rc_l.content)], rc_l.content[j] in c.all_properties<0>];
+        list[str] properties_right = [rc_r.content[j] | int j <- [0..size(rc_r.content)], rc_r.content[j] in c.all_properties<0>];
 
-        // for (str property <- properties_right) {
+        for (str property <- properties_right) {
+            if (!(property in properties_left)) ambiguous += (property: true);
+        }
+    }
 
-        //     if (!(property in properties_left)) {
-                
-        //         ambiguous += (property : true);
+    bool shouldRemove;
+    list[Rule] result = [rule];
+    bool modified = true;
 
-        //     }
+    int begin = 0;
 
-        // }
+    while(modified) {
+
+        modified = false;
+        for (int i <- [begin..size(result)]) {
+
+            Rule cur_rule = result[i];
+            shouldRemove = false;
+
+            for (int j <- [0..size(cur_rule.left)]) {
+                if (shouldRemove) break;
+
+                RuleContent rc = cur_rule.left[j];
+                list[str] properties = [rc.content[j] | int j <- [0..size(rc.content)], rc.content[j] in c.all_properties<0>];
+
+                for (str property <- properties) {
+
+                    if (!ambiguous[property]?) {
+                        continue;
+                    }
+
+                    list[str] aliases = c.all_properties[property];
+
+                    shouldRemove = true;
+                    modified = true;
+
+                    for (str concreteType <- aliases) {
+
+                        newrule = new_rule(cur_rule.original, cur_rule.direction, cur_rule.left, cur_rule.right);
+                        newrule.movingReplacement = cur_rule.movingReplacement;
+                        newrule.aggregateDirReplacement = cur_rule.aggregateDirReplacement;
+
+                        map[str, tuple[str, int]] propertyReplacement = ();
+
+                        for (str property <- cur_rule.propertyReplacement<0>) {
+                            
+                            tuple[str, int] propDat = cur_rule.propertyReplacement[property];
+                            newrule.propertyReplacement[property] = <propDat[0], propdat[1]>;
+
+                        }
+
+                        newrule.left[j] = concretizePropertyInCell(newrule, newrule.left[j], property, concreteType);
+                        if (size(newrule.right) > 0) {
+                            newrule.right[j] = concretizePropertyInCell(newrule, newrule.right[j], property, concreteType);
+                        }
+
+                        if (!newrule[property]) {
+                            newrule.propertyReplacement[property] = <concreteType, 1>;
+                        } else {
+                            newrule.propertyReplacement[property][1] = newrule.propertyReplacement[property][1] + 1;
+                        }
+
+                        result += [newrule];
+
+                    }
+                    break;
+
+                }
+
+            }
 
 
+            if (shouldRemove) {
 
+                result = remove(result, i);
+
+                if (i >= 1) begin = i - 1;
+                else begin = 0;
+                break;
+            }
+
+        }
+        
     }
 
     return rule;
 }
 
+RuleContent concretizePropertyInCell(Rule rule, RuleContent rc, str property, str concreteType) {
+    
+    list[str] new_rc = [];    
+
+    for (int j <- [0..size(rc.content)]) {
+        if (cell[j + 1] == property && cell[j] != "random") {
+            new_rc += [rc[j]] + [concreteType];
+        } else {
+            new_rc += [rc[j]] + [rc[j + 1]];
+        }
+    }
+
+    rc.content = new_rc;
+
+    return rc;    
+}
+
 RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
 
-
-    new_rc = [];
-    list[str] expanded = [];
+    list[str] new_rc = [];
 
     for (int i <- [0..size(rc.content)]) {
 
@@ -937,14 +1025,24 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
         str dir = rc.content[i];
         str name = rc.content[i + 1];
 
-        if (dir != "") println(dir);
+        if (dir == "no" && name in c.all_properties<0>) {
 
-        if (name in c.all_properties<0>) println(name);
+            for (str name <- c.all_properties[name]) {
+                new_rc += [dir] + [name];
+            }
+
+        } else {
+
+            new_rc += [dir] + [name];
+
+        }
 
         // println("Content in expandfixed= <content>");
 
 
     }
+
+    rc.content = new_rc;
 
     return rc;
 

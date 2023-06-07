@@ -135,9 +135,9 @@ Player, Wall, WallBlock, PinkBlock, BlueBlock, PurpleBlock, OrangeBlock, GreenBl
 RULES
 ======
 
-[ no Moveable | Player ] -> [ > Moveable | > Moveable ] 
+[ > moveable | Moveable ] -> [ > moveable | > moveable ] 
 
-horizontal [ > Block | Grille ] -> [ Block | Grille ] 
+[ > Block | Grille ] -> [ Block | Grille ] 
 
 late [ PinkBlock | PinkBlock | PinkBlock ] -> [ | | ] 
 late [ BlueBlock | BlueBlock | BlueBlock ] -> [ | | ] 
