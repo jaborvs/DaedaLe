@@ -463,6 +463,13 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Ch
 
     }
 
+    // Step 4
+    for (Rule rule <- new_rules2) {
+
+        new_rules3 += concretizePropertyRule(checker, rule);
+
+    }
+
     // println("Step 2 done. Rules are now:");
     // for (Rule r <- new_rules2) {
 
@@ -885,9 +892,11 @@ list[list[str]] getMovings(list[str] cell) {
 Rule concretizePropertyRule(Checker c, Rule rule) {
 
     // For later
-    for (RuleContent rc <- rule.left) {
-        rc = expandNoPrefixedProperties(c, rc);
+    for (int i  <- [0..size(rule.left)]) {
+        // println("<rule.left[i]>");
+        rule.left[i] = expandNoPrefixedProperties(c, rule, rule.left[i]);
     }
+    // println("\n");
 
     map [str, bool] ambiguous = ();
 
@@ -916,51 +925,38 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
     return rule;
 }
 
-RuleContent expandNoPrefixedProperties(Checker c, RuleContent rc) {
+RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
 
+
+    new_rc = [];
     list[str] expanded = [];
 
-    println(rc.content);
+    for (int i <- [0..size(rc.content)]) {
 
-    // for (str content <- rc.content) {
+        if (i mod 2 == 1) continue;
+        str dir = rc.content[i];
+        str name = rc.content[i + 1];
 
-    //     println("Content in expandfixed= <content>");
+        if (dir != "") println(dir);
+
+        if (name in c.all_properties<0>) println(name);
+
+        // println("Content in expandfixed= <content>");
 
 
-    // }
+    }
 
     return rc;
 
 }
-
-map[str, list[str]] resolve_properties(Checker c) {
-
-    map[str, list[str]] properties_dict = ();
-
-    println(typeOf(("hoi": ["hoi"])));
-
-    // for (str name <- c.references<0>) {
-    //     while (size(c.references[name]) > 1) {
-
-            
-    //         properties_dict += (name: )
-    //         name = 
-    // }
-
-    return properties_dict;
-
-
-
-}
-
-// map(str(), str())
 
 Engine compile(Checker c) {
 
 	Engine engine = new_engine(c.game);
 	engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
 	engine.conditions = c.conditions;
-    engine.levels = c.game.levels;   
+    engine.levels = c.game.levels;  
+    engine.properties = c.all_properties; 
 
     list[str] all_objects = []; 
     for (LegendData ld <- engine.game.legend) {
@@ -970,9 +966,6 @@ Engine compile(Checker c) {
         }
     }
     engine.all_objects = all_objects;
-
-    engine.properties = resolve_properties(c);
-
 
     for (LevelData ld <- engine.levels) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];

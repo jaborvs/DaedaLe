@@ -27,6 +27,7 @@ alias Checker = tuple[
 	list[str] used_objects,
 	list[str] used_references,
     list[str] all_moveable_objects,
+    map[str, list[str]] all_properties,
     map[LevelData, LevelChecker] level_data,
 	PSGame game
 ];
@@ -85,7 +86,7 @@ map[str, str] COLORS = (
 str default_mask = "@None@";
 		
 Checker new_checker(bool debug_flag, PSGame game){		
-	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], [], (), game>;
+	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], [], (), (), game>;
 }
 
 LevelChecker new_level_checker() {
@@ -176,6 +177,39 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 	}
 	
 	return <dup(objs), c, references>;
+}
+
+map[str, list[str]] resolve_properties(Checker c) {
+
+    map[str, list[str]] properties_dict = ();
+
+    for (str name <- c.references<0>) {
+        
+        list[str] references = [];
+        if (size(c.references[name]) > 1) {
+            for (str reference <- c.references[name]) references += get_map_input(c, reference);
+            properties_dict += (name: references);
+        } else {
+            properties_dict += (name: c.references[name]);
+        }
+    }
+
+    return properties_dict;
+
+}
+
+list[str] get_map_input(Checker c, str name) {
+
+    list[str] propertylist = [];
+
+    if (c.references[name]?) {
+        for(str name <- c.references[name]) propertylist += get_map_input(c, name);
+    } else {
+        propertylist += [name];
+    }
+
+    return propertylist;
+
 }
 
 Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]) {
@@ -1097,6 +1131,8 @@ Checker check_game(PSGame g, bool debug=false) {
 	for (LegendData x <- g.legend){
 		if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x.src)];
 	}
+
+    c.all_properties = resolve_properties(c);
 	
 	if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g.src)];
 	
