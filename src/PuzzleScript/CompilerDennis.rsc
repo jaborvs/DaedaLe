@@ -114,6 +114,7 @@ alias Engine = tuple[
 	list[str] msg_queue,
 	list[Command] cmd_queue,
 	map[str, ObjectData] objects,
+    map[str, list[str]] properties,
 	list[list[str]] input_log, // keep track of moves made by the player for every level
 	PSGame game
 ];
@@ -138,7 +139,7 @@ Engine new_engine(PSGame game)
 		[],
 		[],
 		(),
-		
+		(),
 		[],
 		
 		game
@@ -443,6 +444,16 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Ch
         // new_rules += [rephraseSynonyms(checker, atomized_rule)];
     }
 
+    // println("Step 1 done. Rules are now:");
+    // for (Rule r <- new_rules) {
+
+    //     for (RuleContent rc <- r.left) println("Left = <rc.content>");
+    //     for (RuleContent rc <- r.right) println("Right = <rc.content>\n");
+
+    // }
+    // println("");
+
+
     // Step 2
 
     // Step 3
@@ -452,11 +463,19 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Ch
 
     }
 
-    for (Rule rule <- new_rules) {
+    // println("Step 2 done. Rules are now:");
+    // for (Rule r <- new_rules2) {
+
+    //     for (RuleContent rc <- r.left) println("Left = <rc.content>");
+    //     for (RuleContent rc <- r.right) println("Right = <rc.content>");
+
+    // }
+
+    for (Rule rule <- new_rules2) {
         rule.late = late;
     }
 
-    return new_rules;
+    return new_rules2;
 
 
 }
@@ -867,7 +886,7 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
 
     // For later
     for (RuleContent rc <- rule.left) {
-        rc = expandFixedProperties(c, rc);
+        rc = expandNoPrefixedProperties(c, rc);
     }
 
     map [str, bool] ambiguous = ();
@@ -897,9 +916,11 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
     return rule;
 }
 
-RuleContent expandFixedProperties(Checker c, RuleContent rc) {
+RuleContent expandNoPrefixedProperties(Checker c, RuleContent rc) {
 
     list[str] expanded = [];
+
+    println(rc.content);
 
     // for (str content <- rc.content) {
 
@@ -911,6 +932,28 @@ RuleContent expandFixedProperties(Checker c, RuleContent rc) {
     return rc;
 
 }
+
+map[str, list[str]] resolve_properties(Checker c) {
+
+    map[str, list[str]] properties_dict = ();
+
+    println(typeOf(("hoi": ["hoi"])));
+
+    // for (str name <- c.references<0>) {
+    //     while (size(c.references[name]) > 1) {
+
+            
+    //         properties_dict += (name: )
+    //         name = 
+    // }
+
+    return properties_dict;
+
+
+
+}
+
+// map(str(), str())
 
 Engine compile(Checker c) {
 
@@ -927,6 +970,8 @@ Engine compile(Checker c) {
         }
     }
     engine.all_objects = all_objects;
+
+    engine.properties = resolve_properties(c);
 
 
     for (LevelData ld <- engine.levels) {
