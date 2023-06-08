@@ -20,7 +20,7 @@ data Level (loc src = |unknown:///|)
 		// Layer layer, 
 		// list[Layer] checkpoint,
 		// list[str] objectdata,
-		list[str] player,
+		// list[str] player,
         LevelChecker additional_info,
 		LevelData original
 	)
@@ -316,11 +316,9 @@ Level convert_level(LevelData level, Checker c) {
         }
     }
 
-    // println(c.references);
-
     return Level::level(
         objects,
-		c.references["p"],
+		// c.references["player"],
         c.level_data[level],
 		level        
     );
@@ -421,12 +419,14 @@ bool isDirection (str dir) {
 
 }
 
-// bool directionalRule(list[RulePart] ruleContent) {
+bool directionalRule(list[RuleContent] left, list[RuleContent] right) {
 
+    println(left);
+    println(right);
 
+    return true;
 
-
-// }
+}
 
 // Expanding rules to accompany multiple directions
 list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Checker checker) {
@@ -447,45 +447,21 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Ch
         // new_rules += [rephraseSynonyms(checker, atomized_rule)];
     }
 
-    // println("Step 1 done. Rules are now:");
-    // for (Rule r <- new_rules) {
-
-    //     for (RuleContent rc <- r.left) println("Left = <rc.content>");
-    //     for (RuleContent rc <- r.right) println("Right = <rc.content>\n");
-
-    // }
-    // println("");
-
-
     // Step 2
+    for (Rule rule <- new_rules) {
+        new_rules2 += concretizeMovingRule(checker, rule);
+    }
 
     // Step 3
-    for (Rule rule <- new_rules) {
-
-        new_rules2 += concretizeMovingRule(checker, rule);
-
-    }
-
-    // Step 4
     for (Rule rule <- new_rules2) {
-
         new_rules3 += concretizePropertyRule(checker, rule);
-
     }
 
-    // println("Step 2 done. Rules are now:");
-    // for (Rule r <- new_rules2) {
-
-    //     for (RuleContent rc <- r.left) println("Left = <rc.content>");
-    //     for (RuleContent rc <- r.right) println("Right = <rc.content>");
-
-    // }
-
-    for (Rule rule <- new_rules2) {
+    for (Rule rule <- new_rules3) {
         rule.late = late;
     }
 
-    return new_rules2;
+    return new_rules3;
 
 
 }
@@ -503,7 +479,7 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _)) {
             str direction = toLowerCase(rp.prefix);
 
             // AND IS DIRECTIONALRULE (moet nog gedaan worden)
-            if (direction in directionaggregates) {
+            if (direction in directionaggregates && directionalRule(lhs, rhs)) {
                 list[str] directions = directionaggregates[toLowerCase(rp.prefix)];
                 for (str direction <- directions) {
                     cloned_rule = new_rule(rd, direction, lhs, rhs);
@@ -546,16 +522,34 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
     list[RuleContent] new_rc = [];
     for (RuleContent rc <- rule.left) {
 
+        list[str] new_content = [];
+
         if (size(rc.content) == 1) {
             rc.content = [""] + [rc.content[0]];
             new_rc += rc;
             continue;
         }
 
+        str dir = "";
+        bool skip = false;
         for (int i <- [0..size(rc.content)]) {
+            
+            if (skip) {
+                skip = false;
+                continue;
+            }
+
             int index = indexOf(relativeDirs, rc.content[i]);
-            if (index >= 0) rc.content[i] = relativeDict[direction][index];
+            if (index >= 0) {
+                dir = relativeDict[direction][index];
+                new_content += [dir] + [rc.content[i + 1]];
+                skip = true;
+            } else {
+                new_content += [""] + [rc.content[i]];
+            }
+            // new_rc += [dir] + [rc.content[i]];
         }
+        rc.content = new_content;
         new_rc += rc;
     }
     rule.left = new_rc;
@@ -563,16 +557,34 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
     new_rc = [];
     for (RuleContent rc <- rule.right) {
 
+        list[str] new_content = [];
+
         if (size(rc.content) == 1) {
             rc.content = [""] + [rc.content[0]];
             new_rc += rc;
             continue;
         }
 
+        str dir = "";
+        bool skip = false;
         for (int i <- [0..size(rc.content)]) {
+            
+            if (skip) {
+                skip = false;
+                continue;
+            }
+
             int index = indexOf(relativeDirs, rc.content[i]);
-            if (index >= 0) rc.content[i] = relativeDict[direction][index];
+            if (index >= 0) {
+                dir = relativeDict[direction][index];
+                new_content += [dir] + [rc.content[i + 1]];
+                skip = true;
+            } else {
+                new_content += [""] + [rc.content[i]];
+            }
+            // new_rc += [dir] + [rc.content[i]];
         }
+        rc.content = new_content;
         new_rc += rc;
     }
     rule.right = new_rc;
@@ -586,7 +598,6 @@ Rule atomizeAggregates(Checker c, Rule rule) {
     list[RuleContent] new_rc = [];
     for (RuleContent rc <- rule.left) {
         list[str] new_content = [];
-
         for (int i <- [0..size(rc.content)]) {
             
             if (i mod 2 == 1) continue;
@@ -892,7 +903,7 @@ list[list[str]] getMovings(list[str] cell) {
 }
 
 
-Rule concretizePropertyRule(Checker c, Rule rule) {
+list[Rule] concretizePropertyRule(Checker c, Rule rule) {
 
     // For later
     for (int i  <- [0..size(rule.left)]) {
@@ -912,7 +923,7 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
 
         for (str property <- properties_right) {
             if (!(property in properties_left)) ambiguous += (property: true);
-        }
+            }
     }
 
     bool shouldRemove;
@@ -937,11 +948,13 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
 
                 for (str property <- properties) {
 
-                    if (!ambiguous[property]?) {
+                    if (ambiguous[property]?) {
+                        println(ambiguous[property]);
                         continue;
                     }
 
                     list[str] aliases = c.all_properties[property];
+                    println(aliases);
 
                     shouldRemove = true;
                     modified = true;
@@ -966,13 +979,14 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
                             newrule.right[j] = concretizePropertyInCell(newrule, newrule.right[j], property, concreteType);
                         }
 
-                        if (!newrule[property]) {
+                        if (!newrule.propertyReplacement[property]?) {
                             newrule.propertyReplacement[property] = <concreteType, 1>;
                         } else {
                             newrule.propertyReplacement[property][1] = newrule.propertyReplacement[property][1] + 1;
                         }
 
                         result += [newrule];
+                        println("Added <newrule.left>, <newrule.right> to result");
 
                     }
                     break;
@@ -984,6 +998,7 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
 
             if (shouldRemove) {
 
+                println("Removing <result[i].left>");
                 result = remove(result, i);
 
                 if (i >= 1) begin = i - 1;
@@ -995,7 +1010,13 @@ Rule concretizePropertyRule(Checker c, Rule rule) {
         
     }
 
-    return rule;
+    // println("Rules in result");
+
+    // for (Rule r <- result) {
+    //     println("Left = <r.left>");
+    // }
+
+    return result;
 }
 
 RuleContent concretizePropertyInCell(Rule rule, RuleContent rc, str property, str concreteType) {
@@ -1003,10 +1024,13 @@ RuleContent concretizePropertyInCell(Rule rule, RuleContent rc, str property, st
     list[str] new_rc = [];    
 
     for (int j <- [0..size(rc.content)]) {
-        if (cell[j + 1] == property && cell[j] != "random") {
-            new_rc += [rc[j]] + [concreteType];
+
+        if (j mod 2 == 1) continue;
+
+        if (rc.content[j + 1] == property && rc.content[j] != "random") {
+            new_rc += [rc.content[j]] + [concreteType];
         } else {
-            new_rc += [rc[j]] + [rc[j + 1]];
+            new_rc += [rc.content[j]] + [rc.content[j + 1]];
         }
     }
 
@@ -1079,6 +1103,16 @@ Engine compile(Checker c) {
         else engine.rules += [convert_rule(rule, false, c)];
 
     }
+
+    // println("Converted rules:");
+    // for (list[Rule] r <- engine.rules) {
+
+    //     for (Rule r <- r) {
+    //         for (RuleContent rcl <- r.left) println("Left: <rcl.content>");
+    //         for (RuleContent rcr <- r.right) println("Right: <rcr.content>");
+    //         println("");
+    //     }
+    // }
 
     // engine.rules = c.game.rules;
 

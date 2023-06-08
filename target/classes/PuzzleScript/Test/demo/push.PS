@@ -281,50 +281,49 @@ RULES
 ======
 
 (player can move an object only once)
-[ > StrongPlayer | Movable | no Blockers ] -> [ > WeakPlayer | > Movable | ]
-[ > Movable Link ] -> [ > Movable > Link ]
+( [ > Movable Link ] -> [ > Movable > Link ] )
 [ DeadPlayer ] -> cancel
 
-(pit behaviors)
-late [ Player Pit ] -> [ PitPlayer ] (falling into a pit kills you)
-late [ Pit Rock ] -> [ PitFilled ]  (they can be filled)
-[ Player WeakGround ] -> [ Player WeakGround LinkA ] (mark WeakGround as visited)
-late [ WeakGround LinkA no Player ] -> [ Pit ] (pits appear when you move off weakground)
+( (pit behaviors) )
+( late [ Player Pit ] -> [ PitPlayer ] (falling into a pit kills you) )
+( late [ Pit Rock ] -> [ PitFilled ]  (they can be filled) )
+( [ Player WeakGround ] -> [ Player WeakGround LinkA ] (mark WeakGround as visited) )
+( late [ WeakGround LinkA no Player ] -> [ Pit ] (pits appear when you move off weakground) )
 
-(initialize gun linkages -- try linking on a line first)
-[Wall Link] [Button no Link | ... | Gun no Link] -> [Wall] [Button Link | ... | Gun Link]
-[Wall Link] [Button no Link] [Gun no Link] -> [Wall] [Button Link] [Gun Link]
+( (initialize gun linkages -- try linking on a line first) )
+( [Wall Link] [Button no Link | ... | Gun no Link] -> [Wall] [Button Link | ... | Gun Link] )
+( [Wall Link] [Button no Link] [Gun no Link] -> [Wall] [Button Link] [Gun Link] )
 
-(buttons cause linked gun to fire)
-late [ Button Heavy LinkA ] [ Gun LinkA ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again
-late [ Button Heavy LinkB ] [ Gun LinkB ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again
-late [ Button Heavy LinkC ] [ Gun LinkC ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again
-late [ Button Heavy LinkD ] [ Gun LinkD ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again
-late [ Button Heavy LinkE ] [ Gun LinkE ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again
+( (buttons cause linked gun to fire) )
+( late [ Button Heavy LinkA ] [ Gun LinkA ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again )
+( late [ Button Heavy LinkB ] [ Gun LinkB ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again )
+( late [ Button Heavy LinkC ] [ Gun LinkC ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again )
+( late [ Button Heavy LinkD ] [ Gun LinkD ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again )
+( late [ Button Heavy LinkE ] [ Gun LinkE ] -> [ ButtonPressed Heavy ] [ Gun Firing ] again )
 
-( MultiGuns fire 3 shots. do this by cycling LinkB->LinkA->None )
-[ MultiGun Firing no Link ] -> [ MultiGun Firing LinkB ]
-[ MultiGun Fired LinkB ] -> [ MultiGun Firing LinkA ]
-[ MultiGun Fired LinkA ] -> [ MultiGun Firing ]
+( ( MultiGuns fire 3 shots. do this by cycling LinkB->LinkA->None ) )
+( [ MultiGun Firing no Link ] -> [ MultiGun Firing LinkB ] )
+( [ MultiGun Fired LinkB ] -> [ MultiGun Firing LinkA ] )
+( [ MultiGun Fired LinkA ] -> [ MultiGun Firing ] )
 
-( create arrows )
-[ GunU Firing ] -> [ GunU ArrowU Fired ]
-[ GunR Firing ] -> [ GunR ArrowR Fired ]
-[ GunL Firing ] -> [ GunL ArrowL Fired ]
-[ GunD Firing ] -> [ GunD ArrowD Fired ]
-( move )
-[ ArrowL ] -> [ left ArrowL ] again
-[ ArrowU ] -> [ up ArrowU ] again
-[ ArrowR ] -> [ right ArrowR ] again
-[ ArrowD ] -> [ down ArrowD ] again
+( ( create arrows ) )
+( [ GunU Firing ] -> [ GunU ArrowU Fired ] )
+( [ GunR Firing ] -> [ GunR ArrowR Fired ] )
+( [ GunL Firing ] -> [ GunL ArrowL Fired ] )
+( [ GunD Firing ] -> [ GunD ArrowD Fired ] )
+( ( move ) )
+( [ ArrowL ] -> [ left ArrowL ] again )
+( [ ArrowU ] -> [ up ArrowU ] again )
+( [ ArrowR ] -> [ right ArrowR ] again )
+( [ ArrowD ] -> [ down ArrowD ] again )
 
-late [ Arrow Rock ] -> [ RockDust ] sfx0
-late [ Arrow Player ] -> [ GibbedPlayer ] sfx1
-late [ Arrow Blockers ] -> [ Blockers ] sfx0
+( late [ Arrow Rock ] -> [ RockDust ] sfx0 )
+( late [ Arrow Player ] -> [ GibbedPlayer ] sfx1 )
+( late [ Arrow Blockers ] -> [ Blockers ] sfx0 )
 
-(grabbing an idol)
-[ DeadPlayer ] -> cancel
-[ > Player | Idol ] -> [ Player | Pit ]
+( (grabbing an idol) )
+( [ DeadPlayer ] -> cancel )
+( [ > Player | Idol ] -> [ Player | Pit ] )
 
 ==============
 WINCONDITIONS
