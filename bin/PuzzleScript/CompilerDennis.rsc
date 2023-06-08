@@ -421,10 +421,10 @@ bool isDirection (str dir) {
 
 bool directionalRule(list[RuleContent] left, list[RuleContent] right) {
 
-    println(left);
-    println(right);
+    bool leftDir = any(int i <- [0..size(left)], int j <- [0..size(left[i].content)], left[i].content in relativeDirections);
+    bool rightDir = any(int i <- [0..size(right)], int j <- [0..size(right[i].content)], right[i].content in relativeDirections);
 
-    return true;
+    return (leftDir || rightDir);
 
 }
 
@@ -486,7 +486,7 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _)) {
                     new_rule_directions += cloned_rule;
                 }
             }
-            else if (direction in simpleAbsoluteDirections) {
+            else {
                 cloned_rule = new_rule(rd, direction, lhs, rhs);
                 new_rule_directions += cloned_rule; 
             } 
@@ -494,12 +494,16 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _)) {
     }
 
     // No direction prefix was registered, meaning all directions apply
-    if (cloned_rule.direction == "") {
+    if (cloned_rule.direction == "" && directionalRule(lhs, rhs)) {
         list[str] directions = directionaggregates["orthogonal"];
         for (str direction <- directions) {
             cloned_rule = new_rule(rd, direction, lhs, rhs);
             new_rule_directions += cloned_rule;
         }  
+    } else if (cloned_rule.direction == "") {
+        cloned_rule = new_rule(rd, "up", lhs, rhs);
+        new_rule_directions += cloned_rule;
+
     }
 
     return new_rule_directions;
@@ -948,13 +952,11 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
 
                 for (str property <- properties) {
 
-                    if (ambiguous[property]?) {
-                        println(ambiguous[property]);
+                    if (!ambiguous[property]?) {
                         continue;
                     }
 
                     list[str] aliases = c.all_properties[property];
-                    println(aliases);
 
                     shouldRemove = true;
                     modified = true;
@@ -970,7 +972,7 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
                         for (str property <- cur_rule.propertyReplacement<0>) {
                             
                             tuple[str, int] propDat = cur_rule.propertyReplacement[property];
-                            newrule.propertyReplacement[property] = <propDat[0], propdat[1]>;
+                            newrule.propertyReplacement[property] = <propDat[0], propDat[1]>;
 
                         }
 
@@ -986,7 +988,6 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
                         }
 
                         result += [newrule];
-                        println("Added <newrule.left>, <newrule.right> to result");
 
                     }
                     break;
@@ -998,7 +999,6 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
 
             if (shouldRemove) {
 
-                println("Removing <result[i].left>");
                 result = remove(result, i);
 
                 if (i >= 1) begin = i - 1;
@@ -1104,15 +1104,15 @@ Engine compile(Checker c) {
 
     }
 
-    // println("Converted rules:");
-    // for (list[Rule] r <- engine.rules) {
+    println("Converted rules:");
+    for (list[Rule] r <- engine.rules) {
 
-    //     for (Rule r <- r) {
-    //         for (RuleContent rcl <- r.left) println("Left: <rcl.content>");
-    //         for (RuleContent rcr <- r.right) println("Right: <rcr.content>");
-    //         println("");
-    //     }
-    // }
+        for (Rule r <- r) {
+            for (RuleContent rcl <- r.left) println("Left: <rcl.content>");
+            for (RuleContent rcr <- r.right) println("Right: <rcr.content>");
+            println("");
+        }
+    }
 
     // engine.rules = c.game.rules;
 
