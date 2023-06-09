@@ -102,7 +102,7 @@ alias Engine = tuple[
     list[LevelData] levels,
 	list[Level] converted_levels,
     list[str] all_objects,
-	int current_level,
+	Level current_level,
     map[int, LevelData] level_states,
 	map[str, list[int]] sounds,
 	list[Condition] conditions,
@@ -127,7 +127,7 @@ Engine new_engine(PSGame game)
 		[level_data([])],
         [], 
         [],
-		0,
+		message("", level_data([])),
         (), 
         (),
 		[], 
@@ -1082,9 +1082,10 @@ Engine compile(Checker c) {
 
     list[str] all_objects = []; 
     for (LegendData ld <- engine.game.legend) {
-        all_objects += toLowerCase(ld.legend);
         for (str object <- ld.values) {
-            all_objects += toLowerCase(object);
+            if (!(toLowerCase(object) in all_objects)) {
+                all_objects += toLowerCase(object);
+            }
         }
     }
     engine.all_objects = all_objects;
@@ -1092,11 +1093,10 @@ Engine compile(Checker c) {
     for (LevelData ld <- engine.levels) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
-    // engine.levels = c.game.levels;
-    engine.current_level = 1;
+
+    engine.current_level = engine.converted_levels[0];
 
     list[RuleData] rules = c.game.rules;
-
     for (RuleData rule <- rules) {
 
         if ("late" in [toLowerCase(x.prefix) | x <- rule.left, x is prefix]) engine.late_rules += [convert_rule(rule, true, c)];
@@ -1104,24 +1104,8 @@ Engine compile(Checker c) {
 
     }
 
-    println("Converted rules:");
-    for (list[Rule] r <- engine.rules) {
-
-        for (Rule r <- r) {
-            for (RuleContent rcl <- r.left) println("Left: <rcl.content>");
-            for (RuleContent rcr <- r.right) println("Right: <rcr.content>");
-            println("");
-        }
-    }
-
-    // engine.rules = c.game.rules;
-
 	engine.layers = [convert_layer(x, c) | x <- c.game.layers];
-	
-	// if (!isEmpty(engine.levels)){
-	// 	engine.current_level = engine.levels[0];
-	// }
-	
+
 	engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
 	
 	return engine;

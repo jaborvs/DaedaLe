@@ -541,49 +541,40 @@ void apply_rule() {
 }
 
 // Apply each rule as many times as possible then move on to next rule
-void apply_rules(Engine engine, str direction) {
+void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str direction) {
 
     list[str] all_objects = engine.all_objects;
 
     int index = 1;
-    for (RuleData rd <- engine.rules) {
-
-        if (!(rd is rule_data)) {
-            index +=1; 
-            continue;
-        }
+    for (list[Rule] rulegroup <- rules) {
 
         list[str] required_objects = [];
-        str direction = "any";
+        str ruledir = "";
 
-        for (RulePart rulepart <- rd.left) {
+        for (Rule rule <- rulegroup) {
 
-            if (rulepart is prefix) {
-                direction = toLowerCase(rulepart.prefix);
-            }
+            for (RuleContent rc <- rule.left) {
 
-            if (rulepart is part) {
-                for (RuleContent content <- rulepart.contents) {
-                    for (str content <- content.content) {
-                        if (toLowerCase(content) in all_objects || toLowerCase(content) == "...") {
-                            required_objects += toLowerCase(content);
-                        }
+                ruledir = rule.direction;
+
+                for (str content <- rc.content) {
+                    if (toLowerCase(content) in all_objects || toLowerCase(content) == "...") {
+                        required_objects += toLowerCase(content);
                     }
                 }
+
             }
+            println("Rule direction = <ruledir>, required objects = <required_objects>");
         }
 
-        if (can_be_matched(engine, required_objects, direction)) apply_rule();
+        // println("Rule direction = <ruledir>, required objects = <required_objects>");
 
-    //     // println(N);
-    //     // println()
-    //     // println("Left hand rule requires: <required_objects>, neighbor matters = <neighbor>, direction = <direction>");
-    //     // println("Rule <index> can be applied:");
+        // if (can_be_matched(engine, required_objects, direction)) apply_rule();
 
-    //     // println(rd);
 
         index += 1;
     }    
+
 
 
 }
@@ -599,19 +590,22 @@ void apply_late_rules(Engine engine) {
 
 Engine do_move(Engine engine, Checker c, str direction) {
 
-
-
-    for (LevelData current_level <- engine.levels) {
-
-        if (current_level is message) {
-            println(current_level.message);
-        } else if (current_level is level_data) {
-            apply_rules(engine, direction);
-            // apply_rules(engine);
-        }
-        // engine.current_level += 1;
-
+    for (list[Object] objects <- engine.current_level.objects<1>) {
+        for (Object obj <- objects) println("<obj.current_name> possible names = <engine.properties[obj.current_name]>");
     }
+
+    apply_rules(engine, engine.current_level, engine.rules, direction);
+
+    // for (LevelData current_level <- engine.levels) {
+    //     if (current_level is message) {
+    //         println(current_level.message);
+    //     } else if (current_level is level_data) {
+    //         apply_rules(engine.rules, direction);
+    //         // apply_rules(engine);
+    //     }
+    //     // engine.current_level += 1;
+
+    // }
 
     return engine;
 

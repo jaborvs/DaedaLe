@@ -71,7 +71,7 @@ void main() {
 	Engine engine;
 	Level level;
 
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/push.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	checker = check_game(game);
     checker.level_data = check_game_per_level(checker);
 
@@ -79,8 +79,6 @@ void main() {
 
     // showInteractiveContent(generate_report_per_level(checker, ReportDir));
 
-
-    return;
 	// engine = compile(checker);
 
     for (int i <- [0..size(engine.levels)]){
@@ -91,6 +89,8 @@ void main() {
 	    // print_level(level);
         break;
     }
+
+    do_move(engine, checker, "up");
 
     // list[str] directions = ["left", "up", "left", "up"];
 
