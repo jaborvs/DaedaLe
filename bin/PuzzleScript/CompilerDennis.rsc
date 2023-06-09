@@ -294,7 +294,10 @@ Level convert_level(LevelData level, Checker c) {
             if (char in c.references<0>) {
 
                 LayerData ld = get_layer(c.references[char][0], c);
-                list[Object] object = [object(char, c.references[char][0], get_all_references(char, c.references), <i,j>, 
+
+                str name = c.references[char][0];
+
+                list[Object] object = [object(char, name, get_all_references(char, c.references), <i,j>, 
                     "", ld)];
 
                 if (char in objects) objects[char] += object;

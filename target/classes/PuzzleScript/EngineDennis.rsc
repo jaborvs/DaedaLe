@@ -543,6 +543,9 @@ void apply_rule() {
 // Apply each rule as many times as possible then move on to next rule
 void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str direction) {
 
+
+    // Als possible names in rule zit, geef de char door aan apply_rule
+
     list[str] all_objects = engine.all_objects;
 
     int index = 1;
@@ -558,8 +561,14 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
                 ruledir = rule.direction;
 
                 for (str content <- rc.content) {
-                    if (toLowerCase(content) in all_objects || toLowerCase(content) == "...") {
-                        required_objects += toLowerCase(content);
+
+                    content = toLowerCase(content);
+
+                    for (str object <- current_level.objects<0>) {
+                        Object obj = current_level.objects[object][0];
+                        if (content in obj.possible_names) {
+                            required_objects += obj.char;
+                        }
                     }
                 }
 
@@ -590,9 +599,11 @@ void apply_late_rules(Engine engine) {
 
 Engine do_move(Engine engine, Checker c, str direction) {
 
-    for (list[Object] objects <- engine.current_level.objects<1>) {
-        for (Object obj <- objects) println("<obj.current_name> possible names = <engine.properties[obj.current_name]>");
-    }
+    // println(engine.properties);
+
+    // for (list[Object] objects <- engine.current_level.objects<1>) {
+    //     for (Object obj <- objects) println("<obj.current_name> possible names = <engine.properties[obj.current_name]>");
+    // }
 
     apply_rules(engine, engine.current_level, engine.rules, direction);
 

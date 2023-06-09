@@ -957,32 +957,35 @@ list[str] get_all_references(str char, map[str, list[str]] references) {
     if (!(char in references<0>)) return [];
 
     list[str] reference_list = [];
+    list[str] new_references = references[char];
+    reference_list += new_references;
 
-    reference_list += references[char];
-    list[str] old_reference = references[char];
-    list[str] current_reference = [];
+    for (str reference <- new_references) {
 
-    while(old_reference != []) {
+        reference_list += get_references(reference, references);
 
-        list[str] current_reference = [];
-        for (str reference <- old_reference) {
-            for (str key <- references<0>) {
-
-                if (reference in references[key]) {
-                    reference_list += key;
-                    current_reference += key;
-                }
-
-            }
-        }
-
-        old_reference = current_reference;
     }
 
     return reference_list;
 
 
+}
 
+list[str] get_references(str reference, map[str, list[str]] references) {
+
+    list[str] all_references = [];
+
+    for (str key <- references) {
+
+        if (size(key) == 1) continue;
+
+        if (reference in references[key]) {
+            all_references += key;
+            all_references += get_references(key, references);
+        }
+    }
+
+    return all_references;
 }
 
 bool rules_referencing_char(list[str] char_references, RuleData r: rule_data(left, right, _, _)) {
