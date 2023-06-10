@@ -536,58 +536,69 @@ bool can_be_matched(Engine engine, list[str] required, str direction) {
 
 }
 
+// Ellipsis not accounted for
 void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir) {
 
     list[list[Coords]] all_object_coords = [];
     list[Coords] object_coords = [];
 
+    // Get all the coords of the objects
     for (list[Object] objects <- required) {
 
         object_coords = [];
-
         for (Object obj <- objects) {
-
             for (Object object <- engine.current_level.objects[obj.char]) {
                 object_coords += object.coords;
             }
         }
-
         all_object_coords += [object_coords];
-
     }
 
-    Coords dir_difference = <0,0>;
-
-    switch(dir) {
-        case /up/: {
-            dir_difference = <0,1>;
-        }
-        case /down/: {
-            dir_difference = <0,-1>;
-        }
-    }
-
-    println(all_object_coords[0]);
     list[Coords] neighboring_coords = [];
 
-    for (int i <- [0..size(all_object_coords) - 1]) {
+    // Find all the neighboring objects in the specified direction
+    for (Coords coord <- all_object_coords[0]) {
+        neighboring_coords = find_neighbours(all_object_coords, coord, 0, ruledir);
+        if (size(neighboring_coords) == size(required)) println("<neighboring_coords> for rule with direction <ruledir> can be applied");
+    }
 
-        println(all_object_coords[i + 1]);
+}
 
-        for (Coords coord <- all_object_coords[i]) {
-            if (any(coord2 <- all_object_coords[i + 1], <coord2[0] - coord[0], coord2[1] - coord[1]> == dir_difference) &&
-                    !(coord2 in neighboring_coords)) {
-                neighboring_coords += coord2;
-                println("Coord <coord> has the neighbor <coord2>");
-            }
+list[Coords] find_neighbours(list[list[Coords]] all_lists, Coords current_coord, int index, str direction) {
+
+    list[Coords] neighbors = [];
+    Coords dir_difference = <0,0>;
+
+    switch(direction) {
+        case /right/: {
+            dir_difference = <0,1>;
+        }
+        case /left/: {
+            dir_difference = <0,-1>;
+        }
+        case /down/: {
+            dir_difference = <1,0>;
+        }
+        case /up/: {
+            dir_difference = <-1,0>;
         }
     }
 
-    // println(size(neighboring_coords));
-    // println(size(required));
+    if (index == 0) neighbors += current_coord;
 
-    if (size(neighboring_coords) == size(required) - 1) println("Can be applied");
-    else println("Rule cannot be applied");
+    if (index + 1 < size(all_lists)) {
+        if (any(coord2 <- all_lists[index + 1], <coord2[0] - current_coord[0], coord2[1] - current_coord[1]> == dir_difference) &&
+                !(coord2 in neighbors)) {
+
+            neighbors += coord2;
+            neighbors += find_neighbours(all_lists, coord2, index + 1, direction);
+        } else {
+            return [];
+        }
+    }
+
+    return neighbors;
+
 }
 
 
@@ -629,6 +640,7 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
             
             // Rule can't be applied
             if (required_objects == []) continue;
+
             else apply_rule(engine, rule, required_objects, ruledir, direction);
         }
 

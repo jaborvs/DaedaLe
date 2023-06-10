@@ -75,6 +75,8 @@ void main() {
 	checker = check_game(game);
     checker.level_data = check_game_per_level(checker);
 
+    println("Compiling");
+
 	engine = compile(checker);
 
     // showInteractiveContent(generate_report_per_level(checker, ReportDir));
