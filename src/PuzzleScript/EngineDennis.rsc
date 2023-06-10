@@ -538,27 +538,25 @@ bool can_be_matched(Engine engine, list[str] required, str direction) {
 
 void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir) {
 
+    list[list[Coords]] all_object_coords = [];
+    list[Coords] object_coords = [];
+
     for (list[Object] objects <- required) {
+
+        object_coords = [];
 
         for (Object obj <- objects) {
 
-            println("<obj.current_name> heeft objecten op");
             for (Object object <- engine.current_level.objects[obj.char]) {
-                println(object.coords);
+                object_coords += object.coords;
             }
-
-
         }
 
-        // for (int i <- [0..size(objects)]) println(objects[i].char);
-
+        all_object_coords += [object_coords];
 
     }
 
-    list[list[tuple[int, int]]] lists = [[<1,2>,<3,4>,<2,2>], [<1,2>,<3,4>,<2,2>]];
-
     Coords dir_difference = <0,0>;
-    println(dir);
 
     switch(dir) {
         case /up/: {
@@ -569,17 +567,27 @@ void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruled
         }
     }
 
-    for (int i <- [0..size(lists) - 1]) {
+    println(all_object_coords[0]);
+    list[Coords] neighboring_coords = [];
 
-        for (Coords coord <- lists[i]) {
-            if (any(coord2 <- lists[i + 1], <coord2[0] - coord[0], coord2[1] - coord[1]> == dir_difference)) println("Coord <coord> has a neighbor");
+    for (int i <- [0..size(all_object_coords) - 1]) {
+
+        println(all_object_coords[i + 1]);
+
+        for (Coords coord <- all_object_coords[i]) {
+            if (any(coord2 <- all_object_coords[i + 1], <coord2[0] - coord[0], coord2[1] - coord[1]> == dir_difference) &&
+                    !(coord2 in neighboring_coords)) {
+                neighboring_coords += coord2;
+                println("Coord <coord> has the neighbor <coord2>");
+            }
         }
-
-
     }
 
+    // println(size(neighboring_coords));
+    // println(size(required));
 
-    println("Can possibly be applied");
+    if (size(neighboring_coords) == size(required) - 1) println("Can be applied");
+    else println("Rule cannot be applied");
 }
 
 
@@ -647,7 +655,7 @@ void apply_late_rules(Engine engine) {
 
 Engine plan_move(Engine engine, Checker c, str direction) {
 
-    apply_rules(engine, engine.current_level, engine.rules, direction);
+    apply_rules(engine, engine.current_level, engine.late_rules, direction);
     return engine;
 
 }
