@@ -536,22 +536,63 @@ bool can_be_matched(Engine engine, list[str] required, str direction) {
 
 }
 
-void apply_rule() {
-    println("");
+void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir) {
+
+    for (list[Object] objects <- required) {
+
+        for (Object obj <- objects) {
+
+            println("<obj.current_name> heeft objecten op");
+            for (Object object <- engine.current_level.objects[obj.char]) {
+                println(object.coords);
+            }
+
+
+        }
+
+        // for (int i <- [0..size(objects)]) println(objects[i].char);
+
+
+    }
+
+    list[list[tuple[int, int]]] lists = [[<1,2>,<3,4>,<2,2>], [<1,2>,<3,4>,<2,2>]];
+
+    Coords dir_difference = <0,0>;
+    println(dir);
+
+    switch(dir) {
+        case /up/: {
+            dir_difference = <0,1>;
+        }
+        case /down/: {
+            dir_difference = <0,-1>;
+        }
+    }
+
+    for (int i <- [0..size(lists) - 1]) {
+
+        for (Coords coord <- lists[i]) {
+            if (any(coord2 <- lists[i + 1], <coord2[0] - coord[0], coord2[1] - coord[1]> == dir_difference)) println("Coord <coord> has a neighbor");
+        }
+
+
+    }
+
+
+    println("Can possibly be applied");
 }
+
+
 
 // Apply each rule as many times as possible then move on to next rule
 void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str direction) {
-
-
-    // Als possible names in rule zit, geef de char door aan apply_rule
 
     list[str] all_objects = engine.all_objects;
 
     int index = 1;
     for (list[Rule] rulegroup <- rules) {
 
-        list[str] required_objects = [];
+        list[list[Object]] required_objects = [];
         str ruledir = "";
 
         for (Rule rule <- rulegroup) {
@@ -564,16 +605,23 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
 
                     content = toLowerCase(content);
 
+                    list[Object] current_objs = [];
+
                     for (str object <- current_level.objects<0>) {
                         Object obj = current_level.objects[object][0];
                         if (content in obj.possible_names) {
-                            required_objects += obj.char;
+                            current_objs += obj;
                         }
                     }
+                    if (current_objs != []) required_objects += [current_objs];
                 }
 
             }
-            println("Rule direction = <ruledir>, required objects = <required_objects>");
+            // println("Rule direction = <ruledir>, required objects = <required_objects>");
+            
+            // Rule can't be applied
+            if (required_objects == []) continue;
+            else apply_rule(engine, rule, required_objects, ruledir, direction);
         }
 
         // println("Rule direction = <ruledir>, required objects = <required_objects>");
@@ -597,6 +645,14 @@ void apply_late_rules(Engine engine) {
 
 }
 
+Engine plan_move(Engine engine, Checker c, str direction) {
+
+    apply_rules(engine, engine.current_level, engine.rules, direction);
+    return engine;
+
+}
+
+
 Engine do_move(Engine engine, Checker c, str direction) {
 
     // println(engine.properties);
@@ -605,7 +661,7 @@ Engine do_move(Engine engine, Checker c, str direction) {
     //     for (Object obj <- objects) println("<obj.current_name> possible names = <engine.properties[obj.current_name]>");
     // }
 
-    apply_rules(engine, engine.current_level, engine.rules, direction);
+    // apply_rules(engine, engine.current_level, engine.late_rules, direction);
 
     // for (LevelData current_level <- engine.levels) {
     //     if (current_level is message) {

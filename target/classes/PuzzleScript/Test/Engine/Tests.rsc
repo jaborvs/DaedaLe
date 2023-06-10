@@ -90,7 +90,7 @@ void main() {
         break;
     }
 
-    do_move(engine, checker, "up");
+    plan_move(engine, checker, "up");
 
     // list[str] directions = ["left", "up", "left", "up"];
 
