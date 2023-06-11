@@ -537,39 +537,26 @@ bool can_be_matched(Engine engine, list[str] required, str direction) {
 }
 
 // Ellipsis not accounted for
-void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir) {
+void apply_rule(Engine engine, Rule rule, list[list[Object]] required, list[list[str]] directions, str ruledir, str dir) {
 
-    list[list[Coords]] all_object_coords = [];
-    list[Coords] object_coords = [];
+    list[list[Object]] all_objects_in_level = [];
+    list[Object] current_objects = [];
 
     // Get all the coords of the objects
     for (list[Object] objects <- required) {
 
-        object_coords = [];
+        current_objects = [];
         for (Object obj <- objects) {
             for (Object object <- engine.current_level.objects[obj.char]) {
-                object_coords += object.coords;
+                current_objects += object;
             }
         }
-        all_object_coords += [object_coords];
+        all_objects_in_level += [current_objects];
     }
 
-    list[Coords] neighboring_coords = [];
-
-    // Find all the neighboring objects in the specified direction
-    for (Coords coord <- all_object_coords[0]) {
-        neighboring_coords = find_neighbours(all_object_coords, coord, 0, ruledir);
-        if (size(neighboring_coords) == size(required)) println("<neighboring_coords> for rule with direction <ruledir> can be applied");
-    }
-
-}
-
-list[Coords] find_neighbours(list[list[Coords]] all_lists, Coords current_coord, int index, str direction) {
-
-    list[Coords] neighbors = [];
     Coords dir_difference = <0,0>;
 
-    switch(direction) {
+    switch(dir) {
         case /right/: {
             dir_difference = <0,1>;
         }
@@ -584,14 +571,33 @@ list[Coords] find_neighbours(list[list[Coords]] all_lists, Coords current_coord,
         }
     }
 
-    if (index == 0) neighbors += current_coord;
+    list[Object] neighboring_coords = [];
+
+    // Find all the neighboring objects in the specified direction
+    for (Object object <- all_objects_in_level[0]) {
+        neighboring_coords = find_neighbours(all_objects_in_level, object, 0, ruledir, dir_difference);
+        if (size(neighboring_coords) == size(required)) {
+
+            println("Checking if objects are moving as required");
+
+
+        };
+    }
+
+}
+
+list[Object] find_neighbours(list[list[Object]] all_lists, Object obj1, int index, str direction, Coords dir_difference) {
+
+    list[Object] neighbors = [];
+
+    if (index == 0) neighbors += obj1;
 
     if (index + 1 < size(all_lists)) {
-        if (any(coord2 <- all_lists[index + 1], <coord2[0] - current_coord[0], coord2[1] - current_coord[1]> == dir_difference) &&
-                !(coord2 in neighbors)) {
+        if (any(obj2 <- all_lists[index + 1], <obj2.coords[0] - obj1.coords[0], obj2.coords[1] - obj1.coords[1]> == dir_difference) &&
+                !(obj2 in neighbors)) {
 
-            neighbors += coord2;
-            neighbors += find_neighbours(all_lists, coord2, index + 1, direction);
+            neighbors += obj2;
+            neighbors += find_neighbours(all_lists, obj2, index + 1, direction, dir_difference);
         } else {
             return [];
         }
@@ -611,20 +617,27 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
     int index = 1;
     for (list[Rule] rulegroup <- rules) {
 
-        list[list[Object]] required_objects = [];
-        str ruledir = "";
-
         for (Rule rule <- rulegroup) {
+
+            list[list[Object]] required_objects = [];
+            list[list[str]] directions = [];
+            str ruledir = "";
 
             for (RuleContent rc <- rule.left) {
 
                 ruledir = rule.direction;
 
-                for (str content <- rc.content) {
+                for (int i <- [0..size(rc.content)]) {
 
-                    content = toLowerCase(content);
+                    str content = toLowerCase(rc.content[i]);
 
                     list[Object] current_objs = [];
+                    list[str] current_dirs = [];
+
+                    if (i mod 2 == 0) {
+                        current_dirs += content;
+                        continue;
+                    }
 
                     for (str object <- current_level.objects<0>) {
                         Object obj = current_level.objects[object][0];
@@ -633,6 +646,7 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
                         }
                     }
                     if (current_objs != []) required_objects += [current_objs];
+                    if (current_dirs != []) directions += [current_dirs];
                 }
 
             }
@@ -641,7 +655,7 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
             // Rule can't be applied
             if (required_objects == []) continue;
 
-            else apply_rule(engine, rule, required_objects, ruledir, direction);
+            else apply_rule(engine, rule, required_objects, directions, ruledir, direction);
         }
 
         // println("Rule direction = <ruledir>, required objects = <required_objects>");
@@ -652,6 +666,14 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
         index += 1;
     }    
 
+
+
+}
+
+Engine move_player(Engine engine, Level current_level, str direction) {
+
+    println(current_level.player);
+    return engine;
 
 
 }
@@ -667,6 +689,7 @@ void apply_late_rules(Engine engine) {
 
 Engine plan_move(Engine engine, Checker c, str direction) {
 
+    engine = move_player(engine, engine.current_level, direction);
     apply_rules(engine, engine.current_level, engine.late_rules, direction);
     return engine;
 

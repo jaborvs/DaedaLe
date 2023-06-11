@@ -20,7 +20,7 @@ data Level (loc src = |unknown:///|)
 		// Layer layer, 
 		// list[Layer] checkpoint,
 		// list[str] objectdata,
-		// list[str] player,
+		str player,
         LevelChecker additional_info,
 		LevelData original
 	)
@@ -319,9 +319,20 @@ Level convert_level(LevelData level, Checker c) {
         }
     }
 
+    str player = "";
+
+    for (str key <- c.references<0>) {
+
+        if (("player" in c.references[key]) && size(c.references[key]) == 1) {
+            player = key;
+            break;
+        }
+
+    }
+
     return Level::level(
         objects,
-		// c.references["player"],
+		player,
         c.level_data[level],
 		level        
     );
