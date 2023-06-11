@@ -571,14 +571,19 @@ void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruled
         }
     }
 
-    list[Object] neighboring_coords = [];
+    list[Object] neighboring_objs = [];
 
     // Find all the neighboring objects in the specified direction
     for (Object object <- all_objects_in_level[0]) {
-        neighboring_coords = find_neighbours(all_objects_in_level, object, 0, ruledir, dir_difference);
-        if (size(neighboring_coords) == size(required)) {
+        neighboring_objs = find_neighbours(all_objects_in_level, object, 0, ruledir, dir_difference);
+        if (size(neighboring_objs) == size(required)) {
 
-            println("Checking if objects are moving as required");
+            println("Rule can be applied for:");
+            for (Object object <- neighboring_objs) {
+
+                println("Object with name <object.current_name> at pos <object.coords>");
+
+            }
 
 
         };
@@ -640,7 +645,6 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
                     for (str object <- current_level.objects<0>) {
                         for (Object obj <- current_level.objects[object]) {
                             if ((name in obj.possible_names) && (obj_dir == obj.direction)) {
-                                println(name);
                                 current_objs += obj;
                             }
                         }
@@ -670,6 +674,59 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
 
 }
 
+bool no_obstacle(Object obj, Level current_level) {
+
+    str dir = obj.direction;
+
+    Coords dir_difference = <0,0>;
+
+    switch(dir) {
+        case /right/: {
+            dir_difference = <0,1>;
+        }
+        case /left/: {
+            dir_difference = <0,-1>;
+        }
+        case /down/: {
+            dir_difference = <1,0>;
+        }
+        case /up/: {
+            dir_difference = <-1,0>;
+        }
+    }
+
+    Coords new_pos = <obj.coords[0] + dir_difference[0], obj.coords[1] + dir_difference[1]>;
+
+    visit(current_level) {
+        case n: object(_, _, _, new_pos, _, ld): {
+            if (ld != obj.layer) println("Found <n.current_name> at <new_pos>");
+        }
+    }
+
+    return false;
+
+}
+
+void apply_moves(Engine engine, Level current_level) {
+
+
+    for (str object <- current_level.objects<0>) {
+
+        for (Object obj <- current_level.objects[object]) {
+
+            if (obj.direction != "" && no_obstacle(obj, current_level)) println("Object <obj.current_name> can move <obj.direction>");
+
+
+        }
+
+
+    }
+
+
+
+}
+
+
 Engine move_player(Engine engine, Level current_level, str direction) {
 
     list[Object] objects = [];
@@ -679,6 +736,8 @@ Engine move_player(Engine engine, Level current_level, str direction) {
         objects += object;
     }
     current_level.objects[current_level.player] = objects;
+    
+    engine.current_level = current_level;
     return engine;
 
 
@@ -697,6 +756,7 @@ Engine plan_move(Engine engine, Checker c, str direction) {
 
     engine = move_player(engine, engine.current_level, direction);
     apply_rules(engine, engine.current_level, engine.rules, direction);
+    apply_moves(engine, engine.current_level);
     return engine;
 
 }
