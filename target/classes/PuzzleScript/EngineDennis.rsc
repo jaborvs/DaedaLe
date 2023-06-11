@@ -537,7 +537,7 @@ bool can_be_matched(Engine engine, list[str] required, str direction) {
 }
 
 // Ellipsis not accounted for
-void apply_rule(Engine engine, Rule rule, list[list[Object]] required, list[list[str]] directions, str ruledir, str dir) {
+void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir) {
 
     list[list[Object]] all_objects_in_level = [];
     list[Object] current_objects = [];
@@ -629,33 +629,33 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
 
                 for (int i <- [0..size(rc.content)]) {
 
-                    str content = toLowerCase(rc.content[i]);
-
-                    list[Object] current_objs = [];
-                    list[str] current_dirs = [];
-
-                    if (i mod 2 == 0) {
-                        current_dirs += content;
+                    if (i mod 2 == 1) {
                         continue;
                     }
+                    str obj_dir = rc.content[i];
+                    str name = toLowerCase(rc.content[i + 1]);
+
+                    list[Object] current_objs = [];
 
                     for (str object <- current_level.objects<0>) {
-                        Object obj = current_level.objects[object][0];
-                        if (content in obj.possible_names) {
-                            current_objs += obj;
+                        for (Object obj <- current_level.objects[object]) {
+                            if ((name in obj.possible_names) && (obj_dir == obj.direction)) {
+                                println(name);
+                                current_objs += obj;
+                            }
                         }
                     }
-                    if (current_objs != []) required_objects += [current_objs];
-                    if (current_dirs != []) directions += [current_dirs];
+                    if (current_objs != []) {
+                        required_objects += [current_objs];
+                    }
                 }
 
             }
             // println("Rule direction = <ruledir>, required objects = <required_objects>");
-            
-            // Rule can't be applied
-            if (required_objects == []) continue;
 
-            else apply_rule(engine, rule, required_objects, directions, ruledir, direction);
+            // Rule can't be applied
+            if (size(required_objects) != size(rule.left)) continue;
+            apply_rule(engine, rule, required_objects, ruledir, direction);
         }
 
         // println("Rule direction = <ruledir>, required objects = <required_objects>");
@@ -672,7 +672,13 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
 
 Engine move_player(Engine engine, Level current_level, str direction) {
 
-    println(current_level.player);
+    list[Object] objects = [];
+
+    for (Object object <- current_level.objects[current_level.player]) {
+        object.direction = direction;
+        objects += object;
+    }
+    current_level.objects[current_level.player] = objects;
     return engine;
 
 
@@ -690,7 +696,7 @@ void apply_late_rules(Engine engine) {
 Engine plan_move(Engine engine, Checker c, str direction) {
 
     engine = move_player(engine, engine.current_level, direction);
-    apply_rules(engine, engine.current_level, engine.late_rules, direction);
+    apply_rules(engine, engine.current_level, engine.rules, direction);
     return engine;
 
 }
