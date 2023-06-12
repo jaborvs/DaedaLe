@@ -93,8 +93,16 @@ void main() {
         break;
     }
 
-    engine = plan_move(engine, checker, "up");
-    plan_move(engine, checker, "up");
+    print_level(engine, checker);
+    engine = plan_move(engine, checker, "right");
+    // print_level(engine, checker);
+    engine = plan_move(engine, checker, "right");
+    // print_level(engine, checker);
+    engine = plan_move(engine, checker, "down");
+    // print_level(engine, checker);
+    engine = plan_move(engine, checker, "left");
+    print_level(engine, checker);
+
 
     // list[str] directions = ["left", "up", "left", "up"];
 

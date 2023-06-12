@@ -435,8 +435,8 @@ bool isDirection (str dir) {
 
 bool directionalRule(list[RuleContent] left, list[RuleContent] right) {
 
-    bool leftDir = any(int i <- [0..size(left)], int j <- [0..size(left[i].content)], left[i].content in relativeDirections);
-    bool rightDir = any(int i <- [0..size(right)], int j <- [0..size(right[i].content)], right[i].content in relativeDirections);
+    bool leftDir = any(int i <- [0..size(left)], int j <- [0..size(left[i].content)], left[i].content[j] in relativeDirections);
+    bool rightDir = any(int i <- [0..size(right)], int j <- [0..size(right[i].content)], right[i].content[j] in relativeDirections);
 
     return (leftDir || rightDir);
 
@@ -504,7 +504,7 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _)) {
                 cloned_rule = new_rule(rd, direction, lhs, rhs);
                 new_rule_directions += cloned_rule; 
             } 
-        }              
+        }        
     }
 
     // No direction prefix was registered, meaning all directions apply
