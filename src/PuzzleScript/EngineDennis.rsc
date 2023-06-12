@@ -468,71 +468,26 @@ void check_if_applies(list[str] required_objects, bool neighbor, list[str] direc
 
 }
 
+Coords get_dir_difference(str dir) {
 
-bool find_object(Object obj: object(_, _, _, _), Engine engine) {
+    Coords dir_difference = <0,0>;
 
-    // Finds object on position
-    if (direction in ["right", "left", "horizontal", "any"]) {
-
-        str name = "";
-        // If next object needs to be neighbor
-        if (i + 1 <= (size(required) - 1) && required[i + 1] != "...") {
-            line += 1;
-            name = required[i + 1].name;
-            visit(engine.converted_levels[engine.current_level-1]) {
-                case n: object(_, _, _, _): {
-                    println("Found <n.name> at <coordinate> <line>");
-                }
-            }
+    switch(dir) {
+        case /right/: {
+            dir_difference = <0,1>;
         }
-        // If next object does not need to be neighbor
-        else if (i + 2 <= size(required) - 1 && required[i + 1] == "...") {
-            name = required[i + 2];
-            visit(engine.converted_levels[engine.current_level-1]) {
-                case n: object(name, <coordinate, _>, _, _): {
-                    println("name = <n.name>");
-                    break;
-                }
-            }            
+        case /left/: {
+            dir_difference = <0,-1>;
         }
-
-
-    }
-    return true;
-
-}
-
-
-bool find_object(Object obj: moving_object(_, _, _, _), Engine engine) {
-
-    return true;
-
-}
-
-bool can_be_matched(Engine engine, list[str] required, str direction) {
-
-    // for (str object <- required) {
-
-    // }
-
-    println(required);
-
-    for (int i <- [0..size(required)]) {
-        find_object(required[i]);
+        case /down/: {
+            dir_difference = <1,0>;
+        }
+        case /up/: {
+            dir_difference = <-1,0>;
+        }
     }
 
-
-    tuple[int, int] neighbor_direction = <0,0>;
-
-    int coordinate = 3;
-    int line = 0;
-
-    if (direction in ["right", "left", "horizontal"]) {
-        neighbor_direction = <0,0>;
-    }
-
-    return true;
-
+    return dir_difference;
 
 }
 
@@ -554,22 +509,7 @@ void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruled
         all_objects_in_level += [current_objects];
     }
 
-    Coords dir_difference = <0,0>;
-
-    switch(dir) {
-        case /right/: {
-            dir_difference = <0,1>;
-        }
-        case /left/: {
-            dir_difference = <0,-1>;
-        }
-        case /down/: {
-            dir_difference = <1,0>;
-        }
-        case /up/: {
-            dir_difference = <-1,0>;
-        }
-    }
+    Coords dir_difference = get_dir_difference(dir);
 
     list[Object] neighboring_objs = [];
 
@@ -578,12 +518,8 @@ void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruled
         neighboring_objs = find_neighbours(all_objects_in_level, object, 0, ruledir, dir_difference);
         if (size(neighboring_objs) == size(required)) {
 
-            println("Rule can be applied for:");
-            for (Object object <- neighboring_objs) {
-
-                println("Object with name <object.current_name> at pos <object.coords>");
-
-            }
+            // TODO: Replace lhs with rhs
+            println("");
 
 
         };
@@ -615,17 +551,15 @@ list[Object] find_neighbours(list[list[Object]] all_lists, Object obj1, int inde
 
 
 // Apply each rule as many times as possible then move on to next rule
-void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str direction) {
+Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str direction) {
 
     list[str] all_objects = engine.all_objects;
 
-    int index = 1;
     for (list[Rule] rulegroup <- rules) {
 
         for (Rule rule <- rulegroup) {
 
             list[list[Object]] required_objects = [];
-            list[list[str]] directions = [];
             str ruledir = "";
 
             for (RuleContent rc <- rule.left) {
@@ -655,75 +589,67 @@ void apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str
                 }
 
             }
-            // println("Rule direction = <ruledir>, required objects = <required_objects>");
 
             // Rule can't be applied
-            if (size(required_objects) != size(rule.left)) continue;
+            if (size(required_objects) != size(rule.left)) {
+                println("Rule cannot be applied");
+                continue;
+            }
+
+            println("Rule can be applied");
             apply_rule(engine, rule, required_objects, ruledir, direction);
         }
 
-        // println("Rule direction = <ruledir>, required objects = <required_objects>");
+    }   
 
-        // if (can_be_matched(engine, required_objects, direction)) apply_rule();
-
-
-        index += 1;
-    }    
-
-
+    return engine; 
 
 }
 
-bool no_obstacle(Object obj, Level current_level) {
+Object try_move(Object obj, Level current_level) {
 
     str dir = obj.direction;
 
-    Coords dir_difference = <0,0>;
-
-    switch(dir) {
-        case /right/: {
-            dir_difference = <0,1>;
-        }
-        case /left/: {
-            dir_difference = <0,-1>;
-        }
-        case /down/: {
-            dir_difference = <1,0>;
-        }
-        case /up/: {
-            dir_difference = <-1,0>;
-        }
-    }
-
+    Coords dir_difference = get_dir_difference(dir);
     Coords new_pos = <obj.coords[0] + dir_difference[0], obj.coords[1] + dir_difference[1]>;
 
     visit(current_level) {
+        // If object at new position is not on same layer
         case n: object(_, _, _, new_pos, _, ld): {
-            if (ld != obj.layer) println("Found <n.current_name> at <new_pos>");
+            if (ld != obj.layer || n.direction != "") {
+                obj.direction == "";
+                n.coords = obj.coords;
+                obj.coords = new_pos;
+            }
         }
     }
 
-    return false;
+    return obj;
 
 }
 
-void apply_moves(Engine engine, Level current_level) {
+Engine apply_moves(Engine engine, Level current_level) {
 
+    list[Object] updated_objects = [];
 
     for (str object <- current_level.objects<0>) {
-
         for (Object obj <- current_level.objects[object]) {
 
-            if (obj.direction != "" && no_obstacle(obj, current_level)) println("Object <obj.current_name> can move <obj.direction>");
+            if (obj.direction != "") {
+                println("Object <obj.current_name> on pos <obj.coords>");
+                obj = try_move(obj, current_level);
+                println("Object <obj.current_name> now on pos <obj.coords>");
+            }
 
+            updated_objects += obj;
 
         }
 
-
+        engine.current_level.objects[object] = updated_objects;
+        updated_objects = [];
     }
 
-
-
+    return engine;
 }
 
 
@@ -743,51 +669,21 @@ Engine move_player(Engine engine, Level current_level, str direction) {
 
 }
 
-
-void apply_late_rules(Engine engine) {
-
-    for (RuleData rd <- engine.late_rules) {
-        println("");
-    }
-
-}
-
 Engine plan_move(Engine engine, Checker c, str direction) {
 
     engine = move_player(engine, engine.current_level, direction);
-    apply_rules(engine, engine.current_level, engine.rules, direction);
-    apply_moves(engine, engine.current_level);
+    engine = apply_rules(engine, engine.current_level, engine.rules, direction);
+    engine = apply_moves(engine, engine.current_level);
+    engine = apply_rules(engine, engine.current_level, engine.late_rules, direction);
     return engine;
 
 }
 
 
-Engine do_move(Engine engine, Checker c, str direction) {
-
-    // println(engine.properties);
-
-    // for (list[Object] objects <- engine.current_level.objects<1>) {
-    //     for (Object obj <- objects) println("<obj.current_name> possible names = <engine.properties[obj.current_name]>");
-    // }
-
-    // apply_rules(engine, engine.current_level, engine.late_rules, direction);
-
-    // for (LevelData current_level <- engine.levels) {
-    //     if (current_level is message) {
-    //         println(current_level.message);
-    //     } else if (current_level is level_data) {
-    //         apply_rules(engine.rules, direction);
-    //         // apply_rules(engine);
-    //     }
-    //     // engine.current_level += 1;
-
-    // }
-
-    return engine;
+// void print_level(Engine engine) {
 
 
 
-}
 
 
-
+// }
