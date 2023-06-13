@@ -486,7 +486,7 @@ Coords get_dir_difference(str dir) {
 }
 
 // Ellipsis not accounted for
-void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir, list[RuleContent] right) {
+Engine apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir, list[RuleContent] right) {
 
     // list[list[Object]] all_objects_in_level = [];
     // list[Object] current_objects = [];
@@ -507,6 +507,9 @@ void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruled
     Coords dir_difference = get_dir_difference(dir);
 
     list[Object] neighboring_objs = [];
+    list[Object] replacements = [];
+
+    int neighbour_index = 0;
 
     // Find all the neighboring objects in the specified direction
     for (Object object <- required[0]) {
@@ -515,31 +518,60 @@ void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruled
 
         if (size(neighboring_objs) == size(required)) {
 
-            for (int i <- [0..size(neighboring_objs)]) {
+            println("Rule can be applied");
 
-                Object obj = neighboring_objs[i];
-                RuleContent rc = right[i];
+            for (RuleContent rc <- rule.right) {
 
-                str dir = rc.content[0];
+                for (int i <- [0..size(rc.content)]) {
+                    
+                    if (i mod 2 == 1) continue;
+                    
+                    str direction = rc.content[i];
+                    str name = rc.content[i + 1];
 
-                Object new_obj = game_object(obj.char, obj.current_name, obj.possible_names, obj.coords, dir, obj.layer);
+                    // str current_name = neighboring_objs[neighbour_index].id;
 
-                engine.current_level = visit(engine.current_level) {
+                    list[Object] objects = [];
 
-                    case obj => new_obj
+                    for (Coords coord <- engine.current_level.objects<0>) {
+                        for (Object obj <- engine.current_level.objects[coord]) {
+
+                            if (name in obj.possible_names && obj in neighboring_objs) {
+                                obj.direction = direction;
+                                // println("Added object <obj.possible_names> at pos <coord>");
+                                replacements += obj;
+                            }
+                        }
+                    }
+
+                    neighbour_index += 1;
+
 
                 }
-
-
             }
-
-            // // TODO: Replace lhs with rhs
-            // for (RuleContent rc <- right) {
-            //     println(rc.content);
-            // }
-
         }
     }
+
+    for (int i <- [0..size(replacements)]) {
+
+        Object replacement = replacements[i];
+        Coords neighboring_coords = neighboring_objs[i].coords;
+        int id = replacement.id;
+        str direction = replacement.direction;
+
+        engine.current_level = visit(engine.current_level) {
+
+            case n: game_object(xc, xn, xp_n, xcoords, xdir, xld, id) => {
+                
+                println("Updating <xn> at <xcoords> with dir <xdir> to be <neighboring_coords> with dir <direction>");
+                game_object(xc, xn, xp_n, neighboring_coords, direction, xld, id);
+            }
+
+        };
+
+    }
+
+    return engine;
 
 }
 
@@ -551,7 +583,7 @@ list[Object] find_neighbours(list[list[Object]] all_lists, Object obj1, int inde
 
     if (index + 1 < size(all_lists)) {
 
-        if (any(obj2 <- all_lists[index + 1], <obj1.coords[0] - obj2.coords[0], obj1.coords[1] - obj2.coords[1]> == dir_difference) &&
+        if (any(obj2 <- all_lists[index + 1], <obj2.coords[0] - obj1.coords[0], obj2.coords[1] - obj1.coords[1]> == dir_difference) &&
                 !(obj2 in neighbors)) {
 
             neighbors += obj2;
@@ -615,7 +647,7 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
             // Rule can't be applied
             if (size(required_objects) != size(rule.left)) continue;
 
-            apply_rule(engine, rule, required_objects, ruledir, direction, rule.right);
+            engine = apply_rule(engine, rule, required_objects, ruledir, direction, rule.right);
         }
 
     }   
@@ -644,7 +676,7 @@ Level try_move(Object obj, Level current_level) {
         // Object is pushed (MOVEMENT SHOULD BE UPDATED IN APPLY_RULE)
         if (obj.layer == new_object.layer && new_object.direction != "") {
             println("Hoi");
-            object = try_move(object, current_level);
+            object = try_move(new_object, current_level);
         }
         // Object can move one pos
         else if(obj.layer != new_object.layer && new_object.direction == "") {
@@ -655,7 +687,7 @@ Level try_move(Object obj, Level current_level) {
                 }
             }
             current_level.objects[old_pos] += game_object(new_object.char, new_object.current_name, new_object.possible_names, 
-                old_pos, "", new_object.layer);
+                old_pos, "", new_object.layer, new_object.id);
             
             for (int k <- [0..size(current_level.objects[new_pos])]) {
                 if (current_level.objects[new_pos][k] == new_object) {
@@ -663,7 +695,7 @@ Level try_move(Object obj, Level current_level) {
                     break;
                 }
             }
-            current_level.objects[new_pos] += game_object(obj.char, obj.current_name, obj.possible_names, new_pos, "", obj.layer);
+            current_level.objects[new_pos] += game_object(obj.char, obj.current_name, obj.possible_names, new_pos, "", obj.layer, obj.id);
 
             if (obj.current_name == "player") current_level.player = new_pos;
             // current_level.objects[new_pos] = remove(current_level.objects[new_pos], i);
@@ -777,7 +809,7 @@ void print_level(Engine engine, Checker c) {
             int added = 0;
 
             visit(engine.current_level) {
-                case n: game_object(char, name, _, <i,j>, _, _): {
+                case n: game_object(char, name, _, <i,j>, _, _, _): {
                     line += char;
                     continue;
                 }

@@ -10,7 +10,7 @@ import PuzzleScript::Utils;
 
 import IO;
 
-data Object = game_object(str char, str current_name, list[str] possible_names, Coords coords, str direction, LayerData layer);
+data Object = game_object(str char, str current_name, list[str] possible_names, Coords coords, str direction, LayerData layer, int id);
 alias Line = list[list[Object]];
 alias Layer = list[Line];
 
@@ -285,13 +285,13 @@ Level convert_level(LevelData level, Checker c) {
 
     map[Coords, list[Object]] objects = ();
     Coords player = <0,0>;
+    int id = 0;
 
     for (int i <- [0..size(level.level)]) {
 
  		list[str] char_list = split("", level.level[i]);
 
         for (int j <- [0..size(char_list)]) {
-
 
             str char = toLowerCase(char_list[j]);
             if (char in c.references<0>) {
@@ -300,7 +300,7 @@ Level convert_level(LevelData level, Checker c) {
                 str name = c.references[char][0];
 
                 list[Object] object = [game_object(char, name, get_all_references(char, c.references), <i,j>, 
-                    "", ld)];
+                    "", ld, id)];
 
                 if (<i,j> in objects) objects[<i,j>] += object;
                 else objects += (<i,j>: object);
@@ -310,16 +310,18 @@ Level convert_level(LevelData level, Checker c) {
                     player = <i,j>;
                 }
 
+                id += 1;
+
 
             }
             else if (char in c.combinations<0>) {
                 
                 for (str objectName <- c.combinations[char]) {
                     list[Object] object = [game_object(char, objectName, get_all_references(get_char(objectName, c.references), 
-                        c.references), <i,j>, "", get_layer(objectName, c))];
+                        c.references), <i,j>, "", get_layer(objectName, c), id)];
                     if (<i,j> in objects) objects[<i,j>] += object;
                     else objects += (<i,j>: object);
-
+                    id += 1;
                 }
                 
             }
