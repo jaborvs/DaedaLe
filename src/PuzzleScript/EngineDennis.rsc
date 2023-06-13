@@ -488,27 +488,20 @@ Coords get_dir_difference(str dir) {
 // Ellipsis not accounted for
 void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir, list[RuleContent] right) {
 
-    println("Trying to apply rule with input direction: <dir> and objects:");
-    for (list[Object] obj <- required) {
+    // list[list[Object]] all_objects_in_level = [];
+    // list[Object] current_objects = [];
 
-        for (Object object <- obj) println(object.current_name);
+    // // Get all the coords of the objects
+    // for (list[Object] objects <- required) {
 
-    }
-
-    list[list[Object]] all_objects_in_level = [];
-    list[Object] current_objects = [];
-
-    // Get all the coords of the objects
-    for (list[Object] objects <- required) {
-
-        current_objects = [];
-        for (Object obj <- objects) {
-            for (Object object <- engine.current_level.objects[obj.coords]) {
-                current_objects += object;
-            }
-        }
-        all_objects_in_level += [current_objects];
-    }
+    //     current_objects = [];
+    //     for (Object obj <- objects) {
+    //         for (Object object <- engine.current_level.objects[obj.coords]) {
+    //             current_objects += object;
+    //         }
+    //     }
+    //     all_objects_in_level += [current_objects];
+    // }
 
 
     Coords dir_difference = get_dir_difference(dir);
@@ -518,13 +511,9 @@ void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruled
     // Find all the neighboring objects in the specified direction
     for (Object object <- required[0]) {
 
-        println("Finding neighbours for object <object.current_name>");
-
         neighboring_objs = find_neighbours(required, object, 0, ruledir, dir_difference);
 
         if (size(neighboring_objs) == size(required)) {
-
-            println("Neighbours found!");
 
             for (int i <- [0..size(neighboring_objs)]) {
 
@@ -588,6 +577,7 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
         for (Rule rule <- rulegroup) {
 
             list[list[Object]] required_objects = [];
+            list[list[Object]] right_objects = [];
             str ruledir = "";
 
             for (RuleContent rc <- rule.left) {
@@ -637,47 +627,88 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
 Level try_move(Object obj, Level current_level) {
 
     str dir = obj.direction;
+    println("Moving <dir>");
 
     list[Object] updated_objects = [];
 
     Coords dir_difference = get_dir_difference(dir);
+    Coords old_pos = obj.coords;
     Coords new_pos = <obj.coords[0] + dir_difference[0], obj.coords[1] + dir_difference[1]>;
 
-    visit(current_level) {
-        // If object at new position is not on same layer
-        case n: game_object(char, _, _, new_pos, _, ld): {
-            if (ld != obj.layer || n.direction != "") {
-                
-                updated_objects += n;
-                n.coords = obj.coords;
-                updated_objects += n;
+    list[Object] objs_at_new_pos = current_level.objects[new_pos];
 
-                updated_objects += obj;
-                obj.direction == "";
-                obj.coords = new_pos;
-                updated_objects += obj;
+    for (int i <- [0..size(objs_at_new_pos)]) {
 
+        Object new_object = objs_at_new_pos[i];
 
-
+        // Object is pushed (MOVEMENT SHOULD BE UPDATED IN APPLY_RULE)
+        if (obj.layer == new_object.layer && new_object.direction != "") {
+            println("Hoi");
+            object = try_move(object, current_level);
+        }
+        // Object can move one pos
+        else if(obj.layer != new_object.layer && new_object.direction == "") {
+            for (int j <- [0..size(current_level.objects[old_pos])]) {
+                if (current_level.objects[old_pos][j] == obj) {
+                    current_level.objects[old_pos] = remove(current_level.objects[old_pos], j);
+                    break;
+                }
             }
+            current_level.objects[old_pos] += game_object(new_object.char, new_object.current_name, new_object.possible_names, 
+                old_pos, "", new_object.layer);
+            
+            for (int k <- [0..size(current_level.objects[new_pos])]) {
+                if (current_level.objects[new_pos][k] == new_object) {
+                    current_level.objects[new_pos] = remove(current_level.objects[new_pos], k);
+                    break;
+                }
+            }
+            current_level.objects[new_pos] += game_object(obj.char, obj.current_name, obj.possible_names, new_pos, "", obj.layer);
+
+            if (obj.current_name == "player") current_level.player = new_pos;
+            // current_level.objects[new_pos] = remove(current_level.objects[new_pos], i);
+        } else {
+            println("Nothing");
         }
+
     }
 
-    for (int i <- [0..size(updated_objects)]) {
 
-        if (i mod 2 == 1) continue;
+    // visit(current_level) {
+    //     // If object at new position is not on same layer
+    //     case n: game_object(char, _, _, new_pos, _, ld): {
+    //         if (ld != obj.layer || n.direction != "") {
+                
+    //             updated_objects += n;
+    //             n.coords = obj.coords;
+    //             updated_objects += n;
 
-        Object old_obj = updated_objects[i];
-        Object new_obj = updated_objects[i + 1];
-
-        current_level = visit(current_level) {
-
-            case n: old_obj => new_obj
-
-        }
+    //             updated_objects += obj;
+    //             obj.direction == "";
+    //             obj.coords = new_pos;
+    //             updated_objects += obj;
 
 
-    }
+
+    //         }
+    //     }
+    // }
+
+    // for (int i <- [0..size(updated_objects)]) {
+
+    //     if (i mod 2 == 1) continue;
+
+    //     Object old_obj = updated_objects[i];
+    //     Object new_obj = updated_objects[i + 1];
+
+    //     current_level = visit(current_level) {
+
+    //         case n: old_obj => new_obj
+
+    //     }
+
+
+    // }
 
     return current_level;
 

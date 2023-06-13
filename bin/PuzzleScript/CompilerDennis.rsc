@@ -289,13 +289,14 @@ Level convert_level(LevelData level, Checker c) {
     for (int i <- [0..size(level.level)]) {
 
  		list[str] char_list = split("", level.level[i]);
+
         for (int j <- [0..size(char_list)]) {
+
 
             str char = toLowerCase(char_list[j]);
             if (char in c.references<0>) {
 
                 LayerData ld = get_layer(c.references[char][0], c);
-
                 str name = c.references[char][0];
 
                 list[Object] object = [game_object(char, name, get_all_references(char, c.references), <i,j>, 
@@ -307,7 +308,6 @@ Level convert_level(LevelData level, Checker c) {
 
                 if (("player" in c.references[char]) && size(c.references[char]) == 1) {
                     player = <i,j>;
-                    break;
                 }
 
 
