@@ -462,12 +462,6 @@ void print_message(str string){
 	println("#####################################################");
 }
 
-void check_if_applies(list[str] required_objects, bool neighbor, list[str] directions) {
-
-    println(required_objects);
-
-}
-
 Coords get_dir_difference(str dir) {
 
     Coords dir_difference = <0,0>;
@@ -494,6 +488,13 @@ Coords get_dir_difference(str dir) {
 // Ellipsis not accounted for
 void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir, list[RuleContent] right) {
 
+    println("Trying to apply rule with input direction: <dir> and objects:");
+    for (list[Object] obj <- required) {
+
+        for (Object object <- obj) println(object.current_name);
+
+    }
+
     list[list[Object]] all_objects_in_level = [];
     list[Object] current_objects = [];
 
@@ -502,7 +503,7 @@ void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruled
 
         current_objects = [];
         for (Object obj <- objects) {
-            for (Object object <- engine.current_level.objects[obj.char]) {
+            for (Object object <- engine.current_level.objects[obj.coords]) {
                 current_objects += object;
             }
         }
@@ -515,18 +516,38 @@ void apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruled
     list[Object] neighboring_objs = [];
 
     // Find all the neighboring objects in the specified direction
-    for (Object object <- all_objects_in_level[0]) {
+    for (Object object <- required[0]) {
 
-        neighboring_objs = find_neighbours(all_objects_in_level, object, 0, ruledir, dir_difference);
+        println("Finding neighbours for object <object.current_name>");
+
+        neighboring_objs = find_neighbours(required, object, 0, ruledir, dir_difference);
 
         if (size(neighboring_objs) == size(required)) {
 
-            // TODO: Replace lhs with rhs
-            for (RuleContent rc <- right) {
-                println(rc.content);
-            }
-            // println(right);
+            println("Neighbours found!");
 
+            for (int i <- [0..size(neighboring_objs)]) {
+
+                Object obj = neighboring_objs[i];
+                RuleContent rc = right[i];
+
+                str dir = rc.content[0];
+
+                Object new_obj = game_object(obj.char, obj.current_name, obj.possible_names, obj.coords, dir, obj.layer);
+
+                engine.current_level = visit(engine.current_level) {
+
+                    case obj => new_obj
+
+                }
+
+
+            }
+
+            // // TODO: Replace lhs with rhs
+            // for (RuleContent rc <- right) {
+            //     println(rc.content);
+            // }
 
         }
     }
@@ -540,7 +561,8 @@ list[Object] find_neighbours(list[list[Object]] all_lists, Object obj1, int inde
     if (index == 0) neighbors += obj1;
 
     if (index + 1 < size(all_lists)) {
-        if (any(obj2 <- all_lists[index + 1], <obj2.coords[0] - obj1.coords[0], obj2.coords[1] - obj1.coords[1]> == dir_difference) &&
+
+        if (any(obj2 <- all_lists[index + 1], <obj1.coords[0] - obj2.coords[0], obj1.coords[1] - obj2.coords[1]> == dir_difference) &&
                 !(obj2 in neighbors)) {
 
             neighbors += obj2;
@@ -582,14 +604,15 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
 
                     list[Object] current_objs = [];
 
-                    for (str object <- current_level.objects<0>) {
-                        for (Object obj <- current_level.objects[object]) {
+                    for (Coords coord <- current_level.objects<0>) {
+                        for (Object obj <- current_level.objects[coord]) {
+
+                            // println("Evaluating <obj.current_name> with poss_objs: <obj.possible_names> at pos <obj.coords>");
+
                             if ((name in obj.possible_names) && (obj_dir == obj.direction)) {
+                                // println("Added object <obj.possible_names> at pos <coord>");
                                 current_objs += obj;
-                            } 
-                            // else{
-                            //     println("<name> should have <obj_dir> but has <obj.direction>");
-                            // }
+                            }
                         }
                     }
                     if (current_objs != []) {
@@ -622,7 +645,7 @@ Level try_move(Object obj, Level current_level) {
 
     visit(current_level) {
         // If object at new position is not on same layer
-        case n: object(char, _, _, new_pos, _, ld): {
+        case n: game_object(char, _, _, new_pos, _, ld): {
             if (ld != obj.layer || n.direction != "") {
                 
                 updated_objects += n;
@@ -664,8 +687,8 @@ Engine apply_moves(Engine engine, Level current_level) {
 
     list[Object] updated_objects = [];
 
-    for (str object <- current_level.objects<0>) {
-        for (Object obj <- current_level.objects[object]) {
+    for (Coords coord <- current_level.objects<0>) {
+        for (Object obj <- current_level.objects[coord]) {
 
             if (obj.direction != "") {
                 current_level = try_move(obj, current_level);
@@ -723,7 +746,7 @@ void print_level(Engine engine, Checker c) {
             int added = 0;
 
             visit(engine.current_level) {
-                case n: object(char, name, _, <i,j>, _, _): {
+                case n: game_object(char, name, _, <i,j>, _, _): {
                     line += char;
                     continue;
                 }

@@ -23,10 +23,10 @@ import List;
 
 import util::Benchmark;
 
-Object randomObject(list[Object] objs){
-		int rand = arbInt(size(objs));
-		return objs[rand];
-	}
+// Object randomObject(list[Object] objs){
+// 		int rand = arbInt(size(objs));
+// 		return objs[rand];
+// 	}
 
 void generate_reports(Checker c, loc ReportDir, loc DemoDir) {
     
@@ -76,8 +76,6 @@ void main() {
 	checker = check_game(game);
     checker.level_data = check_game_per_level(checker);
 
-    println("Compiling");
-
 	engine = compile(checker);
 
     // showInteractiveContent(generate_report_per_level(checker, ReportDir));
@@ -93,15 +91,17 @@ void main() {
         break;
     }
 
+    // print_level(engine, checker);
+    int time = cpuTime();
+    engine = plan_move(engine, checker, "right");
     print_level(engine, checker);
     engine = plan_move(engine, checker, "right");
-    // print_level(engine, checker);
-    engine = plan_move(engine, checker, "right");
-    // print_level(engine, checker);
+    print_level(engine, checker);
     engine = plan_move(engine, checker, "down");
-    // print_level(engine, checker);
+    print_level(engine, checker);
     engine = plan_move(engine, checker, "left");
     print_level(engine, checker);
+    println((cpuTime() - time) / 1000000000.00);
 
 
     // list[str] directions = ["left", "up", "left", "up"];

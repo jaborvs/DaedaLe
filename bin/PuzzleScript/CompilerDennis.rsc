@@ -10,17 +10,17 @@ import PuzzleScript::Utils;
 
 import IO;
 
-data Object = object(str char, str current_name, list[str] possible_names, Coords coords, str direction, LayerData layer);
+data Object = game_object(str char, str current_name, list[str] possible_names, Coords coords, str direction, LayerData layer);
 alias Line = list[list[Object]];
 alias Layer = list[Line];
 
 data Level (loc src = |unknown:///|)
 	= level(
-        map[str, list[Object]] objects,
+        map[Coords, list[Object]] objects,
 		// Layer layer, 
 		// list[Layer] checkpoint,
 		// list[str] objectdata,
-		str player,
+		Coords player,
         LevelChecker additional_info,
 		LevelData original
 	)
@@ -283,7 +283,8 @@ LayerData get_layer(str object, Checker c) {
 // Go over each character in the level and convert the character to all possible references
 Level convert_level(LevelData level, Checker c) {
 
-    map[str, list[Object]] objects = ();
+    map[Coords, list[Object]] objects = ();
+    Coords player = <0,0>;
 
     for (int i <- [0..size(level.level)]) {
 
@@ -297,37 +298,34 @@ Level convert_level(LevelData level, Checker c) {
 
                 str name = c.references[char][0];
 
-                list[Object] object = [object(char, name, get_all_references(char, c.references), <i,j>, 
+                list[Object] object = [game_object(char, name, get_all_references(char, c.references), <i,j>, 
                     "", ld)];
 
-                if (char in objects) objects[char] += object;
-                else objects += (char: object);
+                if (<i,j> in objects) objects[<i,j>] += object;
+                else objects += (<i,j>: object);
+
+
+                if (("player" in c.references[char]) && size(c.references[char]) == 1) {
+                    player = <i,j>;
+                    break;
+                }
+
 
             }
             else if (char in c.combinations<0>) {
                 
                 for (str objectName <- c.combinations[char]) {
-                    list[Object] object = [object(char, objectName, get_all_references(char, c.combinations), <i,j>, 
-                        "", get_layer(objectName, c))];
-                    if (char in objects) objects[char] += object;
-                    else objects += (char: object);
+                    list[Object] object = [game_object(char, objectName, get_all_references(get_char(objectName, c.references), 
+                        c.references), <i,j>, "", get_layer(objectName, c))];
+                    if (<i,j> in objects) objects[<i,j>] += object;
+                    else objects += (<i,j>: object);
+
                 }
                 
             }
             else continue;
 
         }
-    }
-
-    str player = "";
-
-    for (str key <- c.references<0>) {
-
-        if (("player" in c.references[key]) && size(c.references[key]) == 1) {
-            player = key;
-            break;
-        }
-
     }
 
     return Level::level(
@@ -1120,7 +1118,7 @@ Engine compile(Checker c) {
 
 	engine.layers = [convert_layer(x, c) | x <- c.game.layers];
 
-	engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
+	// engine.objects = (x.coords : x | x <- c.game.objects);
 	
 	return engine;
 }

@@ -952,7 +952,17 @@ LevelChecker applied_rules(LevelData ld, LevelChecker lc, Checker c) {
 
 }
 
-list[str] get_all_references(str char, map[str, list[str]] references) {
+str get_char(str name, map[str, list[str]] references) {
+
+    for (str char <- references<0>) {
+        if (size(char) == 1 && references[char] == [name]) {   
+            return toLowerCase(char);
+        }
+    }
+    return "";
+}
+
+list[str] get_all_references(str char, map[str, list[str]] references, bool debug = false) {
 
     if (!(char in references<0>)) return [];
 
