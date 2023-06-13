@@ -563,7 +563,6 @@ Engine apply_rule(Engine engine, Rule rule, list[list[Object]] required, str rul
 
             case n: game_object(xc, xn, xp_n, xcoords, xdir, xld, id) => {
                 
-                println("Updating <xn> at <xcoords> with dir <xdir> to be <neighboring_coords> with dir <direction>");
                 game_object(xc, xn, xp_n, neighboring_coords, direction, xld, id);
             }
 
@@ -676,7 +675,7 @@ Level try_move(Object obj, Level current_level) {
         // Object is pushed (MOVEMENT SHOULD BE UPDATED IN APPLY_RULE)
         if (obj.layer == new_object.layer && new_object.direction != "") {
             println("Hoi");
-            object = try_move(new_object, current_level);
+            // object = try_move(new_object, current_level);
         }
         // Object can move one pos
         else if(obj.layer != new_object.layer && new_object.direction == "") {

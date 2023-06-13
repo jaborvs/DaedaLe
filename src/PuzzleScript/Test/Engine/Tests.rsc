@@ -80,28 +80,28 @@ void main() {
 
     // showInteractiveContent(generate_report_per_level(checker, ReportDir));
 
-	// engine = compile(checker);
-
-    for (int i <- [0..size(engine.levels)]){
-        if (engine.levels[i] is message || engine.levels[i] is level_empty) {
-            continue;
-        }
-        level = engine.levels[i];
-	    // print_level(level);
-        break;
-    }
-
     // print_level(engine, checker);
+    print_level(engine, checker);
     int time = cpuTime();
     engine = plan_move(engine, checker, "right");
-    print_level(engine, checker);
+    // print_level(engine, checker);
     engine = plan_move(engine, checker, "right");
     print_level(engine, checker);
     engine = plan_move(engine, checker, "down");
     print_level(engine, checker);
     engine = plan_move(engine, checker, "left");
     print_level(engine, checker);
+    engine = plan_move(engine, checker, "move");
+    // engine = plan_move(engine, checker, "up");
+    // print_level(engine, checker);
+    // engine = plan_move(engine, checker, "left");
+    // print_level(engine, checker);
+    // engine = plan_move(engine, checker, "left");
+    // print_level(engine, checker);
+    // engine = plan_move(engine, checker, "down");
+    // print_level(engine, checker);
     println((cpuTime() - time) / 1000000000.00);
+    print_level(engine, checker);
 
 
     // list[str] directions = ["left", "up", "left", "up"];
