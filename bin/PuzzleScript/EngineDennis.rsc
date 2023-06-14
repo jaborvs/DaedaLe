@@ -567,7 +567,6 @@ Engine apply_rule(Engine engine, Rule rule, list[list[Object]] required, str rul
                         for (Object obj <- engine.current_level.objects[coord]) {
 
                             if (obj == neighboring_objs[neighbour_index]) {
-                                println("Setting direction for <obj.current_name> to <direction> at pos <obj.coords>");
                                 obj.direction = direction;
                                 // println("Added object <obj.possible_names> at pos <coord>");
                                 replacements += obj;
@@ -669,10 +668,7 @@ Level move_to_pos(Level current_level, Coords old_pos, Coords new_pos, Object ob
     for (int j <- [0..size(current_level.objects[old_pos])]) {
         if (current_level.objects[old_pos][j] == obj) {
 
-            println("Removing object <obj.current_name> from pos <old_pos>");
             current_level.objects[old_pos] = remove(current_level.objects[old_pos], j);
-
-            println("Adding object <obj.current_name> to pos <new_pos> instead");
             current_level.objects[new_pos] += game_object(obj.char, obj.current_name, obj.possible_names, new_pos, "", obj.layer, obj.id);
 
             if (obj.current_name == "player") current_level.player = new_pos;
@@ -695,8 +691,6 @@ Level move_to_pos(Level current_level, Coords old_pos, Coords new_pos, Object ob
 }
 
 Level try_move(Object obj, Level current_level) {
-
-    println("\nIn try_move with object: <obj.current_name>");
 
     str dir = obj.direction;
 
@@ -743,7 +737,6 @@ Level try_move(Object obj, Level current_level) {
     }
 
     if (size(objs_at_new_pos) == 0) {
-        println("Move to pos size 0");
         current_level = move_to_pos(current_level, old_pos, new_pos, obj);
     }
 
@@ -759,7 +752,6 @@ Engine apply_moves(Engine engine, Level current_level) {
         for (Object obj <- current_level.objects[coord]) {
 
             if (obj.direction != "") {
-                println("\n\nCalling try move");
                 current_level = try_move(obj, current_level);
             }
 
@@ -804,29 +796,65 @@ Engine plan_move(Engine engine, Checker c, str direction) {
 
 }
 
+bool check_win_condition(Level current_level, str amount, str object) {
+
+    list[Object] found = [];
+
+    for (Coords coords <- current_level.objects<0>) {
+        for (Object obj <- current_level.objects[coords]) {
+            if (toLowerCase(object) in obj.possible_names) found += object;
+        }
+    }   
+
+    if (amount == "some") {
+        return (size(found) > 0);
+    } else if (amount == "no") {
+        return (size(found) == 0);
+    }
+
+
+}
+
 bool check_win_condition(Level current_level, str amount, list[str] objects) {
 
-    list[Object] found_objects;
+    list[list[Object]] found_objects = [];
+    list[Object] current = [];
 
-    // if (amount == "all") {
+    for (int i <- [0..size(objects)]) {
+        for (Coords coords <- current_level.objects<0>) {
 
-        
+            for (Object object <- current_level.objects[coords]) {
+                if (toLowerCase(objects[i]) in object.possible_names) current += object;
+            }
+            if (current != []) {
+                found_objects += [current];
+                current = [];
+            }
+        }   
+    }
 
-    // } else if (amount == "no") {
+    list[Object] same_pos = [];
 
-    // } else if (amount == "any") {
+    for (Object object <- found_objects[0]) {
+        same_pos = [obj | obj <- found_objects[1], obj.coords == object.coords];
+    }
+    
+    if (amount == "all") {
+        return (size(same_pos) == size(found_objects[1]));
+    } else if (amount == "no") {
+        return (size(same_pos) == 0);
+    } else if (amount == "any") {
+        return (size(same_pos) <= size(found_objects[1]));
+    }
 
-
-
-    // }
-
-    return true;
+    return false;
 }
 
 bool check_win_conditions(Engine engine) {
 
     PSGame game = engine.game;
     list[ConditionData] lcd = game.conditions;
+    list[bool] satisfied = [];
 
     for (ConditionData cd <- lcd) {
 
@@ -834,18 +862,17 @@ bool check_win_conditions(Engine engine) {
             
             if ("on" in cd.condition) {
 
-                println(cd.condition[1]);
-                println(cd.condition[3]);
+                satisfied += check_win_condition(engine.current_level, cd.condition[0], [cd.condition[1], cd.condition[3]]);
 
             } else {
 
-                println(cd.condition[1]);
+                satisfied += check_win_condition(engine.current_level, cd.condition[0], cd.condition[1]);
 
             }
         }
     }
 
-    return false;
+    return all(x <- satisfied, x == true);
 
 
 }

@@ -71,8 +71,8 @@ void main() {
 	Engine engine;
 	Level level;
 
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
     checker.level_data = check_game_per_level(checker);
 
@@ -83,41 +83,31 @@ void main() {
     // print_level(engine, checker);
     print_level(engine, checker);
     int time = cpuTime();
-    engine = plan_move(engine, checker, "right");
-    // print_level(engine, checker);
-    engine = plan_move(engine, checker, "right");
-    // print_level(engine, checker);
+    engine = plan_move(engine, checker, "up");
+    engine = plan_move(engine, checker, "left");
+    engine = plan_move(engine, checker, "left");
+    engine = plan_move(engine, checker, "up");
+    engine = plan_move(engine, checker, "left");
     engine = plan_move(engine, checker, "down");
-    // print_level(engine, checker);
-    engine = plan_move(engine, checker, "left");
-    // print_level(engine, checker);
-    engine = plan_move(engine, checker, "left");
-    // print_level(engine, checker);
     engine = plan_move(engine, checker, "down");
-    // print_level(engine, checker);
     engine = plan_move(engine, checker, "left");
-    // print_level(engine, checker);
+    engine = plan_move(engine, checker, "left");
     engine = plan_move(engine, checker, "up");
-    // print_level(engine, checker);
     engine = plan_move(engine, checker, "up");
-    // print_level(engine, checker);
     engine = plan_move(engine, checker, "up");
-    // print_level(engine, checker);
     engine = plan_move(engine, checker, "right");
-    // print_level(engine, checker);
+    engine = plan_move(engine, checker, "right");
     engine = plan_move(engine, checker, "up");
-    // engine = plan_move(engine, checker, "up");
-    // print_level(engine, checker);
-    // engine = plan_move(engine, checker, "left");
-    // print_level(engine, checker);
-    // engine = plan_move(engine, checker, "left");
-    // print_level(engine, checker);
-    // engine = plan_move(engine, checker, "down");
+    engine = plan_move(engine, checker, "right");
+    engine = plan_move(engine, checker, "right");
+    engine = plan_move(engine, checker, "right");
+
+
     // print_level(engine, checker);
     println((cpuTime() - time) / 1000000000.00);
     print_level(engine, checker);
 
-    check_win_conditions(engine);
+    println("Passed level = <check_win_conditions(engine)>");
 
 
     // list[str] directions = ["left", "up", "left", "up"];
