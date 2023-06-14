@@ -504,8 +504,6 @@ Engine apply(Engine engine, list[Object] neighboring_objs, list[Object] replacem
             }
             continue;
 
-        } else {
-            println("Current name is not empty");
         }
 
         int id = replacement.id;
@@ -569,6 +567,7 @@ Engine apply_rule(Engine engine, Rule rule, list[list[Object]] required, str rul
                         for (Object obj <- engine.current_level.objects[coord]) {
 
                             if (obj == neighboring_objs[neighbour_index]) {
+                                println("Setting direction for <obj.current_name> to <direction> at pos <obj.coords>");
                                 obj.direction = direction;
                                 // println("Added object <obj.possible_names> at pos <coord>");
                                 replacements += obj;
@@ -641,10 +640,7 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
                     for (Coords coord <- current_level.objects<0>) {
                         for (Object obj <- current_level.objects[coord]) {
 
-                            // println("Evaluating <obj.current_name> with poss_objs: <obj.possible_names> at pos <obj.coords>");
-
                             if ((name in obj.possible_names) && (obj_dir == obj.direction)) {
-                                // println("Added object <obj.possible_names> at pos <coord>");
                                 current_objs += obj;
                             }
                         }
@@ -668,7 +664,39 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
 
 }
 
+Level move_to_pos(Level current_level, Coords old_pos, Coords new_pos, Object obj) {
+
+    for (int j <- [0..size(current_level.objects[old_pos])]) {
+        if (current_level.objects[old_pos][j] == obj) {
+
+            println("Removing object <obj.current_name> from pos <old_pos>");
+            current_level.objects[old_pos] = remove(current_level.objects[old_pos], j);
+
+            println("Adding object <obj.current_name> to pos <new_pos> instead");
+            current_level.objects[new_pos] += game_object(obj.char, obj.current_name, obj.possible_names, new_pos, "", obj.layer, obj.id);
+
+            if (obj.current_name == "player") current_level.player = new_pos;
+
+            break;
+        }
+    }
+    // current_level.objects[old_pos] += game_object(new_object.char, new_object.current_name, new_object.possible_names, 
+    //     old_pos, "", new_object.layer, new_object.id);
+    
+    // for (int k <- [0..size(current_level.objects[new_pos])]) {
+    //     if (current_level.objects[new_pos][k] == new_object) {
+    //         current_level.objects[new_pos] = remove(current_level.objects[new_pos], k);
+    //         break;
+    //     }
+    // }
+    // println("Moving <obj.current_name> to <new_pos>");
+
+    return current_level;
+}
+
 Level try_move(Object obj, Level current_level) {
+
+    println("\nIn try_move with object: <obj.current_name>");
 
     str dir = obj.direction;
 
@@ -684,33 +712,19 @@ Level try_move(Object obj, Level current_level) {
 
         Object new_object = objs_at_new_pos[i];
 
-        // Object is pushed (MOVEMENT SHOULD BE UPDATED IN APPLY_RULE)
-        if (obj.layer == new_object.layer && new_object.direction != "") {
+        // Object moves together with other objects
+        // if (obj.layer == new_object.layer && new_object.direction != "") {
+        if (new_object.direction != "") {
 
             current_level = try_move(new_object, current_level);
             current_level = try_move(obj, current_level);
             // object = try_move(new_object, current_level);
         }
         // Object can move one pos
-        else if(obj.layer != new_object.layer && new_object.direction == "") {
-            for (int j <- [0..size(current_level.objects[old_pos])]) {
-                if (current_level.objects[old_pos][j] == obj) {
-                    current_level.objects[old_pos] = remove(current_level.objects[old_pos], j);
-                    break;
-                }
-            }
-            current_level.objects[old_pos] += game_object(new_object.char, new_object.current_name, new_object.possible_names, 
-                old_pos, "", new_object.layer, new_object.id);
-            
-            for (int k <- [0..size(current_level.objects[new_pos])]) {
-                if (current_level.objects[new_pos][k] == new_object) {
-                    current_level.objects[new_pos] = remove(current_level.objects[new_pos], k);
-                    break;
-                }
-            }
-            current_level.objects[new_pos] += game_object(obj.char, obj.current_name, obj.possible_names, new_pos, "", obj.layer, obj.id);
+        // else if(obj.layer != new_object.layer && new_object.direction == "") {
+        else if (obj.layer != new_object.layer) {
 
-            if (obj.current_name == "player") current_level.player = new_pos;
+            current_level = move_to_pos(current_level, old_pos, new_pos, obj);
             // current_level.objects[new_pos] = remove(current_level.objects[new_pos], i);
         } else {
 
@@ -728,42 +742,10 @@ Level try_move(Object obj, Level current_level) {
 
     }
 
-
-    // visit(current_level) {
-    //     // If object at new position is not on same layer
-    //     case n: game_object(char, _, _, new_pos, _, ld): {
-    //         if (ld != obj.layer || n.direction != "") {
-                
-    //             updated_objects += n;
-    //             n.coords = obj.coords;
-    //             updated_objects += n;
-
-    //             updated_objects += obj;
-    //             obj.direction == "";
-    //             obj.coords = new_pos;
-    //             updated_objects += obj;
-
-
-
-    //         }
-    //     }
-    // }
-
-    // for (int i <- [0..size(updated_objects)]) {
-
-    //     if (i mod 2 == 1) continue;
-
-    //     Object old_obj = updated_objects[i];
-    //     Object new_obj = updated_objects[i + 1];
-
-    //     current_level = visit(current_level) {
-
-    //         case n: old_obj => new_obj
-
-    //     }
-
-
-    // }
+    if (size(objs_at_new_pos) == 0) {
+        println("Move to pos size 0");
+        current_level = move_to_pos(current_level, old_pos, new_pos, obj);
+    }
 
     return current_level;
 
@@ -777,6 +759,7 @@ Engine apply_moves(Engine engine, Level current_level) {
         for (Object obj <- current_level.objects[coord]) {
 
             if (obj.direction != "") {
+                println("\n\nCalling try move");
                 current_level = try_move(obj, current_level);
             }
 
@@ -798,8 +781,10 @@ Engine move_player(Engine engine, Level current_level, str direction) {
     list[Object] objects = [];
 
     for (Object object <- current_level.objects[current_level.player]) {
-        object.direction = direction;
-        objects += object;
+        if ("player" in object.possible_names) {
+            object.direction = direction;
+            objects += object;
+        }
     }
     current_level.objects[current_level.player] = objects;
     
@@ -819,6 +804,52 @@ Engine plan_move(Engine engine, Checker c, str direction) {
 
 }
 
+bool check_win_condition(Level current_level, str amount, list[str] objects) {
+
+    list[Object] found_objects;
+
+    // if (amount == "all") {
+
+        
+
+    // } else if (amount == "no") {
+
+    // } else if (amount == "any") {
+
+
+
+    // }
+
+    return true;
+}
+
+bool check_win_conditions(Engine engine) {
+
+    PSGame game = engine.game;
+    list[ConditionData] lcd = game.conditions;
+
+    for (ConditionData cd <- lcd) {
+
+        if (cd is condition_data) {
+            
+            if ("on" in cd.condition) {
+
+                println(cd.condition[1]);
+                println(cd.condition[3]);
+
+            } else {
+
+                println(cd.condition[1]);
+
+            }
+        }
+    }
+
+    return false;
+
+
+}
+
 
 void print_level(Engine engine, Checker c) {
 
@@ -829,17 +860,11 @@ void print_level(Engine engine, Checker c) {
 
         for (int j <- [0..level_size.width]) {
 
-            int added = 0;
-
-            visit(engine.current_level) {
-                case n: game_object(char, name, _, <i,j>, _, _, _): {
-                    line += char;
-                    continue;
-                }
-            }
-
-            line += ".";
-            // if (added > 1) println("Added more at pos <i> <j>");
+            list[Object] objects = engine.current_level.objects[<i,j>];
+            
+            if (size(objects) > 1) line += objects[1].char;
+            else if (size(objects) == 1) line += objects[0].char;
+            else line += ".";
         }
 
         println(intercalate("", line));
