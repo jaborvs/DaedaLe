@@ -485,24 +485,50 @@ Coords get_dir_difference(str dir) {
 
 }
 
+Engine apply(Engine engine, list[Object] neighboring_objs, list[Object] replacements) {
+
+    for (int i <- [0..size(replacements)]) {
+
+        Object replacement = replacements[i];
+        Coords neighboring_coords = neighboring_objs[i].coords;
+
+        if (replacement.current_name == "") {
+
+            for (int j <- [0..size(engine.current_level.objects[neighboring_coords])]) {
+
+                Object object = engine.current_level.objects[neighboring_coords][j];
+                if (object == neighboring_objs[i]) {
+                    engine.current_level.objects[neighboring_coords] = remove(engine.current_level.objects[neighboring_coords], j);
+                }
+
+            }
+            continue;
+
+        } else {
+            println("Current name is not empty");
+        }
+
+        int id = replacement.id;
+        str direction = replacement.direction;
+
+        engine.current_level = visit(engine.current_level) {
+
+            case n: game_object(xc, xn, xp_n, xcoords, xdir, xld, id) => {
+                
+                game_object(xc, xn, xp_n, neighboring_coords, direction, xld, id);
+            }
+
+        };
+
+    }
+
+    return engine;
+
+
+}
+
 // Ellipsis not accounted for
 Engine apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir, list[RuleContent] right) {
-
-    // list[list[Object]] all_objects_in_level = [];
-    // list[Object] current_objects = [];
-
-    // // Get all the coords of the objects
-    // for (list[Object] objects <- required) {
-
-    //     current_objects = [];
-    //     for (Object obj <- objects) {
-    //         for (Object object <- engine.current_level.objects[obj.coords]) {
-    //             current_objects += object;
-    //         }
-    //     }
-    //     all_objects_in_level += [current_objects];
-    // }
-
 
     Coords dir_difference = get_dir_difference(dir);
 
@@ -515,12 +541,18 @@ Engine apply_rule(Engine engine, Rule rule, list[list[Object]] required, str rul
     for (Object object <- required[0]) {
 
         neighboring_objs = find_neighbours(required, object, 0, ruledir, dir_difference);
+        replacements = [];
 
         if (size(neighboring_objs) == size(required)) {
 
-            println("Rule can be applied");
+            int neighbour_index = 0;
 
             for (RuleContent rc <- rule.right) {
+
+                if (size(rc.content) == 0) {
+                    replacements += game_object("", "", [], <0,0>, "", layer_empty(""), 0);
+                    continue;
+                }
 
                 for (int i <- [0..size(rc.content)]) {
                     
@@ -536,38 +568,19 @@ Engine apply_rule(Engine engine, Rule rule, list[list[Object]] required, str rul
                     for (Coords coord <- engine.current_level.objects<0>) {
                         for (Object obj <- engine.current_level.objects[coord]) {
 
-                            if (name in obj.possible_names && obj in neighboring_objs) {
+                            if (obj == neighboring_objs[neighbour_index]) {
                                 obj.direction = direction;
                                 // println("Added object <obj.possible_names> at pos <coord>");
                                 replacements += obj;
                             }
                         }
                     }
-
-                    neighbour_index += 1;
-
-
                 }
+                neighbour_index += 1;
             }
+
+            engine = apply(engine, neighboring_objs, replacements);
         }
-    }
-
-    for (int i <- [0..size(replacements)]) {
-
-        Object replacement = replacements[i];
-        Coords neighboring_coords = neighboring_objs[i].coords;
-        int id = replacement.id;
-        str direction = replacement.direction;
-
-        engine.current_level = visit(engine.current_level) {
-
-            case n: game_object(xc, xn, xp_n, xcoords, xdir, xld, id) => {
-                
-                game_object(xc, xn, xp_n, neighboring_coords, direction, xld, id);
-            }
-
-        };
-
     }
 
     return engine;
@@ -658,7 +671,6 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
 Level try_move(Object obj, Level current_level) {
 
     str dir = obj.direction;
-    println("Moving <dir>");
 
     list[Object] updated_objects = [];
 
@@ -674,7 +686,9 @@ Level try_move(Object obj, Level current_level) {
 
         // Object is pushed (MOVEMENT SHOULD BE UPDATED IN APPLY_RULE)
         if (obj.layer == new_object.layer && new_object.direction != "") {
-            println("Hoi");
+
+            current_level = try_move(new_object, current_level);
+            current_level = try_move(obj, current_level);
             // object = try_move(new_object, current_level);
         }
         // Object can move one pos
@@ -699,7 +713,17 @@ Level try_move(Object obj, Level current_level) {
             if (obj.current_name == "player") current_level.player = new_pos;
             // current_level.objects[new_pos] = remove(current_level.objects[new_pos], i);
         } else {
-            println("Nothing");
+
+            for (Coords coords <- current_level.objects<0>) {
+                for (int i <- [0..size(current_level.objects[coords])]) {
+                    Object object = current_level.objects[coords][i];
+                    if (object == obj) {
+                        current_level.objects[coords] = remove(current_level.objects[coords], i);
+                        current_level.objects[coords] += game_object(obj.char, obj.current_name, obj.possible_names, obj.coords, "", 
+                            obj.layer, obj.id);
+                    }
+                }
+            }
         }
 
     }
@@ -813,6 +837,8 @@ void print_level(Engine engine, Checker c) {
                     continue;
                 }
             }
+
+            line += ".";
             // if (added > 1) println("Added more at pos <i> <j>");
         }
 
