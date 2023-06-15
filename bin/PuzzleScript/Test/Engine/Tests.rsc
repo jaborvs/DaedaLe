@@ -81,177 +81,56 @@ void main() {
     // showInteractiveContent(generate_report_per_level(checker, ReportDir));
 
     // // print_level(engine, checker);
+
     print_level(engine, checker);
-    int time = cpuTime();
+    engine = plan_move(engine, checker, "up");
+    print_level(engine, checker);
+
+    return;
+    Coords begin_player_pos = engine.current_level.player;
+    Coords old_player_pos = <0,0>;
+    Coords new_player_pos = <1,1>;
+
+    println("==== Collision test ====");
+    list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
+    for (int i <- [0..size(collision_moves)]) {
+        
+        str move = collision_moves[i];
+        engine = plan_move(engine, checker, move);
+
+        if (i == size(collision_moves) - 2) old_player_pos = engine.current_level.player;
+        if (i == size(collision_moves) - 1) new_player_pos = engine.current_level.player;
+
+    }
+    println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
 
 
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	checker = check_game(game);
+    checker.level_data = check_game_per_level(checker);
+
+	engine = compile(checker);
+
+    print_level(engine, checker);
+
+    println("=== Win test ====");
+    list[str] winning_moves = ["up", "up", "up", "up", "left", "left", "left", "left", "down", "down", "right", 
+        "up", "left", "up", "right", "right", "right", "right", "up", "right", "down", "down", "right", "right", "right"];
+
+    for (int i <- [0..size(winning_moves)]) {
+        
+        str move = winning_moves[i];
+        print_level(engine, checker);
+        engine = plan_move(engine, checker, move);
+
+    }
+    print_level(engine, checker);
+    // println((cpuTime() - time) / 1000000000.00);
     // print_level(engine, checker);
-    println((cpuTime() - time) / 1000000000.00);
-    print_level(engine, checker);
 
     println("Passed level = <check_win_conditions(engine)>");
 
 
-    // list[str] directions = ["left", "up", "left", "up"];
 
-    // for (int i <- [0..size(directions)]) {
-    //     // println("Level before move: \n");
-    //     // print_level(level);
-
-    //     <engine, level> = rewrite(engine, level, false);
-        
-    //     level = plan_move(level, directions[i]);
-       
-    //     <engine, level> = rewrite(engine, level, false);
-
-    //     level = do_move(level);
-
-    //     <engine, level> = rewrite(engine, level, true);
-
-    //     // println("Executed move, level looks the following now: \n");
-    //     // print_level(level);
-    // }
-
-	return;
-	
-	println("Rotate Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Rotate.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	level = rotate_level(engine.levels[0]);
-	print_level(level);
-	
-	println("Movement Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Movement.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	level = engine.levels[0];
-	print_level(level);
-	level = plan_move(level, "right");
-	level = do_move(level);
-	print_level(level);
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = plan_move(level, "down");
-	level = do_move(level);
-	print_level(level);
-	
-	println("Victory Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/Game1Victory.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	println("Victory: true == <is_victorious(engine)>");
-	engine = change_level(engine, engine.index + 1);
-	println("Victory: false == <is_victorious(engine)>");
-		
-	println("Rewrite Test");
-	list[str] GAME1_LEVEL1_MOVES = ["down", "left", "up", "right", "right", "right", "down", "left", "up", "left", "left", "down", "down", "right", "up", "left", "up", "right", "up", "up", "left", "down", "down", "right", "down", "right", "right", "up", "left", "down", "left", "up", "up", "down", "down", "down", "left",  "up"];
-	list[str] GAME1_LEVEL2_MOVES = ["right", "down", "down", "left", "right", "up", "up", "left", "down", "up", "up", "left", "left", "down", "down", "right"];
-	println("Simple Game Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	game_loop(checker, GAME1_LEVEL1_MOVES + GAME1_LEVEL2_MOVES);
-	
-	list[str] GAME2_LEVEL1_MOVES = ["left", "up", "up", "right", "down", "left", "down", "right", "right", "down", "down", "right", "right", "right", "up"];
-	list[str] GAME2_LEVEL2_MOVES = ["right"];
-	println("Intermediate Game Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/IntermediateGame1.PS|);
-	checker = check_game(game);
-	game_loop(checker, GAME2_LEVEL1_MOVES + GAME2_LEVEL2_MOVES);
-	
-	list[str] GAME3_LEVEL1_MOVES = ["right"];
-	println("Advanced Game Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Engine/AdvancedGame1.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	level = engine.levels[0];
-	
-	print_level(level);
-	<engine, level> = do_turn(engine, level, "right");
-	print_level(level);
-	
-	println(engine.rules[0].left[0]);
-	println(format_coords(engine.rules[0].indexes[0]));
-	println(engine.rules[0].left[1]);
-	println(format_coords(engine.rules[0].indexes[1]));
-	println(engine.rules[0].indexes);
-	println();
-	println(engine.rules[0].right[0]);
-	println(engine.rules[0].right[1]);
-	
-	game_loop(checker, GAME3_LEVEL1_MOVES);
-	
-	println("Undo Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	level = engine.levels[0];
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = plan_move(level, "down");
-	level = do_move(level);
-	level = plan_move(level, "left");
-	<engine, level> = rewrite(engine, level, false);
-	level = do_move(level);
-	print_level(level);
-	level = undo(level);
-	print_level(level);
-	
-	println("Restart Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	level = engine.levels[0];
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = plan_move(level, "down");
-	level = do_move(level);
-	level = plan_move(level, "left");
-	<engine, level> = rewrite(engine, level, false);
-	level = do_move(level);
-	print_level(level);
-	level = restart(level);
-	print_level(level);
-	
-	println("Checkpoint Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	level = engine.levels[0];
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = checkpoint(level);
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = plan_move(level, "down");
-	level = do_move(level);
-	level = plan_move(level, "left");
-	<engine, level> = rewrite(engine, level, false);
-	level = do_move(level);
-	print_level(level);
-	level = restart(level);
-	print_level(level);
-	
-	println("Mixed Command Test");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game1.PS|);
-	checker = check_game(game);
-	engine = compile(checker);
-	level = engine.levels[0];
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = plan_move(level, "right");
-	level = do_move(level);
-	level = plan_move(level, "down");
-	level = do_move(level);
-	level = plan_move(level, "left");
-	<engine, level> = rewrite(engine, level, false);
-	level = do_move(level);
-	print_level(level);
-	level = restart(level);
-	print_level(level);
 }

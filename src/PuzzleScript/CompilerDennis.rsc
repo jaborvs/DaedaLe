@@ -339,63 +339,6 @@ Level convert_level(LevelData level, Checker c) {
 
 }
 
-// Level convert_level(LevelData level, Checker c) {
-
-//     // println("Layer list = <c.game.layers>");
-//     Layer converted_layer = [[]];
-
-//     for (int i <- [0..size(level.level)]) {
-
-//         Line line = [];
-
-//  		list[str] char_list = split("", level.level[i]);
-//         for (int j <- [0..size(char_list)]) {
-
-//             str char = toLowerCase(char_list[j]);
-//             if (char in c.references<0>) {
-
-//                 LayerData ld = get_layer(c.references[char][0], c);
-//                 line += [[<c.references[char][0], <i,j>, "", ld>]];
-//             }
-//             else if (char in c.combinations<0>) {
-                
-//                 list[Object] objects = [];
-//                 for (str object <- c.combinations[char]) {
-//                     objects += [<object, <i,j>, "", get_layer(object, c)>];
-//                 }
-
-//                 line += [objects];
-                
-//                 // println("char <char> references: <c.combinations[toLowerCase(char)]>");
-//             }
-//             else continue;
-//             // println("char <char> references: <c.references[toLowerCase(char)]>");
-
-//         }
-//         converted_layer += [line];
-
-//     }
-
-//     // for (Line line <- converted_layer) {
-
-//     //     for (list[Object] objects <- line) {
-
-//     //         println("First object in at <objects[0].coords> is <objects[0].object>");
-
-//     //     }
-
-//     // }
-
-//     return Level::level(
-// 		converted_layer, 
-// 		c.references["player"],
-//         c.level_data[level],
-// 		level
-// 	);
-
-
-// }
-
 
 // ==== DIRECTIONS AND IMPLEMENTATIONS REPRODUCED FROM PUZZLESCRIPTS GITHUB ==== \\
 
@@ -1108,7 +1051,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[0];
+    engine.current_level = engine.converted_levels[1];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
