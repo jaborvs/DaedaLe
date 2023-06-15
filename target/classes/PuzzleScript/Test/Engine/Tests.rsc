@@ -8,12 +8,9 @@ import util::Web;
 
 import PuzzleScript::Report;
 import PuzzleScript::Load;
-import PuzzleScript::EngineDennis;
-import PuzzleScript::CompilerDennis;
-import PuzzleScript::CheckerDennis;
-// import PuzzleScript::Engine;
-// import PuzzleScript::Compiler;
-// import PuzzleScript::Checker;
+import PuzzleScript::Engine;
+import PuzzleScript::Compiler;
+import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import IO;
 import util::Eval;
@@ -75,10 +72,24 @@ void main() {
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
     checker.level_data = check_game_per_level(checker);
-
 	engine = compile(checker);
 
     Level save_level = engine.current_level;
+
+    // println("==== Multiple layer object test ====");
+
+    // list[str] sokoban_moves = ["down", "left", "up", "right", "right", "right", "down", "left", "up", "left", "left", "down", "down", "right", "up", "left", "up", "right", "up", "up", "left", "down", "right", "down", "down", "right", "right", "up", "left", "down", "left", "up", "up"];
+
+    // for (int i <- [0..size(sokoban_moves)]) {
+        
+    //     str move = sokoban_moves[i];
+    //     engine = execute_move(engine, checker, move);
+
+    // }
+
+    // println(check_win_conditions(engine));
+
+    // engine.current_level = save_level;
 
     // showInteractiveContent(generate_report_per_level(checker, ReportDir));
 
@@ -92,6 +103,7 @@ void main() {
         
         str move = collision_moves[i];
         engine = execute_move(engine, checker, move);
+
 
         if (i == size(collision_moves) - 2) old_player_pos = engine.current_level.player;
         if (i == size(collision_moves) - 1) new_player_pos = engine.current_level.player;

@@ -1,5 +1,9 @@
 module PuzzleScript::Checker
 
+// For visualizing
+import util::IDEServices;
+import vis::Charts;
+
 import PuzzleScript::AST;
 import util::Math;
 import IO;
@@ -23,13 +27,16 @@ alias Checker = tuple[
 	list[str] used_objects,
 	list[str] used_references,
     list[str] all_moveable_objects,
+    map[str, list[str]] all_properties,
     map[LevelData, LevelChecker] level_data,
 	PSGame game
 ];
 
 alias LevelChecker = tuple[
     list[str] moveable_objects,
-    tuple[int width, int height] size
+    tuple[int width, int height] size,
+    list[RuleData] applied_rules,
+    list[LevelData] messages
 ];
 
 alias Reference = tuple[
@@ -79,11 +86,11 @@ map[str, str] COLORS = (
 str default_mask = "@None@";
 		
 Checker new_checker(bool debug_flag, PSGame game){		
-	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], [], (), game>;
+	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], [], (), (), game>;
 }
 
 LevelChecker new_level_checker() {
-    return <[], 0>;
+    return <[], <0,0>, [], []>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -142,8 +149,6 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 
 	if (name in c.combinations) {
 
-        println("1");
-
 		if ("combinations" in allowed) {
 			for (str n <- c.combinations[name]) {
 
@@ -168,11 +173,43 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 			c.msgs += [invalid_object_type("properties", name, error(), pos)];
 		}
 	} else {
-        println("3");
 		c.msgs += [undefined_object(raw_name, error(), pos)];
 	}
 	
 	return <dup(objs), c, references>;
+}
+
+map[str, list[str]] resolve_properties(Checker c) {
+
+    map[str, list[str]] properties_dict = ();
+
+    for (str name <- c.references<0>) {
+        
+        list[str] references = [];
+        if (size(c.references[name]) > 1) {
+            for (str reference <- c.references[name]) references += get_map_input(c, reference);
+            properties_dict += (name: references);
+        } else {
+            properties_dict += (name: c.references[name]);
+        }
+    }
+
+    return properties_dict;
+
+}
+
+list[str] get_map_input(Checker c, str name) {
+
+    list[str] propertylist = [];
+
+    if (c.references[name]?) {
+        for(str name <- c.references[name]) propertylist += get_map_input(c, name);
+    } else {
+        propertylist += [name];
+    }
+
+    return propertylist;
+
 }
 
 Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]) {
@@ -266,14 +303,12 @@ Checker check_object(ObjectData obj, Checker c) {
 	}
 	
 	// add references
-	c.references[id] = [id];
 	if (!isEmpty(obj.legend)) {
 
 		msgs = check_existing_legend(obj.legend[0], [obj.name], obj.src, c);
 		if (!isEmpty(msgs)){
 			c.msgs += msgs;
 		} else {
-			c.references[toLowerCase(obj.legend[0])] = [id];
 			c.used_objects += [id];
 		}
 	}
@@ -329,64 +364,73 @@ Checker check_object(ObjectData obj, Checker c) {
 Checker check_legend(LegendData l, Checker c) {
 	if (!check_valid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l.src)];
 	c.msgs += check_existing_legend(l.legend, l.values, l.src, c);
-	
-	Reference r = resolve_references(l.values, c, l.src);
 
-	list[str] values = r[0];
-	c = r[1];
-	c.used_references += r.references[1..];
-	
+
+    if (l is legend_alias) {
+        for (str object <- l.values) {
+            if (toLowerCase(l.legend) in c.references) c.references[toLowerCase(l.legend)] += [toLowerCase(object)];
+            else c.references += (toLowerCase(l.legend): [toLowerCase(object)]);
+        }
+    }
+
+    if (l is legend_combined) {
+        for (str object <- l.values) {
+            if (toLowerCase(l.legend) in c.combinations) c.combinations[toLowerCase(l.legend)] += [toLowerCase(object)];
+            else c.combinations += (toLowerCase(l.legend): [toLowerCase(object)]);
+        }
+    }
+
 	str legend = toLowerCase(l.legend);
 
     // Check if object in legend is defined in objects section
 	if (check_valid_name(l.legend)) c.objects += [legend];
-	for (str v <- values){
-		if (!(v in c.objects)) {
-			c.msgs += [undefined_object(v, error(), l.src)];
-		} else {
-			c.used_objects += [v];
-		}
-	}
+	// for (str v <- values){
+	// 	if (!(v in c.objects)) {
+	// 		c.msgs += [undefined_object(v, error(), l.src)];
+	// 	} else {
+	// 		c.used_objects += [v];
+	// 	}
+	// }
 	
-	// if it's just one thing being defined with check it and return
-	if (size(values) == 1) {
-		msgs = check_undefined_object(l.values[0], l.src, c);
-		if (!isEmpty(msgs)) {
-			c.msgs += msgs;
-		} else {
-			// check if it's a self definition and warn as need be
-			if (legend == values[0]){
-				c.msgs += [self_reference(l.legend, warn(), l.src)];
-			} else {
-				c.references[legend] = values;
-			}
-		}
+	// // if it's just one thing being defined with check it and return
+	// if (size(values) == 1) {
+	// 	msgs = check_undefined_object(l.values[0], l.src, c);
+	// 	if (!isEmpty(msgs)) {
+	// 		c.msgs += msgs;
+	// 	} else {
+	// 		// check if it's a self definition and warn as need be
+	// 		if (legend == values[0]){
+	// 			c.msgs += [self_reference(l.legend, warn(), l.src)];
+	// 		} else {
+	// 			c.references[legend] = values;
+	// 		}
+	// 	}
 		
-		return c;
-	}
+	// 	return c;
+	// }
 	
-	// if not we do a more expensive check for invalid legend and mixed types
-	switch(l) {
-		case legend_alias(_, _): {
-			// if our alias makes use of combinations that's a bonk
-			list[str] mixed = [x | x <- values, x in c.combinations];
-			if (!isEmpty(mixed)) {
-				c.msgs += [mixed_legend(l.legend, mixed, "alias", "combination", error(), l.src)];
-			} else {
-				c.references[legend] = values;
-			}
-		}
-		case legend_combined(_, _): {
-			// if our combination makes use of aliases that's a bonk (just gotta make sure it's actually an alias)
-			list[str] mixed = [x | x <- values, x in c.references && size(c.references[x]) > 1];
-			if (!isEmpty(mixed)) {
-				c.msgs += [mixed_legend(l.legend, mixed, "combination", "alias", error(), l.src)];
-			} else {
-				c.combinations[legend] = values;
-			}
-		}
-		case legend_error(_, _): c.msgs += [mixed_legend(l.legend, l.values, error(), l.src)];	
-	}
+	// // if not we do a more expensive check for invalid legend and mixed types
+	// switch(l) {
+	// 	case legend_alias(_, _): {
+	// 		// if our alias makes use of combinations that's a bonk
+	// 		list[str] mixed = [x | x <- values, x in c.combinations];
+	// 		if (!isEmpty(mixed)) {
+	// 			c.msgs += [mixed_legend(l.legend, mixed, "alias", "combination", error(), l.src)];
+	// 		} else {
+	// 			c.references[legend] = values;
+	// 		}
+	// 	}
+	// 	case legend_combined(_, _): {
+	// 		// if our combination makes use of aliases that's a bonk (just gotta make sure it's actually an alias)
+	// 		list[str] mixed = [x | x <- values, x in c.references && size(c.references[x]) > 1];
+	// 		if (!isEmpty(mixed)) {
+	// 			c.msgs += [mixed_legend(l.legend, mixed, "combination", "alias", error(), l.src)];
+	// 		} else {
+	// 			c.combinations[legend] = values;
+	// 		}
+	// 	}
+	// 	case legend_error(_, _): c.msgs += [mixed_legend(l.legend, l.values, error(), l.src)];	
+	// }
 
 	return c;
 }
@@ -526,7 +570,20 @@ Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, 
         int index = 0;
         for (str verb <- verbs) {
 
-            if (verb in moveable_keywords && !(objs[index] in c.all_moveable_objects)) c.all_moveable_objects += [toLowerCase(objs[index])];
+            if (verb in moveable_keywords && !(objs[index] in c.all_moveable_objects)) {
+
+                // list[str] moveable_object = objs[index];
+                // for (str object <- moveable_objects) {
+                //     if (object in c.references<0>) {
+                //         for (str child_object <- c.references[object]) c.all_moveable_objects += toLowerCase(child_object);
+                //     }
+
+
+                // }
+                // println("References = <resolve_reference(objs[index], c, cont.src).references>");
+                c.all_moveable_objects += resolve_reference(objs[index], c, cont.src).references;
+            }
+            
             index += 1;
 
         }
@@ -822,17 +879,27 @@ map[LevelData, LevelChecker] check_game_per_level(Checker allData, bool debug=fa
     map[LevelData, LevelChecker] allLevelData = ();
     PSGame g = allData.game;
 
+    LevelChecker lc = new_level_checker();
+
     for (LevelData ld <- g.levels) {
 
-        if (ld is message || ld is level_empty) continue;
+        if (ld is level_empty) continue;
 
-        LevelChecker lc = new_level_checker();
-        lc.size = size(ld.level) * size(ld.level[0]);
+        if (ld is message) {
+            lc.messages += [ld];
+            continue;
+        }
+        lc.size = <size(ld.level[0]), size(ld.level)>;
+
         lc = moveable_objects_in_level(ld, lc, allData);
+
+        lc = applied_rules(ld, lc, allData);
+        
         allLevelData += (ld: lc);
 
-    }
+        lc = new_level_checker();
 
+    }
     return allLevelData;
 
 }
@@ -846,17 +913,181 @@ LevelChecker moveable_objects_in_level(LevelData ld, LevelChecker lc, Checker c)
 
             char = toLowerCase(char);
             if (char in c.combinations) lc.moveable_objects += 
-                [x | x <- c.combinations[char], x in c.all_moveable_objects, !(x in lc.moveable_objects)];
+                [x | x <- c.combinations[char], x in c.all_moveable_objects];
             if (char in c.references) lc.moveable_objects += 
-                [x | x <- c.references[char], x in c.all_moveable_objects, !(x in lc.moveable_objects)];
-
+                [x | x <- c.references[char], x in c.all_moveable_objects];
         }
     }
 
     return lc;
 
+}
+
+LevelChecker applied_rules(LevelData ld, LevelChecker lc, Checker c) {
+
+    list[RuleData] rules = c.game.rules;
+
+    list[RuleData] rules_used = [];
+    list[str] chars_used = [];
+    list[str] char_references = [];
+
+    for (str line <- ld.level) {
+
+        list[str] char_list = split("", line);
+        for (str char <- char_list) {
+
+            char = toLowerCase(char);
+            if (!(char in chars_used)) {
+                if (char in c.references) char_references += get_all_references(char, c.references);
+                else char_references += get_all_references(char, c.combinations);
+
+            }
+        }
+    }
+
+    for (RuleData rd <- rules) if (rd is rule_data && rules_referencing_char(char_references, rd)) rules_used += rd;
+    lc.applied_rules = rules_used;
+
+    return lc;
 
 }
+
+str get_char(str name, map[str, list[str]] references) {
+
+    for (str char <- references<0>) {
+        if (size(char) == 1 && references[char] == [name]) {   
+            return toLowerCase(char);
+        }
+    }
+    return "";
+}
+
+list[str] get_all_references(str char, map[str, list[str]] references, bool debug = false) {
+
+    if (!(char in references<0>)) return [];
+
+    list[str] reference_list = [];
+    list[str] new_references = references[char];
+    reference_list += new_references;
+
+    for (str reference <- new_references) {
+
+        reference_list += get_references(reference, references);
+
+    }
+
+    return reference_list;
+
+
+}
+
+list[str] get_references(str reference, map[str, list[str]] references) {
+
+    list[str] all_references = [];
+
+    for (str key <- references) {
+
+        if (size(key) == 1) continue;
+
+        if (reference in references[key]) {
+            all_references += key;
+            all_references += get_references(key, references);
+        }
+    }
+
+    return all_references;
+}
+
+bool rules_referencing_char(list[str] char_references, RuleData r: rule_data(left, right, _, _)) {
+
+    list[RuleData] used = [];
+    list[str] ruleContent = [];
+
+    for (RulePart rule <- left) {
+        if (rule is part) {
+
+            for (RuleContent content <- rule.contents) {
+                for (str content <- content.content) {
+
+                    if (!(content in rulepart_keywords)) ruleContent += toLowerCase(content);
+                    // if (toLowerCase(content) in char_references && !(r in used)) {
+                    //     // println("<toLowerCase(content)> is in references, adding <r> to used");
+                    //     used += r;
+                    // }
+                }
+            }
+            if (ruleContent != [] && ruleContent < char_references && !(r in used)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+
+}
+
+// This function is used to generate reports and create charts for each game
+Content generate_report_per_level(Checker c, loc directory) {
+
+    str levelOutput = "";
+
+    list[LevelData] levels = c.game.levels;
+    map[LevelData, LevelChecker] ld = c.level_data;
+
+    str title = "";
+    str author = "";
+
+    for(PreludeData p <- c.game.prelude){
+        if(p.key == "title") {
+        title = replaceAll(p.string, ",", " ");
+        break;
+        }
+    }
+    
+    for(PreludeData p <- c.game.prelude){
+        if(p.key == "author") {
+        author = replaceAll(p.string, ",", " ");
+        break;
+        }
+    }
+
+    title = replaceAll(title, " ", "_");
+    directory.path = directory.path + "/<title>.csv";
+
+    str filePath = directory.authority + directory.path;
+
+    // Create file if it does not exist yet
+    if (!isFile(directory)) touch(directory);
+
+    writeFile(directory, "level, size, moveable_objects, rules, messages\n");
+
+    int levelIndex = 1;
+
+    for (LevelData level <- levels) {
+
+        if (level is level_empty || level is message) continue;
+
+        // Means message is incorrectly parsed as level
+        if (ld[level].size.height == 1) continue;
+
+        appendToFile(directory, "<levelIndex>,<ld[level].size>,<size(ld[level].moveable_objects)>,<size(ld[level].applied_rules)>,<size(ld[level].messages)>\n");
+        levelIndex += 1;
+
+    }
+    appendToFile(directory, "\n");
+
+    // Only get level_data for visualizing purposes
+    list[LevelData] level_data_ld = [x | x <- levels, x is level_data];
+
+    return lineChart(["size", "moving objects", "applied rules", "messages"],
+            [<"<x>",(ld[level_data_ld[x]].size.width)> | x <- [0..size(level_data_ld)]], 
+            [<"<x>",(size(ld[level_data_ld[x]].moveable_objects))> | x <- [0..size(level_data_ld)]], 
+            [<"<x>",(size(ld[level_data_ld[x]].applied_rules))> | x <- [0..size(level_data_ld)]],
+            [<"<x>",(size(ld[level_data_ld[x]].messages))> | x <- [0..size(level_data_ld)]]);
+
+}
+
+
 
 
 
@@ -873,7 +1104,6 @@ Checker check_game(PSGame g, bool debug=false) {
 		c = check_prelude(pr, c);
 	}
 	
-    // Here the object references are added
 	for (ObjectData obj <- g.objects){
 		c = check_object(obj, c);
 	}
@@ -914,6 +1144,8 @@ Checker check_game(PSGame g, bool debug=false) {
 	for (LegendData x <- g.legend){
 		if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x.src)];
 	}
+
+    c.all_properties = resolve_properties(c);
 	
 	if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g.src)];
 	
