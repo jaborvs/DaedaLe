@@ -78,15 +78,10 @@ void main() {
 
 	engine = compile(checker);
 
+    Level save_level = engine.current_level;
+
     // showInteractiveContent(generate_report_per_level(checker, ReportDir));
 
-    // // print_level(engine, checker);
-
-    print_level(engine, checker);
-    engine = plan_move(engine, checker, "up");
-    print_level(engine, checker);
-
-    return;
     Coords begin_player_pos = engine.current_level.player;
     Coords old_player_pos = <0,0>;
     Coords new_player_pos = <1,1>;
@@ -96,7 +91,7 @@ void main() {
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];
-        engine = plan_move(engine, checker, move);
+        engine = execute_move(engine, checker, move);
 
         if (i == size(collision_moves) - 2) old_player_pos = engine.current_level.player;
         if (i == size(collision_moves) - 1) new_player_pos = engine.current_level.player;
@@ -104,33 +99,50 @@ void main() {
     }
     println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
 
+    engine.current_level = save_level;
 
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
-	checker = check_game(game);
-    checker.level_data = check_game_per_level(checker);
+    old_player_pos = engine.current_level.player;
+    engine = execute_move(engine, checker, "right");
+    new_player_pos = engine.current_level.player;
 
-	engine = compile(checker);
+    println("Player was unable to move into a wall: <old_player_pos == new_player_pos>");
 
-    print_level(engine, checker);
+    engine.current_level = save_level;
 
-    println("=== Win test ====");
+    println("\n=== Win test ====");
     list[str] winning_moves = ["up", "up", "up", "up", "left", "left", "left", "left", "down", "down", "right", 
-        "up", "left", "up", "right", "right", "right", "right", "up", "right", "down", "down", "right", "right", "right"];
+        "up", "left", "up", "right", "right", "right", "right", "up", "right", "down", "right", "down", "right", "right", "right"];
 
     for (int i <- [0..size(winning_moves)]) {
         
         str move = winning_moves[i];
-        print_level(engine, checker);
-        engine = plan_move(engine, checker, move);
+        engine = execute_move(engine, checker, move);
 
     }
-    print_level(engine, checker);
-    // println((cpuTime() - time) / 1000000000.00);
-    // print_level(engine, checker);
 
-    println("Passed level = <check_win_conditions(engine)>");
+    println("Win conditions satisfied after correct moves: <check_win_conditions(engine)>");
 
+    engine.current_level = save_level;
 
+    list[str] losing_moves = ["up", "up"];
+
+    for (int i <- [0..size(losing_moves)]) {
+        
+        str move = losing_moves[i];
+        engine = execute_move(engine, checker, move);
+
+    }
+
+    println("Win conditions not satisfied after wrong moves: <!check_win_conditions(engine)>");
+
+    println("\n=== Mutliple rule test ====");
+
+    engine.current_level = save_level;
+
+    old_player_pos = engine.current_level.player;
+    engine = execute_move(engine, checker, "up");
+    new_player_pos = engine.current_level.player;
+
+    println("Player is able to move multiple consecutive blocks: <old_player_pos != new_player_pos>");
 
 }
