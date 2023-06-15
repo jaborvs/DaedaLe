@@ -512,7 +512,6 @@ Engine apply(Engine engine, list[Object] neighboring_objs, list[Object] replacem
         engine.current_level = visit(engine.current_level) {
 
             case n: game_object(xc, xn, xp_n, xcoords, xdir, xld, id) => {
-                
                 game_object(xc, xn, xp_n, neighboring_coords, direction, xld, id);
             }
 
@@ -618,43 +617,54 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
 
         for (Rule rule <- rulegroup) {
 
+            list[list[Object]] old_required_objects = [];
             list[list[Object]] required_objects = [];
             list[list[Object]] right_objects = [];
             str ruledir = "";
+            bool can_be_applied = true;
 
-            for (RuleContent rc <- rule.left) {
+            while (can_be_applied) {
 
-                ruledir = rule.direction;
+                for (RuleContent rc <- rule.left) {
 
-                for (int i <- [0..size(rc.content)]) {
+                    ruledir = rule.direction;
 
-                    if (i mod 2 == 1) {
-                        continue;
-                    }
-                    str obj_dir = rc.content[i];
-                    str name = toLowerCase(rc.content[i + 1]);
+                    for (int i <- [0..size(rc.content)]) {
 
-                    list[Object] current_objs = [];
+                        if (i mod 2 == 1) {
+                            continue;
+                        }
+                        str obj_dir = rc.content[i];
+                        str name = toLowerCase(rc.content[i + 1]);
 
-                    for (Coords coord <- current_level.objects<0>) {
-                        for (Object obj <- current_level.objects[coord]) {
+                        list[Object] current_objs = [];
 
-                            if ((name in obj.possible_names) && (obj_dir == obj.direction)) {
-                                current_objs += obj;
+                        for (Coords coord <- engine.current_level.objects<0>) {
+                            for (Object obj <- engine.current_level.objects[coord]) {
+
+                                if ((name in obj.possible_names) && (obj_dir == obj.direction)) {
+                                    current_objs += obj;
+                                }
                             }
                         }
+                        if (current_objs != []) {
+                            required_objects += [current_objs];
+                        }
                     }
-                    if (current_objs != []) {
-                        required_objects += [current_objs];
-                    }
+
                 }
 
+                // Rule can't be applied
+                if (size(required_objects) != size(rule.left) || required_objects == old_required_objects) { 
+                    can_be_applied = false;
+                }
+                else {
+                    engine = apply_rule(engine, rule, required_objects, ruledir, direction, rule.right);
+                    old_required_objects = required_objects;
+                    required_objects = [];
+                    current_objs = [];
+                }
             }
-
-            // Rule can't be applied
-            if (size(required_objects) != size(rule.left)) continue;
-
-            engine = apply_rule(engine, rule, required_objects, ruledir, direction, rule.right);
         }
 
     }   
@@ -843,7 +853,7 @@ bool check_win_condition(Level current_level, str amount, list[str] objects) {
         return (size(same_pos) == size(found_objects[1]));
     } else if (amount == "no") {
         return (size(same_pos) == 0);
-    } else if (amount == "any") {
+    } else if (amount == "any" || amount == "some") {
         return (size(same_pos) <= size(found_objects[1]));
     }
 

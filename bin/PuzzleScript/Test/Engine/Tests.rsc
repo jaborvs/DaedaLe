@@ -80,27 +80,9 @@ void main() {
 
     // showInteractiveContent(generate_report_per_level(checker, ReportDir));
 
-    // print_level(engine, checker);
+    // // print_level(engine, checker);
     print_level(engine, checker);
     int time = cpuTime();
-    engine = plan_move(engine, checker, "up");
-    engine = plan_move(engine, checker, "left");
-    engine = plan_move(engine, checker, "left");
-    engine = plan_move(engine, checker, "up");
-    engine = plan_move(engine, checker, "left");
-    engine = plan_move(engine, checker, "down");
-    engine = plan_move(engine, checker, "down");
-    engine = plan_move(engine, checker, "left");
-    engine = plan_move(engine, checker, "left");
-    engine = plan_move(engine, checker, "up");
-    engine = plan_move(engine, checker, "up");
-    engine = plan_move(engine, checker, "up");
-    engine = plan_move(engine, checker, "right");
-    engine = plan_move(engine, checker, "right");
-    engine = plan_move(engine, checker, "up");
-    engine = plan_move(engine, checker, "right");
-    engine = plan_move(engine, checker, "right");
-    engine = plan_move(engine, checker, "right");
 
 
     // print_level(engine, checker);
