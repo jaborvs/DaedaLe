@@ -295,44 +295,59 @@ Level try_move(Object obj, Level current_level) {
 
     list[Object] objs_at_new_pos = current_level.objects[new_pos];
 
-    for (int i <- [0..size(objs_at_new_pos)]) {
+    if (size(objs_at_new_pos) == 0) {
+        current_level = move_to_pos(current_level, old_pos, new_pos, obj);
+        return current_level;
+    }
 
-        Object new_object = objs_at_new_pos[i];
+    Object same_layer_obj = game_object("","...",[],<0,0>,"",layer_empty(""),0);
+    Object other = game_object("","...",[],<0,0>,"",layer_empty(""),0);
+
+    Object new_object;
+
+    for (Object object <- objs_at_new_pos) {
+        if (object.layer == obj.layer) same_layer_obj = object;
+        else other = object;
+    }
+
+    if (same_layer_obj.current_name != "") new_object = same_layer_obj;
+    else new_object = other;
+
+    // for (int i <- [0..size(objs_at_new_pos)]) {
+
+        // Object new_object = objs_at_new_pos[i];
 
         // Object moves together with other objects
         // if (obj.layer == new_object.layer && new_object.direction != "") {
-        if (new_object.direction != "") {
+    if (new_object.direction != "") {
 
-            current_level = try_move(new_object, current_level);
-            current_level = try_move(obj, current_level);
-            // object = try_move(new_object, current_level);
-        }
-        // Object can move one pos
-        // else if(obj.layer != new_object.layer && new_object.direction == "") {
-        else if (obj.layer != new_object.layer) {
-            current_level = move_to_pos(current_level, old_pos, new_pos, obj);
-            // current_level.objects[new_pos] = remove(current_level.objects[new_pos], i);
-        } else {
+        current_level = try_move(new_object, current_level);
+        current_level = try_move(obj, current_level);
+        // object = try_move(new_object, current_level);
+    }
+    // Object can move one pos
+    // else if(obj.layer != new_object.layer && new_object.direction == "") {
+    else if (obj.layer != new_object.layer) {
+        current_level = move_to_pos(current_level, old_pos, new_pos, obj);
+        // current_level.objects[new_pos] = remove(current_level.objects[new_pos], i);
+    } else {
 
-            for (Coords coords <- current_level.objects<0>) {
-                for (int i <- [0..size(current_level.objects[coords])]) {
-                    Object object = current_level.objects[coords][i];
-                    if (object == obj) {
-                        current_level.objects[coords] = remove(current_level.objects[coords], i);
-                        current_level.objects[coords] += game_object(obj.char, obj.current_name, obj.possible_names, obj.coords, "", 
-                            obj.layer, obj.id);
-                    }
+        for (Coords coords <- current_level.objects<0>) {
+            for (int i <- [0..size(current_level.objects[coords])]) {
+                Object object = current_level.objects[coords][i];
+                if (object == obj) {
+                    current_level.objects[coords] = remove(current_level.objects[coords], i);
+                    current_level.objects[coords] += game_object(obj.char, obj.current_name, obj.possible_names, obj.coords, "", 
+                        obj.layer, obj.id);
                 }
             }
         }
-
     }
 
-    if (size(objs_at_new_pos) == 0) {
-        current_level = move_to_pos(current_level, old_pos, new_pos, obj);
-    }
+    // }
 
     return current_level;
+
 
 }
 

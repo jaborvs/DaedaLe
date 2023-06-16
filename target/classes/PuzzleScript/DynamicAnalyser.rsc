@@ -53,9 +53,10 @@ void main() {
         
         str move = winning_moves[i];
         engine = execute_move(engine, checker, move);
-        print_level(engine, checker);
+        // print_level(engine, checker);
 
     }
+    println(winning_moves);
 
     println("Took: <(cpuTime() - before) / 1000000000.00> sec");
 
