@@ -112,9 +112,50 @@ list[list[Object]] remove_ellipsis(list[list[Object]] required) {
 }
 
 // Updates engine's level based on the application of a rule
-Engine apply_rule(Engine engine, Rule rule, list[list[Object]] required, str ruledir, str dir, list[RuleContent] right) {
+Engine apply_rule(Engine engine, Rule rule, list[list[list[Object]]] row, list[list[str]] excluded, str ruledir, str dir, list[RuleContent] right) {
 
+    list[list[Object]] required = [];
     Coords dir_difference = get_dir_difference(dir);
+
+    bool one_obj = (all(int i <- [0..size(row)], size(row[i]) + size(excluded[i]) - 1 == 1));
+
+    for (list[list[Object]] cell <- row) {
+        for (list[Object] item <- cell) {
+            for (Object obj <- item) println(obj.current_name);
+            println("");
+        }
+    }
+
+    if (one_obj) {
+        required = [x[0] | x <- row];
+    }
+
+    if (required == []) {
+
+        for (list[list[Object]] cell <- row) {
+
+            list[Object] current = [];
+            for (int i <- [0..size(cell[0])]) {
+                
+                Object cell_obj = cell[0][i];
+                println(cell);
+
+                list[Object] object_at_pos = engine.current_level.objects[cell_obj.coords];
+
+                // Check if amount of objects on the position satisfies the amount specified in cell
+                if (size(object_at_pos) >= size(cell)) {
+                    current = [x | x <- object_at_pos, [x] in cell];
+                    println(current);
+                } else {
+                    continue;
+                }
+            }
+            if (size(current) == size(cell)) required += [current];
+        }
+    }
+
+    if (required == []) return engine;
+
 
     list[Object] neighboring_objs = [];
     list[Object] replacements = [];
@@ -234,50 +275,64 @@ list[Object] find_neighbours(list[list[Object]] all_lists, Object obj1, int inde
 }
 
 // Apply each rule as many times as possible then move on to next rule
+//
+// For every cell in each row from each rule, every object that matches the name is collected and put in a list
+// Example: if 'Moveable = OrangeCrate or Player' and the rule is : '[ > Moveable Moveable | Moveable ]'
+// Then the list will contain: [[[OrangeCrate, Player], [OrangeCrate, Player]], [[OrangeCrate, Player]]]
+// The outside list represents the rule row, the list within represent each cell and the list within the cells
+// represent each object found per cell item
 Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str direction) {
 
     for (list[Rule] rulegroup <- rules) {
 
+        // For every rule
         for (Rule rule <- rulegroup) {
 
-            list[list[Object]] old_required_objects = [];
+            list[list[list[Object]]] old_required_objects = [];
             list[list[str]] old_excluded_objects = [];
 
-            list[list[Object]] required_objects = [];
+            list[list[list[Object]]] old_row_objects = [];
+
+            list[list[list[Object]]] required_objects = [];
             list[list[str]] excluded_objects = [];
+
             str ruledir = "";
             bool can_be_applied = true;
 
-            // println("\n\n ===== Applying rule <rule>\n\n");
-
             while (can_be_applied) {
 
-                // Variable used to count all the objects present in the cell
-                int cell_size = 0;
+                list[list[list[Object]]] row_objects = [];
+                list[list[str]] row_excluded = [];
 
+                list[int] cell_sizes = [];
+
+                // For every row
                 for (RuleContent rc <- rule.left) {
 
                     ruledir = rule.direction;
-                    list[Object] current_objs = [];
-                    list[str] current_excluded = [];
+                    list[list[Object]] cell_objects = [];
+                    list[str] cell_excluded = [];
 
                     bool has_no = false;
+                    int cell_size = 0;
 
+                    // For every cell in row
                     for (int i <- [0..size(rc.content)]) {
 
-                        if (i mod 2 == 1) {
-                            continue;
-                        }
+                        if (i mod 2 == 1) continue;
 
-                        cell_size += 1;
+                        list[Object] current = [];
+
                         str obj_dir = rc.content[i];
                         str name = toLowerCase(rc.content[i + 1]);
 
                         if (has_no) {
-                            current_excluded += name;
+                            cell_excluded += name;
                             has_no = false;
                             continue;
                         }
+
+                        cell_size += 1;
 
                         if (name == "...") {
                             current_objs += game_object("", "...", [], <0,0>, "", layer_empty(""), 0);
@@ -287,44 +342,37 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
                         } else {
                             for (Coords coord <- engine.current_level.objects<0>) {
                                 for (Object obj <- engine.current_level.objects[coord]) {
-
                                     if ((name in obj.possible_names) && (obj_dir == obj.direction)) {
-                                        current_objs += obj;
+                                        current += obj;
                                     }
                                 }
                             }
                         }
-                    }
-                    if (current_objs != []) {
-                        required_objects += [current_objs];
-                    }
-                    if (current_excluded != []) {
-                        excluded_objects += [current_excluded];
-                    }
 
+                        if (current != []) cell_objects += [current];
+                    }
+                    
+                    if (cell_objects != []) row_objects += [cell_objects];
+                    if (cell_excluded != []) row_excluded += [cell_excluded];
+                    else row_excluded += [[""]];
+                    cell_sizes += [cell_size];
                 }
+
+                // println(row_objects[0][0]);
+                // println(size(row_objects[1]));
+
+
+                bool correct_amount = (all(int i <- [0..size(row_objects)], size(row_objects[i]) + size(row_excluded[i]) - 1 == cell_sizes[i]));
 
                 // Rule can't be applied
-                if (size(required_objects) + size(excluded_objects) != cell_size || required_objects == old_required_objects) { 
+                if (size(row_objects) + size(excluded_objects) != size(rule.left) || row_objects == old_row_objects || !correct_amount) { 
                     can_be_applied = false;
-                    // println("Can\'t be applied for rule with size left: <size(rule.left)>.\nRequired objects has size: <size(required_objects)>");
+                    return engine; // Debugging purposes
                 }
-
                 else {
-                    
-                    println("Required objects and excluded_objects together have a size of <cell_size>");
-                    println("Applying <rule.left>");
-
-                    engine = apply_rule(engine, rule, required_objects, ruledir, direction, rule.right);
-                    
-                    old_required_objects = required_objects;
-                    required_objects = [];
-                    current_objs = [];
-                    excluded_objects = [];
-                    current_excluded = [];
+                    engine = apply_rule(engine, rule, row_objects, row_excluded, ruledir, direction, rule.right);
+                    old_row_objects = row_objects;
                 }
-
-                cell_size = 0;
 
             }
 
@@ -455,7 +503,7 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
 
     list[Object] objects = [];
 
-    println(current_level.player[0]);
+    println("Player pos = <current_level.player[0]>");
 
     for (Object object <- current_level.objects[current_level.player[0]]) {
         if (object.char == current_level.player[1]) {

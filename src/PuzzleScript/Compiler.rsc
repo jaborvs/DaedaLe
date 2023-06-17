@@ -290,18 +290,18 @@ tuple[str, str] resolve_player_name(Checker c) {
     for (str name <- c.references<0>) {
         if (any(str ref <- c.references[name], ref in possible_player_names)) {
             current_name = <name, ref>;
-        } else if ("player" in c.references[name]) {
-            current_name = <name, c.references[name][0]>;
         }
     }
+
+    // for (str name <- c.combinations<0>) {
+    //     if (any(str ref <- c.combinations[name], ref in possible_player_names)) {
+    //         current_name = <name, ref>;
+    //     }
+    // }
+
 
     if (current_name != <"", "">) return current_name;
 
-    for (str name <- c.combinations<0>) {
-        if (any(str ref <- c.combinations[name], ref in possible_player_names)) {
-            current_name = <name, ref>;
-        }
-    }
 
     return current_name;
 
