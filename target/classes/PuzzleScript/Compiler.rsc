@@ -101,7 +101,7 @@ Rule new_rule(RuleData r, str direction, list[RuleContent] left, list[RuleConten
 alias Engine = tuple[
     list[LevelData] levels,
 	list[Level] converted_levels,
-    list[str] all_objects,
+    int all_objects,
 	Level current_level,
     map[int, LevelData] level_states,
 	map[str, list[int]] sounds,
@@ -126,7 +126,7 @@ Engine new_engine(PSGame game)
 	= < 
 		[level_data([])],
         [], 
-        [],
+        0,
 		message("", level_data([])),
         (), 
         (),
@@ -263,9 +263,9 @@ set[str] convert_layer(LayerData l, Checker c){
 	return layer;
 }
 
-LayerData get_layer(list[str] object, Checker c) {
+LayerData get_layer(list[str] object, PSGame game) {
 
-    for (LayerData layer <- c.game.layers) {
+    for (LayerData layer <- game.layers) {
         if (layer is layer_data) {
             for (str layer_item <- layer.layer) {
                 if (toLowerCase(layer_item) in object) {
@@ -290,6 +290,8 @@ tuple[str, str] resolve_player_name(Checker c) {
     for (str name <- c.references<0>) {
         if (any(str ref <- c.references[name], ref in possible_player_names)) {
             current_name = <name, ref>;
+        } else if ("player" in c.references[name]) {
+            current_name = <name, c.references[name][0]>;
         }
     }
 
@@ -328,7 +330,7 @@ Level convert_level(LevelData level, Checker c) {
             if (char in c.references<0>) {
 
                 list[str] all_references = get_all_references(char, c.references);
-                LayerData ld = get_layer(all_references, c);
+                LayerData ld = get_layer(all_references, c.game);
                 str name = c.references[char][0];
 
                 list[Object] object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
@@ -344,7 +346,7 @@ Level convert_level(LevelData level, Checker c) {
                 for (str objectName <- c.combinations[char]) {
 
                     list[str] all_references = get_all_references(get_char(objectName, c.references), c.references);
-                    LayerData ld = get_layer(all_references, c);
+                    LayerData ld = get_layer(all_references, c.game);
 
                     list[Object] object = [game_object(char, objectName, all_references, <i,j>, "", ld, id)];
                     if (<i,j> in objects) objects[<i,j>] += object;
@@ -1067,16 +1069,6 @@ Engine compile(Checker c) {
 
     // println(c.references);
     // println(c.combinations);
-
-    list[str] all_objects = []; 
-    for (LegendData ld <- engine.game.legend) {
-        for (str object <- ld.values) {
-            if (!(toLowerCase(object) in all_objects)) {
-                all_objects += toLowerCase(object);
-            }
-        }
-    }
-    engine.all_objects = all_objects;
 
     for (LevelData ld <- engine.levels) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
