@@ -20,9 +20,6 @@ import List;
 
 import util::Benchmark;
 
-data State = state(Engine engine);
-data Move = move(str direction);
-
 void main() {
 
     loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/Tutorials|;
@@ -35,54 +32,71 @@ void main() {
 
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_match3.PS|);
 	checker = check_game(game);
     checker.level_data = check_game_per_level(checker);
 
 	engine = compile(checker);
 
-    list[str] possible_moves = ["up", "down", "right", "left"];
-
-    State starting_state = state(engine);
-    list[str] moves = possible_moves;
-    map[State, list[str]] adjacencyList = (starting_state: moves);
-
     int before = cpuTime();
-    list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker);
 
-    for (int i <- [0..size(winning_moves)]) {
-        
-        str move = winning_moves[i];
-        engine = execute_move(engine, checker, move);
-        // print_level(engine, checker);
+    for (int i <- [0..size(engine.converted_levels)]) {
+
+        engine.current_level = engine.converted_levels[i];
+
+        list[str] possible_moves = ["up", "down", "right", "left"];
+
+        Engine starting_state = engine;
+        list[str] moves = possible_moves;
+        map[Engine, list[str]] adjacencyList = (starting_state: moves);
+
+        list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker);
+
+        for (int i <- [0..size(winning_moves)]) {
+            
+            str move = winning_moves[i];
+            engine = execute_move(engine, checker, move);
+            // print_level(engine, checker);
+
+        }
+        println(winning_moves);
 
     }
-    println(winning_moves);
+
 
     println("Took: <(cpuTime() - before) / 1000000000.00> sec");
 
 
 }
 
-list[str] bfs(State starting, list[str] moves, map[State, list[str]] adjacencyList, Checker c) {
+list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacencyList, Checker c) {
     
-    set[State] visited = {};
-    list[tuple[State, list[str]]] queue = [<starting, []>];
+    set[Engine] visited = {};
+    list[tuple[Engine, list[str]]] queue = [<starting, []>];
 
     while (!isEmpty(queue)) {
-        tuple[State, list[str]] current = head(queue);
+        tuple[Engine, list[str]] current = head(queue);
         queue = tail(queue);
 
-        if (check_win_conditions(current[0].engine)) {
+        if (check_win_conditions(current[0])) {
             return current[1];  // return the path to the winning state
         }
 
         visited += {current[0]};
 
         for (m <- moves) {
-            State newState = state(execute_move(current[0].engine, c, m));
+            Engine newState = execute_move(current[0], c, m);
             // print_level(newState.engine, c);
 
-            if (!(newState in visited)) {
+            Coords difference = get_dir_difference(m);
+
+            int x_difference = newState.current_level.player[0] - difference[0];
+            int y_difference = newState.current_level.player[1] - difference[1];
+
+            bool in_bounds = (x_difference > 0 && x_difference < newState.current_level.additional_info.size[0] &&
+                 x_difference > 0 && x_difference < newState.current_level.additional_info.size[1]);
+
+            if (!(newState in visited) && in_bounds) {
                 queue += [<newState, current[1] + [m]>];
             }
         }

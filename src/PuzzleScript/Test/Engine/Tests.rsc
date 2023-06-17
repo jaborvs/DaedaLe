@@ -25,38 +25,6 @@ import util::Benchmark;
 // 		return objs[rand];
 // 	}
 
-void generate_reports(Checker c, loc ReportDir, loc DemoDir) {
-    
-    int amount = 0;
-    int maxamount = 3;
-
-    list[Content] charts = [];
-
-    for(loc file <- DemoDir.ls){
-        if(file.extension == "txt" && amount <= maxamount){
-        
-            // Creates ast
-            ParseResult p = parseFile(file);
-            CheckResult c = chk_error();
-            Summary s = summary_error();
-        
-            // If parseresult is success (has the tree and ast):
-            if(src_success(loc file, start[PSGame] tree, PSGame game) := p) {
-            
-                checker = check_game(game);
-                checker.level_data = check_game_per_level(checker);
-
-                charts += [generate_report_per_level(checker, ReportDir)];
-
-            }
-            amount += 1;
-        }
-    }
-
-    showInteractiveContent(charts[2]);
-
-
-}
 
 void main() {
 
@@ -103,6 +71,8 @@ void main() {
         
         str move = collision_moves[i];
         engine = execute_move(engine, checker, move);
+
+        print_level(engine, checker);
 
 
         if (i == size(collision_moves) - 2) old_player_pos = engine.current_level.player;

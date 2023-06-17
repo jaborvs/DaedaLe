@@ -44,6 +44,7 @@ Coords get_dir_difference(str dir) {
 // Actual appliance of rule
 Engine apply(Engine engine, list[Object] neighboring_objs, list[Object] replacements) {
 
+
     for (int i <- [0..size(replacements)]) {
 
         Object replacement = replacements[i];
@@ -56,6 +57,7 @@ Engine apply(Engine engine, list[Object] neighboring_objs, list[Object] replacem
                 Object object = engine.current_level.objects[neighboring_coords][j];
                 if (object == neighboring_objs[i]) {
                     engine.current_level.objects[neighboring_coords] = remove(engine.current_level.objects[neighboring_coords], j);
+                    break;
                 }
 
             }
@@ -446,7 +448,7 @@ bool check_win_condition(Level current_level, str amount, list[str] objects) {
     }
     
     if (amount == "all") {
-        return (size(same_pos) == size(found_objects[1]));
+        return (size(same_pos) == size(found_objects[1]) && size(same_pos) == size(found_objects[0]));
     } else if (amount == "no") {
         return (size(same_pos) == 0);
     } else if (amount == "any" || amount == "some") {

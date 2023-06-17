@@ -1051,7 +1051,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[0];
+    engine.current_level = engine.converted_levels[1];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
