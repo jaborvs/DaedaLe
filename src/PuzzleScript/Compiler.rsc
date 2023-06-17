@@ -20,7 +20,7 @@ data Level (loc src = |unknown:///|)
 		// Layer layer, 
 		// list[Layer] checkpoint,
 		// list[str] objectdata,
-		Coords player,
+		tuple[Coords, str] player,
         LevelChecker additional_info,
 		LevelData original
 	)
@@ -263,12 +263,12 @@ set[str] convert_layer(LayerData l, Checker c){
 	return layer;
 }
 
-LayerData get_layer(str object, Checker c) {
+LayerData get_layer(list[str] object, Checker c) {
 
     for (LayerData layer <- c.game.layers) {
         if (layer is layer_data) {
             for (str layer_item <- layer.layer) {
-                if (toLowerCase(layer_item) == object) {
+                if (toLowerCase(layer_item) in object) {
                     return layer;
                 }
             }
@@ -279,12 +279,41 @@ LayerData get_layer(str object, Checker c) {
 
 }
 
+tuple[str, str] resolve_player_name(Checker c) {
+
+    list[str] possible_player_names = [];
+    tuple[str char, str current_name] current_name = <"", "">;
+
+    if ("player" in c.references<0>) possible_player_names = c.references["player"];
+    else if ("player" in c.combinations<0>) possible_player_names = c.combinations["player"];
+
+    for (str name <- c.references<0>) {
+        if (any(str ref <- c.references[name], ref in possible_player_names)) {
+            current_name = <name, ref>;
+        }
+    }
+
+    if (current_name != <"", "">) return current_name;
+
+    for (str name <- c.combinations<0>) {
+        if (any(str ref <- c.combinations[name], ref in possible_player_names)) {
+            current_name = <name, ref>;
+        }
+    }
+
+    return current_name;
+
+    // return possible_player_names[0];
+
+}
+
 
 // Go over each character in the level and convert the character to all possible references
 Level convert_level(LevelData level, Checker c) {
 
     map[Coords, list[Object]] objects = ();
-    Coords player = <0,0>;
+    tuple[Coords, str] player = <<0,0>, "">;
+    tuple[str,str] player_name = resolve_player_name(c);
     int id = 0;
 
     for (int i <- [0..size(level.level)]) {
@@ -294,31 +323,30 @@ Level convert_level(LevelData level, Checker c) {
         for (int j <- [0..size(char_list)]) {
 
             str char = toLowerCase(char_list[j]);
+            if (char == player_name[0]) player = <<i,j>, char>;
+
             if (char in c.references<0>) {
 
-                LayerData ld = get_layer(c.references[char][0], c);
+                list[str] all_references = get_all_references(char, c.references);
+                LayerData ld = get_layer(all_references, c);
                 str name = c.references[char][0];
 
-                list[Object] object = [game_object(char, name, get_all_references(char, c.references), <i,j>, 
-                    "", ld, id)];
+                list[Object] object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
 
                 if (<i,j> in objects) objects[<i,j>] += object;
                 else objects += (<i,j>: object);
 
-
-                if (("player" in c.references[char]) && size(c.references[char]) == 1) {
-                    player = <i,j>;
-                }
-
                 id += 1;
-
 
             }
             else if (char in c.combinations<0>) {
                 
                 for (str objectName <- c.combinations[char]) {
-                    list[Object] object = [game_object(char, objectName, get_all_references(get_char(objectName, c.references), 
-                        c.references), <i,j>, "", get_layer(objectName, c), id)];
+
+                    list[str] all_references = get_all_references(get_char(objectName, c.references), c.references);
+                    LayerData ld = get_layer(all_references, c);
+
+                    list[Object] object = [game_object(char, objectName, all_references, <i,j>, "", ld, id)];
                     if (<i,j> in objects) objects[<i,j>] += object;
                     else objects += (<i,j>: object);
                     id += 1;
@@ -1036,6 +1064,9 @@ Engine compile(Checker c) {
 	engine.conditions = c.conditions;
     engine.levels = c.game.levels;  
     engine.properties = c.all_properties; 
+
+    // println(c.references);
+    // println(c.combinations);
 
     list[str] all_objects = []; 
     for (LegendData ld <- engine.game.legend) {

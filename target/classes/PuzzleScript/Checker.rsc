@@ -305,6 +305,9 @@ Checker check_object(ObjectData obj, Checker c) {
 	// add references
 	if (!isEmpty(obj.legend)) {
 
+        if (toLowerCase(obj.legend[0]) in c.references) c.references[toLowerCase(obj.legend[0])] += [toLowerCase(obj.name)];
+        else c.references += (toLowerCase(obj.legend[0]): [toLowerCase(obj.name)]);
+
 		msgs = check_existing_legend(obj.legend[0], [obj.name], obj.src, c);
 		if (!isEmpty(msgs)){
 			c.msgs += msgs;

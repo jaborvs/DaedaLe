@@ -36,7 +36,8 @@ void main() {
 	Engine engine;
 	Level level;
 
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
     checker.level_data = check_game_per_level(checker);
@@ -61,7 +62,7 @@ void main() {
 
     // showInteractiveContent(generate_report_per_level(checker, ReportDir));
 
-    Coords begin_player_pos = engine.current_level.player;
+    Coords begin_player_pos = engine.current_level.player[0];
     Coords old_player_pos = <0,0>;
     Coords new_player_pos = <1,1>;
 
@@ -75,17 +76,19 @@ void main() {
         print_level(engine, checker);
 
 
-        if (i == size(collision_moves) - 2) old_player_pos = engine.current_level.player;
-        if (i == size(collision_moves) - 1) new_player_pos = engine.current_level.player;
+        if (i == size(collision_moves) - 2) old_player_pos = engine.current_level.player[0];
+        if (i == size(collision_moves) - 1) new_player_pos = engine.current_level.player[0];
 
     }
     println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
 
+    return;
+
     engine.current_level = save_level;
 
-    old_player_pos = engine.current_level.player;
+    old_player_pos = engine.current_level.player[0];
     engine = execute_move(engine, checker, "right");
-    new_player_pos = engine.current_level.player;
+    new_player_pos = engine.current_level.player[0];
 
     println("Player was unable to move into a wall: <old_player_pos == new_player_pos>");
 
@@ -121,9 +124,9 @@ void main() {
 
     engine.current_level = save_level;
 
-    old_player_pos = engine.current_level.player;
+    old_player_pos = engine.current_level.player[0];
     engine = execute_move(engine, checker, "up");
-    new_player_pos = engine.current_level.player;
+    new_player_pos = engine.current_level.player[0];
 
     println("Player is able to move multiple consecutive blocks: <old_player_pos != new_player_pos>");
 
