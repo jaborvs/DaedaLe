@@ -287,10 +287,16 @@ tuple[str, str] resolve_player_name(Checker c) {
     if ("player" in c.references<0>) possible_player_names = c.references["player"];
     else if ("player" in c.combinations<0>) possible_player_names = c.combinations["player"];
 
-    for (str name <- c.references<0>) {
-        if (any(str ref <- c.references[name], ref in possible_player_names)) {
-            current_name = <name, ref>;
+    if (possible_player_names == []) {
+        for (str keys <- c.references<0>) {
+            if (size(keys) == 1 && "player" in c.references[keys]) return <keys, "player">;
         }
+    }
+
+    for (str name <- c.references<0>) {
+        if (any(str ref <- c.references[name], ref in possible_player_names, size(name) == 1)) {
+            current_name = <name, ref>;
+        } 
     }
 
     // for (str name <- c.combinations<0>) {
@@ -1074,7 +1080,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[1];
+    engine.current_level = engine.converted_levels[0];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {

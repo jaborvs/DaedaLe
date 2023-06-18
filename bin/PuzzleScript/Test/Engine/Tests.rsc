@@ -68,7 +68,7 @@ void main() {
 
     println("==== Collision test ====");
     list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
-    // list[str] collision_moves = ["up", "up", "up"];
+    // list[str] collision_moves = ["left"];
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];
@@ -103,6 +103,7 @@ void main() {
         
         str move = winning_moves[i];
         engine = execute_move(engine, checker, move);
+        // print_level(engine, checker);
 
     }
 
