@@ -987,6 +987,7 @@ list[str] get_all_references(str char, map[str, list[str]] references, bool debu
 list[str] get_references(str reference, map[str, list[str]] references) {
 
     list[str] all_references = [];
+    all_references += reference;
 
     for (str key <- references) {
 
@@ -998,7 +999,7 @@ list[str] get_references(str reference, map[str, list[str]] references) {
         }
     }
 
-    return all_references;
+    return dup(all_references);
 }
 
 bool rules_referencing_char(list[str] char_references, RuleData r: rule_data(left, right, _, _)) {
