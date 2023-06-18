@@ -338,6 +338,178 @@ list[Object] find_neighbours(list[list[Object]] all_lists, Object obj1, int inde
 // Then the list will contain: [[[OrangeCrate, Player], [OrangeCrate, Player]], [[OrangeCrate, Player]]]
 // The outside list represents the rule row, the list within represent each cell and the list within the cells
 // represent each object found per cell item
+// Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str direction) {
+
+//     // println("Moving <direction>");
+
+//     for (list[Rule] rulegroup <- rules) {
+
+//         // For every rule
+//         for (Rule rule <- rulegroup) {
+
+//             list[list[list[Object]]] old_required_objects = [];
+//             list[list[str]] old_excluded_objects = [];
+
+//             list[list[list[Object]]] old_row_objects = [];
+
+//             list[list[list[Object]]] required_objects = [];
+//             list[list[str]] excluded_objects = [];
+
+//             str ruledir = "";
+//             bool can_be_applied = true;
+
+//             while (can_be_applied) {
+
+//                 list[list[list[Object]]] row_objects = [];
+//                 list[list[str]] row_excluded = [];
+
+//                 list[int] cell_sizes = [];
+
+//                 // For every row
+//                 for (RuleContent rc <- rule.left) {
+
+//                     ruledir = rule.direction;
+//                     list[list[Object]] cell_objects = [];
+//                     // list[str] cell_excluded = [];
+
+//                     bool has_no = false;
+//                     int cell_size = 0;
+
+//                     // For every cell in row
+//                     for (int i <- [0..size(rc.content)]) {
+
+//                         if (i mod 2 == 1) continue;
+
+//                         list[Object] current = [];
+
+//                         str obj_dir = rc.content[i];
+//                         str name = toLowerCase(rc.content[i + 1]);
+
+//                         if (has_no) {
+//                             current += game_object("no_object", name, [], <0,0>, "", layer_empty(""), 0);;
+//                             has_no = false;
+//                             continue;
+//                         }
+
+//                         cell_size += 1;
+
+//                         if (name == "...") {
+//                             current += game_object("", "...", [], <0,0>, "", layer_empty(""), 0);
+//                         } else if (name == "no") {
+//                             has_no = true;
+//                             continue;
+//                         } else {
+//                             for (Coords coord <- engine.current_level.objects<0>) {
+//                                 for (Object obj <- engine.current_level.objects[coord]) {
+//                                     if ((name in obj.possible_names) && (obj_dir == obj.direction)) {
+//                                         current += obj;
+//                                     }
+//                                 }
+//                             }
+//                         }
+
+//                         if (current != []) cell_objects += [current];
+//                     }
+                    
+//                     if (cell_objects != []) row_objects += [cell_objects];
+//                     cell_sizes += [cell_size];
+//                 }
+
+//                 bool correct_amount = (all(int i <- [0..size(row_objects)], size(row_objects[i]) == cell_sizes[i]) &&
+//                     size(row_objects) == size(cell_sizes));
+
+//                 // Rule can't be applied
+//                 if (row_objects == old_row_objects || !correct_amount) { 
+//                     can_be_applied = false;
+//                     // return engine; // Debugging purposes
+//                 }
+//                 else {
+//                     engine = apply_rule(engine, rule, row_objects, ruledir, direction, rule.right);
+//                     old_row_objects = row_objects;
+//                 }
+//             }
+//         }
+//     }   
+
+//     return engine; 
+
+// }
+
+// // Moves object to desired position by adding object to list of objects at that position
+// Level move_to_pos(Level current_level, Coords old_pos, Coords new_pos, Object obj) {
+
+//     for (int j <- [0..size(current_level.objects[old_pos])]) {
+//         if (current_level.objects[old_pos][j] == obj) {
+
+//             current_level.objects[old_pos] = remove(current_level.objects[old_pos], j);
+//             current_level.objects[new_pos] += game_object(obj.char, obj.current_name, obj.possible_names, new_pos, "", obj.layer, obj.id);
+
+//             if (obj.char == current_level.player[1]) current_level.player = <new_pos, current_level.player[1]>;
+
+//             break;
+//         }
+//     }
+
+//     // println("Objects on <old_pos> are now: <current_level.objects[old_pos]>\nObjects on <new_pos> are now: ")
+
+//     return current_level;
+// }
+
+bool contains_no_object(Object object, str name) {
+
+    return (name in object.possible_names);
+
+}
+
+list[Object] matches_criteria(Level current_level, Object object, list[RuleContent] lhs) {
+
+    list[Object] object_matches_criteria = [];
+
+
+    for (int i <- [0..size(lhs)]) {
+
+        RuleContent rc = lhs[i];
+
+        // First part: Check if (multiple) object(s) can be found on layer with corresponding movement
+
+        // Ellipsis nog niet.
+        if (size(rc.content) == 2) {
+
+            if (!(rc.content[1] in object.possible_names)) return [];
+            if (rc.content[0] != "no" && rc.content[0] != object.direction) return []; 
+            if (rc.content[0] == "no" && contains_no_object(object, rc.content[1])) return [];
+
+        } else {
+
+            list[Object] objects_same_pos = current_level.objects[object.coords];
+
+            list[str] required_objs = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == "")];
+            list[str] no_objs = [rc.content[i + 2] | i <- [0..size(rc.content)], rc.content[i] == "no"];
+
+            list[Object] rc_objects = [obj | name <- required_objs, any(Object obj <- objects_same_pos, name in obj.possible_names)];
+            list[Object] no_objects = [obj | name <- no_objs, any(Object obj <- objects_same_pos, name in obj.possible_names)];
+
+            if (size(rc_objects) != size(required_objs) || size(no_objects) > 0) return [];
+
+            list[str] movements = [rc.content[i] | i <- [0..size(rc.content)], isDirection(rc.content[i]) || rc.content[i] == ""];
+            if (!(all(int i <- [0..size(rc_objects)], rc_objects[i].direction == movements[i]))) return [];
+
+            println("Objects at pos <object.coords> satisfy all criteria!");
+
+        }
+
+        // if ()
+
+        // Second part: Check neighbors exist
+
+
+    }
+
+    return object_matches_criteria;
+
+}
+
+
 Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str direction) {
 
     // println("Moving <direction>");
@@ -347,24 +519,20 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
         // For every rule
         for (Rule rule <- rulegroup) {
 
-            list[list[list[Object]]] old_required_objects = [];
-            list[list[str]] old_excluded_objects = [];
-
-            list[list[list[Object]]] old_row_objects = [];
-
-            list[list[list[Object]]] required_objects = [];
-            list[list[str]] excluded_objects = [];
-
             str ruledir = "";
             bool can_be_applied = true;
 
             while (can_be_applied) {
 
-                list[list[list[Object]]] row_objects = [];
-                list[list[str]] row_excluded = [];
+                for (Coords coord <- engine.current_level.objects<0>) {
+                    for (Object object <- engine.current_level.objects[coord]) {
 
-                list[int] cell_sizes = [];
-
+                        list[Object] found_objects = [];
+                        found_objects = matches_criteria(engine.current_level, object, rule.left);
+                    }
+                }
+                can_be_applied = false;
+                break;
                 // For every row
                 for (RuleContent rc <- rule.left) {
 
@@ -402,7 +570,6 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
                             for (Coords coord <- engine.current_level.objects<0>) {
                                 for (Object obj <- engine.current_level.objects[coord]) {
                                     if ((name in obj.possible_names) && (obj_dir == obj.direction)) {
-                                        // println("Adding <name> with direction <obj.direction>, object dir = <obj_dir>");
                                         current += obj;
                                     }
                                 }
@@ -413,42 +580,11 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
                     }
                     
                     if (cell_objects != []) row_objects += [cell_objects];
-
-                    // cell_excluded += [""];
-                    // if (cell_excluded != []) row_excluded += [cell_excluded];
                     cell_sizes += [cell_size];
                 }
 
-                // println(row_objects[0][0]);
-                // println(size(row_objects[1]));
-
-                // println("Cell sizes = <size(cell_sizes)>");
-
-                // int total_excluded = size([x | x <- row_excluded, size(x) > 1]);
-
                 bool correct_amount = (all(int i <- [0..size(row_objects)], size(row_objects[i]) == cell_sizes[i]) &&
                     size(row_objects) == size(cell_sizes));
-
-
-                // for (list[str] excluded <- row_excluded) println(size(excluded));
-
-                // println("Size row objs = <size(row_objects)>");
-                // println("Row objs = <row_objects>");
-
-                // for (int i <- [0..size(row_objects)]) {
-
-                //     println("i = <i>");
-                //     // for (int j <- [0..size(row_objects[i])]) println(size(row_objects[i][j]));
-                //     println(size(row_objects[i]));
-                //     println(row_excluded[i]);
-                //     println(size(row_excluded[i]) - 1);
-                //     println(cell_sizes[i]);
-
-                // }
-
-                // println("Correct amount = <correct_amount>");
-                // println("row objs = <row_objects>");
-                // println("cell sizes amount = <cell_sizes>");
 
                 // Rule can't be applied
                 if (row_objects == old_row_objects || !correct_amount) { 
@@ -456,15 +592,11 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
                     // return engine; // Debugging purposes
                 }
                 else {
-                    // if (!(size(row_objects) == size(cell_sizes))) println("Applying rule with \'No\' in it");
                     engine = apply_rule(engine, rule, row_objects, ruledir, direction, rule.right);
                     old_row_objects = row_objects;
                 }
-
             }
-
         }
-
     }   
 
     return engine; 
