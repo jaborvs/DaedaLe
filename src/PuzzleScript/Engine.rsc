@@ -466,7 +466,7 @@ list[list[Object]] matches_criteria(Level current_level, Object object, list[Rul
     list[list[Object]] object_matches_criteria = [];
     RuleContent rc = lhs[index];
 
-    if (index > 0) println(index);
+    // if (index > 0) println(index);
 
     // First part: Check if (multiple) object(s) can be found on layer with corresponding movement
 
@@ -477,7 +477,7 @@ list[list[Object]] matches_criteria(Level current_level, Object object, list[Rul
         if (rc.content[0] != "no" && rc.content[0] != object.direction) return []; 
         if (rc.content[0] == "no" && contains_no_object(object, rc.content[1])) return [];
 
-        println("Found <object.current_name> that matches criteria!\nBecause: <object.current_name>\'s dir = <object.direction> and required = <rc.content[0]> and name = <rc.content[1]>");
+        // println("Found <object.current_name> that matches criteria!\nBecause: <object.current_name>\'s dir = <object.direction> and required = <rc.content[0]> and name = <rc.content[1]>");
 
         object_matches_criteria += [[object]];
 
@@ -507,31 +507,24 @@ list[list[Object]] matches_criteria(Level current_level, Object object, list[Rul
 
     if (size(lhs) <= index) return object_matches_criteria;
 
-    println("Index is now <index> size lhs = <size(lhs)>");
-
     // Second part: Now that objects in current cell meet the criteria, check if required neighbors exist
     Coords dir_difference = get_dir_difference(direction);
     Coords neighboring_coords = <object.coords[0] + dir_difference[0], object.coords[1] + dir_difference[1]>;
 
-    println("Direction = <direction>, object coords = <object.coords>, dir_difference = <dir_difference> neighboring = <neighboring_coords>");
-
+    // Make sure neighbor object is within bounds
     if (!(current_level.objects[neighboring_coords]?)) return [];
+    
+    
     list[Object] neighboring_objs = current_level.objects[neighboring_coords];
 
     // Check if all required objects are present at the position
     list[str] required_objs = [name | name <- lhs[index].content, !(name == "no"), !(isDirection(name)), !(name == "")];
     list[Object] rc_objects = [obj | name <- required_objs, any(Object obj <- neighboring_objs, name in obj.possible_names)];
-    if (size(rc_objects) != size(required_objs)) {
-        return object_matches_criteria; 
-    }
+    if (size(rc_objects) != size(required_objs)) return object_matches_criteria; 
 
-    println("Now looking if neighboring <object.coords> object satisfies criteria at <neighboring_objs>");
     if (any(Object object <- neighboring_objs, matches_criteria(current_level, object, lhs, direction, index) != [])) {
-        println(object);
-    } else {
-        println("No object meets criteria");
+        object_matches_criteria += matches_criteria(current_level, object, lhs, direction, index);
     }
-    // object_matches_criteria += matches_criteria(current_level,)
 
     return object_matches_criteria;
 
@@ -557,6 +550,7 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
 
                         list[list[Object]] found_objects = [];
                         found_objects = matches_criteria(engine.current_level, object, rule.left, direction, 0);
+                        if (found_objects != [] && size(found_objects) == size(rule.left)) println("Found = <size(found_objects)> objects");
                     }
                 }
                 can_be_applied = false;
