@@ -74,7 +74,7 @@ void main() {
         str move = collision_moves[i];
         engine = execute_move(engine, checker, move);
 
-        print_level(engine, checker);
+        // print_level(engine, checker);
 
 
         if (i == size(collision_moves) - 2) old_player_pos = engine.current_level.player[0];
@@ -83,7 +83,7 @@ void main() {
     }
     println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
 
-    return;
+    // return;
 
     engine.current_level = save_level;
 
