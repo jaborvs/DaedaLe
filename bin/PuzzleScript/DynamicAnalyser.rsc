@@ -59,8 +59,7 @@ void main() {
             // print_level(engine, checker);
 
         }
-        println(winning_moves);
-
+        println(check_win_conditions(engine));
     }
 
 
@@ -90,8 +89,8 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
 
             Coords difference = get_dir_difference(m);
 
-            int x_difference = newState.current_level.player[0] - difference[0];
-            int y_difference = newState.current_level.player[1] - difference[1];
+            int x_difference = newState.current_level.player[0][0] - difference[0];
+            int y_difference = newState.current_level.player[0][1] - difference[1];
 
             bool in_bounds = (x_difference > 0 && x_difference < newState.current_level.additional_info.size[0] &&
                  x_difference > 0 && x_difference < newState.current_level.additional_info.size[1]);

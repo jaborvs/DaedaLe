@@ -354,22 +354,21 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     bool has_ellipsis = false;
     bool has_zero = false;
 
-    // if (direction == "left" && index == 2) {
-    //     println("Index is now <index>");
-    //     println("Applying <lhs[index]>");
-    // }
+    // if ("player" in rc.content) println(rc.content);
 
     // First part: Check if (multiple) object(s) can be found on layer with corresponding movement
     if (size(rc.content) == 2) {
 
-        // if ("strongplayer" in rc.content) println("<rc.content[1]> en obj current = <object.current_name>");
-
         if (rc.content[1] in engine.properties<0> && !(rc.content[1] in object.possible_names)) return [];
-        if (!(rc.content[1] in engine.properties<0>) && !(rc.content[1] == object.current_name)) return [];
+        
+        if (!(rc.content[1] in engine.properties<0>) && !(rc.content[1] == object.current_name)) {
+            return [];
+        }
 
-        if (rc.content[0] != "no" && rc.content[0] != object.direction) return []; 
+        if (rc.content[0] != "no" && rc.content[0] != object.direction) return [];
 
         if (rc.content[0] == "no" && contains_no_object(object, rc.content[1])) return [];
+
 
         object_matches_criteria += [[object]];
 
@@ -426,10 +425,13 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     // Make sure neighbor object is within bounds
     if (any(Coords coord <- neighboring_coords, !(engine.current_level.objects[coord]?))) return object_matches_criteria;
 
+
     // Check if all required objects are present at neighboring position
     for (Coords coord <- neighboring_coords) {
+
         if (size(object_matches_criteria) == required) return object_matches_criteria;
 
+        // println("Calling has_objects in neighboring coords");
         if (has_objects(lhs[index].content, direction, engine.current_level.objects[coord], engine)) {
             if (any(Object object <- engine.current_level.objects[coord], matches_criteria(engine, object, lhs, direction, index, required) != [])) {                
                 object_matches_criteria += matches_criteria(engine, object, lhs, direction, index, required);
@@ -477,7 +479,6 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
             } else if (any(Object obj <- found_objects[i], name == obj.current_name)) {
 
                 if (any(Object obj <- found_objects[i], name in obj.possible_names)) {
-                    // println("Setting object\'s name to <name>");
                     obj.current_name = name;
                     obj.coords = found_objects[i][0].coords;
                     obj.direction = dir;
@@ -488,7 +489,13 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
             } else {
 
                 str char = get_char(name, engine.properties);
-                list[str] all_references = char != "" ? get_all_references(char, engine.properties) : get_references(name, engine.properties);
+                char = char != "" ? char : "9";
+
+                list[str] references = get_references(name, engine.properties);
+
+                if ("player" in references) engine.current_level.player[1] = name;
+
+                list[str] all_references = engine.current_level.player[1] == name ? references : get_all_references(char, engine.properties);
                 int highest_id = max([obj.id | coord <- engine.current_level.objects<0>, obj <- engine.current_level.objects[coord]]);
 
                 current += [game_object(char != "" ? char : "9", name, all_references, found_objects[i][0].coords, 
@@ -541,23 +548,33 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
             int applied = 0;
             int max_apply = 5;
 
-            while (can_be_applied && applied < max_apply) {
+            while (can_be_applied) {
+
+                list[list[Object]] found_objects = [];
 
                 for (Coords coord <- engine.current_level.objects<0>) {
                     for (Object object <- engine.current_level.objects[coord]) {
 
-                        list[list[Object]] found_objects = [];
+                        if (!(any(str name <- object.possible_names, name in rule.left[0].content || object.current_name in rule.left[0].content))) {
+                            // can_be_applied = false;
+                            continue;
+                        }
+
                         found_objects = matches_criteria(engine, object, rule.left, direction, 0, size(rule.left));
                         if (found_objects != [] && size(found_objects) == size(rule.left)) {
                             engine = apply(engine, found_objects, rule.right);
                             applied += 1;
                             // return engine;
                         } else {
-                            can_be_applied = false;
+                            found_objects = [];
                         }
+
                     }
                 }
+                if (applied == 0) can_be_applied = false;
+                else applied = 0;
             }
+            
         }
     }   
 
@@ -574,7 +591,7 @@ Level move_to_pos(Level current_level, Coords old_pos, Coords new_pos, Object ob
             current_level.objects[old_pos] = remove(current_level.objects[old_pos], j);
             current_level.objects[new_pos] += game_object(obj.char, obj.current_name, obj.possible_names, new_pos, "", obj.layer, obj.id);
 
-            if (obj.char == current_level.player[1]) current_level.player = <new_pos, current_level.player[1]>;
+            if (obj.current_name == current_level.player[1]) current_level.player = <new_pos, current_level.player[1]>;
 
             break;
         }
@@ -633,7 +650,6 @@ Level try_move(Object obj, Level current_level) {
         current_level = move_to_pos(current_level, old_pos, new_pos, obj);
         // current_level.objects[new_pos] = remove(current_level.objects[new_pos], i);
     } else {
-
         for (Coords coords <- current_level.objects<0>) {
             for (int i <- [0..size(current_level.objects[coords])]) {
                 Object object = current_level.objects[coords][i];
@@ -680,7 +696,7 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
     list[Object] objects = [];
 
     for (Object object <- current_level.objects[current_level.player[0]]) {
-        if (object.char == current_level.player[1]) {
+        if (object.current_name == current_level.player[1]) {
             object.direction = direction;
         }
         objects += object;

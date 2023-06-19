@@ -36,9 +36,9 @@ void main() {
 	Engine engine;
 	Level level;
 
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
     checker.level_data = check_game_per_level(checker);
 	engine = compile(checker);
@@ -67,8 +67,8 @@ void main() {
     Coords new_player_pos = <1,1>;
 
     println("==== Collision test ====");
-    // list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
-    list[str] collision_moves = ["right", "up"];
+    list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
+    // list[str] collision_moves = ["right", "up"];
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];

@@ -331,7 +331,7 @@ Level convert_level(LevelData level, Checker c) {
         for (int j <- [0..size(char_list)]) {
 
             str char = toLowerCase(char_list[j]);
-            if (char == player_name[0]) player = <<i,j>, char>;
+            if (char == player_name[0]) player = <<i,j>, player_name[1]>;
 
             if (char in c.references<0>) {
 
@@ -1072,11 +1072,6 @@ Engine compile(Checker c) {
 	engine.conditions = c.conditions;
     engine.levels = c.game.levels;  
     engine.properties = c.all_properties; 
-
-    println(engine.properties);
-
-    // println(c.references);
-    // println(c.combinations);
 
     for (LevelData ld <- engine.levels) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
