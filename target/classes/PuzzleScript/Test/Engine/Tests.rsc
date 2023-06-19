@@ -36,8 +36,8 @@ void main() {
 	Engine engine;
 	Level level;
 
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
     checker.level_data = check_game_per_level(checker);
@@ -67,22 +67,23 @@ void main() {
     Coords new_player_pos = <1,1>;
 
     println("==== Collision test ====");
-    list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
-    // list[str] collision_moves = ["left"];
+    // list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
+    list[str] collision_moves = ["right", "up"];
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];
         engine = execute_move(engine, checker, move);
 
-        // print_level(engine, checker);
-
+        print_level(engine, checker);
 
         if (i == size(collision_moves) - 2) old_player_pos = engine.current_level.player[0];
         if (i == size(collision_moves) - 1) new_player_pos = engine.current_level.player[0];
 
     }
     println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
+    println("Win conditions satisfied after correct moves: <check_win_conditions(engine)>");
 
+    return;
     // return;
 
     engine.current_level = save_level;
@@ -103,9 +104,11 @@ void main() {
         
         str move = winning_moves[i];
         engine = execute_move(engine, checker, move);
-        // print_level(engine, checker);
+        print_level(engine, checker);
 
     }
+
+    return;
 
     println("Win conditions satisfied after correct moves: <check_win_conditions(engine)>");
 

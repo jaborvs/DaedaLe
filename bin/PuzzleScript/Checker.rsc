@@ -189,9 +189,10 @@ map[str, list[str]] resolve_properties(Checker c) {
         if (size(c.references[name]) > 1) {
             for (str reference <- c.references[name]) references += get_map_input(c, reference);
             properties_dict += (name: references);
-        } else {
-            properties_dict += (name: c.references[name]);
-        }
+        } 
+        // else {
+        //     properties_dict += (name: c.references[name]);
+        // }
     }
 
     return properties_dict;

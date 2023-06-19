@@ -1073,6 +1073,8 @@ Engine compile(Checker c) {
     engine.levels = c.game.levels;  
     engine.properties = c.all_properties; 
 
+    println(engine.properties);
+
     // println(c.references);
     // println(c.combinations);
 
@@ -1080,7 +1082,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[1];
+    engine.current_level = engine.converted_levels[0];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
