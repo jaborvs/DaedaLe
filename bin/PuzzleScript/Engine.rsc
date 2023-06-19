@@ -461,12 +461,24 @@ bool contains_no_object(Object object, str name) {
 
 }
 
-list[list[Object]] matches_criteria(Level current_level, Object object, list[RuleContent] lhs, str direction, int index) {
+bool has_objects(list[str] content, str direction, Coords coords, Level current_level) {
+
+    list[Object] neighboring_objs = current_level.objects[coords];
+
+    list[str] required_objs = [name | name <- content, !(name == "no"), !(isDirection(name)), !(name == "")];
+    list[Object] rc_objects = [obj | name <- required_objs, any(Object obj <- neighboring_objs, name in obj.possible_names)];
+
+    return (size(rc_objects) == size(required_objs));
+
+}
+
+list[list[Object]] matches_criteria(Level current_level, Object object, list[RuleContent] lhs, str direction, int index, int required) {
+
+    // println([x | x <- [0..-5]]);
 
     list[list[Object]] object_matches_criteria = [];
     RuleContent rc = lhs[index];
-
-    // if (index > 0) println(index);
+    bool has_ellipsis = false;
 
     // First part: Check if (multiple) object(s) can be found on layer with corresponding movement
 
@@ -481,14 +493,20 @@ list[list[Object]] matches_criteria(Level current_level, Object object, list[Rul
 
         object_matches_criteria += [[object]];
 
+    } else if (size(rc.content) == 0) {
+        
+        object_matches_criteria += [[]];
+
     } else {
 
         list[Object] objects_same_pos = current_level.objects[object.coords];
 
         // Check if all required objects are present at the position
-        list[str] required_objs = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == "")];
-        list[Object] rc_objects = [obj | name <- required_objs, any(Object obj <- objects_same_pos, name in obj.possible_names)];
-        if (size(rc_objects) != size(required_objs)) return []; 
+        // list[str] required_objs = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == "")];
+        // list[Object] rc_objects = [obj | name <- required_objs, any(Object obj <- objects_same_pos, name in obj.possible_names)];
+        // if (size(rc_objects) != size(required_objs)) return []; 
+
+        if (!(has_objects(rc.content, direction, object.coords, level))) return [];
 
         // Check if no 'no' objects are present at the position
         list[str] no_objs = [rc.content[i + 2] | i <- [0..size(rc.content)], rc.content[i] == "no"];
@@ -504,27 +522,71 @@ list[list[Object]] matches_criteria(Level current_level, Object object, list[Rul
     }
 
     index += 1;
-
     if (size(lhs) <= index) return object_matches_criteria;
 
     // Second part: Now that objects in current cell meet the criteria, check if required neighbors exist
     Coords dir_difference = get_dir_difference(direction);
-    Coords neighboring_coords = <object.coords[0] + dir_difference[0], object.coords[1] + dir_difference[1]>;
+    list[Coords] neighboring_coords = [];
+    
+    if ("..." in lhs[index].content) {
+        object_matches_criteria += [[]];
+        has_ellipsis = true;
+        index += 1;
+    }
+
+    if (has_ellipsis) {
+
+        int level_width = current_level.additional_info.size[0];
+        int level_height = current_level.additional_info.size[1];
+        int x = object.coords[0];
+        int y = object.coords[1];
+
+        switch(direction) {
+
+            case /left/: neighboring_coords = [<x, y + width> | width <- [-1..-level_width], current_level.objects[<x + width, y>]?];
+            case /right/: neighboring_coords = [<x, y + width> | width <- [1..level_width], current_level.objects[<x + width, y>]?];
+            case /up/: neighboring_coords = [<x + heigth, y> | heigth <- [-1..-level_height], current_level.objects[<x, y + heigth>]?];
+            case /down/: neighboring_coords = [<x + heigth, y> | heigth <- [1..level_height], current_level.objects[<x, y + heigth>]?];
+        }
+
+        // println("pos <object.coords> met dir <object.direction> heeft als eerstvolgende buur: <neighboring_coords[0]>");
+        // println("Daarop staan: <current_level.objects[neighboring_coords[0]]>");
+
+    } else {
+        neighboring_coords = [<object.coords[0] + dir_difference[0], object.coords[1] + dir_difference[1]>];
+    }
 
     // Make sure neighbor object is within bounds
-    if (!(current_level.objects[neighboring_coords]?)) return [];
-    
-    
-    list[Object] neighboring_objs = current_level.objects[neighboring_coords];
+    if (any(Coords coord <- neighboring_coords, !(current_level.objects[coord]?))) {
+        println("Returning");
+        return object_matches_criteria;
+    }
 
     // Check if all required objects are present at the position
-    list[str] required_objs = [name | name <- lhs[index].content, !(name == "no"), !(isDirection(name)), !(name == "")];
-    list[Object] rc_objects = [obj | name <- required_objs, any(Object obj <- neighboring_objs, name in obj.possible_names)];
-    if (size(rc_objects) != size(required_objs)) return object_matches_criteria; 
+    for (Coords coord <- neighboring_coords) {
 
-    if (any(Object object <- neighboring_objs, matches_criteria(current_level, object, lhs, direction, index) != [])) {
-        object_matches_criteria += matches_criteria(current_level, object, lhs, direction, index);
+        if (size(object_matches_criteria) == required) return object_matches_criteria;
+
+        if (has_objects(lhs[index].content, direction, coord, current_level)) {
+
+            println("Pos <coord> has it!");
+
+            if (any(Object object <- current_level.objects[coord], matches_criteria(current_level, object, lhs, direction, index, required) != [])) {                
+                object_matches_criteria += matches_criteria(current_level, object, lhs, direction, index, required);
+            } 
+        }
     }
+
+    // if (any())
+    
+    
+    // list[str] required_objs = [name | name <- lhs[index].content, !(name == "no"), !(isDirection(name)), !(name == "")];
+    // list[Object] rc_objects = [obj | name <- required_objs, any(Object obj <- neighboring_objs, name in obj.possible_names)];
+    // if (size(rc_objects) != size(required_objs)) return object_matches_criteria; 
+
+    // if (any(Object object <- neighboring_objs, matches_criteria(current_level, object, lhs, direction, index) != [])) {
+    //     object_matches_criteria += matches_criteria(current_level, object, lhs, direction, index);
+    // }
 
     return object_matches_criteria;
 
@@ -549,8 +611,11 @@ Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, s
                     for (Object object <- engine.current_level.objects[coord]) {
 
                         list[list[Object]] found_objects = [];
-                        found_objects = matches_criteria(engine.current_level, object, rule.left, direction, 0);
-                        if (found_objects != [] && size(found_objects) == size(rule.left)) println("Found = <size(found_objects)> objects");
+                        found_objects = matches_criteria(engine.current_level, object, rule.left, direction, 0, size(rule.left));
+                        if (found_objects != [] && size(found_objects) == size(rule.left)) {
+                            // println("Found = <size(found_objects)> objects");
+                            println("Found = <found_objects> objects");
+                        }
                     }
                 }
                 can_be_applied = false;
