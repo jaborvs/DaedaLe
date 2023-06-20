@@ -35,13 +35,11 @@ void main() {
 	Engine engine;
 	Level level;
 
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
-
-    return;
 
     // AFTER CONVERTED LEVELS CHECK WHICH RULES CAN BE APPLIED. ADD RULES THAT CAN BE APPLIED TO MAP [LEVELDATA, RULELIST]
 
@@ -69,13 +67,11 @@ void main() {
     Coords new_player_pos = <1,1>;
 
     println("==== Collision test ====");
-    list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
+    // list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
     // list[str] collision_moves = ["right", "up"];
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];
-
-        // print_level(engine, checker);
 
         engine = execute_move(engine, checker, move);
 

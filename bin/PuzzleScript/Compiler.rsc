@@ -89,12 +89,13 @@ alias LevelChecker = tuple[
     list[str] moveable_objects,
     tuple[int width, int height] size,
     list[list[Rule]] applied_rules,
+    list[list[Rule]] applied_late_rules,
     list[LevelData] messages,
     Level original
 ];
 
 LevelChecker new_level_checker(Level level) {
-    return <[], [], [], <0,0>, [], [], level>;
+    return <[], [], [], <0,0>, [], [], [], level>;
 }
 
 
@@ -431,10 +432,10 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, _, _), bool late, Ch
     }
 
     for (Rule rule <- new_rules3) {
-        rule.late = late;
+        new_rules4 += rule.late = late;
     }
 
-    return new_rules3;
+    return new_rules4;
 
 
 }
@@ -1047,10 +1048,10 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
 
 LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc) {
 
-    for (list[Rule] lrule <- lc.applied_rules) {
+    // for (list[Rule] lrule <- lc.applied_rules) {
 
-        println("");
-    }
+    //     println("");
+    // }
 
     return lc;
 
@@ -1060,32 +1061,44 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
     bool new_objects = true;
     list[list[Rule]] applied_rules = [];
+    list[list[Rule]] applied_late_rules = [];
 
-    while(new_objects) {
+    list[list[Rule]] current = engine.rules + engine.late_rules;
 
-        for (list[Rule] lrule <- engine.rules) {
+    list[str] previous_objs = [];
 
+    while(previous_objs != lc.starting_objects_names) {
+
+        previous_objs = lc.starting_objects_names;
+
+        for (list[Rule] lrule <- current) {
+            
             // Each rewritten rule in rulegroup contains same objects so take one
             Rule rule = lrule[0];
+            bool applied = true;
 
             for (RuleContent rc <- rule.left) {
                 list[str] required = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == "")];
-                if (all(str rule_obj <- required, rule_obj in lc.starting_objects_names)) {
-                    
-                    if (!(lrule in applied_rules)) applied_rules += [lrule];
-                    list[str] new_objects_list = [name | rc <- rule.right, name <- rc.content, !(name == "no"), 
-                        !(isDirection(name)), !(name == ""), !(name in lc.starting_objects_names)];
-                    
-                    if (size(new_objects_list) == 0) new_objects = false;
-                    else lc.starting_objects_names += new_objects_list;
-                
+                if (!(all(str rule_obj <- required, rule_obj in lc.starting_objects_names))) {
+                    applied = false;
                 }
             }
 
+            if (!(applied)) continue;
+
+            list[str] new_objects_list = [name | rc <- rule.right, name <- rc.content, !(name == "no"), 
+                !(isDirection(name)), !(name == ""), !(name in lc.starting_objects_names)];
+            
+            lc.starting_objects_names += new_objects_list;
+
+            if (rule.late && !(lrule in applied_late_rules)) {
+                applied_late_rules += [lrule];
+            }
+            if (!(rule.late) && !(lrule in applied_rules)) applied_rules += [lrule];
         }
     }
 
-    println(lc.starting_objects_names);
+    lc.applied_late_rules = applied_late_rules;
     lc.applied_rules = applied_rules;
 
     return lc;
@@ -1128,15 +1141,11 @@ map[LevelData, LevelChecker] check_game_per_level(Engine engine, bool debug=fals
 
         LevelChecker lc = new_level_checker(level);
 
-
         lc.size = <10, 10>;
         lc = starting_objects(level, lc);
         lc = applied_rules(engine, lc);
-        println(size(engine.rules));
-        println(size(lc.applied_rules));
         lc = moveable_objects_in_level(engine, lc);
         allLevelData += (level.original: lc);
-        return allLevelData;
 
     }
     return allLevelData;
@@ -1165,7 +1174,7 @@ Engine compile(Checker c) {
             if (size(rulegroup) != 0) engine.late_rules += [rulegroup];
         }
         else {
-            list[Rule] rulegroup = convert_rule(rule, true, c);
+            list[Rule] rulegroup = convert_rule(rule, false, c);
             if (size(rulegroup) != 0) engine.rules += [rulegroup];
         }
 

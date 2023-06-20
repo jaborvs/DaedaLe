@@ -536,9 +536,11 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
 }
 
 
-Engine apply_rules(Engine engine, Level current_level, list[list[Rule]] rules, str direction) {
+Engine apply_rules(Engine engine, Level current_level, str direction, bool late) {
 
-    for (list[Rule] rulegroup <- rules) {
+    list[list[Rule]] applied_rules = late ? engine.level_data[current_level.original].applied_late_rules :engine.level_data[current_level.original].applied_rules;
+
+    for (list[Rule] rulegroup <- applied_rules) {
 
         // For every rule
         for (Rule rule <- rulegroup) {
@@ -712,9 +714,9 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
 Engine execute_move(Engine engine, Checker c, str direction) {
 
     engine = move_player(engine, engine.current_level, direction, c);
-    engine = apply_rules(engine, engine.current_level, engine.rules, direction);
+    engine = apply_rules(engine, engine.current_level, direction, false);
     engine = apply_moves(engine, engine.current_level);
-    engine = apply_rules(engine, engine.current_level, engine.late_rules, direction);
+    engine = apply_rules(engine, engine.current_level, direction, true);
 
     return engine;
 

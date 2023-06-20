@@ -974,14 +974,11 @@ Checker check_game(PSGame g, bool debug=false) {
 		c = check_legend(l, c);
 	}
 
-    println(c.references);
-
 	for (SoundData s <- g.sounds) {
 		c = check_sound(s, c);
 	}
 
 	for (LayerData l <- g.layers) {
-        println("Checking layer");
 		c = check_layer(l, c);
 	}
 
