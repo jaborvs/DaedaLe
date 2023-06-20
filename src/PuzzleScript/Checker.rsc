@@ -879,11 +879,17 @@ Checker check_level(LevelData l, Checker c){
 
 str get_char(str name, map[str, list[str]] references) {
 
+    // println("Finding char for <name> in <references<1>>");
+
+    // println("<size("*") == 1> and <name in references["*"]>");
+
     for (str char <- references<0>) {
-        if (size(char) == 1 && references[char] == [name]) {   
+        if (size(char) == 1 && name in references[char]) {  
+            println(char); 
             return toLowerCase(char);
         }
     }
+
     return "";
 }
 

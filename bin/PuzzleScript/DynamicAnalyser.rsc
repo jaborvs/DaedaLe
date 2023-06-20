@@ -50,15 +50,15 @@ void main() {
         map[Engine, list[str]] adjacencyList = (starting_state: moves);
 
         list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker);
+        println(winning_moves);
 
-        for (int i <- [0..size(winning_moves)]) {
+        // for (int i <- [0..size(winning_moves)]) {
             
-            str move = winning_moves[i];
-            engine = execute_move(engine, checker, move);
-            // print_level(engine, checker);
+        //     str move = winning_moves[i];
+        //     engine = execute_move(engine, checker, move);
+        //     // print_level(engine, checker);
 
-        }
-        println(check_win_conditions(engine));
+        // }
     }
 
 

@@ -263,39 +263,63 @@ LayerData get_layer(list[str] object, PSGame game) {
 
 tuple[str, str] resolve_player_name(Checker c) {
 
-    list[str] possible_player_names = [];
-    tuple[str char, str current_name] current_name = <"", "">;
+    tuple[str, str] start_name = <"", "">;
+    list[str] possible_names = ["player"];
 
-    if ("player" in c.references<0>) possible_player_names = c.references["player"];
-    else if ("player" in c.combinations<0>) possible_player_names = c.combinations["player"];
-
-    if (possible_player_names == []) {
-        for (str keys <- c.references<0>) {
-            if (size(keys) == 1 && "player" in c.references[keys]) return <keys, "player">;
-        }
-    }
-
-    for (str name <- c.references<0>) {
-        if (any(str ref <- c.references[name], ref in possible_player_names, size(name) == 1)) {
-            current_name = <name, ref>;
-        } 
-    }
-
-    // for (str name <- c.combinations<0>) {
-    //     if (any(str ref <- c.combinations[name], ref in possible_player_names)) {
-    //         current_name = <name, ref>;
-    //     }
-    // }
+    if (any(str key <- c.references<0>, size(key) == 1, "player" in c.references[key])) return <key, "player">;
 
 
-    if (current_name != <"", "">) return current_name;
+    // if (any(str key <- c.references<0>, key == "player")) possible_names += c.references[key];
+    if (any(str key <- c.combinations<0>, "player" in c.combinations[key])) return <key, "player">;
 
+    possible_names += c.references["player"];
+    if (any(str key <- c.references<0>, size(key) == 1, any(str name <- possible_names, name in c.references[key]))) return <key, name>;
+    if (any(str key <- c.combinations<0>, size(key) == 1, any(str name <- possible_names, name in c.combinations[key]))) return <key, name>;
 
-    return current_name;
-
-    // return possible_player_names[0];
+    return start_name;
 
 }
+
+// tuple[str, str] resolve_player_name(Checker c) {
+
+//     list[str] possible_player_names = [];
+//     tuple[str char, str current_name] current_name = <"", "">;
+
+//     if(any(str key <- c.references<0>, str reference <- c.references[key], "player" == reference)) possible_player_names += c.references[key];
+//     if(any(str key <- c.combinations<0>, str reference <- c.combinations[key], "player" == reference)) possible_player_names += c.combinations[key];
+
+//     if (possible_player_names == []) {
+//         if (any(str key <- c.references<0>, size(key) == 1 && "player" in c.references[key])) return <key, "player">;
+//     }
+
+
+//     for (str name <- c.combinations<0>) {
+//         if (any(str ref <- c.combinations[name], ref in possible_player_names, ref == "player")) {
+//             return <name, ref>;
+//         }
+//     }
+
+
+
+//     for (str name <- c.references<0>) {
+
+//         if (any(str ref <- c.references[name], size(name) == 1, ref == "player")) {
+//             return <name,ref>;
+//         }
+
+//         if (any(str ref <- c.references[name], ref in possible_player_names, size(name) == 1)) {
+//             return <name, ref>;
+//         } 
+//     }
+
+//     if (current_name != <"", "">) return current_name;
+
+
+//     return current_name;
+
+//     // return possible_player_names[0];
+
+// }
 
 
 // Go over each character in the level and convert the character to all possible references
@@ -303,7 +327,7 @@ Level convert_level(LevelData level, Checker c) {
 
     map[Coords, list[Object]] objects = ();
     tuple[Coords, str] player = <<0,0>, "">;
-    tuple[str,str] player_name = resolve_player_name(c);
+    tuple[str, str] player_name = resolve_player_name(c);
     int id = 0;
 
     for (int i <- [0..size(level.level)]) {
@@ -333,7 +357,7 @@ Level convert_level(LevelData level, Checker c) {
                 
                 for (str objectName <- c.combinations[char]) {
 
-                    list[str] all_references = get_all_references(get_char(objectName, c.references), c.references);
+                    list[str] all_references = get_references(objectName, c.all_properties);
                     LayerData ld = get_layer(all_references, c.game);
 
                     list[Object] object = [game_object(char, objectName, all_references, <i,j>, "", ld, id)];
@@ -1141,7 +1165,7 @@ map[LevelData, LevelChecker] check_game_per_level(Engine engine, bool debug=fals
 
         LevelChecker lc = new_level_checker(level);
 
-        lc.size = <10, 10>;
+        lc.size = <size(level.original.level[0]), size(level.original.level)>;;
         lc = starting_objects(level, lc);
         lc = applied_rules(engine, lc);
         lc = moveable_objects_in_level(engine, lc);
@@ -1164,7 +1188,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[1];
+    engine.current_level = engine.converted_levels[0];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {

@@ -462,7 +462,8 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
         for (int j <- [0..size(rc.content)]) {
 
             if (j mod 2 == 1) continue;
-            if (found_objects[i][j].current_name == "...") {
+
+            if (j < size(found_objects[i]) && found_objects[i][j].current_name == "...") {
                 replacements += [[found_objects[i][j]]];
                 break;
             }
@@ -759,7 +760,7 @@ bool check_win_condition(Level current_level, str amount, list[str] objects) {
 
         for (Coords coords <- current_level.objects<0>) {
             for (Object object <- current_level.objects[coords]) {
-                if (toLowerCase(objects[i]) in object.possible_names) current += object;
+                if (toLowerCase(objects[i]) in object.possible_names || toLowerCase(objects[i]) == object.current_name) current += object;
             }
         }  
         if (current != []) {
@@ -773,7 +774,7 @@ bool check_win_condition(Level current_level, str amount, list[str] objects) {
     for (Object object <- found_objects[0]) {
         same_pos += [obj | obj <- found_objects[1], obj.coords == object.coords];
     }
-    
+
     if (amount == "all") {
         return (size(same_pos) == size(found_objects[1]) && size(same_pos) == size(found_objects[0]));
     } else if (amount == "no") {
@@ -795,9 +796,9 @@ bool check_win_conditions(Engine engine) {
     for (ConditionData cd <- lcd) {
         if (cd is condition_data) {
             if ("on" in cd.condition) {
-                satisfied += check_win_condition(engine.current_level, cd.condition[0], [cd.condition[1], cd.condition[3]]);
+                satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), [cd.condition[1], cd.condition[3]]);
             } else {
-                satisfied += check_win_condition(engine.current_level, cd.condition[0], cd.condition[1]);
+                satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), cd.condition[1]);
             }
         }
     }
@@ -825,5 +826,6 @@ void print_level(Engine engine, Checker c) {
         println(intercalate("", line));
         line = [];
     }
+    println("");
 
 }
