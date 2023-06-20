@@ -1164,7 +1164,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[0];
+    engine.current_level = engine.converted_levels[1];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
@@ -1181,6 +1181,8 @@ Engine compile(Checker c) {
     }
 
     engine.level_data = check_game_per_level(engine);
+
+    // for (list[Rule] rule <- engine.level_data[engine.current_level.original].applied_late_rules) println(rule[0]);
 
 	// engine.layers = [convert_layer(x, c) | x <- c.game.layers];
 

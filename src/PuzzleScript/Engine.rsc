@@ -258,8 +258,9 @@ Engine apply_rule(Engine engine, Rule rule, list[list[list[Object]]] row, str ru
                 if (cell_replacements != []) replacements += [cell_replacements];
                 neighbour_index += 1;
             }
-
+            
             engine = apply(engine, all_neighbors, replacements);
+
         }
     }
 
@@ -389,6 +390,8 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
         return object_matches_criteria;
     }
 
+    if ("rock" in lhs[index - 1].content) println("Objects on the position with rock match <lhs[index-1].content>");
+
     // Second part: Now that objects in current cell meet the criteria, check if required neighbors exist
     Coords dir_difference = get_dir_difference(direction);
     list[Coords] neighboring_coords = [];
@@ -515,21 +518,28 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
         list[Object] new_objects = [];
         list[Object] original_obj = found_objects[i];
         list[Object] new_objs = replacements[i];
-        if (size(new_objs) > 0 && new_objs[0].current_name == "...") continue;
+        if (size(new_objs) > 0 && new_objs[0].current_name == "...") {
+            continue;
+        }
 
         Coords objects_coords = original_obj[0].coords;
 
         for (Object object_at_pos <- engine.current_level.objects[objects_coords]) {
-            if (!(object_at_pos in original_obj)) new_objects += object_at_pos;
+            if (!(object_at_pos in original_obj)) {
+                new_objects += object_at_pos;
+            }
         }
 
         for (Object new_obj <- new_objs) {
-            if (new_obj.current_name == "empty_obj") continue;
+            if (new_obj.current_name == "empty_obj") {
+                new_objects += [obj | obj <- engine.current_level.objects[objects_coords], !(obj in new_objects)];
+            }
 
             if (!(new_obj in current)) new_objects += new_obj;
         }
 
         engine.current_level.objects[objects_coords] = new_objects;
+
     }
 
     return engine;
@@ -558,7 +568,6 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
                     for (Object object <- engine.current_level.objects[coord]) {
 
                         if (!(any(str name <- object.possible_names, name in rule.left[0].content || object.current_name in rule.left[0].content))) {
-                            // can_be_applied = false;
                             continue;
                         }
 
@@ -679,9 +688,7 @@ Engine apply_moves(Engine engine, Level current_level) {
     for (Coords coord <- current_level.objects<0>) {
         for (Object obj <- current_level.objects[coord]) {
             if (obj.direction != "") {
-                
                 current_level = try_move(obj, current_level);
-
             }
         }
 
