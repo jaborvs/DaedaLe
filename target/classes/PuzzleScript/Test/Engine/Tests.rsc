@@ -25,7 +25,6 @@ import util::Benchmark;
 // 		return objs[rand];
 // 	}
 
-
 void main() {
 
     loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/Tutorials|;
@@ -37,11 +36,16 @@ void main() {
 	Level level;
 
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
-    checker.level_data = check_game_per_level(checker);
+
+
+    // checker.level_data = check_game_per_level(checker);
 	engine = compile(checker);
+    // engine.level_data = check_game_per_level(engine);
+
+    // AFTER CONVERTED LEVELS CHECK WHICH RULES CAN BE APPLIED. ADD RULES THAT CAN BE APPLIED TO MAP [LEVELDATA, RULELIST]
 
     Level save_level = engine.current_level;
 
@@ -72,6 +76,9 @@ void main() {
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];
+
+        // print_level(engine, checker);
+
         engine = execute_move(engine, checker, move);
 
         print_level(engine, checker);

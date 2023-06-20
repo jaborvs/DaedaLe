@@ -92,8 +92,8 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
             int x_difference = newState.current_level.player[0][0] - difference[0];
             int y_difference = newState.current_level.player[0][1] - difference[1];
 
-            bool in_bounds = (x_difference > 0 && x_difference < newState.current_level.additional_info.size[0] &&
-                 x_difference > 0 && x_difference < newState.current_level.additional_info.size[1]);
+            bool in_bounds = (x_difference > 0 && x_difference < newState.level_data[current_level].additional_info.size[0] &&
+                 x_difference > 0 && x_difference < newState.level_data[current_level].additional_info.size[1]);
 
             if (!(newState in visited) && in_bounds) {
                 queue += [<newState, current[1] + [m]>];

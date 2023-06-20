@@ -21,25 +21,12 @@ data Level (loc src = |unknown:///|)
 		// list[Layer] checkpoint,
 		// list[str] objectdata,
 		tuple[Coords, str] player,
-        LevelChecker additional_info,
 		LevelData original
 	)
 	| message(str msg, LevelData original)
 	;
 
 alias Coords = tuple[int x, int y];
-
-// data Object (loc src = |unknown:///|)
-// 	= object(str name, int id, Coords coords)
-// 	| moving_object(str name, int id, str direction, Coords coords)
-// 	| transparent(str name, int id, Coords coords)
-// 	;
-
-// data Object (loc src = |unknown:///|)
-// 	= object(str name, int id, Coords coords)
-// 	| moving_object(str name, int id, str direction, Coords coords)
-// 	| transparent(str name, int id, Coords coords)
-// 	;
 
 data Command (loc src = |unknown:///|)
 	= message(str string)
@@ -96,6 +83,18 @@ Rule new_rule(RuleData r, str direction, list[RuleContent] left, list[RuleConten
 		r
 	>;
 
+alias LevelChecker = tuple[
+    list[Object] starting_objects,
+    list[str] moveable_objects,
+    tuple[int width, int height] size,
+    list[list[Rule]] applied_rules,
+    list[LevelData] messages,
+    Level original
+];
+
+LevelChecker new_level_checker(Level level) {
+    return <[], [], <0,0>, [], [], level>;
+}
 
 
 alias Engine = tuple[
@@ -103,48 +102,29 @@ alias Engine = tuple[
 	list[Level] converted_levels,
     int all_objects,
 	Level current_level,
-    map[int, LevelData] level_states,
-	map[str, list[int]] sounds,
 	list[Condition] conditions,
-	list[set[str]] layers,
 	list[list[Rule]] rules,
     list[list[Rule]] late_rules,
 	int index,
-	bool win_keyword,
-	bool abort,
-	bool again,
-	list[str] sound_queue,
-	list[str] msg_queue,
-	list[Command] cmd_queue,
 	map[str, ObjectData] objects,
     map[str, list[str]] properties,
-	list[list[str]] input_log, // keep track of moves made by the player for every level
+    map[Level, LevelChecker] level_data,
 	PSGame game
 ];
 
 Engine new_engine(PSGame game)		
 	= < 
-		[level_data([])],
+		[],
         [], 
         0,
 		message("", level_data([])),
-        (), 
-        (),
-		[], 
-		[],
-		[],
         [],
+		[[]], 
+		[[]],
 		0, 
-		false, 
-		false, 
-		false, 
-		[], 
-		[],
-		[],
 		(),
 		(),
-		[],
-		
+        (),
 		game
 	>;
 
@@ -369,7 +349,6 @@ Level convert_level(LevelData level, Checker c) {
     return Level::level(
         objects,
 		player,
-        c.level_data[level],
 		level        
     );
 
@@ -1065,13 +1044,80 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
 
 }
 
+LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc) {
+
+    for (list[Rule] lrule <- lc.applied_rules) {
+
+        println("");
+    }
+
+    return lc;
+
+}
+
+LevelChecker applied_rules(Engine engine, LevelChecker lc) {
+
+    for (list[Rule] lrule <- engine.rules) {
+
+        // Each rewritten rule in rulegroup contains same objects so take one
+        Rule rule = lrule[0];
+
+
+        
+        println("");
+    }
+
+    return lc;
+
+}
+
+
+LevelChecker starting_objects(Level level, LevelChecker lc) {
+
+    list[Object] all_objects = [obj | Coords coord <- level.objects<0>, obj <- level.objects[coord], !(obj in all_objects)];
+
+    // for (Coord coords <- level.objects<0>) {
+    //     for (Object obj <- level.objects[coords]) {
+    //         if (!(obj in all_objects)) all_objects += obj;
+    //     }
+    // }
+    
+    lc.starting_objects = all_objects;
+
+    return lc;
+
+}
+
+
+
+map[Level, LevelChecker] check_game_per_level(Engine engine, bool debug=false) {
+
+    map[Level, LevelChecker] allLevelData = ();
+    PSGame g = engine.game;
+
+
+    for (Level level <- engine.converted_levels) {
+
+        LevelChecker lc = new_level_checker(level);
+
+        lc.size = <10, 10>;
+        lc = starting_objects(level, lc);
+        lc = applied_rules(engine, lc);
+        lc = moveable_objects_in_level(engine, lc);
+        allLevelData += (level: lc);
+
+    }
+    return allLevelData;
+
+}
+
 Engine compile(Checker c) {
 
 	Engine engine = new_engine(c.game);
-	engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
+	// engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
 	engine.conditions = c.conditions;
     engine.levels = c.game.levels;  
-    engine.properties = c.all_properties; 
+    engine.properties = c.all_properties;
 
     for (LevelData ld <- engine.levels) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
@@ -1087,7 +1133,10 @@ Engine compile(Checker c) {
 
     }
 
-	engine.layers = [convert_layer(x, c) | x <- c.game.layers];
+
+    engine.level_data = check_game_per_level(engine);
+
+	// engine.layers = [convert_layer(x, c) | x <- c.game.layers];
 
 	// engine.objects = (x.coords : x | x <- c.game.objects);
 	

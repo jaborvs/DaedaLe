@@ -28,15 +28,8 @@ alias Checker = tuple[
 	list[str] used_references,
     list[str] all_moveable_objects,
     map[str, list[str]] all_properties,
-    map[LevelData, LevelChecker] level_data,
+    list[str] all_char_refs,
 	PSGame game
-];
-
-alias LevelChecker = tuple[
-    list[str] moveable_objects,
-    tuple[int width, int height] size,
-    list[RuleData] applied_rules,
-    list[LevelData] messages
 ];
 
 alias Reference = tuple[
@@ -86,11 +79,7 @@ map[str, str] COLORS = (
 str default_mask = "@None@";
 		
 Checker new_checker(bool debug_flag, PSGame game){		
-	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], [], (), (), game>;
-}
-
-LevelChecker new_level_checker() {
-    return <[], <0,0>, [], []>;
+	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], [], (), [], game>;
 }
 
 //get a value from the prelude if it exists, else return the default
@@ -179,9 +168,10 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 	return <dup(objs), c, references>;
 }
 
-map[str, list[str]] resolve_properties(Checker c) {
+tuple[map[str, list[str]], list[str]] resolve_properties(Checker c) {
 
     map[str, list[str]] properties_dict = ();
+    list[str] char_refs = [];
 
     for (str name <- c.references<0>) {
         
@@ -190,12 +180,20 @@ map[str, list[str]] resolve_properties(Checker c) {
             for (str reference <- c.references[name]) references += get_map_input(c, reference);
             properties_dict += (name: references);
         } 
-        // else {
-        //     properties_dict += (name: c.references[name]);
-        // }
+        else if (size(name) == 1) {
+            char_refs += c.references[name];
+        }
     }
 
-    return properties_dict;
+    for (str name <- c.combinations<0>) {
+
+        if (size(name) == 1) {
+            char_refs += [ref | ref <- c.combinations[name]];
+        }
+
+    }
+
+    return <properties_dict, char_refs>;
 
 }
 
@@ -549,6 +547,7 @@ Checker check_sound(SoundData s, Checker c){
 //	multilayered_object
 Checker check_layer(LayerData l, Checker c){
 	Reference r = resolve_references(l.layer, c, l.src);
+
 	c = r.c;
 	for (str obj <- r.objs){
 		if (obj in c.layer_list) c.msgs += [multilayered_object(obj, warn(), l.src)];
@@ -878,84 +877,6 @@ Checker check_level(LevelData l, Checker c){
 // warning
 //	no_levels
 
-map[LevelData, LevelChecker] check_game_per_level(Checker allData, bool debug=false) {
-
-    map[LevelData, LevelChecker] allLevelData = ();
-    PSGame g = allData.game;
-
-    LevelChecker lc = new_level_checker();
-
-    for (LevelData ld <- g.levels) {
-
-        if (ld is level_empty) continue;
-
-        if (ld is message) {
-            lc.messages += [ld];
-            continue;
-        }
-        lc.size = <size(ld.level[0]), size(ld.level)>;
-
-        lc = moveable_objects_in_level(ld, lc, allData);
-
-        lc = applied_rules(ld, lc, allData);
-        
-        allLevelData += (ld: lc);
-
-        lc = new_level_checker();
-
-    }
-    return allLevelData;
-
-}
-
-LevelChecker moveable_objects_in_level(LevelData ld, LevelChecker lc, Checker c) {
-
-    for (str line <- ld.level) {
-
-        list[str] char_list = split("", line);
-        for (str char <- char_list) {
-
-            char = toLowerCase(char);
-            if (char in c.combinations) lc.moveable_objects += 
-                [x | x <- c.combinations[char], x in c.all_moveable_objects];
-            if (char in c.references) lc.moveable_objects += 
-                [x | x <- c.references[char], x in c.all_moveable_objects];
-        }
-    }
-
-    return lc;
-
-}
-
-LevelChecker applied_rules(LevelData ld, LevelChecker lc, Checker c) {
-
-    list[RuleData] rules = c.game.rules;
-
-    list[RuleData] rules_used = [];
-    list[str] chars_used = [];
-    list[str] char_references = [];
-
-    for (str line <- ld.level) {
-
-        list[str] char_list = split("", line);
-        for (str char <- char_list) {
-
-            char = toLowerCase(char);
-            if (!(char in chars_used)) {
-                if (char in c.references) char_references += get_all_references(char, c.references);
-                else char_references += get_all_references(char, c.combinations);
-
-            }
-        }
-    }
-
-    for (RuleData rd <- rules) if (rd is rule_data && rules_referencing_char(char_references, rd)) rules_used += rd;
-    lc.applied_rules = rules_used;
-
-    return lc;
-
-}
-
 str get_char(str name, map[str, list[str]] references) {
 
     for (str char <- references<0>) {
@@ -1053,11 +974,14 @@ Checker check_game(PSGame g, bool debug=false) {
 		c = check_legend(l, c);
 	}
 
+    println(c.references);
+
 	for (SoundData s <- g.sounds) {
 		c = check_sound(s, c);
 	}
 
 	for (LayerData l <- g.layers) {
+        println("Checking layer");
 		c = check_layer(l, c);
 	}
 
@@ -1086,7 +1010,10 @@ Checker check_game(PSGame g, bool debug=false) {
 		if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x.src)];
 	}
 
-    c.all_properties = resolve_properties(c);
+    tuple[map[str, list[str]], list[str]] all_objects = resolve_properties(c);
+
+    c.all_properties = all_objects[0];
+    c.all_char_refs = all_objects[1];
 	
 	if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g.src)];
 	
