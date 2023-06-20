@@ -799,7 +799,7 @@ bool check_win_conditions(Engine engine) {
 // Prints the current level
 void print_level(Engine engine, Checker c) {
 
-    tuple[int width, int height] level_size = c.level_data[engine.current_level.original].size;
+    tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
     for (int i <- [0..level_size.height]) {
 
         list[str] line = [];

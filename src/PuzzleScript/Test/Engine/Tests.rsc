@@ -35,15 +35,13 @@ void main() {
 	Engine engine;
 	Level level;
 
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
-
-
-    // checker.level_data = check_game_per_level(checker);
 	engine = compile(checker);
-    // engine.level_data = check_game_per_level(engine);
+
+    return;
 
     // AFTER CONVERTED LEVELS CHECK WHICH RULES CAN BE APPLIED. ADD RULES THAT CAN BE APPLIED TO MAP [LEVELDATA, RULELIST]
 

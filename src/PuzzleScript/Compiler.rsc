@@ -85,6 +85,7 @@ Rule new_rule(RuleData r, str direction, list[RuleContent] left, list[RuleConten
 
 alias LevelChecker = tuple[
     list[Object] starting_objects,
+    list[str] starting_objects_names,
     list[str] moveable_objects,
     tuple[int width, int height] size,
     list[list[Rule]] applied_rules,
@@ -93,7 +94,7 @@ alias LevelChecker = tuple[
 ];
 
 LevelChecker new_level_checker(Level level) {
-    return <[], [], <0,0>, [], [], level>;
+    return <[], [], [], <0,0>, [], [], level>;
 }
 
 
@@ -108,7 +109,7 @@ alias Engine = tuple[
 	int index,
 	map[str, ObjectData] objects,
     map[str, list[str]] properties,
-    map[Level, LevelChecker] level_data,
+    map[LevelData, LevelChecker] level_data,
 	PSGame game
 ];
 
@@ -119,8 +120,8 @@ Engine new_engine(PSGame game)
         0,
 		message("", level_data([])),
         [],
-		[[]], 
-		[[]],
+		[], 
+		[],
 		0, 
 		(),
 		(),
@@ -1057,15 +1058,35 @@ LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc) {
 
 LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
-    for (list[Rule] lrule <- engine.rules) {
+    bool new_objects = true;
+    list[list[Rule]] applied_rules = [];
 
-        // Each rewritten rule in rulegroup contains same objects so take one
-        Rule rule = lrule[0];
+    while(new_objects) {
 
+        for (list[Rule] lrule <- engine.rules) {
 
-        
-        println("");
+            // Each rewritten rule in rulegroup contains same objects so take one
+            Rule rule = lrule[0];
+
+            for (RuleContent rc <- rule.left) {
+                list[str] required = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == "")];
+                if (all(str rule_obj <- required, rule_obj in lc.starting_objects_names)) {
+                    
+                    if (!(lrule in applied_rules)) applied_rules += [lrule];
+                    list[str] new_objects_list = [name | rc <- rule.right, name <- rc.content, !(name == "no"), 
+                        !(isDirection(name)), !(name == ""), !(name in lc.starting_objects_names)];
+                    
+                    if (size(new_objects_list) == 0) new_objects = false;
+                    else lc.starting_objects_names += new_objects_list;
+                
+                }
+            }
+
+        }
     }
+
+    println(lc.starting_objects_names);
+    lc.applied_rules = applied_rules;
 
     return lc;
 
@@ -1074,15 +1095,23 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
 LevelChecker starting_objects(Level level, LevelChecker lc) {
 
-    list[Object] all_objects = [obj | Coords coord <- level.objects<0>, obj <- level.objects[coord], !(obj in all_objects)];
+    list[Object] all_objects = [];
+    list[str] object_names = [];
 
-    // for (Coord coords <- level.objects<0>) {
-    //     for (Object obj <- level.objects[coords]) {
-    //         if (!(obj in all_objects)) all_objects += obj;
-    //     }
-    // }
+    for (Coords coords <- level.objects<0>) {
+        for (Object obj <- level.objects[coords]) {
+            if (!(obj in all_objects)) {
+                
+                all_objects += obj;
+
+                object_names += obj.current_name;
+                for (str name <- obj.possible_names) if (!(name in object_names)) object_names += name;
+            }
+        }
+    }
     
     lc.starting_objects = all_objects;
+    lc.starting_objects_names = object_names;
 
     return lc;
 
@@ -1090,21 +1119,24 @@ LevelChecker starting_objects(Level level, LevelChecker lc) {
 
 
 
-map[Level, LevelChecker] check_game_per_level(Engine engine, bool debug=false) {
+map[LevelData, LevelChecker] check_game_per_level(Engine engine, bool debug=false) {
 
-    map[Level, LevelChecker] allLevelData = ();
+    map[LevelData, LevelChecker] allLevelData = ();
     PSGame g = engine.game;
-
 
     for (Level level <- engine.converted_levels) {
 
         LevelChecker lc = new_level_checker(level);
 
+
         lc.size = <10, 10>;
         lc = starting_objects(level, lc);
         lc = applied_rules(engine, lc);
+        println(size(engine.rules));
+        println(size(lc.applied_rules));
         lc = moveable_objects_in_level(engine, lc);
-        allLevelData += (level: lc);
+        allLevelData += (level.original: lc);
+        return allLevelData;
 
     }
     return allLevelData;
@@ -1128,11 +1160,16 @@ Engine compile(Checker c) {
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
 
-        if ("late" in [toLowerCase(x.prefix) | x <- rule.left, x is prefix]) engine.late_rules += [convert_rule(rule, true, c)];
-        else engine.rules += [convert_rule(rule, false, c)];
+        if ("late" in [toLowerCase(x.prefix) | x <- rule.left, x is prefix]) {
+            list[Rule] rulegroup = convert_rule(rule, true, c);
+            if (size(rulegroup) != 0) engine.late_rules += [rulegroup];
+        }
+        else {
+            list[Rule] rulegroup = convert_rule(rule, true, c);
+            if (size(rulegroup) != 0) engine.rules += [rulegroup];
+        }
 
     }
-
 
     engine.level_data = check_game_per_level(engine);
 
