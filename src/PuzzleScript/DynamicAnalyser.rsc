@@ -17,6 +17,7 @@ import util::Eval;
 import Type;
 import util::Math;
 import List;
+import Set;
 
 import util::Benchmark;
 
@@ -33,7 +34,8 @@ void main() {
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_match3.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 
@@ -83,6 +85,7 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
         visited += {current[0]};
 
         for (m <- moves) {
+
             Engine newState = execute_move(current[0], c, m);
             // print_level(newState.engine, c);
 
@@ -91,12 +94,9 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
             int x_difference = newState.current_level.player[0][0] - difference[0];
             int y_difference = newState.current_level.player[0][1] - difference[1];
 
-            bool in_bounds = (x_difference > 0 && x_difference < newState.level_data[newState.current_level.original].size[0] &&
-                 x_difference > 0 && x_difference < newState.level_data[newState.current_level.original].size[1]);
-
-            if (!(newState in visited) && in_bounds) {
+            if (!(newState in visited)) {
                 queue += [<newState, current[1] + [m]>];
-            }
+            }        
         }
     }
 

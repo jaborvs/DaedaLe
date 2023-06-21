@@ -885,7 +885,6 @@ str get_char(str name, map[str, list[str]] references) {
 
     for (str char <- references<0>) {
         if (size(char) == 1 && name in references[char]) {  
-            println(char); 
             return toLowerCase(char);
         }
     }
@@ -893,12 +892,13 @@ str get_char(str name, map[str, list[str]] references) {
     return "";
 }
 
-list[str] get_all_references(str char, map[str, list[str]] references, bool debug = false) {
+list[str] get_references(str char, map[str, list[str]] references) {
 
     if (!(char in references<0>)) return [];
 
     list[str] reference_list = [];
     list[str] new_references = references[char];
+
     reference_list += new_references;
 
     for (str reference <- new_references) {
@@ -910,9 +910,36 @@ list[str] get_all_references(str char, map[str, list[str]] references, bool debu
     return reference_list;
 
 
+
 }
 
-list[str] get_references(str reference, map[str, list[str]] references) {
+list[str] get_all_references(str char, map[str, list[str]] references, bool debug = false) {
+
+    // if (size(char) != 1) println("Getting references for <char>");
+
+    if (!(char in references<0>)) return [];
+
+    list[str] reference_list = [];
+    list[str] new_references = references[char];
+    if (size(char) != 1) println("Found references for <new_references>");
+
+
+    reference_list += new_references;
+
+    for (str reference <- new_references) {
+
+        reference_list += get_properties(reference, references);
+
+    }
+
+    if (size(char) != 1) println(reference_list);
+
+    return reference_list;
+
+
+}
+
+list[str] get_properties(str reference, map[str, list[str]] references) {
 
     list[str] all_references = [];
     all_references += reference;
@@ -923,7 +950,7 @@ list[str] get_references(str reference, map[str, list[str]] references) {
 
         if (reference in references[key]) {
             all_references += key;
-            all_references += get_references(key, references);
+            all_references += get_properties(key, references);
         }
     }
 

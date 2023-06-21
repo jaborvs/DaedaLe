@@ -248,7 +248,7 @@ Engine apply_rule(Engine engine, Rule rule, list[list[list[Object]]] row, str ru
                     if (found) continue;
 
                     str char = get_char(name, engine.properties);
-                    list[str] all_references = char != "" ? get_all_references(char, engine.properties) : get_references(name, engine.properties);
+                    list[str] all_references = char != "" ? get_all_references(char, engine.properties) : get_properties(name, engine.properties);
                                         
                     cell_replacements += [game_object(char != "" ? char : "9", name, all_references, all_neighbors[neighbour_index][0].coords, 
                         direction, get_layer(all_references, engine.game), highest_id + 1)];
@@ -319,12 +319,12 @@ bool contains_no_object(Object object, str name) {
 
 }
 
-bool has_objects(list[str] content, str direction, list[Object] objects_same_pos, Engine engine) {
+tuple[bool, list[Object]] has_objects(list[str] content, str direction, list[Object] objects_same_pos, Engine engine) {
 
     // Check if no 'no' objects are present at the position
     list[str] no_objs = [content[i + 2] | i <- [0..size(content)], content[i] == "no"];
     list[Object] no_objects = [obj | name <- no_objs, any(Object obj <- objects_same_pos, name in obj.possible_names)];
-    if (size(no_objects) > 0) return false;
+    if (size(no_objects) > 0) return <false, []>;
 
     // Check if all required objects are present at the position
     list[str] required_objs = [name | name <- content, !(name == "no"), !(isDirection(name)), !(name == ""), !(name in no_objs)];
@@ -335,16 +335,16 @@ bool has_objects(list[str] content, str direction, list[Object] objects_same_pos
         else if (any(Object obj <- objects_same_pos, name == obj.current_name)) rc_objects += obj;
     }
 
-    if (size(rc_objects) != size(required_objs)) return false;
+    if (size(rc_objects) != size(required_objs)) return <false, []>;
 
     // Check if all the objects have the required movement
     list[str] movements = [content[i] | i <- [0..size(content)], isDirection(content[i]) || content[i] == ""];
 
-    if (rc_objects == []) return true;
+    if (rc_objects == []) return <true, []>;
 
-    if (!(all(int i <- [0..size(rc_objects)], rc_objects[i].direction == movements[i]))) return false;
+    if (!(all(int i <- [0..size(rc_objects)], rc_objects[i].direction == movements[i]))) return <false, []>;
     
-    return true;
+    return <true, rc_objects>;
 
 }
 
@@ -354,8 +354,6 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     RuleContent rc = lhs[index];
     bool has_ellipsis = false;
     bool has_zero = false;
-
-    // if ("player" in rc.content) println(rc.content);
 
     // First part: Check if (multiple) object(s) can be found on layer with corresponding movement
     if (size(rc.content) == 2) {
@@ -370,7 +368,6 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
 
         if (rc.content[0] == "no" && contains_no_object(object, rc.content[1])) return [];
 
-
         object_matches_criteria += [[object]];
 
     } else if (size(rc.content) == 0) {
@@ -380,7 +377,8 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     } else {
 
         list[Object] objects_same_pos = engine.current_level.objects[object.coords];
-        if (has_objects(rc.content, direction, objects_same_pos, engine)) object_matches_criteria += [objects_same_pos];
+        tuple[bool, list[Object]] has_required_objs = has_objects(rc.content, direction, objects_same_pos, engine);
+        if (has_required_objs[0]) object_matches_criteria += [has_required_objs[1]];
         else return [];
 
     }
@@ -389,8 +387,6 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     if (size(lhs) <= index) {
         return object_matches_criteria;
     }
-
-    if ("rock" in lhs[index - 1].content) println("Objects on the position with rock match <lhs[index-1].content>");
 
     // Second part: Now that objects in current cell meet the criteria, check if required neighbors exist
     Coords dir_difference = get_dir_difference(direction);
@@ -428,14 +424,13 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     // Make sure neighbor object is within bounds
     if (any(Coords coord <- neighboring_coords, !(engine.current_level.objects[coord]?))) return object_matches_criteria;
 
-
     // Check if all required objects are present at neighboring position
     for (Coords coord <- neighboring_coords) {
 
         if (size(object_matches_criteria) == required) return object_matches_criteria;
 
         // println("Calling has_objects in neighboring coords");
-        if (has_objects(lhs[index].content, direction, engine.current_level.objects[coord], engine)) {
+        if (has_objects(lhs[index].content, direction, engine.current_level.objects[coord], engine)[0]) {
             if (any(Object object <- engine.current_level.objects[coord], matches_criteria(engine, object, lhs, direction, index, required) != [])) {                
                 object_matches_criteria += matches_criteria(engine, object, lhs, direction, index, required);
             }
@@ -450,7 +445,20 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
     list[list[Object]] replacements = [];
     list[Object] current = [];
 
-    if (size(right) == 0) return engine;
+    if (size(right) == 0) {
+        int id = 0;
+        for (list[Object] lobj <- found_objects) {
+            for (Object obj <- lobj) {
+                id = obj.id;
+                engine.current_level = visit(engine.current_level) {
+                    case n: game_object(xn, xcn, xpn, xc, xd, xld, id) =>
+                        game_object(xn, xcn, xpn, xc, "", xld, id)
+
+                }
+            }
+        }
+        return engine;
+    }
 
     for (int i <- [0..size(right)]) {
 
@@ -495,7 +503,7 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
                 str char = get_char(name, engine.properties);
                 char = char != "" ? char : "9";
 
-                list[str] references = get_references(name, engine.properties);
+                list[str] references = get_properties(name, engine.properties);
 
                 if ("player" in references) engine.current_level.player[1] = name;
 
@@ -516,6 +524,7 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
 
     for (int i <- [0..size(found_objects)]) {
 
+        // println("\n\nObjects at 0,0 = <engine.current_level.objects[<0,0>]>");
         list[Object] new_objects = [];
         list[Object] original_obj = found_objects[i];
         list[Object] new_objs = replacements[i];
@@ -524,19 +533,23 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
         }
 
         Coords objects_coords = original_obj[0].coords;
+        list[Object] object_at_pos = engine.current_level.objects[objects_coords];
 
-        for (Object object_at_pos <- engine.current_level.objects[objects_coords]) {
-            if (!(object_at_pos in original_obj)) {
-                new_objects += object_at_pos;
-            }
-        }
+        new_objects += [obj | obj <- object_at_pos, !(obj in original_obj)];
+
+        // if (!(any(Object obj <- object_at_pos, any(Object original <- original_obj, obj.id == original.id)))) {
+        //     new_objects += [object | object<- object_at_pos, !(object in new_objects)];
+        // } else {
+        //     println("Nope");
+        // }
 
         for (Object new_obj <- new_objs) {
             if (new_obj.current_name == "empty_obj") {
-                new_objects += [obj | obj <- engine.current_level.objects[objects_coords], !(obj in new_objects)];
+                // new_objects += [obj | obj <- engine.current_level.objects[objects_coords], !(obj in new_objects)];
+                continue;        
             }
 
-            if (!(new_obj in current)) new_objects += new_obj;
+            if (!(new_obj in new_objects)) new_objects += new_obj;
         }
 
         engine.current_level.objects[objects_coords] = new_objects;
@@ -574,8 +587,10 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
 
                         found_objects = matches_criteria(engine, object, rule.left, direction, 0, size(rule.left));
                         if (found_objects != [] && size(found_objects) == size(rule.left)) {
+                            Engine engine_before = engine;
                             engine = apply(engine, found_objects, rule.right);
-                            applied += 1;
+                            if (engine_before != engine) applied += 1;
+                            else return engine;
                             // return engine;
                         } else {
                             found_objects = [];
@@ -623,6 +638,16 @@ Level try_move(Object obj, Level current_level) {
     Coords old_pos = obj.coords;
     Coords new_pos = <obj.coords[0] + dir_difference[0], obj.coords[1] + dir_difference[1]>;
 
+    if (!(current_level.objects[new_pos]?)) {
+        int id = obj.id;
+
+        current_level = visit(current_level) {
+            case n: game_object(xn, xcn, xpn, xc, xd, xld, id) =>
+                game_object(xn, xcn, xpn, xc, "", xld, id)
+
+        }
+        return current_level;
+    }
     list[Object] objs_at_new_pos = current_level.objects[new_pos];
 
     if (size(objs_at_new_pos) == 0) {
@@ -805,6 +830,14 @@ bool check_win_conditions(Engine engine) {
 
     return all(x <- satisfied, x == true);
 }
+
+// bool is_dead_end(Engine engine) {
+
+
+
+
+
+// }
 
 // Prints the current level
 void print_level(Engine engine, Checker c) {

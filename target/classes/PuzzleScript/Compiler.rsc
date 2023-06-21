@@ -261,20 +261,26 @@ LayerData get_layer(list[str] object, PSGame game) {
 
 }
 
-tuple[str, str] resolve_player_name(Checker c) {
+map[str, str] resolve_player_name(Checker c) {
 
-    tuple[str, str] start_name = <"", "">;
+    map[str, str] start_name = ();
     list[str] possible_names = ["player"];
 
-    if (any(str key <- c.references<0>, size(key) == 1, "player" in c.references[key])) return <key, "player">;
-
-
+    if (any(str key <- c.references<0>, size(key) == 1, "player" in c.references[key])) return (key: "player");
+    
     // if (any(str key <- c.references<0>, key == "player")) possible_names += c.references[key];
-    if (any(str key <- c.combinations<0>, "player" in c.combinations[key])) return <key, "player">;
+    for (str key <- c.combinations<0>) {
+        if ("player" in c.combinations[key]) start_name += (key: "player");
+    }
+    if (start_name != ()) return start_name;
 
     possible_names += c.references["player"];
-    if (any(str key <- c.references<0>, size(key) == 1, any(str name <- possible_names, name in c.references[key]))) return <key, name>;
-    if (any(str key <- c.combinations<0>, size(key) == 1, any(str name <- possible_names, name in c.combinations[key]))) return <key, name>;
+    for (str key <- c.references<0>) {
+        if(size(key) == 1, any(str name <- possible_names, name in c.references[key])) start_name += (key: name);
+    }
+    for (str key <- c.combinations<0>) {
+        if (size(key) == 1, any(str name <- possible_names, name in c.combinations[key])) start_name += (key: name);
+    }
 
     return start_name;
 
@@ -327,7 +333,8 @@ Level convert_level(LevelData level, Checker c) {
 
     map[Coords, list[Object]] objects = ();
     tuple[Coords, str] player = <<0,0>, "">;
-    tuple[str, str] player_name = resolve_player_name(c);
+    map[str, str] player_name = resolve_player_name(c);
+    println(player_name);
     int id = 0;
 
     for (int i <- [0..size(level.level)]) {
@@ -337,7 +344,7 @@ Level convert_level(LevelData level, Checker c) {
         for (int j <- [0..size(char_list)]) {
 
             str char = toLowerCase(char_list[j]);
-            if (char == player_name[0]) player = <<i,j>, player_name[1]>;
+            if (char in player_name<0>) player = <<i,j>, player_name[char]>;
 
             if (char in c.references<0>) {
 
@@ -357,7 +364,7 @@ Level convert_level(LevelData level, Checker c) {
                 
                 for (str objectName <- c.combinations[char]) {
 
-                    list[str] all_references = get_references(objectName, c.all_properties);
+                    list[str] all_references = get_properties(objectName, c.all_properties);
                     LayerData ld = get_layer(all_references, c.game);
 
                     list[Object] object = [game_object(char, objectName, all_references, <i,j>, "", ld, id)];
@@ -1070,13 +1077,41 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
 
 }
 
-LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc) {
+LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c) {
 
-    // for (list[Rule] lrule <- lc.applied_rules) {
+    list[str] found_objects = [];
 
-    //     println("");
-    // }
+    for (list[Rule] lrule <- lc.applied_rules) {
 
+        Rule rule = lrule[0];
+        for (RuleContent rc <- rule.left) {
+            for (int i <- [0..(size(rc.content))]) {
+                if (i mod 2 == 1) continue;
+                str dir = rc.content[i];
+                str name = rc.content[i + 1];
+                if (isDirection(dir)) {
+                    if (!(name in found_objects)) lc.moveable_objects += [name];
+                    list[str] all_references = get_references(name, c.references);
+                    found_objects += get_references(name, c.references);
+                    found_objects += get_references(name, c.combinations);
+                }
+            }
+        }  
+        for (RuleContent rc <- rule.right) {
+            for (int i <- [0..(size(rc.content))]) {
+                if (i mod 2 == 1) continue;
+                str dir = rc.content[i];
+                str name = rc.content[i + 1];
+                if (isDirection(dir)) {
+                    if (!(name in found_objects)) lc.moveable_objects += [name];
+                    found_objects += get_references(name, c.references);
+                    found_objects += get_references(name, c.combinations);
+                }
+            }
+        }       
+    }
+
+    lc.moveable_objects = dup(found_objects);
     return lc;
 
 }
@@ -1156,7 +1191,7 @@ LevelChecker starting_objects(Level level, LevelChecker lc) {
 
 
 
-map[LevelData, LevelChecker] check_game_per_level(Engine engine, bool debug=false) {
+map[LevelData, LevelChecker] check_game_per_level(Engine engine, Checker c, bool debug=false) {
 
     map[LevelData, LevelChecker] allLevelData = ();
     PSGame g = engine.game;
@@ -1168,7 +1203,7 @@ map[LevelData, LevelChecker] check_game_per_level(Engine engine, bool debug=fals
         lc.size = <size(level.original.level[0]), size(level.original.level)>;;
         lc = starting_objects(level, lc);
         lc = applied_rules(engine, lc);
-        lc = moveable_objects_in_level(engine, lc);
+        lc = moveable_objects_in_level(engine, lc, c);
         allLevelData += (level.original: lc);
 
     }
@@ -1188,7 +1223,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[0];
+    engine.current_level = engine.converted_levels[1];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
@@ -1204,7 +1239,7 @@ Engine compile(Checker c) {
 
     }
 
-    engine.level_data = check_game_per_level(engine);
+    engine.level_data = check_game_per_level(engine, c);
 
     // for (list[Rule] rule <- engine.level_data[engine.current_level.original].applied_late_rules) println(rule[0]);
 
