@@ -569,6 +569,16 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
         // For every rule
         for (Rule rule <- rulegroup) {
 
+            list[str] directions = [];
+
+            if (late) {
+                if (any(RulePart rp <- rule.original.left, rp is prefix, "horizontal" == rp.prefix)) directions = ["left", "right"];
+                else if (any(RulePart rp <- rule.original.left, rp is prefix, "vertical" == rp.prefix)) directions = ["down", "up"];
+                else directions = ["up", "down", "left", "right"];
+            } else {
+                directions = [direction];
+            }
+
             str ruledir = "";
             bool can_be_applied = true;
             int applied = 0;
@@ -585,15 +595,17 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
                             continue;
                         }
 
-                        found_objects = matches_criteria(engine, object, rule.left, direction, 0, size(rule.left));
-                        if (found_objects != [] && size(found_objects) == size(rule.left)) {
-                            Engine engine_before = engine;
-                            engine = apply(engine, found_objects, rule.right);
-                            if (engine_before != engine) applied += 1;
-                            else return engine;
-                            // return engine;
-                        } else {
-                            found_objects = [];
+                        for (str direction <- directions) {
+                            found_objects = matches_criteria(engine, object, rule.left, direction, 0, size(rule.left));
+                            if (found_objects != [] && size(found_objects) == size(rule.left)) {
+                                Engine engine_before = engine;
+                                engine = apply(engine, found_objects, rule.right);
+                                if (engine_before != engine) applied += 1;
+                                else return engine;
+                                // return engine;
+                            } else {
+                                found_objects = [];
+                            }
                         }
 
                     }

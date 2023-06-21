@@ -69,9 +69,9 @@ void main() {
     Coords new_player_pos = <1,1>;
 
     println("==== Collision test ====");
-    // list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
+    list[str] collision_moves = ["up", "up", "up", "up", "left", "left", "left", "down"];
     // list[str] collision_moves = ["up", "right", "right", "up", "left", "left", "up"];
-    list[str] collision_moves = ["up","left","left","left","left","down", "down", "left", "left", "left", "up"];
+    // list[str] collision_moves = ["up","left","left","left","left","down", "down", "left", "left", "left", "up"];
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];
@@ -87,8 +87,6 @@ void main() {
     println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
     println("Win conditions satisfied after correct moves: <check_win_conditions(engine)>");
 
-    return;
-
     engine.current_level = save_level;
 
     old_player_pos = engine.current_level.player[0];
@@ -101,7 +99,7 @@ void main() {
 
     println("\n=== Win test ====");
     list[str] winning_moves = ["up", "up", "up", "up", "left", "left", "left", "left", "down", "down", "right", 
-        "up", "left", "up", "right", "right", "right", "right", "up", "right", "down", "right", "down", "right", "right", "right"];
+        "up", "left", "up", "right", "right", "right", "right", "up", "right", "down", "down", "right", "right", "right"];
 
     for (int i <- [0..size(winning_moves)]) {
         
@@ -110,8 +108,6 @@ void main() {
         print_level(engine, checker);
 
     }
-
-    return;
 
     println("Win conditions satisfied after correct moves: <check_win_conditions(engine)>");
 

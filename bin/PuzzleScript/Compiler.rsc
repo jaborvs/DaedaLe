@@ -87,6 +87,7 @@ alias LevelChecker = tuple[
     list[Object] starting_objects,
     list[str] starting_objects_names,
     list[str] moveable_objects,
+    int moveable_amount_level,
     tuple[int width, int height] size,
     list[list[Rule]] applied_rules,
     list[list[Rule]] applied_late_rules,
@@ -95,7 +96,7 @@ alias LevelChecker = tuple[
 ];
 
 LevelChecker new_level_checker(Level level) {
-    return <[], [], [], <0,0>, [], [], [], level>;
+    return <[], [], [], 0, <0,0>, [], [], [], level>;
 }
 
 
@@ -483,7 +484,6 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _)) {
         if (rp is prefix && rp.prefix != "late") {
             str direction = toLowerCase(rp.prefix);
 
-            // AND IS DIRECTIONALRULE (moet nog gedaan worden)
             if (direction in directionaggregates && directionalRule(lhs, rhs)) {
                 list[str] directions = directionaggregates[toLowerCase(rp.prefix)];
                 for (str direction <- directions) {
@@ -1061,14 +1061,8 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
             }
 
         } else {
-
             new_rc += [dir] + [name];
-
         }
-
-        // println("Content in expandfixed= <content>");
-
-
     }
 
     rc.content = new_rc;
@@ -1077,41 +1071,50 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
 
 }
 
-LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c) {
+LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, list[RuleContent] rule_side) {
 
     list[str] found_objects = [];
 
-    for (list[Rule] lrule <- lc.applied_rules) {
+    for (RuleContent rc <- rule_side) {
+        for (int i <- [0..(size(rc.content))]) {
+            if (i mod 2 == 1) continue;
+            str dir = rc.content[i];
+            str name = rc.content[i + 1];
+            if (isDirection(dir)) {
+                if (!(name in found_objects)) lc.moveable_objects += [name];
+                list[str] all_references = get_references(name, c.references);
+                found_objects += [name | str name <- get_references(name, c.references), name in lc.starting_objects_names];
+                found_objects += [name | str name <- get_references(name, c.combinations), name in lc.starting_objects_names];
+            }
+        }
+    } 
 
-        Rule rule = lrule[0];
-        for (RuleContent rc <- rule.left) {
-            for (int i <- [0..(size(rc.content))]) {
-                if (i mod 2 == 1) continue;
-                str dir = rc.content[i];
-                str name = rc.content[i + 1];
-                if (isDirection(dir)) {
-                    if (!(name in found_objects)) lc.moveable_objects += [name];
-                    list[str] all_references = get_references(name, c.references);
-                    found_objects += get_references(name, c.references);
-                    found_objects += get_references(name, c.combinations);
-                }
-            }
-        }  
-        for (RuleContent rc <- rule.right) {
-            for (int i <- [0..(size(rc.content))]) {
-                if (i mod 2 == 1) continue;
-                str dir = rc.content[i];
-                str name = rc.content[i + 1];
-                if (isDirection(dir)) {
-                    if (!(name in found_objects)) lc.moveable_objects += [name];
-                    found_objects += get_references(name, c.references);
-                    found_objects += get_references(name, c.combinations);
-                }
-            }
-        }       
+    lc.moveable_objects += dup(found_objects);
+    return lc;
+
+
+}
+
+LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c, Level level) {
+
+    for (list[Rule] lrule <- lc.applied_rules) {
+        lc = get_moveable_objects(engine, lc, c, lrule[0].left);
+        lc = get_moveable_objects(engine, lc, c, lrule[0].right);
     }
 
-    lc.moveable_objects = dup(found_objects);
+    lc.moveable_objects = dup(lc.moveable_objects);
+
+    int amount_in_level = 0;
+
+    for (Coords coord <- level.objects<0>) {
+        for (Object obj <- level.objects[coord]) {
+            if (obj.current_name in lc.moveable_objects) amount_in_level += 1;
+        }
+    }
+
+    lc.moveable_amount_level = amount_in_level;
+    println(amount_in_level);
+
     return lc;
 
 }
@@ -1203,7 +1206,7 @@ map[LevelData, LevelChecker] check_game_per_level(Engine engine, Checker c, bool
         lc.size = <size(level.original.level[0]), size(level.original.level)>;;
         lc = starting_objects(level, lc);
         lc = applied_rules(engine, lc);
-        lc = moveable_objects_in_level(engine, lc, c);
+        lc = moveable_objects_in_level(engine, lc, c, level);
         allLevelData += (level.original: lc);
 
     }
