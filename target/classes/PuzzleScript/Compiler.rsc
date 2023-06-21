@@ -335,7 +335,6 @@ Level convert_level(LevelData level, Checker c) {
     map[Coords, list[Object]] objects = ();
     tuple[Coords, str] player = <<0,0>, "">;
     map[str, str] player_name = resolve_player_name(c);
-    println(player_name);
     int id = 0;
 
     for (int i <- [0..size(level.level)]) {
@@ -1113,7 +1112,6 @@ LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c
     }
 
     lc.moveable_amount_level = amount_in_level;
-    println(amount_in_level);
 
     return lc;
 
@@ -1226,7 +1224,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[1];
+    engine.current_level = engine.converted_levels[0];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {

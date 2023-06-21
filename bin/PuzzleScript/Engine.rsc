@@ -774,7 +774,7 @@ bool check_win_condition(Level current_level, str amount, str object) {
 
     for (Coords coords <- current_level.objects<0>) {
         for (Object obj <- current_level.objects[coords]) {
-            if (toLowerCase(object) in obj.possible_names) found += obj;
+            if (toLowerCase(object) in obj.possible_names || toLowerCase(object) == obj.current_name) found += obj;
         }
     }   
 
@@ -823,8 +823,54 @@ bool check_win_condition(Level current_level, str amount, list[str] objects) {
     return false;
 }
 
+bool in_corner(Object object, Engine engine, LevelChecker lc) {
+
+    list[list[str]] corners = [["up", "right"], ["up", "left"], ["down", "left"], ["down", "right"]];
+
+    for (list[str] corner <- corners) {
+        list[bool] satisfies = [];
+
+        for (str direction <- corner) {
+
+            Coords dir_diff = get_dir_difference(direction);
+            
+            Coords neighboring_coord = <object.coords[0] + dir_diff[0], object.coords[1] + dir_diff[1]>;
+            LayerData layer = object.layer;
+
+            visit (engine.current_level) {
+                case game_object(_, name, _, neighboring_coord, _, layer, _): {
+                    satisfies += !(name in lc.moveable_objects);
+                }
+            }
+
+        }
+
+        if (size(satisfies) == 2 && (all(x <- satisfies, x == true))) {
+            return true;
+        }
+    }
+
+    return false;
+
+}
+
+bool check_dead_end(Engine engine, str amount, str object) {
+
+    list[Object] found = [];
+
+    for (Coords coords <- engine.current_level.objects<0>) {
+        for (Object obj <- engine.current_level.objects[coords]) {
+            if (toLowerCase(object) in obj.possible_names || toLowerCase(object) == obj.current_name) found += obj;
+        }
+    } 
+
+    return any(Object obj <- found, in_corner(obj, engine, engine.level_data[engine.current_level.original]));
+
+
+}
+
 // Checks if current state satisfies all the win conditions
-bool check_win_conditions(Engine engine) {
+bool check_conditions(Engine engine, str condition) {
 
     PSGame game = engine.game;
     list[ConditionData] lcd = game.conditions;
@@ -833,23 +879,25 @@ bool check_win_conditions(Engine engine) {
     for (ConditionData cd <- lcd) {
         if (cd is condition_data) {
             if ("on" in cd.condition) {
-                satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), [cd.condition[1], cd.condition[3]]);
+                if (condition == "win") {
+                    satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), [cd.condition[1], cd.condition[3]]);
+                } else {
+
+                    str moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                        cd.condition[1] : cd.condition[3];
+                    satisfied += check_dead_end(engine, toLowerCase(cd.condition[0]), moveable);
+                }
             } else {
-                satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), cd.condition[1]);
+
+                if (condition == "win") {
+                    satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), cd.condition[1]);
+                }
             }
         }
     }
 
     return all(x <- satisfied, x == true);
 }
-
-// bool is_dead_end(Engine engine) {
-
-
-
-
-
-// }
 
 // Prints the current level
 void print_level(Engine engine, Checker c) {

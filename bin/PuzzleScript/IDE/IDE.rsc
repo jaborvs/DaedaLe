@@ -50,7 +50,7 @@ loc localize(str section, loc default_loc, list[Section] sections){
 }
 
 public node ps_outline(Tree x){
-	PSGAME g = implode(#PsGame, x);
+	PSGame g = implode(#PsGame, x);
 	
 	loc pr_loc;
 	if (isEmpty(g.pr)) {
@@ -85,7 +85,7 @@ public node ps_outline(Tree x){
 
 Content run_game(Tree t, loc s){
 	t = annotate(t);
-	PSGAME g = ps_implode(t);
+	PSGame g = ps_implode(t);
 	Checker c = check_game(g);
 	Engine engine = compile(c);
 	
@@ -94,16 +94,17 @@ Content run_game(Tree t, loc s){
 
 set[Message] build_game(Tree tree){
 	tree = annotate(tree);
-	PSGAME g = ps_implode(tree);
+	PSGame g = ps_implode(tree);
 	Checker c = check_game(g);
 	Engine e = compile(c);
-	DynamicChecker dc = analyse_game(e);
+	// DynamicChecker dc = analyse_game(e);
 	
 	// disabled due to perfomance issues
 	//dc = analyse_stupid_solution(e);
 	//return toMessages(dc.msgs) + toMessages(dc.solutions) + toMessages(c.msgs);
 	
-	return toMessages(dc.msgs) + toMessages(c.msgs);
+	// return toMessages(dc.msgs) + toMessages(c.msgs);
+	return toMessages(c.msgs);
 }
 
 public void registerPS(){
@@ -118,7 +119,6 @@ public void registerPS(){
 		"ObjectName": {bold()},
 		"LegendKey": {italic()},
 		"SoundSeed": {foregroundColor(color("white")), backgroundColor(color("black"))},
-
 
 		// pixel colors
 		"transparent": {foregroundColor(color("lightgray")), italic()},
