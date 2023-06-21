@@ -47,6 +47,14 @@ void main() {
 	checker = check_game(game);
 	engine = compile(checker);
 
+    list[list[Rule]] lrule = engine.level_data[engine.converted_levels[2].original].applied_rules;
+    for (list[Rule] rule <- lrule) {
+
+        println(rule[0].left);
+    }
+
+    return;
+
     Level save_level = engine.current_level;
 
     // println("==== Multiple layer object test ====");

@@ -661,28 +661,6 @@ Rule atomizeAggregates(Checker c, Rule rule) {
 
 }
 
-// If name has synonym in object section, replace DOES NOT WORK YET
-// Rule rephraseSynonyms(Checker c, Rule rule) {
-
-//     for (RuleContent rc <- rule.left) {
-//         for (int i <- [0..size(rc.content)]) {
-//             str object = rc.content[i];
-//             if (object in c.references<0> && size(c.references[object]) == 1) println("<object> references <c.references[object]>");
-
-//         }
-//     }
-//     for (RuleContent rc <- rule.right) {
-//         for (int i <- [0..size(rc.content)]) {
-//             str object = rc.content[i];
-//             if (object in c.references<0> && size(c.references[object]) == 1) println("<object> references <c.references[object]>");
-
-//         }
-//     }
-    
-//     return rule;
-
-// }
-
 list[Rule] concretizeMovingRule(Checker c, Rule rule) {
 
     bool shouldRemove;
