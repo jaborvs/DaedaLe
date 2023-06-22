@@ -1008,9 +1008,6 @@ Checker check_game(PSGame g, bool debug=false) {
 		c = check_legend(l, c);
 	}
 
-    println(c.references);
-    println(c.combinations);
-
 	for (SoundData s <- g.sounds) {
 		c = check_sound(s, c);
 	}

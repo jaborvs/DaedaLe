@@ -122,7 +122,8 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
 
         list[Object] objects_same_pos = engine.current_level.objects[object.coords];
         tuple[bool, list[Object]] has_required_objs = has_objects(rc.content, direction, objects_same_pos, engine);
-        if (has_required_objs[0]) object_matches_criteria += [has_required_objs[1]];
+        if (has_required_objs[0]) object_matches_criteria += !(isEmpty(has_required_objs[1])) ? [has_required_objs[1]] : 
+            [[game_object("","empty_obj",[], object.coords,"",object.layer,0)]];
         else return [];
 
     }
@@ -247,6 +248,8 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
 
                 if (any(Object obj <- found_objects[i], name in obj.possible_names)) {
 
+                    println("1");
+
                     // println("Updated movement = <dir> and name = <name>");
                     // println("Found object <obj.current_name> and checks if direction <obj.direction> matches with the direction");
 
@@ -285,6 +288,10 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
                 }
 
                 new_coords = new_coords == <0,0> ? found_objects[i][0].coords : new_coords;
+
+                // println("Found objects = <found_objects> new coords = <new_coords>");
+                // println("Replacing with: <game_object(char != "" ? char : "9", name, all_references, new_coords, 
+                //     dir, get_layer(all_references, engine.game), highest_id + 1)>");
 
                 // Coords new_coord = size(found_objects[i] == 0) ? 
                 current += [game_object(char != "" ? char : "9", name, all_references, new_coords, 
@@ -346,17 +353,14 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
         for (Rule rule <- rulegroup) {
 
             // Get directions the rule can be applied in
-            list[str] directions = [];
-            if (late) {
-                if (any(RulePart rp <- rule.original.left, rp is prefix, "horizontal" == rp.prefix)) directions = ["left", "right"];
-                else if (any(RulePart rp <- rule.original.left, rp is prefix, "vertical" == rp.prefix)) directions = ["down", "up"];
-                else directions = ["up", "down", "left", "right"];
-
-            } else {
-                directions = [direction];
+            list[str] directions = [rule.direction];
+            if (size(rulegroup) == 1) {
+                if (any(RulePart rp <- rule.left, rp is prefix, "horizontal" == rp.prefix)) directions = ["left", "right"];
+                else if (any(RulePart rp <- rule.left, rp is prefix, "vertical" == rp.prefix)) directions = ["down", "up"];
+                else if (late) directions = ["up", "down", "left", "right"];
+                else if (any(RulePart rp <- rule.left, rp is prefix, isDirection(toLowerCase(rp.prefix)))) directions = [toLowerCase(rp.prefix)];
             }
 
-            str ruledir = "";
             bool can_be_applied = true;
             int applied = 0;
             int max_apply = 5;
@@ -374,7 +378,7 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
                 list[list[list[Object]]] all_found_objects = [];
                 bool find_next = false;
                 list[bool] applicable = [];
-                // println("Trying new rule <rule.left>");
+
                 // For every row in the rule
                 for (int i <- [0..size(rp_left)]) {
                     
@@ -423,6 +427,10 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
 
                 // Means all components to match the rule have been found
                 if (size(applicable) == size(rp_left)) {
+
+                    // println("Found <size(applicable)> lists of objects\n");
+                    // println("Applying ...\n");
+
                     for (int i <- [0..size(all_found_objects)]) {
 
                         // println("Applying <rp_left> with <rp_right[i].contents>");
@@ -434,6 +442,7 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
                         Engine engine_before = engine;
                         // println("Applying rule <rp_left[i]>\n<rp_right[i]>");
                         engine = apply(engine, found_objects, rp_left[i].contents, rp_right[i].contents, direction);
+                        // println("\nDone!\n");
                         if (engine_before != engine) applied += 1;
                         // else return engine;
                     }
@@ -598,10 +607,15 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
 // Applies movement, checks which rules apply, executes movement, checks which late rules apply
 Engine execute_move(Engine engine, Checker c, str direction) {
 
+    // println("\n##### Moving player #####\n");
     engine = move_player(engine, engine.current_level, direction, c);
+    // println("\n##### Applying rules #####\n");
     engine = apply_rules(engine, engine.current_level, direction, false);
+    // println("\n##### Applying moves #####\n");
     engine = apply_moves(engine, engine.current_level);
+    // println("\n##### Applying late rules #####\n");
     engine = apply_rules(engine, engine.current_level, direction, true);
+    // println("\n##### Done #####\n");
 
     return engine;
 
@@ -742,6 +756,7 @@ bool check_conditions(Engine engine, str condition) {
 void print_level(Engine engine, Checker c) {
 
     tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
+    println(level_size);
     for (int i <- [0..level_size.height]) {
 
         list[str] line = [];
