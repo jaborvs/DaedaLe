@@ -74,6 +74,7 @@ void main() {
 
 }
 
+// Calling this function with "win" as condition will result in the winning_moves, any other string will result in a dead-end
 list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacencyList, Checker c, str condition) {
     
     set[Engine] visited = {};
@@ -100,7 +101,7 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
 
             if (!(newState in visited)) {
                 queue += [<newState, current[1] + [m]>];
-            }        
+            }     
         }
     }
 

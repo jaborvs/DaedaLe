@@ -38,7 +38,7 @@ void main() {
 	Engine engine;
 	Level level;
 
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
@@ -70,6 +70,8 @@ void main() {
     Coords old_player_pos = <0,0>;
     Coords new_player_pos = <1,1>;
 
+    print_level(engine, checker);
+
     println("==== Collision test ====");
     list[str] collision_moves = ["right", "right", "right", "right", "right", "right", "right", "right", "up"];
     // list[str] collision_moves = ["up", "left", "down", "down"];
@@ -86,7 +88,6 @@ void main() {
     }
     print_level(engine, checker);
 
-    return;
     println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
     println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");
 

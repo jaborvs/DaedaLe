@@ -344,6 +344,7 @@ Level convert_level(LevelData level, Checker c) {
         for (int j <- [0..size(char_list)]) {
 
             str char = toLowerCase(char_list[j]);
+
             if (char in player_name<0>) player = <<i,j>, player_name[char]>;
 
             if (char in c.references<0>) {
@@ -374,7 +375,20 @@ Level convert_level(LevelData level, Checker c) {
                 }
                 
             }
-            else continue;
+            else {
+
+                list[str] all_references = get_all_references(char, c.references);
+                all_references += [ref | str ref <- get_all_references(char, c.combinations), !(ref in all_references)];
+                LayerData ld = get_layer(all_references, c.game);
+                str name = "";
+
+                list[Object] object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
+
+                if (<i,j> in objects) objects[<i,j>] += object;
+                else objects += (<i,j>: object);
+
+                id += 1;
+            }
 
         }
     }
@@ -1305,7 +1319,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[1];
+    engine.current_level = engine.converted_levels[0];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
