@@ -47,14 +47,6 @@ void main() {
 	checker = check_game(game);
 	engine = compile(checker);
 
-    list[list[Rule]] lrule = engine.level_data[engine.converted_levels[2].original].applied_rules;
-    for (list[Rule] rule <- lrule) {
-
-        println(rule[0].left);
-    }
-
-    return;
-
     Level save_level = engine.current_level;
 
     // println("==== Multiple layer object test ====");
@@ -79,7 +71,7 @@ void main() {
     Coords new_player_pos = <1,1>;
 
     println("==== Collision test ====");
-    list[str] collision_moves = ["left", "up", "left", "up"];
+    list[str] collision_moves = ["right", "right", "right", "right", "right", "right", "right", "right", "up"];
     // list[str] collision_moves = ["up", "left", "down", "down"];
     for (int i <- [0..size(collision_moves)]) {
         
@@ -93,6 +85,8 @@ void main() {
 
     }
     print_level(engine, checker);
+
+    return;
     println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
     println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");
 
@@ -103,8 +97,6 @@ void main() {
     new_player_pos = engine.current_level.player[0];
 
     println("Player was unable to move into a wall: <old_player_pos == new_player_pos>");
-
-    return;
 
     engine.current_level = save_level;
 
@@ -120,7 +112,7 @@ void main() {
 
     }
 
-    println("Win conditions satisfied after correct moves: <check_win_conditions(engine)>");
+    println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");
 
     engine.current_level = save_level;
 
@@ -133,7 +125,7 @@ void main() {
 
     }
 
-    println("Win conditions not satisfied after wrong moves: <!check_win_conditions(engine)>");
+    println("Win conditions not satisfied after wrong moves: <!check_conditions(engine, "win")>");
 
     println("\n=== Mutliple rule test ====");
 

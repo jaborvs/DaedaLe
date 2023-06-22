@@ -256,7 +256,7 @@ Message Hold down switches to open doors.
 #############
 #...#...#...#
 #.F.*.{.#.G.#
-#...#...[...#
+#.......[...#
 #############
 
 Message Press multiple switches at once.

@@ -982,7 +982,7 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
 
         for (int j <- [0..size(rp.contents)]) {
             rule.left[i].contents[j] = expandNoPrefixedProperties(c, rule, rule.left[i].contents[j]);
-            if (size(rule.right[i].contents) > 0) rule.right[i].contents[j] = expandNoPrefixedProperties(c, rule, rule.right[i].contents[j]);
+            if (size(rule.right) > 0) rule.right[i].contents[j] = expandNoPrefixedProperties(c, rule, rule.right[i].contents[j]);
         }
     }
 
@@ -1168,8 +1168,8 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
 LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c, Level level) {
 
     for (list[Rule] lrule <- lc.applied_rules) {
-        lc = get_moveable_objects(engine, lc, c, lrule[0].left);
-        lc = get_moveable_objects(engine, lc, c, lrule[0].right);
+        for (list[RuleContent] lrc <- lrule[0].left) lc = get_moveable_objects(engine, lc, c, lrc);
+        for (list[RuleContent] lrc <- lrule[0].right) lc = get_moveable_objects(engine, lc, c, lrc);
     }
 
     lc.moveable_objects = dup(lc.moveable_objects);
@@ -1206,26 +1206,36 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
             
             // Each rewritten rule in rulegroup contains same objects so take one
             Rule rule = lrule[0];
-            bool applied = true;
 
-            for (RuleContent rc <- rule.left) {
-                list[str] required = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == "")];
-                if (!(all(str rule_obj <- required, rule_obj in lc.starting_objects_names))) {
-                    applied = false;
+            for (RulePart rp <- rule.left) {
+                
+                if (!(rp is part)) continue;
+
+                bool applied = true;
+
+                for (RuleContent rc <- rp.contents) {
+                    list[str] required = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == "")];
+                    if (!(all(str rule_obj <- required, rule_obj in lc.starting_objects_names))) {
+                        applied = false;
+                    }
                 }
+
+                if (!(applied)) continue;
+                if (rule.right[0] is command) {   
+                    if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
+                    if (!(rule.late) && !(lrule in applied_rules)) applied_rules += [lrule];
+                    continue;
+                }
+                list[RuleContent] lrc = [rulepart.contents | rulepart <- rule.right, rulepart is part][0];
+
+                list[str] new_objects_list = [name | rc <- lrc, name <- rc.content, !(name == "no"), 
+                    !(isDirection(name)), !(name == ""), !(name in lc.starting_objects_names)];
+                
+                lc.starting_objects_names += new_objects_list;
+
+                if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
+                if (!(rule.late) && !(lrule in applied_rules)) applied_rules += [lrule];
             }
-
-            if (!(applied)) continue;
-
-            list[str] new_objects_list = [name | rc <- rule.right, name <- rc.content, !(name == "no"), 
-                !(isDirection(name)), !(name == ""), !(name in lc.starting_objects_names)];
-            
-            lc.starting_objects_names += new_objects_list;
-
-            if (rule.late && !(lrule in applied_late_rules)) {
-                applied_late_rules += [lrule];
-            }
-            if (!(rule.late) && !(lrule in applied_rules)) applied_rules += [lrule];
         }
     }
 
@@ -1295,7 +1305,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[0];
+    engine.current_level = engine.converted_levels[1];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
