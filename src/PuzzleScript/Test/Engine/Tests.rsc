@@ -40,9 +40,9 @@ void main() {
 
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
@@ -75,7 +75,7 @@ void main() {
 
     println("==== Collision test ====");
     // list[str] collision_moves = ["right", "right", "right", "right", "up", "up", "up", "up", "up"];
-    list[str] collision_moves = ["left", "down", "left", "up", "up"];
+    list[str] collision_moves = ["left", "down", "left", "up", "up", "up", "up", "up", "right", "right", "right", "right"];
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];

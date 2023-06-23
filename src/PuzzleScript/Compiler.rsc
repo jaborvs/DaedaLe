@@ -470,6 +470,7 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Ch
     RuleData new_rd = rule_data(new_left, new_right, x, y);
 
     // Step 1
+    println("Extending rule with direction <direction>");
     new_rule_directions += extend_directions(new_rd, direction);
     for (Rule rule <- new_rule_directions) {
         Rule absolute_rule = convertRelativeDirsToAbsolute(rule);
@@ -508,22 +509,24 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _), str dir
     list[RuleContent] lhs = get_rulecontent(left);
     list[RuleContent] rhs = get_rulecontent(right);
 
-    for (RulePart rp <- left) {
-        if (rp is prefix && rp.prefix != "late") {
+    // for (RulePart rp <- left) {
+    //     if (rp is prefix && rp.prefix != "late") {
 
-            if (direction in directionaggregates && directionalRule(left, right)) {
-                list[str] directions = directionaggregates[toLowerCase(rp.prefix)];
-                for (str direction <- directions) {
-                    cloned_rule = new_rule(rd, direction, left, right);
-                    new_rule_directions += cloned_rule;
-                }
-            }
-            else {
-                cloned_rule = new_rule(rd, direction, left, right);
-                new_rule_directions += cloned_rule; 
-            } 
-        }        
+    if (direction in directionaggregates && directionalRule(left, right)) {
+        list[str] directions = directionaggregates[toLowerCase(direction)];
+        // list[str] directions = directionaggregates[toLowerCase(rp.prefix)];
+
+        for (str direction <- directions) {
+            cloned_rule = new_rule(rd, direction, left, right);
+            new_rule_directions += cloned_rule;
+        }
     }
+    // else {
+    //     cloned_rule = new_rule(rd, direction, left, right);
+    //     new_rule_directions += cloned_rule; 
+    // } 
+    //     }        
+    // }
 
     // No direction prefix was registered, meaning all directions apply
     if (cloned_rule.direction == "" && directionalRule(left, right)) {
@@ -584,6 +587,12 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
                 if (skip) {
                     skip = false;
                     continue;
+                }
+
+                if (toLowerCase(rc.content[i]) in simpleAbsoluteDirections) {
+                    new_content += [toLowerCase(rc.content[i])] + [rc.content[i + 1]];
+                    skip = true;
+                    continue;                    
                 }
 
                 int index = indexOf(relativeDirs, rc.content[i]);
@@ -1208,6 +1217,18 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
     list[list[Rule]] applied_rules = [];
     list[list[Rule]] applied_late_rules = [];
 
+    map[int, list[Rule]] indexed = ();
+    map[int, list[Rule]] indexed_late = ();
+
+    for (int i <- [0..size(engine.rules)]) {
+        list[Rule] rulegroup = engine.rules[i];
+        indexed += (i: rulegroup);
+    }
+    for (int i <- [0..size(engine.late_rules)]) {
+        list[Rule] rulegroup = engine.late_rules[i];
+        indexed_late += (i: rulegroup);
+    }
+
     list[list[Rule]] current = engine.rules + engine.late_rules;
 
     list[str] previous_objs = [];
@@ -1237,7 +1258,9 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
                 if (!(applied)) continue;
                 if (rule.right[0] is command) {   
                     if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
-                    if (!(rule.late) && !(lrule in applied_rules)) applied_rules += [lrule];
+                    if (!(rule.late) && !(lrule in applied_rules)) {
+                        applied_rules += [lrule];
+                    }
                     continue;
                 }
                 list[RuleContent] lrc = [rulepart.contents | rulepart <- rule.right, rulepart is part][0];
@@ -1248,13 +1271,26 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
                 lc.starting_objects_names += new_objects_list;
 
                 if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
-                if (!(rule.late) && !(lrule in applied_rules)) applied_rules += [lrule];
+                if (!(rule.late) && !(lrule in applied_rules)) {
+                    applied_rules += [lrule];
+                }
             }
         }
     }
 
-    lc.applied_late_rules = applied_late_rules;
-    lc.applied_rules = applied_rules;
+    list[list[Rule]] applied_rules_in_order = [];
+    list[list[Rule]] applied_late_rules_in_order = [];
+
+    for (int i <- [0..size(indexed<0>)]) {
+        if (indexed[i] in applied_rules) applied_rules_in_order += [indexed[i]];
+    }
+    for (int i <- [0..size(indexed_late<0>)]) {
+        if (indexed_late[i] in applied_late_rules) applied_late_rules_in_order += [indexed_late[i]];
+    }
+
+
+    lc.applied_late_rules = applied_late_rules_in_order;
+    lc.applied_rules = applied_rules_in_order;
 
     return lc;
 
