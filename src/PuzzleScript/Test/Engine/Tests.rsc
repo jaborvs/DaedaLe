@@ -40,11 +40,11 @@ void main() {
 
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 
@@ -74,8 +74,8 @@ void main() {
     print_level(engine, checker);
 
     println("==== Collision test ====");
-    // list[str] collision_moves = ["right", "right", "right", "right", "up", "up", "up", "up", "up"];
-    list[str] collision_moves = ["left", "down", "left", "up", "up", "up", "up", "up", "right", "right", "right", "right"];
+    list[str] collision_moves = ["down"];
+    // list[str] collision_moves = ["left", "down", "left", "up", "up", "up", "up", "up", "right", "right", "right", "right"];
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];
@@ -88,6 +88,7 @@ void main() {
 
     }
     print_level(engine, checker);
+    println(check_conditions(engine, "poep"));
 
     println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
     println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");

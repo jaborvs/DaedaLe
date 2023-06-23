@@ -1166,7 +1166,7 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
 
 LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, list[RuleContent] rule_side) {
 
-    list[str] found_objects = [];
+    list[str] found_objects = ["player"];
 
     for (RuleContent rc <- rule_side) {
         for (int i <- [0..(size(rc.content))]) {
@@ -1174,7 +1174,7 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
             str dir = rc.content[i];
             str name = rc.content[i + 1];
             if (isDirection(dir)) {
-                if (!(name in found_objects)) lc.moveable_objects += [name];
+                if (!(name in found_objects)) found_objects += [name];
                 list[str] all_references = get_references(name, c.references);
                 found_objects += [name | str name <- get_references(name, c.references), name in lc.starting_objects_names];
                 found_objects += [name | str name <- get_references(name, c.combinations), name in lc.starting_objects_names];
@@ -1191,8 +1191,12 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
 LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c, Level level) {
 
     for (list[Rule] lrule <- lc.applied_rules) {
-        for (list[RuleContent] lrc <- lrule[0].left) lc = get_moveable_objects(engine, lc, c, lrc);
-        for (list[RuleContent] lrc <- lrule[0].right) lc = get_moveable_objects(engine, lc, c, lrc);
+        for (RulePart rp <- lrule[0].left) {
+            if (rp is part) lc = get_moveable_objects(engine, lc, c, rp.contents);
+        }
+        for (RulePart rp <- lrule[0].right) {
+            if (rp is part) lc = get_moveable_objects(engine, lc, c, rp.contents);
+        }
     }
 
     lc.moveable_objects = dup(lc.moveable_objects);

@@ -56,7 +56,7 @@ void main() {
         // list[list[str]] dead_ends = bfs(starting_state, moves, adjacencyList, checker, "poep");
         // println(size(dead_ends));
 
-        list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker, "win");
+        list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker, "poep");
         println(winning_moves);
 
         for (int i <- [0..size(winning_moves)]) {
@@ -106,7 +106,7 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
                 }
 
                 if (moveSequences[newMoveSequence] == 4) {
-                    return newMoveSequence;  // Return the move sequence where all moves result in the same state
+                    return newMoveSequence;
                 }
             }
 
@@ -151,5 +151,5 @@ list[list[str]] all_bfs(Engine starting, list[str] moves, map[Engine, list[str]]
         }
     }
 
-    return solutions;  // Return all found solutions
+    return solutions;
 }
