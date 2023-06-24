@@ -111,6 +111,7 @@ alias Engine = tuple[
 	int index,
 	map[str, ObjectData] objects,
     map[str, list[str]] properties,
+    map[str, list[str]] references,
     map[LevelData, LevelChecker] level_data,
 	PSGame game
 ];
@@ -127,6 +128,7 @@ Engine new_engine(PSGame game)
 		0, 
 		(),
 		(),
+        (),
         (),
 		game
 	>;
@@ -1051,7 +1053,8 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
                     if (shouldRemove) break;
 
                     RuleContent rc = cur_rule.left[j].contents[k];
-                    list[str] properties = [rc.content[k] | int l <- [0..size(rc.content)], rc.content[l] in c.all_properties<0>];
+
+                    list[str] properties = [rc.content[l] | int l <- [0..size(rc.content)], rc.content[l] in c.all_properties<0>];
 
                     for (str property <- properties) {
 
@@ -1112,7 +1115,6 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
         }
         
     }
-
 
     return result;
 }
@@ -1253,7 +1255,9 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
                 bool applied = true;
 
                 for (RuleContent rc <- rp.contents) {
-                    list[str] required = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == "")];
+                    if ("..." in rc.content) continue;
+
+                    list[str] required = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == ""), !(name == "...")];
                     if (!(all(str rule_obj <- required, rule_obj in lc.starting_objects_names))) {
                         applied = false;
                     }
@@ -1270,7 +1274,7 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
                 list[RuleContent] lrc = [rulepart.contents | rulepart <- rule.right, rulepart is part][0];
 
                 list[str] new_objects_list = [name | rc <- lrc, name <- rc.content, !(name == "no"), 
-                    !(isDirection(name)), !(name == ""), !(name in lc.starting_objects_names)];
+                    !(isDirection(name)), !(name == ""), !(name == "..."), !(name in lc.starting_objects_names)];
                 
                 lc.starting_objects_names += new_objects_list;
 
@@ -1354,6 +1358,7 @@ Engine compile(Checker c) {
 	engine.conditions = c.conditions;
     engine.levels = c.game.levels;  
     engine.properties = c.all_properties;
+    engine.references = c.references;
 
     for (LevelData ld <- engine.levels) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];

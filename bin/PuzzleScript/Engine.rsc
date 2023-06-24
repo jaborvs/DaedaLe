@@ -142,8 +142,8 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
 
     if (has_ellipsis) {
 
-        int level_width = engine.current_level.additional_info.size[0];
-        int level_height = engine.current_level.additional_info.size[1];
+        int level_width = engine.level_data[engine.current_level.original].size[0];
+        int level_height = engine.level_data[engine.current_level.original].size[1];
         int x = object.coords[0];
         int y = object.coords[1];
 
@@ -254,7 +254,7 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
             } else {
 
                 str char = get_char(name, engine.properties);
-                char = char != "" ? char : "9";
+                char = char != "" ? char : get_char(name, engine.references);
 
                 list[str] references = get_properties(name, engine.properties);
                                 
@@ -345,7 +345,7 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
 
             bool can_be_applied = true;
             int applied = 0;
-            int max_apply = 5;
+            int max_apply = 10;
 
             // Filter out the contents from the rules to make applying easier
             list[RulePart] rp_left = [rp | RulePart rp <- rule.left, rp is part];

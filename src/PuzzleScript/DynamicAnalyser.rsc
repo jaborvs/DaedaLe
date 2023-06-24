@@ -32,11 +32,13 @@ void main() {
 	Level level;
 
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_match3.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
+
 
 	checker = check_game(game);
 	engine = compile(checker);
@@ -56,7 +58,7 @@ void main() {
         // list[list[str]] dead_ends = bfs(starting_state, moves, adjacencyList, checker, "poep");
         // println(size(dead_ends));
 
-        list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker, "poep");
+        list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker, "same_state");
         println(winning_moves);
 
         for (int i <- [0..size(winning_moves)]) {
@@ -94,25 +96,19 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
 
         for (m <- moves) {
 
+            Engine beforeState = current[0];
             Engine newState = execute_move(current[0], c, m);
 
-            list[str] newMoveSequence = current[1] + [m];
+            if (condition == "same_state" && beforeState == newState) {
+                if (current[1] in moveSequences<0>) moveSequences[current[1]] += 1;
+                else moveSequences += (current[1]: 1);
 
-            if (condition == "same_state") {
-                if (newMoveSequence in moveSequences) {
-                    moveSequences[newMoveSequence] += 1;
-                } else {
-                    moveSequences += (newMoveSequence: 1);
-                }
-
-                if (moveSequences[newMoveSequence] == 4) {
-                    return newMoveSequence;
-                }
-            }
+                if (moveSequences[current[1]] == 4) return current[1];
+            }    
 
             if (!(newState in visited)) {
-                queue += [<newState, newMoveSequence>];
-            }        
+                queue += [<newState, current[1] + [m]>];
+            }  
         }
     }
 
