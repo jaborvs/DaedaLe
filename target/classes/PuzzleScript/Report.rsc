@@ -51,14 +51,11 @@ void main() {
 }
 
 void generate_reports(loc ReportDir, loc DemoDir) {
-    
-    int amount = 0;
-    int maxamount = 3;
 
     list[Content] charts = [];
 
     for(loc file <- DemoDir.ls){
-        if(file.extension == "txt" && amount <= maxamount){
+        if(file.extension == "txt"){
         
             // Creates ast
             ParseResult p = parseFile(file);
@@ -69,39 +66,40 @@ void generate_reports(loc ReportDir, loc DemoDir) {
             if(src_success(loc file, start[PSGame] tree, PSGame game) := p) {
             
                 checker = check_game(game);
-                checker.level_data = check_game_per_level(checker);
+                engine = compile(checker);
+                generate_report_per_level(engine, ReportDir);
 
-                charts += [generate_report_per_level(checker, ReportDir)];
+                // charts += [generate_report_per_level(checker, ReportDir)];
 
             }
-            amount += 1;
         }
     }
 
-    showInteractiveContent(charts[2]);
+    // showInteractiveContent(charts[2]);
 
 
 }
 
 // This function is used to generate reports and create charts for each game
-Content generate_report_per_level(Checker c, loc directory) {
+// Content generate_report_per_level(Engine engine, loc directory) {
+void generate_report_per_level(Engine engine, loc directory) {
 
     str levelOutput = "";
 
-    list[LevelData] levels = c.game.levels;
-    map[LevelData, LevelChecker] ld = c.level_data;
+    list[Level] levels = engine.converted_levels;
+    map[LevelData, LevelChecker] ld = engine.level_data;
 
     str title = "";
     str author = "";
 
-    for(PreludeData p <- c.game.prelude){
+    for(PreludeData p <- engine.game.prelude){
         if(p.key == "title") {
         title = replaceAll(p.string, ",", " ");
         break;
         }
     }
     
-    for(PreludeData p <- c.game.prelude){
+    for(PreludeData p <- engine.game.prelude){
         if(p.key == "author") {
         author = replaceAll(p.string, ",", " ");
         break;
@@ -120,27 +118,28 @@ Content generate_report_per_level(Checker c, loc directory) {
 
     int levelIndex = 1;
 
-    for (LevelData level <- levels) {
+    for (Level level <- levels) {
 
-        if (level is level_empty || level is message) continue;
+        // if (ld is level_empty) continue;
+        // // Means message is incorrectly parsed as level
+        // if (ld[level].size.height == 1) continue;
 
-        // Means message is incorrectly parsed as level
-        if (ld[level].size.height == 1) continue;
+        int applied_rules = size(ld[level.original].applied_rules) + size(ld[level.original].applied_late_rules);
 
-        appendToFile(directory, "<levelIndex>,<ld[level].size>,<size(ld[level].moveable_objects)>,<size(ld[level].applied_rules)>,<size(ld[level].messages)>\n");
+        appendToFile(directory, "<levelIndex>,<ld[level.original].size>,<size(ld[level.original].moveable_objects)>,<applied_rules>,<size(ld[level.original].messages)>\n");
         levelIndex += 1;
 
     }
     appendToFile(directory, "\n");
 
     // Only get level_data for visualizing purposes
-    list[LevelData] level_data_ld = [x | x <- levels, x is level_data];
+    // list[LevelData] level_data_ld = [x | x <- levels, x is level_data];
 
-    return lineChart(["size", "moving objects", "applied rules", "messages"],
-            [<"<x>",(ld[level_data_ld[x]].size.width)> | x <- [0..size(level_data_ld)]], 
-            [<"<x>",(size(ld[level_data_ld[x]].moveable_objects))> | x <- [0..size(level_data_ld)]], 
-            [<"<x>",(size(ld[level_data_ld[x]].applied_rules))> | x <- [0..size(level_data_ld)]],
-            [<"<x>",(size(ld[level_data_ld[x]].messages))> | x <- [0..size(level_data_ld)]]);
+    // return lineChart(["size", "moving objects", "applied rules", "messages"],
+    //         [<"<x>",(ld[level_data_ld[x]].size.width)> | x <- [0..size(level_data_ld)]], 
+    //         [<"<x>",(size(ld[level_data_ld[x]].moveable_objects))> | x <- [0..size(level_data_ld)]], 
+    //         [<"<x>",(size(ld[level_data_ld[x]].applied_rules))> | x <- [0..size(level_data_ld)]],
+    //         [<"<x>",(size(ld[level_data_ld[x]].messages))> | x <- [0..size(level_data_ld)]]);
 
 }
 

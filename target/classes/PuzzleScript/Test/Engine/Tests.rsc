@@ -42,8 +42,8 @@ void main() {
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
@@ -74,7 +74,7 @@ void main() {
     print_level(engine, checker);
 
     println("==== Collision test ====");
-    list[str] collision_moves = ["up", "up", "up", "up", "up"];
+    list[str] collision_moves = ["down", "left", "left", "up", "up"];
     // list[str] collision_moves = ["left", "down", "left", "up", "up", "up", "up", "up", "right", "right", "right", "right"];
     for (int i <- [0..size(collision_moves)]) {
         
