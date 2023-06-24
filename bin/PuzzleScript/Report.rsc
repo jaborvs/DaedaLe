@@ -39,18 +39,19 @@ data Summary
 void main() {
 
     loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/Tutorials|;
-    loc ReportDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results|;
+    loc CountableDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results/Countables|;
+    loc RuleDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results/Rules|;
 
 	PSGame game;
 	Checker checker;
 	Engine engine;
 	Level level;
 
-    generate_reports(ReportDir, DemoDir);
+    generate_reports(CountableDir, RuleDir, DemoDir);
 
 }
 
-void generate_reports(loc ReportDir, loc DemoDir) {
+void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
 
     list[Content] charts = [];
 
@@ -59,30 +60,23 @@ void generate_reports(loc ReportDir, loc DemoDir) {
         
             // Creates ast
             ParseResult p = parseFile(file);
-            // CheckResult c = chk_error();
-            // Summary s = summary_error();
         
             // If parseresult is success (has the tree and ast):
             if(src_success(loc file, start[PSGame] tree, PSGame game) := p) {
             
                 checker = check_game(game);
                 engine = compile(checker);
-                generate_report_per_level(engine, ReportDir);
-
-                // charts += [generate_report_per_level(checker, ReportDir)];
+                generate_report_per_level(engine, RuleDir, CountableDir);
 
             }
         }
     }
 
-    // showInteractiveContent(charts[2]);
-
-
 }
 
 // This function is used to generate reports and create charts for each game
 // Content generate_report_per_level(Engine engine, loc directory) {
-void generate_report_per_level(Engine engine, loc directory) {
+void generate_report_per_level(Engine engine, loc rule_directory, loc count_directory) {
 
     str levelOutput = "";
 
@@ -107,30 +101,40 @@ void generate_report_per_level(Engine engine, loc directory) {
     }
 
     title = replaceAll(title, " ", "_");
-    directory.path = directory.path + "/<title>.csv";
+    
+    count_directory.path = count_directory.path + "/<title>.csv";
+    str filePath = count_directory.authority + count_directory.path;
+    if (!isFile(count_directory)) touch(count_directory);
 
-    str filePath = directory.authority + directory.path;
+    rule_directory.path = rule_directory.path + "/<title>.csv";
+    filePath = rule_directory.authority + rule_directory.path;
+    if (!isFile(rule_directory)) touch(rule_directory);
 
-    // Create file if it does not exist yet
-    if (!isFile(directory)) touch(directory);
-
-    writeFile(directory, "level, size, moveable_objects, rules, messages\n");
+    writeFile(rule_directory, "level, size, moveable_objects, rules, messages\n");
+    writeFile(count_directory, "level, rules\n");
 
     int levelIndex = 1;
 
     for (Level level <- levels) {
 
-        // if (ld is level_empty) continue;
-        // // Means message is incorrectly parsed as level
-        // if (ld[level].size.height == 1) continue;
+        if (level.original is level_empty) continue;
+        println("Hoi");
 
         int applied_rules = size(ld[level.original].applied_rules) + size(ld[level.original].applied_late_rules);
+        list[list[Rule]] rules = ld[level.original].applied_rules + ld[level.original].applied_late_rules;
 
-        appendToFile(directory, "<levelIndex>,<ld[level.original].size>,<size(ld[level.original].moveable_objects)>,<applied_rules>,<size(ld[level.original].messages)>\n");
+        appendToFile(count_directory, "<levelIndex>,<ld[level.original].size>,<size(ld[level.original].moveable_objects)>,<applied_rules>,<size(ld[level.original].messages)>\n");
+        for (list[Rule] rule <- rules) {
+
+            if(any(RuleData rd <- engine.game.rules, rd == rule[0].original)) println(rd);
+
+        }
+        appendToFile(rule_directory, "<levelIndex>,<rules>\n");
         levelIndex += 1;
 
     }
-    appendToFile(directory, "\n");
+    appendToFile(count_directory, "\n");
+    appendToFile(rule_directory, "\n");
 
     // Only get level_data for visualizing purposes
     // list[LevelData] level_data_ld = [x | x <- levels, x is level_data];
