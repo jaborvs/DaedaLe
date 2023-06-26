@@ -53,6 +53,7 @@ void main() {
 
 void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
 
+
     list[Content] charts = [];
 
     for(loc file <- DemoDir.ls){
@@ -73,6 +74,59 @@ void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
     }
 
 }
+
+str convert_rule(list[RulePart] left, list[RulePart] right) {
+
+    str rule = "";
+
+    if (any(RulePart rp <- left, rp is prefix)) rule += rp.prefix;
+
+    for (int i <- [0..size(left)]) {
+        RulePart rp = left[i];
+
+        if (!(rp is part)) continue;
+        rule += " [ ";
+        for (RuleContent rc <- rp.contents) {
+            for (str content <- rc.content) rule += "<content> ";
+            if (i < size(left) - 1) rule += " | ";
+        }
+        rule += " ] ";
+    }
+
+
+    rule += " -\> ";
+
+    for (int i <- [0..size(right)]) {
+        RulePart rp = right[i];
+
+        if (!(rp is part)) continue;
+        rule += " [ ";
+        for (RuleContent rc <- rp.contents) {
+            for (str content <- rc.content) rule += "<content> ";
+            if (i < size(right) - 1) rule += " | ";
+        }
+        rule += " ] ";
+    }
+
+    return rule;
+}
+
+map[RuleData, tuple[int, str]] index_rules(list[RuleData] rules) {
+
+    map[RuleData, tuple[int, str]] indexed_rules = ();
+    int index = 0;
+
+    for (RuleData rd <- rules) {
+        str rule_string = convert_rule(rd.left, rd.right);
+        indexed_rules += (rd: <index, rule_string>);
+        index += 1;
+    }
+
+    return indexed_rules;
+
+}
+
+
 
 // This function is used to generate reports and create charts for each game
 // Content generate_report_per_level(Engine engine, loc directory) {
@@ -110,15 +164,16 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
     filePath = rule_directory.authority + rule_directory.path;
     if (!isFile(rule_directory)) touch(rule_directory);
 
-    writeFile(rule_directory, "level, size, moveable_objects, rules, messages\n");
-    writeFile(count_directory, "level, rules\n");
+    writeFile(count_directory, "level,size,moveable_objects,rules,messages\n");
+    writeFile(rule_directory, "level,rules\n");
 
     int levelIndex = 1;
+
+    map[RuleData, tuple[int, str]] indexed_rules = index_rules(engine.game.rules);
 
     for (Level level <- levels) {
 
         if (level.original is level_empty) continue;
-        println("Hoi");
 
         int applied_rules = size(ld[level.original].applied_rules) + size(ld[level.original].applied_late_rules);
         list[list[Rule]] rules = ld[level.original].applied_rules + ld[level.original].applied_late_rules;
@@ -126,10 +181,12 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
         appendToFile(count_directory, "<levelIndex>,<ld[level.original].size>,<size(ld[level.original].moveable_objects)>,<applied_rules>,<size(ld[level.original].messages)>\n");
         for (list[Rule] rule <- rules) {
 
-            if(any(RuleData rd <- engine.game.rules, rd == rule[0].original)) println(rd);
+            if (any(RuleData rd <- engine.game.rules, rd.src == rule[0].original.src)) {
+                appendToFile(rule_directory, "<levelIndex>, <indexed_rules[rd][0]>\n");
+            }
 
         }
-        appendToFile(rule_directory, "<levelIndex>,<rules>\n");
+        // appendToFile(rule_directory, "<levelIndex>,<rules>\n");
         levelIndex += 1;
 
     }

@@ -306,7 +306,6 @@ Checker check_object(ObjectData obj, Checker c) {
 
         if (toLowerCase(obj.legend[0]) in c.references) c.references[toLowerCase(obj.legend[0])] += [toLowerCase(obj.name)];
         else c.references += (toLowerCase(obj.legend[0]): [toLowerCase(obj.name)]);
-        println("Adding <obj.name>");
 
 		msgs = check_existing_legend(obj.legend[0], [obj.name], obj.src, c);
 		if (!isEmpty(msgs)){

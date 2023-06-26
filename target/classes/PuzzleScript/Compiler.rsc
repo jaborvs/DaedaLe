@@ -463,16 +463,16 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Ch
 
     list[RulePart] new_left = [rp | RulePart rp <- left, rp is part];
     list[RulePart] save_left = [rp | RulePart rp <- left, !(rp is part)];
-    list[str] directions = [toLowerCase(rp.prefix) | rp <- save_left, rp is prefix && rp.prefix != "late"];
+    list[str] directions = [toLowerCase(rp.prefix) | rp <- save_left, rp is prefix && replaceAll(toLowerCase(rp.prefix), " ", "") != "late"];
     str direction = size(directions) > 0 ? directions[0] : "";
 
     list[RulePart] new_right = [rp | RulePart rp <- right, rp is part];
     list[RulePart] save_right = [rp | RulePart rp <- right, !(rp is part)];
 
     RuleData new_rd = rule_data(new_left, new_right, x, y);
+    new_rd.src = rd.src;
 
     // Step 1
-    println("Extending rule with direction <direction>");
     new_rule_directions += extend_directions(new_rd, direction);
     for (Rule rule <- new_rule_directions) {
         Rule absolute_rule = convertRelativeDirsToAbsolute(rule);
@@ -1264,7 +1264,7 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
                 }
 
                 if (!(applied)) continue;
-                if (rule.right[0] is command) {   
+                if (!(rule.right[0] is part)) {   
                     if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
                     if (!(rule.late) && !(lrule in applied_rules)) {
                         applied_rules += [lrule];
@@ -1364,7 +1364,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[1];
+    engine.current_level = engine.converted_levels[0];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {

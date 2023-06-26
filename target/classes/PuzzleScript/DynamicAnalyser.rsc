@@ -34,10 +34,11 @@ void main() {
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_match3.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/byyourside.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
 
 
 	checker = check_game(game);
@@ -58,7 +59,7 @@ void main() {
         // list[list[str]] dead_ends = bfs(starting_state, moves, adjacencyList, checker, "poep");
         // println(size(dead_ends));
 
-        list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker, "same_state");
+        list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker, "win");
         println(winning_moves);
 
         for (int i <- [0..size(winning_moves)]) {
@@ -93,6 +94,8 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
             }
         }
         visited += {current[0]};
+
+        
 
         for (m <- moves) {
 

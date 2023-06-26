@@ -195,6 +195,7 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
                 }
             }
         }
+        println("Hoi");
         return engine;
     }
 
@@ -289,6 +290,7 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
 
     }
 
+    // println("Found objects: <found_objects>");
     // println("Replacing them with: <replacements>");
 
     // Do the actual replacements
@@ -381,8 +383,7 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
                             // If the object is not referenced by rule, skip
                             if (!(any(str name <- object.possible_names, name in rc[0].content || object.current_name in rc[0].content))) {
                                 continue;
-                            } 
-
+                            }
                             for (str direction <- directions) {
                                 // println("Trying dir <direction>");
                                 found_objects = matches_criteria(engine, object, rc, direction, 0, size(rc));
@@ -411,8 +412,10 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
                         list[list[Object]] found_objects = all_found_objects[i];
 
                         Engine engine_before = engine;
+                        // println("Applying rule");
                         engine = apply(engine, found_objects, rp_left[i].contents, rp_right[i].contents, direction);
-                        if (engine_before != engine) applied += 1;
+                        applied += 1;
+                        // else println("Engine stayed the same for rule \n<rule>\n<rp_left[i].contents>\n<rp_right[i].contents>");
                     }
                 }
                 else {

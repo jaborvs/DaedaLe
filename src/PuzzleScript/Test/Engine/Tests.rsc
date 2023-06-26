@@ -40,11 +40,13 @@ void main() {
 
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/byyourside.PS|);
+
 	checker = check_game(game);
 	engine = compile(checker);
 
@@ -74,7 +76,8 @@ void main() {
     print_level(engine, checker);
 
     println("==== Collision test ====");
-    list[str] collision_moves = ["down", "left", "left", "up", "up"];
+    list[str] collision_moves = ["right", "right", "right", "right", "up", "up", "right", "right", "right", "right", "up", "up", "right", "up", "up", "right", "right", "right", "right"];
+    // list[str] collision_moves = ["up","up","left","left","left","down","left","down","down"];
     // list[str] collision_moves = ["left", "down", "left", "up", "up", "up", "up", "up", "right", "right", "right", "right"];
     for (int i <- [0..size(collision_moves)]) {
         

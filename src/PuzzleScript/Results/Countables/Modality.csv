@@ -1,4 +1,4 @@
-level, rules
+level,size,moveable_objects,rules,messages
 1,<5,3>,2,4,0
 2,<5,5>,2,4,0
 3,<6,6>,2,4,0
