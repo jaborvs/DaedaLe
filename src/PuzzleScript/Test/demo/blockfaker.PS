@@ -135,7 +135,15 @@ Player, Wall, WallBlock, PinkBlock, BlueBlock, PurpleBlock, OrangeBlock, GreenBl
 RULES
 ======
 
-[ > Player | ... | PurpleBlock ] -> [ > PurpleBlock | ... | > Player] 
+[ > Moveable | Moveable ] -> [ > Moveable | > Moveable ] 
+
+[ > Block | Grille ] -> [ Block | Grille ] 
+
+late [ PinkBlock | PinkBlock | PinkBlock ] -> [ | | ] 
+late [ BlueBlock | BlueBlock | BlueBlock ] -> [ | | ] 
+late [ PurpleBlock | PurpleBlock | PurpleBlock ] -> [ | | ] 
+late [ OrangeBlock | OrangeBlock | OrangeBlock ] -> [ | | ] 
+late [ GreenBlock | GreenBlock | GreenBlock ] -> [ | | ] 
 
 ==============
 WINCONDITIONS
@@ -165,9 +173,9 @@ message congrats: level 2!
 ##########
 ####R.R###
 #x....#x##
-#xO#OROxE#
+#xO#O.OxE#
 #xx##.#xx#
-#####.####
+#####R####
 #####P####
 O#########
 

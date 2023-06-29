@@ -164,7 +164,7 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
     filePath = rule_directory.authority + rule_directory.path;
     if (!isFile(rule_directory)) touch(rule_directory);
 
-    writeFile(count_directory, "level,size,moveable_objects,rules,messages\n");
+    writeFile(count_directory, "level,size,moveable_objects,messages\n");
     writeFile(rule_directory, "level,rules\n");
 
     int levelIndex = 1;
@@ -178,7 +178,9 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
         int applied_rules = size(ld[level.original].applied_rules) + size(ld[level.original].applied_late_rules);
         list[list[Rule]] rules = ld[level.original].applied_rules + ld[level.original].applied_late_rules;
 
-        appendToFile(count_directory, "<levelIndex>,<ld[level.original].size>,<size(ld[level.original].moveable_objects)>,<applied_rules>,<size(ld[level.original].messages)>\n");
+        real level_size = ld[level.original].size[0] * ld[level.original].size[1] / 100.0;
+
+        appendToFile(count_directory, "<levelIndex>,<level_size>,<size(ld[level.original].moveable_objects)>,<size(ld[level.original].messages)>\n");
         for (list[Rule] rule <- rules) {
 
             if (any(RuleData rd <- engine.game.rules, rd.src == rule[0].original.src)) {

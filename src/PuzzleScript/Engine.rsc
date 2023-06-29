@@ -414,6 +414,7 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
                         Engine engine_before = engine;
                         // println("Applying rule");
                         engine = apply(engine, found_objects, rp_left[i].contents, rp_right[i].contents, direction);
+                        if (!(rule.original in engine.applied_rules)) engine.applied_rules += [rule.original];
                         applied += 1;
                         // else println("Engine stayed the same for rule \n<rule>\n<rp_left[i].contents>\n<rp_right[i].contents>");
                     }
@@ -579,6 +580,41 @@ Engine execute_move(Engine engine, Checker c, str direction) {
 
 }
 
+
+// You need to define this function. It should return a lower score if the player is closer to a winning object.
+int calculate_heuristic(Engine engine) {
+    
+    int score = 0;
+
+    PSGame game = engine.game;
+    list[ConditionData] lcd = game.conditions;
+
+    // println(engine.current_level.objects);
+
+    for (ConditionData cd <- lcd) {
+        if (cd is condition_data) {
+            str moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                cd.condition[1] : cd.condition[3];
+
+
+            moveable = toLowerCase(moveable);
+
+            visit(engine.current_level.objects) {
+
+                case n: game_object(_, moveable, _, _, _, _, _): {
+
+                    return abs(engine.current_level.player[0][0] - n.coords[0]) + abs(engine.current_level.player[0][1] - n.coords[1]);
+
+                }
+
+            }
+
+        }
+    }
+
+    return 10;
+}
+
 // If only one object is found in win condition
 bool check_win_condition(Level current_level, str amount, str object) {
 
@@ -690,15 +726,16 @@ bool check_conditions(Engine engine, str condition) {
     for (ConditionData cd <- lcd) {
         if (cd is condition_data) {
             if ("on" in cd.condition) {
+
+                str moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                    cd.condition[1] : cd.condition[3];
+
                 if (condition == "win") {
                     satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), [cd.condition[1], cd.condition[3]]);
-                } else {
-
-                    str moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
-                        cd.condition[1] : cd.condition[3];
-
+                } else if (condition == "dead_end") {
                     satisfied += check_dead_end(engine, toLowerCase(cd.condition[0]), moveable);
                 }
+
             } else {
 
                 if (condition == "win") {

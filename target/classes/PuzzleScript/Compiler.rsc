@@ -113,6 +113,7 @@ alias Engine = tuple[
     map[str, list[str]] properties,
     map[str, list[str]] references,
     map[LevelData, LevelChecker] level_data,
+    list[RuleData] applied_rules,
 	PSGame game
 ];
 
@@ -130,6 +131,7 @@ Engine new_engine(PSGame game)
 		(),
         (),
         (),
+        [],
 		game
 	>;
 
@@ -1364,7 +1366,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[0];
+    engine.current_level = engine.converted_levels[1];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
