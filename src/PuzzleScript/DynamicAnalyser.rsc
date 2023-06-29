@@ -21,6 +21,8 @@ import Set;
 
 import util::Benchmark;
 
+alias TupleObjects = list[tuple[str name, Coords coords]];
+
 void main() {
 
     loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/Tutorials|;
@@ -34,7 +36,7 @@ void main() {
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_match3.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/byyourside.PS|);
@@ -64,6 +66,7 @@ void main() {
 
         // list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker, "win");
         // println(winning_moves);
+        // println("Took: <(cpuTime() - before) / 1000000000.00> sec");
 
         // for (int i <- [0..size(winning_moves)]) {
             
@@ -124,12 +127,14 @@ void main() {
 list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacencyList, Checker c, str condition) {
     
     set[Engine] visited = {};
-    list[tuple[Engine, list[str], int]] queue = [<starting, [], 0>];
+    list[tuple[Engine, list[str], real]] queue = [<starting, [], 0.0>];
     map[list[str], int] moveSequences = ();
 
     while (!isEmpty(queue)) {
-        queue = sort(queue, bool(tuple[Engine, list[str], int] a, tuple[Engine, list[str], int] b){return a[2] < b[2]; });
-        tuple[Engine, list[str], int] current = head(queue);
+        queue = sort(queue, bool(tuple[Engine, list[str], real] a, tuple[Engine, list[str], real] b){return a[2] < b[2]; });
+        // for (tuple[Engine, list[str], int] item <- queue) println(item[2]);
+        // println("");
+        tuple[Engine, list[str], real] current = head(queue);
         queue = tail(queue);
 
         if (condition != "same_state") {
@@ -152,7 +157,7 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
             }    
 
             if (!(newState in visited)) {
-                int heuristic = calculate_heuristic(newState);
+                real heuristic = calculate_heuristic(newState);
                 queue += [<newState, current[1] + [m], heuristic>];
             }  
         }
@@ -162,35 +167,99 @@ list[str] bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacency
 }
 
 
-list[list[str]] all_bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacencyList, Checker c, str condition) {
+// list[list[str]] all_bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacencyList, Checker c, str condition) {
 
-    set[Engine] visited = {};
-    list[tuple[Engine, list[str]]] queue = [<starting, []>];
-    list[list[str]] solutions = [];  
+//     set[Engine] visited = {};
+//     list[tuple[Engine, list[str]]] queue = [<starting, []>];
+//     list[list[str]] solutions = [];  
+
+//     while (!isEmpty(queue)) {
+//         tuple[Engine, list[str]] current = head(queue);
+//         queue = tail(queue);
+
+//         if (check_conditions(current[0], condition)) {
+//             solutions += [current[1]];           
+//             continue;
+//         }
+//         visited += {current[0]};
+
+//         for (m <- moves) {
+
+//             Engine newState = execute_move(current[0], c, m);
+
+//             if (!(newState in visited)) {
+//                 queue += [<newState, current[1] + [m]>];
+//             }        
+//         }
+//     }
+
+//     return solutions;
+// }
+
+TupleObjects convert_tuples(Engine engine) {
+
+    list[tuple[str, Coords]] converted = [];
+
+    for (Coords coord <- engine.current_level.objects<0>) {
+        for (Object object <- engine.current_level.objects[coord]) {
+            converted += [<object.current_name, object.coords>];
+        }
+    }
+
+    return converted;
+
+
+}
+
+list[list[str]] all_bfs(Engine starting, list[str] moves, map[Engine, list[str]] adjacencyList, Checker c, str condition) {
+    
+    // set[Engine] visited = {};
+    set[TupleObjects] visited = {};
+    list[tuple[Engine, list[str], real]] queue = [<starting, [], 0.0>];
+    map[list[str], int] moveSequences = ();
+    list[list[str]] solutions = [];
+    int shortest_solution = 0;
+
+    int current = 0;
+    int batch_sort_nr = 20;
 
     while (!isEmpty(queue)) {
-        tuple[Engine, list[str]] current = head(queue);
+
+        current += 1;
+
+        if (current mod batch_sort_nr == 0) queue = sort(queue, bool(tuple[Engine, list[str], real] a, tuple[Engine, list[str], real] b){return a[2] < b[2]; });
+        else queue = queue;
+        // queue = sort(queue, bool(tuple[Engine, list[str], real] a, tuple[Engine, list[str], real] b){return a[2] < b[2]; });
+        tuple[Engine, list[str], real] current = head(queue);
         queue = tail(queue);
 
-        if (check_conditions(current[0], condition)) {
-            solutions += [current[1]];           
-            continue;
+        if (condition != "same_state") {
+            if (check_conditions(current[0], condition)) {
+                solutions += [current[1]];
+                println(current[1]);
+                if (shortest_solution == 0) shortest_solution = size(current[1]);
+                continue;
+            }
+            if (shortest_solution != 0 && size(current[1]) > shortest_solution * 3) return solutions;
         }
-        visited += {current[0]};
+        visited += {convert_tuples(current[0])};
 
         for (m <- moves) {
 
+            Engine beforeState = current[0];
             Engine newState = execute_move(current[0], c, m);
-            // print_level(newState.engine, c);
 
-            Coords difference = get_dir_difference(m);
+            if (condition == "same_state" && beforeState == newState) {
+                if (current[1] in moveSequences<0>) moveSequences[current[1]] += 1;
+                else moveSequences += (current[1]: 1);
 
-            int x_difference = newState.current_level.player[0][0] - difference[0];
-            int y_difference = newState.current_level.player[0][1] - difference[1];
+                if (moveSequences[current[1]] == 4) return current[1];
+            }    
 
-            if (!(newState in visited)) {
-                queue += [<newState, current[1] + [m]>];
-            }        
+            if (!(convert_tuples(newState) in visited)) {
+                real heuristic = calculate_heuristic(newState);
+                queue += [<newState, current[1] + [m], heuristic>];
+            }  
         }
     }
 

@@ -581,38 +581,69 @@ Engine execute_move(Engine engine, Checker c, str direction) {
 }
 
 
-// You need to define this function. It should return a lower score if the player is closer to a winning object.
-int calculate_heuristic(Engine engine) {
+real calculate_heuristic(Engine engine) {
     
     int score = 0;
 
     PSGame game = engine.game;
     list[ConditionData] lcd = game.conditions;
-
-    // println(engine.current_level.objects);
+    list[int] distances = [];
 
     for (ConditionData cd <- lcd) {
         if (cd is condition_data) {
-            str moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
-                cd.condition[1] : cd.condition[3];
 
+            list[Object] moveable_win_objs = [];
+            list[Object] non_moveable_win_objs = [];
 
-            moveable = toLowerCase(moveable);
+            if (size(cd.condition) > 2) {
+                str moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                    cd.condition[1] : cd.condition[3];
 
-            visit(engine.current_level.objects) {
+                str non_moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                    cd.condition[3] : cd.condition[1];
 
-                case n: game_object(_, moveable, _, _, _, _, _): {
+                moveable = toLowerCase(moveable);
+                non_moveable = toLowerCase(non_moveable);
 
-                    return abs(engine.current_level.player[0][0] - n.coords[0]) + abs(engine.current_level.player[0][1] - n.coords[1]);
-
+                visit(engine.current_level.objects) {
+                    case n: game_object(_, moveable, _, _, _, _, _): {
+                        moveable_win_objs += n;
+                    }
+                }
+                visit(engine.current_level.objects) {
+                    case n: game_object(_, non_moveable, _, _, _, _, _): {
+                        non_moveable_win_objs += n;
+                    }
                 }
 
-            }
+                for (Object m_object <- moveable_win_objs) {
+                    // if (any(Object n_m_object <- non_moveable_win_objs, n_m_object.coords == m_object.coords)) continue;
+                    for (Object n_m_object <- non_moveable_win_objs) {
+                        distances += abs(n_m_object.coords[0] - m_object.coords[0]) + abs(n_m_object.coords[1] - m_object.coords[1]);
+                    }
+                    distances += abs(engine.current_level.player[0][0] - m_object.coords[0]) + abs(engine.current_level.player[0][1] - m_object.coords[1]);
+                }
+            } else {
 
+                str name = toLowerCase(cd.condition[1]);
+
+                visit(engine.current_level.objects) {
+                    case n: game_object(_, name, _, _, _, _, _): {
+                        moveable_win_objs += n;
+                    }
+                }
+                for (Object m_object <- moveable_win_objs) {
+                    distances += abs(engine.current_level.player[0][0] - m_object.coords[0]) + abs(engine.current_level.player[0][1] - m_object.coords[1]);
+                }
+            }
         }
     }
 
-    return 10;
+    real size = engine.level_data[engine.current_level.original].size[0] * engine.level_data[engine.current_level.original].size[1] / 1.0;
+
+    if (isEmpty(distances)) return 0.0;
+
+    return sum(distances) / size;
 }
 
 // If only one object is found in win condition
