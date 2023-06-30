@@ -1,4 +1,4 @@
-module PuzzleScript::Report
+module PuzzleScript::DynamicReport
 
 import util::IDEServices;
 import vis::Charts;
@@ -11,6 +11,7 @@ import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import PuzzleScript::Report;
 import IO;
 import util::Eval;
 import Type;
@@ -20,38 +21,21 @@ import String;
 
 import util::Benchmark;
 
-
-data ParseResult
-  = src_parse_error(loc file)
-  | src_ambiguous(loc file, str rule, str input)
-  | src_implode_error(loc file, start[PSGame] tree)
-  | src_success(loc file, start[PSGame] tree, PSGame game);
-
-data CheckResult
-  = chk_error() 
-  | chk_success(Checker checker, int errors, int warnings, int infos);
-  
-data Summary
-  = summary_error()
-  | summary(str title, str author, int objects, 
-            int layers, int collisions, int rules, int conditions, int levels, bool zoom);
-
 void main() {
 
     loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/Tutorials|;
-    loc CountableDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results/Countables|;
-    loc RuleDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results/Rules|;
+    loc DynamicDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results/Dynamic|;
 
 	PSGame game;
 	Checker checker;
 	Engine engine;
 	Level level;
 
-    generate_reports(CountableDir, RuleDir, DemoDir);
+    generate_reports(CountableDir, DynamicDir);
 
 }
 
-void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
+void generate_reports(loc CountableDir, loc DynamicDir) {
 
 
     list[Content] charts = [];
@@ -75,56 +59,6 @@ void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
 
 }
 
-str convert_rule(list[RulePart] left, list[RulePart] right) {
-
-    str rule = "";
-
-    if (any(RulePart rp <- left, rp is prefix)) rule += rp.prefix;
-
-    for (int i <- [0..size(left)]) {
-        RulePart rp = left[i];
-
-        if (!(rp is part)) continue;
-        rule += " [ ";
-        for (RuleContent rc <- rp.contents) {
-            for (str content <- rc.content) rule += "<content> ";
-            if (i < size(left) - 1) rule += " | ";
-        }
-        rule += " ] ";
-    }
-
-
-    rule += " -\> ";
-
-    for (int i <- [0..size(right)]) {
-        RulePart rp = right[i];
-
-        if (!(rp is part)) continue;
-        rule += " [ ";
-        for (RuleContent rc <- rp.contents) {
-            for (str content <- rc.content) rule += "<content> ";
-            if (i < size(right) - 1) rule += " | ";
-        }
-        rule += " ] ";
-    }
-
-    return rule;
-}
-
-map[RuleData, tuple[int, str]] index_rules(list[RuleData] rules) {
-
-    map[RuleData, tuple[int, str]] indexed_rules = ();
-    int index = 0;
-
-    for (RuleData rd <- rules) {
-        str rule_string = convert_rule(rd.left, rd.right);
-        indexed_rules += (rd: <index, rule_string>);
-        index += 1;
-    }
-
-    return indexed_rules;
-
-}
 
 
 
@@ -199,43 +133,5 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
     appendToFile(count_directory, "\n");
     appendToFile(rule_directory, "\n");
 
-    // Only get level_data for visualizing purposes
-    // list[LevelData] level_data_ld = [x | x <- levels, x is level_data];
-
-    // return lineChart(["size", "moving objects", "applied rules", "messages"],
-    //         [<"<x>",(ld[level_data_ld[x]].size.width)> | x <- [0..size(level_data_ld)]], 
-    //         [<"<x>",(size(ld[level_data_ld[x]].moveable_objects))> | x <- [0..size(level_data_ld)]], 
-    //         [<"<x>",(size(ld[level_data_ld[x]].applied_rules))> | x <- [0..size(level_data_ld)]],
-    //         [<"<x>",(size(ld[level_data_ld[x]].messages))> | x <- [0..size(level_data_ld)]]);
-
 }
 
-
-public ParseResult parseFile(loc file) {
-    str src = readFile(file);
-    loc preFile = file;  
-    preFile.extension = "PS";
-    writeFile(preFile, src);
-
-    ParseResult result = src_parse_error(preFile);
-    try {
-
-        // Create tree and AST
-        start[PSGame] tree = ps_parse(preFile);
-
-        PSGame ast = ps_implode(tree);
-        try {
-            result = src_success(preFile, tree, ast);      
-        } catch x: {
-            result = src_implode_error(preFile, tree);
-        }
-    }
-    catch Ambiguity(loc l, str rule, str s): {
-        result = src_ambiguous(l, rule, s);
-    } 
-    catch ParseError(loc l): {
-        result = src_parse_error(l);
-    }
-
-    return result;
-}

@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 import os
 
 # Specify the directory where the CSV files are located
@@ -21,15 +22,18 @@ for filename in os.listdir(directory):
         # Plot 'size', 'moveable_objects', and 'messages' against 'level'
         plt.plot(df['level'], df['size'], 'o-', label='size')
         plt.plot(df['level'], df['moveable_objects'], 's-', label='moveable_objects')
-        plt.plot(df['level'], df['messages'], 'd-', label='messages')
+        # plt.plot(df['level'], df['messages'], 'd-', label='messages')
 
         # Add labels, legend, and grid
-        plt.xlabel('Level', fontsize=12)
-        plt.ylabel('Value', fontsize=12)
-        plt.title('Line plots of size, moveable objects, and messages against level for file {}'.format(filename), fontsize=14)
-        plt.legend(loc='best', fontsize=10)
+        plt.xlabel('Level', fontsize=18)
+        plt.ylabel('Amount', fontsize=18)
+        plt.title('{}'.format(filename), fontsize=22)
+        plt.legend(loc='best', fontsize=15)
         plt.grid(True)
 
+        # Set the x-axis tick increment to 1
+        plt.xticks(np.arange(min(df['level']), max(df['level'])+1, 1.0))
+
         # Save the plot
-        plt.savefig('plot_{}.png'.format(filename.split('.')[0])) # save as PNG
+        plt.savefig('Countables/plot_{}.png'.format(filename.split('.')[0]), bbox_inches='tight')
         plt.close() # close the figure

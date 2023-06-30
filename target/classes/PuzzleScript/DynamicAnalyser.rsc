@@ -33,10 +33,10 @@ void main() {
 	Engine engine;
 	Level level;
 
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_match3.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/byyourside.PS|);
@@ -61,7 +61,7 @@ void main() {
 
         list[list[str]] dead_ends = all_bfs(starting_state, moves, adjacencyList, checker, "win");
         println(size(dead_ends));
-        println(dead_ends);
+        // println(dead_ends);
         println("Took: <(cpuTime() - before) / 1000000000.00> sec");
 
         // list[str] winning_moves = bfs(starting_state, moves, adjacencyList, checker, "win");
@@ -227,9 +227,9 @@ list[list[str]] all_bfs(Engine starting, list[str] moves, map[Engine, list[str]]
 
         current += 1;
 
-        if (current mod batch_sort_nr == 0) queue = sort(queue, bool(tuple[Engine, list[str], real] a, tuple[Engine, list[str], real] b){return a[2] < b[2]; });
-        else queue = queue;
-        // queue = sort(queue, bool(tuple[Engine, list[str], real] a, tuple[Engine, list[str], real] b){return a[2] < b[2]; });
+        // if (current mod batch_sort_nr == 0) queue = sort(queue, bool(tuple[Engine, list[str], real] a, tuple[Engine, list[str], real] b){return a[2] < b[2]; });
+        queue = sort(queue, bool(tuple[Engine, list[str], real] a, tuple[Engine, list[str], real] b){return a[2] < b[2]; });
+        // else queue = queue;
         tuple[Engine, list[str], real] current = head(queue);
         queue = tail(queue);
 
@@ -240,7 +240,7 @@ list[list[str]] all_bfs(Engine starting, list[str] moves, map[Engine, list[str]]
                 if (shortest_solution == 0) shortest_solution = size(current[1]);
                 continue;
             }
-            if (shortest_solution != 0 && size(current[1]) > shortest_solution * 3) return solutions;
+            if (shortest_solution != 0 && size(current[1]) > shortest_solution + (shortest_solution / 2)) return solutions;
         }
         visited += {convert_tuples(current[0])};
 
@@ -257,6 +257,10 @@ list[list[str]] all_bfs(Engine starting, list[str] moves, map[Engine, list[str]]
             }    
 
             if (!(convert_tuples(newState) in visited)) {
+
+                if (!isEmpty(solutions) && size(current[1]) >= size(solutions[0]) / 4 && any(list[str] solution <- solutions, all(int i <- [0..size(solution) / 4], current[1][i] == solution[i]))) {
+                    continue;
+                }
                 real heuristic = calculate_heuristic(newState);
                 queue += [<newState, current[1] + [m], heuristic>];
             }  

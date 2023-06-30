@@ -43,8 +43,8 @@ void main() {
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
 	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/byyourside.PS|);
 
 	checker = check_game(game);
@@ -73,10 +73,6 @@ void main() {
     Coords old_player_pos = <0,0>;
     Coords new_player_pos = <1,1>;
 
-    print_level(engine, checker);
-
-    println(calculate_heuristic(engine));
-    return;
     println("==== Collision test ====");
     list[str] collision_moves = ["right", "right", "right", "right", "up", "up", "right", "right", "right", "right", "up", "up", "right", "up", "up", "right", "right", "right", "right"];
     // list[str] collision_moves = ["up","up","left","left","left","down","left","down","down"];

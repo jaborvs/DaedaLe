@@ -368,11 +368,6 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
                     
                     find_next = false;
 
-                    // if (size(applicable) != i) {
-                    //     applicable = [];
-                    //     break;
-                    // }
-
                     RulePart rp = rule.left[i];
                     list[RuleContent] rc = rp.contents;
                     list[list[Object]] found_objects = [];
@@ -609,10 +604,16 @@ real calculate_heuristic(Engine engine) {
                     case n: game_object(_, moveable, _, _, _, _, _): {
                         moveable_win_objs += n;
                     }
+                    case m: game_object(_, _, [*N, moveable, *M], _, _, _, _): {
+                        moveable_win_objs += m;
+                    }
                 }
                 visit(engine.current_level.objects) {
                     case n: game_object(_, non_moveable, _, _, _, _, _): {
                         non_moveable_win_objs += n;
+                    }
+                    case m: game_object(_, _, [*N, non_moveable, *M], _, _, _, _): {
+                        non_moveable_win_objs += m;
                     }
                 }
 

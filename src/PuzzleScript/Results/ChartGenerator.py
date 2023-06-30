@@ -60,7 +60,7 @@ for filename in os.listdir(directory):
         fig.tight_layout()
 
         # Save the plot
-        plt.savefig(f'{filename}.png')
+        plt.savefig(f'Rules/{filename}.png')
 
     else:
         print(f"Skipping non-CSV file: {filename}")
