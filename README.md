@@ -17,12 +17,12 @@ Here we describe how to reproduce the automated part of this study.
 ScriptButler is built using the Rascal meta-programming language and language workbench.
 More information about setting up Rascal can be found here: https://www.rascal-mpl.org
 
-1. The project must be stored in a directory called AutomatedPuzzleScript.
+1. The project must be stored in a directory called automatedpuzzlescript.
 
 2. The analyzed PuzzleScript source code repository and the generated report are stored in the following directories.
 ```
-loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo|;
-loc ReportFile = |project://AutomatedPuzzleScript/src/PuzzleScript/report.csv|;
+loc DemoDir = |project://automatedpuzzlescript/src/PuzzleScript/Test/demo|;
+loc ReportFile = |project://automatedpuzzlescript/src/PuzzleScript/report.csv|;
 ```
 
 3. Running the analysis requires executing the following commands in Rascal's REPL.

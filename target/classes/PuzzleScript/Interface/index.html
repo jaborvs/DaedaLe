@@ -1,207 +1,22 @@
 <!DOCTYPE html>
 <html>
-<link rel="stylesheet" href="/salix/lib/bootstrap.min.css">
-<script src="/salix/lib/jquery-1.11.0.min.js"></script>
-<script src="/salix/lib/bootstrap.min.js"></script>
-<link rel="stylesheet" href="/salix/lib/codemirror.css">
-<script src="/salix/lib/codemirror.js"></script>
-<script src="/salix/lib/javascript.js"></script>
-<script src="/salix/lib/simple.js"></script>
-<script src="/salix/lib/salix-cm.js"></script>
-<script src="/salix/salix.js"></script>
+<head>
 
-<style>
-	.trans {
-		color: white;
-		width: 21px;
-	}
-	
-	.object {
-		border: 1px dotted black;
-		width: 21px;
-		text-align: center;
-	}
-	
-	
-	.left {
-		display: inline-table;
-		margin: 10px;
-	}
-	
-	.true {
-		color: darkgreen;
-	}
-	
-	.false {
-		color: darkred;
-	}
-	
-	/* Style the collapsible content. Note: hidden by default */
-	.content {
-	  display: none;
-	  overflow-x: auto;
-	}
-	
-	.rule {
-		white-space: pre;
-	}
-	
-	.grid {
-		display: grid;
-  		grid-template-columns: 250px 1fr;
-  		grid-template-rows: 250px 1fr;
-	}
-	
-	.layer {
-	  grid-area: 1 / 1 / 2 / 2;
-	}
-	
-	.cell {
-		height: 50px;
-		width: 50px;
-	}
-	
-	.pixel{
-		width: 10px;
-		height: 10px;
-	}
-	
-	.transparent {
-	
-	}
-	
-	.black {
-		background-color: #000000;
-	}
+    <link rel="stylesheet" href="../../salix/lib/bootstrap.min.css">
+    <script src="../../salix/lib/jquery-1.11.0.min.js"></script>
+    <script src="../../salix/lib/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../../salix/lib/codemirror.css">
+    <script src="../../salix/lib/codemirror.js"></script>
+    <script src="../../salix/lib/javascript.js"></script>
+    <script src="../../salix/lib/simple.js"></script>
+    <script src="../../salix/lib/salix-cm.js"></script>
+    <script src="../../salix/salix.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>document.addEventListener("DOMContentLoaded", new Salix("counterApp").start);</script>
 
-    .white {
-		background-color: #FFFFFF;
-	}
-
-    .grey {
-		background-color: #555555;
-	}
-
-    .darkgrey {
-		background-color: #555500;
-	}
-
-    .lightgrey {
-		background-color: #AAAAAA;
-	}
-
-    .gray {
-		background-color: #555555;
-	}
-
-    .darkgray {
-		background-color: #555500;
-	}
-
-    .lightgray {
-		background-color: #AAAAAA;
-	}
-
-    .red {
-		background-color: #FF0000;
-	}
-
-    .darkred {
-		background-color: #AA0000;
-	}
-
-    .lightred {
-		background-color: #FF5555;
-	}
-
-    .brown {
-		background-color: #AA5500;
-	}
-
-    .darkbrown {
-		background-color: #550000;
-	}
-
-    .lightbrown {
-		background-color: #FFAA00;
-	}
-
-    .orange {
-		background-color: #FF5500;
-	}
-
-    .yellow {
-		background-color: #FFFF55;
-	}
-
-    .green {
-		background-color: #55AA00;
-	}
-
-    .darkgreen {
-		background-color: #005500;
-	}
-
-    .lightgreen {
-		background-color: #AAFF00;
-	}
-
-    .blue {
-		background-color: #5555AA;
-	}
-
-    .lightblue {
-		background-color: #AAFFFF;
-	}
-
-    .darkblue {
-		background-color: #000055;
-	}
-
-    .purple {
-		background-color: #550055;
-	}
-
-    .pink {
-		background-color: #FFAAFF;
-	}
-	
-	
-</style>
-
-<script>
-  var salix = new Salix();
-  $(document).ready(salix.start);
-  
-	function do_thing(){
-		var coll = document.getElementsByClassName("collapsible");
-		var i;
-		
-		for (i = 0; i < coll.length; i++) {
-		
-		  coll[i].addEventListener("click", function() {
-		    this.classList.toggle("active");
-		    var content = this.parentElement.nextElementSibling;
-		    if (content.style.display === "block") {
-		      content.style.display = "none";
-		      this.textContent = "+";
-		    } else {
-		      content.style.display = "block";
-		      this.textContent = "-";
-		    }
-		  });
-		}
-	}
-	
-	window.onload = do_thing;
-</script>
+</head>
 
 <body>
-<div class="container">
-  <div id="root">
-  </div>
-</div>
-
+  <div id="counterApp"></div>
 </body>
-
 </html>

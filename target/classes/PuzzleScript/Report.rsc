@@ -1,11 +1,5 @@
 module PuzzleScript::Report
 
-import util::IDEServices;
-import vis::Charts;
-import vis::Presentation;
-import vis::Layout;
-import util::Web;
-
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
@@ -38,9 +32,9 @@ data Summary
 
 void main() {
 
-    loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/Tutorials|;
-    loc CountableDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results/Countables|;
-    loc RuleDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results/Rules|;
+    loc DemoDir = |project://automatedpuzzlescript/src/PuzzleScript/Test/Tutorials|;
+    loc CountableDir = |project://automatedpuzzlescript/src/PuzzleScript/Results/Countables|;
+    loc RuleDir = |project://automatedpuzzlescript/src/PuzzleScript/Results/Rules|;
 
 	PSGame game;
 	Checker checker;
@@ -52,9 +46,6 @@ void main() {
 }
 
 void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
-
-
-    list[Content] charts = [];
 
     for(loc file <- DemoDir.ls){
         if(file.extension == "txt"){
@@ -74,59 +65,6 @@ void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
     }
 
 }
-
-str convert_rule(list[RulePart] left, list[RulePart] right) {
-
-    str rule = "";
-
-    if (any(RulePart rp <- left, rp is prefix)) rule += rp.prefix;
-
-    for (int i <- [0..size(left)]) {
-        RulePart rp = left[i];
-
-        if (!(rp is part)) continue;
-        rule += " [ ";
-        for (RuleContent rc <- rp.contents) {
-            for (str content <- rc.content) rule += "<content> ";
-            if (i < size(left) - 1) rule += " | ";
-        }
-        rule += " ] ";
-    }
-
-
-    rule += " -\> ";
-
-    for (int i <- [0..size(right)]) {
-        RulePart rp = right[i];
-
-        if (!(rp is part)) continue;
-        rule += " [ ";
-        for (RuleContent rc <- rp.contents) {
-            for (str content <- rc.content) rule += "<content> ";
-            if (i < size(right) - 1) rule += " | ";
-        }
-        rule += " ] ";
-    }
-
-    return rule;
-}
-
-map[RuleData, tuple[int, str]] index_rules(list[RuleData] rules) {
-
-    map[RuleData, tuple[int, str]] indexed_rules = ();
-    int index = 0;
-
-    for (RuleData rd <- rules) {
-        str rule_string = convert_rule(rd.left, rd.right);
-        indexed_rules += (rd: <index, rule_string>);
-        index += 1;
-    }
-
-    return indexed_rules;
-
-}
-
-
 
 // This function is used to generate reports and create charts for each game
 // Content generate_report_per_level(Engine engine, loc directory) {
@@ -169,8 +107,6 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
 
     int levelIndex = 1;
 
-    map[RuleData, tuple[int, str]] indexed_rules = index_rules(engine.game.rules);
-
     for (Level level <- levels) {
 
         if (level.original is level_empty) continue;
@@ -188,7 +124,7 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
         for (list[Rule] rule <- rules) {
 
             if (any(RuleData rd <- engine.game.rules, rd.src == rule[0].original.src)) {
-                appendToFile(rule_directory, "<levelIndex>, <indexed_rules[rd][0]>\n");
+                appendToFile(rule_directory, "<levelIndex>, <engine.indexed_rules[rd][0]>\n");
             }
 
         }

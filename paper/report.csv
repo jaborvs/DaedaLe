@@ -1,95 +1,95 @@
 title, author, objects, rules, winconditions, levels,sloc, comment lines, blank lines,parse result,check result, errors, warnings, file
-Block Faker, Droqen, 11, 7, 1, 5,183, 5, 43,success,success, 0, 3,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/blockfaker.txt|
-Rigid Body example, Anonymous, 11, 31, 0, 1,131, 19, 42,success,success, 25, 5,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_many_many2.txt|
-Simple Block Pushing Game, increpare, 6, 2, 0, 1,87, 0, 24,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/twolittlecrates1.txt|
-Slidings, Alain Brobecker, 12, 10, 1, 11,216, 7, 41,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/slidings.txt|
-Lunar Lockout, , 7, 5, 1, 4,116, 0, 26,success,success, 1, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/lunar_lockout.txt|
-, , 2, 0, 0, 1,28, 0, 9,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/blank.txt|
-It Dies In The Light, Christopher Wells, 16, 19, 1, 4,218, 0, 36,success,success, 9, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/diesinthelight.txt|
-Spriteaporter, increpare, 6, 2, 0, 1,79, 0, 18,success,success, 0, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/naughtysprite.txt|
-Memories Of Castlemouse, Wayne Myers, 29, 93, 2, 10,522, 13, 95,success,success, 1, 17,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/castlemouse.txt|
-Several Rigid Bodies, increpare, 8, 11, 0, 1,81, 0, 27,success,success, 0, 3,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/several_rigid_bodies.txt|
-Octat, increpare, 6, 5, 1, 8,153, 5, 40,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/octat.txt|
-Zen Puzzle Garden, lexaloffle, 6, 3, 1, 5,149, 5, 35,success,success, 1, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/zenpuzzlegarden.txt|
-Gobble Rush!, Mark Richardson, 21, 36, 3, 21,391, 13, 69,success,success, 1, 3,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/gobble_rush.txt|
-Simple Block Pushing Game, David Skinner, 5, 1, 1, 2,91, 0, 23,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sokoban_basic_zoomscreen.txt|
-Robot Spawner, increpare, 6, 2, 0, 1,84, 5, 17,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/randomspawner.txt|
-Des Poseidons Dreizack, Stephen Lavelle, 62, 80, 1, 5,690, 466, 217,success,success, 12, 11,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/dreizack.txt|
-Bouncers, Tyler Glaiel, 21, 23, 1, 5,305, 12, 79,success,success, 1, 4,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/bouncers.txt|
-Ponies Jumping Synchronously, vytah, 28, 54, 3, 12,426, 10, 90,success,success, 3, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/ponies%20jumping%20synchronously.txt|
-PUSH, lonebot - demake by rmmh, 32, 30, 1, 22,536, 38, 80,success,success, 6, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/push.txt|
-Robot Arm, increpare, 34, 106, 3, 3,450, 15, 115,success,success, 11, 3,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/robotarm.txt|
-The Legend of Zokoban, Joshua Minor, 12, 10, 1, 1,164, 25, 36,success,success, 0, 4,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/legend%20of%20zokoban.txt|
-Dungeon Janitor, Farbs, 24, 28, 1, 4,285, 8, 51,success,success, 16, 7,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/dungeon%20janitor.txt|
-Colour Chained, Dennis Au, 28, 46, 2, 12,409, 34, 86,success,success, 0, 6,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/color%20chained.txt|
-Extended Bodies:Multiple Parallel Players  Multiple Extended Object, Anonymous, 10, 17, 0, 1,109, 18, 32,success,success, 12, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_parallel_many.txt|
-Cliched River Puzzle, Weeble, 18, 11, 0, 1,159, 8, 32,success,success, 39, 8,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/riverpuzzle.txt|
-BROKEN Rigid Body example, Anonymous, 11, 31, 0, 2,141, 20, 43,success,success, 25, 4,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_many_many.txt|
-Extended Body Example: 1 Player  1 Extended Object, increpare, 5, 3, 1, 1,81, 4, 20,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_11.txt|
-A single rigid body, increpare, 5, 2, 0, 1,58, 0, 17,success,success, 1, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_one_object.txt|
-The Saga of the Candy Scroll, Jim Palmeri, 31, 21, 2, 30,737, 7, 140,success,success, 6, 31,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/the_saga_of_the_candy_scroll.txt|
-Simple Block Pushing Game, increpare, 5, 4, 0, 1,81, 0, 22,success,success, 0, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/leftrightnpcs.txt|
-Atlas Shrank, James Noeckel, 27, 44, 1, 12,434, 15, 66,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/atlas%20shrank.txt|
-Threes: The Demake, Benjamin Davis, 32, 187, 0, 1,467, 33, 93,success,success, 19, 13,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/threes.txt|
-Sok7, Kevin Cancienne, 17, 44, 1, 1,235, 14, 50,success,success, 0, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sok7.txt|
-neko puzzle, lexaloffle, 3, 2, 1, 10,130, 6, 41,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/nekopuzzle.txt|
-Multi-word Dictionary Game, Sarah Northway, 7, 4, 1, 1,76, 1, 21,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/wordgame.txt|
-Simple Block Pushing Game, increpare, 6, 5, 0, 1,91, 0, 24,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/twolittlecrates3.txt|
-Broken Rigid Body example, Anonymous, 11, 18, 0, 2,124, 17, 35,success,success, 12, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_many_broken.txt|
-One rigid body and wee crates, increpare, 6, 7, 0, 1,99, 0, 23,success,success, 4, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_and_little.txt|
-It Dies In The Light, Christopher Wells, 16, 19, 1, 4,218, 0, 36,success,success, 9, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/it%20dies%20in%20the%20light.txt|
-Collapse, Terry Cavanagh, 19, 31, 2, 2,247, 8, 55,success,success, 3, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/collapse.txt|
-Wrapping Recipe, increpare, 3, 1, 0, 1,44, 0, 14,success,success, 1, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/wrappingrecipe.txt|
-Lime Rick, Tommi Tuovinen, 11, 11, 1, 10,283, 10, 56,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/limerick.txt|
-constellation z, increpare, 6, 4, 3, 11,266, 5, 35,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/constellationz.txt|
-Kettle, increpare, 8, 14, 1, 11,278, 5, 52,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/kettle.txt|
-Simple Action Example, increpare, 5, 2, 0, 1,83, 0, 22,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/actiontest.txt|
-Heroes of Sokoban, Jonah Ostroff, 18, 22, 2, 22,368, 0, 68,success,success, 16, 10,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/heroes_of_sokoban.txt|
-2D Whale World, increpare, 7, 8, 1, 8,204, 10, 46,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/whaleworld.txt|
-Simple Block Pushing Game, increpare, 6, 5, 0, 1,91, 0, 25,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/twolittlecrates2.txt|
-The closet and the castle, HeskHwis and Holly Hatter, 39, 44, 0, 1,393, 0, 66,success,success, 12, 4,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/castlecloset.txt|
-One player  unlimited rigidbodies, increpare, 8, 7, 0, 1,126, 15, 41,success,success, 4, 5,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_one_unlimited.txt|
-horizontal Block Pushing Game, increpare, 5, 1, 1, 2,86, 0, 19,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sokoban_horizontal.txt|
-Notsnake, Terry Cavanagh, 3, 2, 1, 1,50, 0, 17,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/notsnake.txt|
-Love and Pieces, lexaloffle, 5, 2, 1, 9,167, 0, 34,success,success, 0, 3,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/lovendpieces.txt|
-Heroes of Sokoban III: The Bard and The Druid, Jonah Ostroff, 31, 79, 2, 22,538, 26, 101,success,success, 52, 20,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/heroes_of_sokoban_3.txt|
-Multiple Patterns, increpare, 4, 1, 0, 1,67, 0, 16,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sumo.txt|
-MC Escher's Equestrian Armageddon, Anna Clarke, 14, 19, 1, 4,211, 0, 48,success,success, 1, 11,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/m%20c%20eschers%20armageddon.txt|
-Sticky Candy Puzzle Saga, Alan Hazelden, 31, 22, 3, 20,483, 8, 96,success,success, 0, 5,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/stick_candy_puzzle_saga.txt|
-maze generator, , 11, 10, 0, 1,124, 3, 28,success,success, 7, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/mazetest.txt|
-EYE EYE EYE, increpare, 5, 1, 0, 1,75, 1, 18,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sokoban_eyeball.txt|
-Simple Action Example, increpare, 5, 1, 0, 1,82, 0, 22,success,success, 0, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/againexample.txt|
-Sticky Blocks, increpare, 5, 1, 1, 2,86, 0, 19,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sokoban_sticky.txt|
-Many parallel players  unlimited rigidbodies, increpare, 9, 19, 0, 1,151, 18, 50,success,success, 12, 5,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_parallel_unlimited.txt|
-Modality, Sean Barrett, 7, 4, 1, 4,107, 0, 28,success,success, 0, 3,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/modality.txt|
-Smother, Team Borse, 15, 19, 2, 16,341, 14, 85,success,success, 2, 7,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/smother.txt|
-Easy Enigma, , 143, 153, 5, 22,1430, 38, 281,success,success, 212, 8,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/easyenigma.txt|
-MazezaM, Malcolm Tyrrell, 13, 8, 1, 30,392, 71, 133,success,success, 0, 3,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/mazezam.txt|
-Heroes of Sokoban II: Monsters, Jonah Ostroff, 31, 51, 2, 22,519, 20, 101,success,success, 26, 14,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/heroes_of_sokoban_2.txt|
-Simple Block Pushing Game, David Skinner, 5, 1, 1, 2,85, 0, 19,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sokoban_basic.txt|
-BROKEN Naive Extended Bodies, increpare, 5, 2, 0, 1,80, 4, 21,success,success, 0, 3,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigidfail1.txt|
-IceCrates, Tyler Glaiel, 32, 50, 1, 6,394, 10, 95,success,success, 0, 10,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/icecrates.txt|
-Manic Ammo, David Eastman, 23, 38, 1, 15,387, 0, 87,success,success, 4, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/manic_ammo.txt|
-By Your Side, Alan Hazelden, 23, 6, 1, 10,360, 13, 61,success,success, 1, 5,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/byyourside.txt|
-LED Challenge, increpare, 28, 28, 2, 4,309, 11, 68,success,success, 0, 6,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/ledchallenge.txt|
-Midas, wanderlands, 13, 15, 1, 15,309, 10, 63,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/midas.txt|
-Take Heart Lass, Kevin Zuhn, 14, 17, 1, 12,273, 0, 55,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/take%20heart%20lass.txt|
-Cratopia, CHz [v1], 30, 50, 0, 17,541, 71, 121,success,success, 4, 5,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/cratopia.txt|
-Match 3 Block Push, increpare, 5, 2, 1, 2,90, 0, 23,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sokoban_match3.txt|
-Simple Block Pushing Game, David Skinner, 5, 1, 1, 2,91, 0, 25,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sokoban_basic_debug.txt|
-Microban, David Skinner, 5, 1, 1, 10,158, 2, 40,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/microban.txt|
-Extended Body Example: 1 Player  Multiple Extended Objects, Scott Hughes, 7, 7, 0, 1,69, 8, 28,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/rigid_scott1.txt|
-Ebony & Ivory, Guilherme Töws, 6, 9, 1, 1,74, 0, 20,success,success, 2, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/ebony%20and%20ivory.txt|
-ScriptCross, Dennis Au, 16, 3, 2, 4,167, 3, 39,success,success, 0, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/scriptcross.txt|
-chaos wizard, mark wonnacott, 21, 42, 2, 23,586, 43, 96,success,success, 6, 4,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/chaos%20wizard.txt|
-The Legend of Zokoban, Joshua Minor, 12, 10, 1, 1,164, 25, 35,success,success, 0, 4,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/zokoban.txt|
-Drop Swap, Aaron Steed, 31, 59, 2, 5,381, 29, 74,success,success, 1, 30,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/dropswap.txt|
-cute train, Mark Wonnacott, 30, 45, 0, 1,382, 14, 72,success,success, 56, 9,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/cute%20train.txt|
-Sokobond: The Demake, Jonah Ostroff, 31, 60, 1, 15,443, 12, 86,success,success, 49, 16,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/sokobond%20demake.txt|
-Puzzles, increpare, 25, 41, 1, 1,230, 8, 57,success,success, 24, 9,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/puzzles.txt|
-Tunnel Rat, James Noeckel, 25, 70, 1, 2,324, 26, 64,success,success, 47, 10,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/tunnel%20rat.txt|
-Simple Block Pushing Game, increpare, 6, 5, 0, 1,90, 0, 23,success,success, 3, 1,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/twolittlecrates4.txt|
-tiny treasure hunt 1.0, Weeble, 22, 28, 1, 7,331, 20, 66,success,success, 7, 5,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/tiny%20treasure%20hunt.txt|
-Coin Counter, , 33, 94, 3, 11,385, 0, 89,success,success, 36, 4,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/coincounter.txt|
-Cake Monsters, Matt Rix, 18, 34, 1, 36,602, 73, 153,success,success, 1, 2,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/cakemonsters.txt|
-Random Robots, increpare, 3, 1, 0, 1,60, 2, 14,success,success, 0, 0,|project://AutomatedPuzzleScript/src/PuzzleScript/Test/demo/randomrobots.txt|
+Block Faker, Droqen, 11, 7, 1, 5,183, 5, 43,success,success, 0, 3,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/blockfaker.txt|
+Rigid Body example, Anonymous, 11, 31, 0, 1,131, 19, 42,success,success, 25, 5,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_many_many2.txt|
+Simple Block Pushing Game, increpare, 6, 2, 0, 1,87, 0, 24,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/twolittlecrates1.txt|
+Slidings, Alain Brobecker, 12, 10, 1, 11,216, 7, 41,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/slidings.txt|
+Lunar Lockout, , 7, 5, 1, 4,116, 0, 26,success,success, 1, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/lunar_lockout.txt|
+, , 2, 0, 0, 1,28, 0, 9,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/blank.txt|
+It Dies In The Light, Christopher Wells, 16, 19, 1, 4,218, 0, 36,success,success, 9, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/diesinthelight.txt|
+Spriteaporter, increpare, 6, 2, 0, 1,79, 0, 18,success,success, 0, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/naughtysprite.txt|
+Memories Of Castlemouse, Wayne Myers, 29, 93, 2, 10,522, 13, 95,success,success, 1, 17,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/castlemouse.txt|
+Several Rigid Bodies, increpare, 8, 11, 0, 1,81, 0, 27,success,success, 0, 3,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/several_rigid_bodies.txt|
+Octat, increpare, 6, 5, 1, 8,153, 5, 40,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/octat.txt|
+Zen Puzzle Garden, lexaloffle, 6, 3, 1, 5,149, 5, 35,success,success, 1, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/zenpuzzlegarden.txt|
+Gobble Rush!, Mark Richardson, 21, 36, 3, 21,391, 13, 69,success,success, 1, 3,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/gobble_rush.txt|
+Simple Block Pushing Game, David Skinner, 5, 1, 1, 2,91, 0, 23,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sokoban_basic_zoomscreen.txt|
+Robot Spawner, increpare, 6, 2, 0, 1,84, 5, 17,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/randomspawner.txt|
+Des Poseidons Dreizack, Stephen Lavelle, 62, 80, 1, 5,690, 466, 217,success,success, 12, 11,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/dreizack.txt|
+Bouncers, Tyler Glaiel, 21, 23, 1, 5,305, 12, 79,success,success, 1, 4,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/bouncers.txt|
+Ponies Jumping Synchronously, vytah, 28, 54, 3, 12,426, 10, 90,success,success, 3, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/ponies%20jumping%20synchronously.txt|
+PUSH, lonebot - demake by rmmh, 32, 30, 1, 22,536, 38, 80,success,success, 6, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/push.txt|
+Robot Arm, increpare, 34, 106, 3, 3,450, 15, 115,success,success, 11, 3,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/robotarm.txt|
+The Legend of Zokoban, Joshua Minor, 12, 10, 1, 1,164, 25, 36,success,success, 0, 4,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/legend%20of%20zokoban.txt|
+Dungeon Janitor, Farbs, 24, 28, 1, 4,285, 8, 51,success,success, 16, 7,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/dungeon%20janitor.txt|
+Colour Chained, Dennis Au, 28, 46, 2, 12,409, 34, 86,success,success, 0, 6,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/color%20chained.txt|
+Extended Bodies:Multiple Parallel Players  Multiple Extended Object, Anonymous, 10, 17, 0, 1,109, 18, 32,success,success, 12, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_parallel_many.txt|
+Cliched River Puzzle, Weeble, 18, 11, 0, 1,159, 8, 32,success,success, 39, 8,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/riverpuzzle.txt|
+BROKEN Rigid Body example, Anonymous, 11, 31, 0, 2,141, 20, 43,success,success, 25, 4,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_many_many.txt|
+Extended Body Example: 1 Player  1 Extended Object, increpare, 5, 3, 1, 1,81, 4, 20,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_11.txt|
+A single rigid body, increpare, 5, 2, 0, 1,58, 0, 17,success,success, 1, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_one_object.txt|
+The Saga of the Candy Scroll, Jim Palmeri, 31, 21, 2, 30,737, 7, 140,success,success, 6, 31,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/the_saga_of_the_candy_scroll.txt|
+Simple Block Pushing Game, increpare, 5, 4, 0, 1,81, 0, 22,success,success, 0, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/leftrightnpcs.txt|
+Atlas Shrank, James Noeckel, 27, 44, 1, 12,434, 15, 66,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/atlas%20shrank.txt|
+Threes: The Demake, Benjamin Davis, 32, 187, 0, 1,467, 33, 93,success,success, 19, 13,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/threes.txt|
+Sok7, Kevin Cancienne, 17, 44, 1, 1,235, 14, 50,success,success, 0, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sok7.txt|
+neko puzzle, lexaloffle, 3, 2, 1, 10,130, 6, 41,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/nekopuzzle.txt|
+Multi-word Dictionary Game, Sarah Northway, 7, 4, 1, 1,76, 1, 21,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/wordgame.txt|
+Simple Block Pushing Game, increpare, 6, 5, 0, 1,91, 0, 24,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/twolittlecrates3.txt|
+Broken Rigid Body example, Anonymous, 11, 18, 0, 2,124, 17, 35,success,success, 12, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_many_broken.txt|
+One rigid body and wee crates, increpare, 6, 7, 0, 1,99, 0, 23,success,success, 4, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_and_little.txt|
+It Dies In The Light, Christopher Wells, 16, 19, 1, 4,218, 0, 36,success,success, 9, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/it%20dies%20in%20the%20light.txt|
+Collapse, Terry Cavanagh, 19, 31, 2, 2,247, 8, 55,success,success, 3, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/collapse.txt|
+Wrapping Recipe, increpare, 3, 1, 0, 1,44, 0, 14,success,success, 1, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/wrappingrecipe.txt|
+Lime Rick, Tommi Tuovinen, 11, 11, 1, 10,283, 10, 56,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/limerick.txt|
+constellation z, increpare, 6, 4, 3, 11,266, 5, 35,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/constellationz.txt|
+Kettle, increpare, 8, 14, 1, 11,278, 5, 52,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/kettle.txt|
+Simple Action Example, increpare, 5, 2, 0, 1,83, 0, 22,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/actiontest.txt|
+Heroes of Sokoban, Jonah Ostroff, 18, 22, 2, 22,368, 0, 68,success,success, 16, 10,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/heroes_of_sokoban.txt|
+2D Whale World, increpare, 7, 8, 1, 8,204, 10, 46,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/whaleworld.txt|
+Simple Block Pushing Game, increpare, 6, 5, 0, 1,91, 0, 25,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/twolittlecrates2.txt|
+The closet and the castle, HeskHwis and Holly Hatter, 39, 44, 0, 1,393, 0, 66,success,success, 12, 4,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/castlecloset.txt|
+One player  unlimited rigidbodies, increpare, 8, 7, 0, 1,126, 15, 41,success,success, 4, 5,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_one_unlimited.txt|
+horizontal Block Pushing Game, increpare, 5, 1, 1, 2,86, 0, 19,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sokoban_horizontal.txt|
+Notsnake, Terry Cavanagh, 3, 2, 1, 1,50, 0, 17,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/notsnake.txt|
+Love and Pieces, lexaloffle, 5, 2, 1, 9,167, 0, 34,success,success, 0, 3,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/lovendpieces.txt|
+Heroes of Sokoban III: The Bard and The Druid, Jonah Ostroff, 31, 79, 2, 22,538, 26, 101,success,success, 52, 20,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/heroes_of_sokoban_3.txt|
+Multiple Patterns, increpare, 4, 1, 0, 1,67, 0, 16,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sumo.txt|
+MC Escher's Equestrian Armageddon, Anna Clarke, 14, 19, 1, 4,211, 0, 48,success,success, 1, 11,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/m%20c%20eschers%20armageddon.txt|
+Sticky Candy Puzzle Saga, Alan Hazelden, 31, 22, 3, 20,483, 8, 96,success,success, 0, 5,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/stick_candy_puzzle_saga.txt|
+maze generator, , 11, 10, 0, 1,124, 3, 28,success,success, 7, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/mazetest.txt|
+EYE EYE EYE, increpare, 5, 1, 0, 1,75, 1, 18,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sokoban_eyeball.txt|
+Simple Action Example, increpare, 5, 1, 0, 1,82, 0, 22,success,success, 0, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/againexample.txt|
+Sticky Blocks, increpare, 5, 1, 1, 2,86, 0, 19,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sokoban_sticky.txt|
+Many parallel players  unlimited rigidbodies, increpare, 9, 19, 0, 1,151, 18, 50,success,success, 12, 5,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_parallel_unlimited.txt|
+Modality, Sean Barrett, 7, 4, 1, 4,107, 0, 28,success,success, 0, 3,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/modality.txt|
+Smother, Team Borse, 15, 19, 2, 16,341, 14, 85,success,success, 2, 7,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/smother.txt|
+Easy Enigma, , 143, 153, 5, 22,1430, 38, 281,success,success, 212, 8,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/easyenigma.txt|
+MazezaM, Malcolm Tyrrell, 13, 8, 1, 30,392, 71, 133,success,success, 0, 3,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/mazezam.txt|
+Heroes of Sokoban II: Monsters, Jonah Ostroff, 31, 51, 2, 22,519, 20, 101,success,success, 26, 14,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/heroes_of_sokoban_2.txt|
+Simple Block Pushing Game, David Skinner, 5, 1, 1, 2,85, 0, 19,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sokoban_basic.txt|
+BROKEN Naive Extended Bodies, increpare, 5, 2, 0, 1,80, 4, 21,success,success, 0, 3,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigidfail1.txt|
+IceCrates, Tyler Glaiel, 32, 50, 1, 6,394, 10, 95,success,success, 0, 10,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/icecrates.txt|
+Manic Ammo, David Eastman, 23, 38, 1, 15,387, 0, 87,success,success, 4, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/manic_ammo.txt|
+By Your Side, Alan Hazelden, 23, 6, 1, 10,360, 13, 61,success,success, 1, 5,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/byyourside.txt|
+LED Challenge, increpare, 28, 28, 2, 4,309, 11, 68,success,success, 0, 6,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/ledchallenge.txt|
+Midas, wanderlands, 13, 15, 1, 15,309, 10, 63,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/midas.txt|
+Take Heart Lass, Kevin Zuhn, 14, 17, 1, 12,273, 0, 55,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/take%20heart%20lass.txt|
+Cratopia, CHz [v1], 30, 50, 0, 17,541, 71, 121,success,success, 4, 5,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/cratopia.txt|
+Match 3 Block Push, increpare, 5, 2, 1, 2,90, 0, 23,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sokoban_match3.txt|
+Simple Block Pushing Game, David Skinner, 5, 1, 1, 2,91, 0, 25,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sokoban_basic_debug.txt|
+Microban, David Skinner, 5, 1, 1, 10,158, 2, 40,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/microban.txt|
+Extended Body Example: 1 Player  Multiple Extended Objects, Scott Hughes, 7, 7, 0, 1,69, 8, 28,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/rigid_scott1.txt|
+Ebony & Ivory, Guilherme Töws, 6, 9, 1, 1,74, 0, 20,success,success, 2, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/ebony%20and%20ivory.txt|
+ScriptCross, Dennis Au, 16, 3, 2, 4,167, 3, 39,success,success, 0, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/scriptcross.txt|
+chaos wizard, mark wonnacott, 21, 42, 2, 23,586, 43, 96,success,success, 6, 4,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/chaos%20wizard.txt|
+The Legend of Zokoban, Joshua Minor, 12, 10, 1, 1,164, 25, 35,success,success, 0, 4,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/zokoban.txt|
+Drop Swap, Aaron Steed, 31, 59, 2, 5,381, 29, 74,success,success, 1, 30,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/dropswap.txt|
+cute train, Mark Wonnacott, 30, 45, 0, 1,382, 14, 72,success,success, 56, 9,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/cute%20train.txt|
+Sokobond: The Demake, Jonah Ostroff, 31, 60, 1, 15,443, 12, 86,success,success, 49, 16,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/sokobond%20demake.txt|
+Puzzles, increpare, 25, 41, 1, 1,230, 8, 57,success,success, 24, 9,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/puzzles.txt|
+Tunnel Rat, James Noeckel, 25, 70, 1, 2,324, 26, 64,success,success, 47, 10,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/tunnel%20rat.txt|
+Simple Block Pushing Game, increpare, 6, 5, 0, 1,90, 0, 23,success,success, 3, 1,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/twolittlecrates4.txt|
+tiny treasure hunt 1.0, Weeble, 22, 28, 1, 7,331, 20, 66,success,success, 7, 5,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/tiny%20treasure%20hunt.txt|
+Coin Counter, , 33, 94, 3, 11,385, 0, 89,success,success, 36, 4,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/coincounter.txt|
+Cake Monsters, Matt Rix, 18, 34, 1, 36,602, 73, 153,success,success, 1, 2,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/cakemonsters.txt|
+Random Robots, increpare, 3, 1, 0, 1,60, 2, 14,success,success, 0, 0,|project://automatedpuzzlescript/src/PuzzleScript/Test/demo/randomrobots.txt|

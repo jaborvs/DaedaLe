@@ -1,13 +1,12 @@
 module PuzzleScript::Test::Engine::Tests
 
-import util::IDEServices;
-import vis::Charts;
-import vis::Presentation;
-import vis::Layout;
-import util::Web;
+// import util::IDEServices;
+// import vis::Charts;
+// import vis::Presentation;
+// import vis::Layout;
+// import util::Web;
 
-import PuzzleScript::IDE::IDE;
-
+// import PuzzleScript::IDE::IDE;
 
 import PuzzleScript::Report;
 import PuzzleScript::Load;
@@ -30,22 +29,22 @@ import util::Benchmark;
 
 void main() {
 
-    loc DemoDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Test/Tutorials|;
-    loc ReportDir = |project://AutomatedPuzzleScript/src/PuzzleScript/Results|;
+    loc DemoDir = |project://automatedpuzzlescript/src/PuzzleScript/Test/Tutorials|;
+    loc ReportDir = |project://automatedpuzzlescript/src/PuzzleScript/Results|;
 
 	PSGame game;
 	Checker checker;
 	Engine engine;
 	Level level;
 
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/limerick.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/Tutorials/push.PS|);
-	game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
-	// game = load(|project://AutomatedPuzzleScript/bin/PuzzleScript/Test/demo/byyourside.PS|);
+	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
+	game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
+	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|);
+	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
+	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|);
+	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
+	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/byyourside.PS|);
 
 	checker = check_game(game);
 	engine = compile(checker);
@@ -63,20 +62,14 @@ void main() {
 
     // }
 
-    // println(check_win_conditions(engine));
-
-    // engine.current_level = save_level;
-
-    // showInteractiveContent(generate_report_per_level(checker, ReportDir));
+    engine.current_level = save_level;
 
     Coords begin_player_pos = engine.current_level.player[0];
     Coords old_player_pos = <0,0>;
     Coords new_player_pos = <1,1>;
 
     println("==== Collision test ====");
-    list[str] collision_moves = ["right", "right", "right", "right", "up", "up", "right", "right", "right", "right", "up", "up", "right", "up", "up", "right", "right", "right", "right"];
-    // list[str] collision_moves = ["up","up","left","left","left","down","left","down","down"];
-    // list[str] collision_moves = ["left", "down", "left", "up", "up", "up", "up", "up", "right", "right", "right", "right"];
+    list[str] collision_moves = ["left", "left", "left", "down", "left", "up", "up", "up"];
     for (int i <- [0..size(collision_moves)]) {
         
         str move = collision_moves[i];
@@ -94,9 +87,9 @@ void main() {
     println("Player was unable to push block: <old_player_pos == new_player_pos && new_player_pos != begin_player_pos>");
     println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");
 
-    // return;
-    engine.applied_rules = [];
+    return;
     engine.current_level = save_level;
+    engine.level_data[engine.current_level.original].actual_applied_rules = [];
 
     old_player_pos = engine.current_level.player[0];
     engine = execute_move(engine, checker, "right");
@@ -107,8 +100,10 @@ void main() {
     engine.current_level = save_level;
 
     println("\n=== Win test ====");
-    list[str] winning_moves = ["up", "up", "up", "up", "left", "left", "left", "left", "down", "down", "right", 
-        "up", "left", "up", "right", "right", "right", "right", "up", "right", "down", "down", "right", "right", "right"];
+    // list[str] winning_moves = ["up", "up", "up", "up", "left", "left", "left", "left", "down", "down", "right", 
+    //     "up", "left", "up", "right", "right", "right", "right", "up", "right", "down", "down", "right", "right", "right"];
+
+    list[str] winning_moves = ["up","up","up","up","left","left","left","left","down","down","right","up","left","up","right","right","right","up","right","down","down","right","right","right"];
 
     for (int i <- [0..size(winning_moves)]) {
         
@@ -120,14 +115,15 @@ void main() {
 
     println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");
     println("Applied rules to get there:");
-    for (RuleData rd <- engine.applied_rules) {
+    for (RuleData rd <- engine.level_data[engine.current_level.original].applied_rules) {
 
         println(convert_rule(rd.left, rd.right));
 
     }
     
-    engine.applied_rules = [];
     engine.current_level = save_level;
+    engine.level_data[engine.current_level.original].actual_applied_rules = [];
+
 
     list[str] losing_moves = ["up", "up"];
 
@@ -142,8 +138,8 @@ void main() {
 
     println("\n=== Mutliple rule test ====");
 
-    engine.applied_rules = [];
     engine.current_level = save_level;
+    engine.level_data[engine.current_level.original].actual_applied_rules = [];
 
     old_player_pos = engine.current_level.player[0];
     engine = execute_move(engine, checker, "up");

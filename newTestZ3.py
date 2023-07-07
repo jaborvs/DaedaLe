@@ -17,11 +17,11 @@ mapping = {
 }
 
 # Define the dimensions of the level and the number of timesteps
-width = 15
-height = 15
+width = 7
+height = 7
 timesteps = 10
 playerpos = (2, 2)
-winpos = (5, 1)
+winpos = (5, 4)
 
 # Define the 3D array of Z3 integer variables
 level = [[[Int(f"level_{x}_{y}_{t}") for t in range(timesteps)] for y in range(height)] for x in range(width)]
@@ -44,7 +44,7 @@ for x in range(width):
         if (x == playerpos[0] and y == playerpos[1]):
             s.add(cell_val == PLAYER[1])
 
-        elif (x == playerpos[0] + 1 and y == playerpos[1] + 1):
+        elif (x == playerpos[0] + 1 and y == playerpos[1]):
             s.add(cell_val == CRATE[1])
         
         elif x == 0 or x == width - 1 or y == 0 or y == height - 1:
@@ -134,20 +134,21 @@ for t in range(1, timesteps):
                             # Check if pattern fits at player position
                             if m + xdiff < width and n + ydiff < height and len(lhs) != len(pattern):
 
-                                skip.append(tuple((m + xdiff, n + ydiff)))
-
                                 curr_cel_value = level[m + xdiff][n + ydiff][t]
                                 prev_cel_value = level[m + xdiff][n + ydiff][t - 1]
 
                                 lhs.append(prev_cel_value == obj)
-                                # unchanged.append(curr_cel_value == prev_cel_value)
 
-                                if ((m + xdiff, n + ydiff) == winpos and t == timesteps - 1):
-                                    rhs.append(curr_cel_value == CRATE[1])
-                                    # unchanged.append(curr_cel_value == CRATE[1])
+                                # if ((m + xdiff, n + ydiff) == winpos and t == timesteps - 1):
+                                    # rhs.append(curr_cel_value == CRATE[1])
+
+                                if (t == timesteps - 1 and ):
+                                    rhs.append(level[m + xdiff][n + ydiff][t] == replacements[i][j])
+                                    skip.append(tuple((m + xdiff, n + ydiff)))
                                 
-                                else:
+                                elif (t != timesteps - 1):
                                     rhs.append(curr_cel_value == replacements[i][j])
+                                    skip.append(tuple((m + xdiff, n + ydiff)))
                                     # unchanged.append(curr_cel_value == prev_cel_value)
 
                         if (x, y) in skip:
@@ -161,17 +162,17 @@ for t in range(1, timesteps):
                 # unchanged = And(unchanged)
 
                 # If - else geeft nu unsat.
-                # if (t != timesteps - 1):
-                choice_rule.append(And(lhs, rhs, unchanged_rhs))
-                # else:
-                #     last_t.append(And(lhs, rhs, unchanged_rhs))
+                if (t != timesteps - 1):
+                    choice_rule.append(And(lhs, rhs, unchanged_rhs))
+                else:
+                    last_t.append(And(lhs, rhs, unchanged_rhs))
 
     if (t == timesteps - 1):
-        # if (last_t): s.add(AtMost(*last_t, 1))
+        if (last_t): s.add(AtLeast(*last_t, 1))
         s.add(Sum([If(level[i][j][t] == 2, 1, 0) for j in range(width) for i in range(height)]) == 1)
 
 
-    if (choice_rule):
+    if (choice_rule and t != timesteps - 1):
         constraint = (AtLeast(*choice_rule, 1))
     
     s.add(Xor(constraint, And(unchanged)))

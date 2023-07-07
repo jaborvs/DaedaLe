@@ -1,0 +1,10 @@
+level,applied_rule
+1,  [ > StrongPlayer Movable no Blockers  ]  ->  [ > WeakPlayer > Movable  ] 
+1,  [ > Player Idol  ]  ->  [ Player Pit  ] 
+2,  [ > StrongPlayer Movable no Blockers  ]  ->  [ > WeakPlayer > Movable  ] 
+2, late [ Pit Rock  ]  ->  [ PitFilled  ] 
+2,  [ > Player Idol  ]  ->  [ Player Pit  ] 
+3,  [ > StrongPlayer Movable no Blockers  ]  ->  [ > WeakPlayer > Movable  ] 
+3, late [ Pit Rock  ]  ->  [ PitFilled  ] 
+3,  [ > Player Idol  ]  ->  [ Player Pit  ] 
+

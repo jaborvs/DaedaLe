@@ -8,7 +8,7 @@ import seaborn as sns
 sns.set_palette("Paired") 
 
 # Specify your directory here
-directory = '/Users/dennisvet/Documents/Documents/GitHub/AutomatedPuzzleScript/AutomatedPuzzleScript/src/PuzzleScript/Results/Rules'
+directory = '/Users/dennisvet/Documents/Documents/GitHub/automatedpuzzlescript/automatedpuzzlescript/src/PuzzleScript/Results/Rules'
 
 for filename in os.listdir(directory):
     if filename.endswith(".csv"): 

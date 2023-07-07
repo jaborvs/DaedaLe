@@ -4,16 +4,16 @@ import lang::xml::DOM;
 import salix::Node;
 import salix::SVG;
 
-salix::Node::Node uml2svgNode(str src) = node2node(parseXMLDOM(uml2svg(src)));
+salix::Node::SalixNode uml2svgNode(str src) = node2node(parseXMLDOM(uml2svg(src)));
 
-private salix::Node::Node node2node(lang::xml::DOM::Node n) {
+private salix::Node::SalixNode node2node(lang::xml::DOM::SalixNode n) {
   switch (n) {
-    case document(lang::xml::DOM::Node root):
+    case document(lang::xml::DOM::SalixNode root):
       return node2node(root);
       
-    case element(_, str name, list[lang::xml::DOM::Node] kids): {
+    case element(_, str name, list[lang::xml::DOM::SalixNode] kids): {
       map[str,str] attrs = ( k: v | attribute(_, str k, str v) <- kids );
-      list[salix::Node::Node] nodes = [ node2node(kid) | lang::xml::DOM::Node kid <- kids, attribute(_, _, _) !:= kid ];
+      list[salix::Node::SalixNode] nodes = [ node2node(kid) | lang::xml::DOM::SalixNode kid <- kids, attribute(_, _, _) !:= kid ];
       return svgElement(name, nodes, attrs, (), ());
     } 
     

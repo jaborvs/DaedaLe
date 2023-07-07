@@ -83,13 +83,15 @@ public node ps_outline(Tree x){
 	);
 }
 
-Content run_game(Tree t, loc s){
-	t = annotate(t);
-	PSGame g = ps_implode(t);
-	Checker c = check_game(g);
-	Engine engine = compile(c);
+// Content run_game(Tree t, loc s){
+Content run_game(){
+
+	// t = annotate(t);
+	PSGame game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
+	Checker checker = check_game(game);
+	Engine engine = compile(checker);
 	
-	return load_app(engine)();
+	return load_app(engine, checker)();
 }
 
 set[Message] build_game(Tree tree){

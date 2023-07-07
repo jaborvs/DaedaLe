@@ -18,7 +18,8 @@ import util::Benchmark;
 import util::Math;
 import Message;
 
-alias Model = tuple[str input, str title, Engine engine, int update, set[Message] msgs];
+// alias Model = tuple[str input, str title, Engine engine, Checker checker, int update, set[Msg] msgs];
+alias Model = tuple[str input, str title, Engine engine, Checker checker, int update];
 
 data Msg 
 	= left() 
@@ -48,13 +49,15 @@ Model update(Msg msg, Model model){
 			case action(): model.input = "action";
 			case undo(): model.input = "undo";
 			case restart(): model.input = "restart";
-			case win(): model.engine.win_keyword = true;
+			// case win(): model.engine.win_keyword = true;
 			default: return model;
 		}
 		
-		model.engine.msg_queue = [];
-		<model.engine, model.engine.current_level> = do_turn(model.engine, model.engine.current_level, model.input);
+		// model.engine.msg_queue = [];
+		<model.engine, model.engine.current_level> = execute_move(model.engine, model.engine, model.input);
 	}
+
+    return model;
 	
 	bool victory = is_victorious(model.engine, model.engine.current_level);
 	if (victory && is_last(model.engine)){
@@ -83,7 +86,7 @@ void view_sprite(Model m, str _ : "trans"){
 
 
 default void view_sprite(Model m, str name){
-	OBJECTDATA obj = m.engine.objects[name];
+	ObjectData obj = m.engine.objects[name];
 	table(class("sprite"), class("cell"), () {
 		for (int i <- [0..5]){
 			tr((){
@@ -91,7 +94,7 @@ default void view_sprite(Model m, str name){
 					if(isEmpty(obj.sprite)){
 						td(class("pixel"), class(toLowerCase(obj.colors[0])));
 					} else {
-						PIXEL pix = obj.sprite[i][j];
+						Pixel pix = obj.sprite[i][j];
 						if (pix.pixel == "."){
 							td(class("pixel"), class("transparent"));
 						} else {
@@ -128,67 +131,95 @@ void view_level(Model m){
 	} else {
 		list[Layer] layers = m.engine.current_level.layers;
 		view_background(m);
-		
-		for (Layer lyr <- layers){
-			table(class("layer"), () {
-				for (Line line <- lyr) {
-					tr(() {
-						for (Object obj <- line) {
-							td(class(obj.name), class("cell"), () {view_sprite(m, obj.name);});
-						}
-					});
-				}
+
+        for (Coords coord <- m.engine.current_level.objects<0>) {
+
+            if (size(m.engine.current_level.objects[coord]) > 0) {
+
+                Object obj = m.engine.current_level.objects[coord][size(m.engine.current_level.objects[coord]) - 1];
+                td(class(obj.name), class("cell"), () {view_sprite(m, obj.name);});
+
+            } else {
+                td(class("transparent"), class("cell"), () {view_sprite(m, "transparent");});
+            }
+
+
+        }
+
+		// for (Layer lyr <- layers){
+		// 	table(class("layer"), () {
+		// 		for (Line line <- lyr) {
+		// 			tr(() {
+		// 				for (Object obj <- line) {
+		// 					td(class(obj.name), class("cell"), () {view_sprite(m, obj.name);});
+		// 				}
+		// 			});
+		// 		}
 				
-			});
-					}
+		// 	});
+		// }
 	}
 }
 
-void view_panel(Model m){
-	h3("Buttons");
-	button(onClick(direction(37)), "left");
-	button(onClick(direction(39)), "right");
-	button(onClick(direction(38)), "up");
-	button(onClick(direction(40)), "down");
-	button(onClick(action()), "action");
-	button(onClick(restart()), "restart");
-	button(onClick(undo()), "undo");
-	button(onClick(win()), "win");
+// void view_panel(Model m){
+// 	h3("Buttons");
+// 	button(onClick(direction(37)), "left");
+// 	button(onClick(direction(39)), "right");
+// 	button(onClick(direction(38)), "up");
+// 	button(onClick(direction(40)), "down");
+// 	button(onClick(action()), "action");
+// 	button(onClick(restart()), "restart");
+// 	button(onClick(undo()), "undo");
+// 	button(onClick(win()), "win");
 
-	h3("Victory Conditions");
-	for (Condition cond <- m.engine.conditions){
-		bool met;
-		if (m.engine.current_level is message){
-			met = true;
-		} else {
-			met = is_met(cond, m.engine.current_level);
-		}
-		p(() {
-			span("<toString(cond)>: ");
-			b(class("<met>"), "<met>");
-		});
-	}
+// 	h3("Victory Conditions");
+// 	for (Condition cond <- m.engine.conditions){
+// 		bool met;
+// 		if (m.engine.current_level is message){
+// 			met = true;
+// 		} else {
+// 			met = is_met(cond, m.engine.current_level);
+// 		}
+// 		p(() {
+// 			span("<toString(cond)>: ");
+// 			b(class("<met>"), "<met>");
+// 		});
+// 	}
 	
-	h3("Rules");
-	for (int i <- [0..size(m.engine.rules)]){
-		Rule rule = m.engine.rules[i];
-		str left_original = intercalate(" ", [toString(x) | x <- rule.original.left]);
-		str right_original = intercalate(" ", [toString(x) | x <- rule.original.right]);
-		str message = "";
-		if (!isEmpty(rule.original.message)) message = "message <rule.original.message[0]>";
+// 	h3("Rules");
+// 	for (int i <- [0..size(m.engine.rules)]){
+// 		Rule rule = m.engine.rules[i];
+// 		str left_original = intercalate(" ", [toString(x) | x <- rule.original.left]);
+// 		str right_original = intercalate(" ", [toString(x) | x <- rule.original.right]);
+// 		str message = "";
+// 		if (!isEmpty(rule.original.message)) message = "message <rule.original.message[0]>";
 		
-		p(() {
-			button(\type("button"), class("collapsible"), "+");
-			span("\t <left_original> -\> <right_original> <message>: ");
-			b(class("<rule.used > 0>"), "<rule.used>");
-		});
+// 		p(() {
+// 			button(\type("button"), class("collapsible"), "+");
+// 			span("\t <left_original> -\> <right_original> <message>: ");
+// 			b(class("<rule.used > 0>"), "<rule.used>");
+// 		});
 		
-		div(class("content"), () {
-			for (str r <- rule.left) p(class("rule"), r);
-			br();
-			for (str r <- rule.right) p(class("rule"), r);
-		});
-	}
+// 		div(class("content"), () {
+// 			for (str r <- rule.left) p(class("rule"), r);
+// 			br();
+// 			for (str r <- rule.right) p(class("rule"), r);
+// 		});
+// 	}
+// }
+
+void view_panel(Model m){
+    div(class("panel"), () {
+        h3("Buttons");
+        button(onClick(direction(37)), "left");
+        button(onClick(direction(39)), "right");
+        button(onClick(direction(38)), "up");
+        button(onClick(direction(40)), "down");
+        button(onClick(action()), "action");
+        button(onClick(restart()), "restart");
+        button(onClick(undo()), "undo");
+        button(onClick(win()), "win");
+    });
 }
 
 void view_layers(Model m){
@@ -226,42 +257,32 @@ void view_layers(Model m){
 
 void view(Model m){
 	int start_time = userTime();
-	div(class("main"), () {
-		//p(m.input);
+	
+    div(class("main"), () {
+		p(m.input);
 		h2(m.title);
-		div(class("left"), () {view_panel(m);});
-		div(class("left"), () {view_layers(m);});
-		div(class("left"), onKeyDown(direction), () {
-			h3("Level");
-			div(class("grid"), () {view_level(m);});
-		});
-		//div(() {
-		//	h3("Messages");
-		//	for (Message msg <- m.msgs){
-		//		p(() { 
-		//			u(msg.at.begin.line);
-		//			p(msg.msg);
-		//		});
-		//	}
-		//});
-		
+		div(class("left"), () {
+            view_panel(m);
+        });
+		// div(class("left"), () {view_layers(m);});
+		// div(class("left"), onKeyDown(direction), () {
+		// 	h3("Level");
+		// 	div(class("grid"), () {view_level(m);});
+		// });
 		int view_time = userTime() - start_time;
-		//p("View: <view_time/1000000> ms");
-		//p("Update: <m.update/1000000> ms");
 	});
-	
-	
 }
 
-App[str]() load_app(loc src){
-	PSGAME game = load(src);
+App[str]() load_app(){
+    
+	PSGame game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
 	Checker checker = check_game(game);
 	Engine engine = compile(checker);
 	
 	return load_app(engine);
 }
 
-App[str]() load_app(Engine engine){
+App[str]() load_app(Engine engine, Checker checker){
 
     println("Loading app");
 
@@ -271,7 +292,7 @@ App[str]() load_app(Engine engine){
     println("Past DynamicChecker");
 	
 	// Model init() = <"none", title, engine, 0, toMessages(dc.msgs)>;
-	Model init() = <"none", title, engine, 0>;
+	Model init() = <"none", title, engine, checker>;
 	SalixApp[Model] gameApp(str appId = "root") = makeApp(appId, init, view, update);
     
     println("Making gameWebApp");
@@ -279,8 +300,8 @@ App[str]() load_app(Engine engine){
 	App[str] gameWebApp()
 	  = webApp(
 	      gameApp(), 
-	      |project://AutomatedPuzzleScript/src/PuzzleScript/Interface/index.html|, 
-	      |project://AutomatedPuzzleScript/src|
+	      |project://automatedpuzzlescript/src/PuzzleScript/Interface/index.html|, 
+	      |project://automatedpuzzlescript/src|
 	    );
 	    
 	return gameWebApp;
@@ -288,7 +309,7 @@ App[str]() load_app(Engine engine){
 
 //Test
 //import PuzzleScript::Interface::Interface;
-// load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/IDE/Game1.PS|)();
-// load_app(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/DEMO.PS|)();
+// load_app(|project://automatedpuzzlescript/src/PuzzleScript/IDE/Game1.PS|)();
+// load_app(|project://automatedpuzzlescript/src/PuzzleScript/Test/DEMO.PS|)();
 
 

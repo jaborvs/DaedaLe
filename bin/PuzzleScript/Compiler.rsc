@@ -85,10 +85,12 @@ Rule new_rule(RuleData r, str direction, list[RulePart] left, list[RulePart] rig
 
 alias LevelChecker = tuple[
     list[Object] starting_objects,
-    list[str] starting_objects_names,
+    list[list[str]] starting_objects_names,
     list[str] moveable_objects,
     int moveable_amount_level,
     tuple[int width, int height] size,
+    list[RuleData] actual_applied_rules,
+    list[str] shortest_path,
     list[list[Rule]] applied_rules,
     list[list[Rule]] applied_late_rules,
     list[LevelData] messages,
@@ -96,7 +98,7 @@ alias LevelChecker = tuple[
 ];
 
 LevelChecker new_level_checker(Level level) {
-    return <[], [], [], 0, <0,0>, [], [], [], level>;
+    return <[], [], [], 0, <0,0>, [], [], [], [], [], level>;
 }
 
 
@@ -108,12 +110,12 @@ alias Engine = tuple[
 	list[Condition] conditions,
 	list[list[Rule]] rules,
     list[list[Rule]] late_rules,
+    map[RuleData, tuple[int, str]] indexed_rules,
 	int index,
 	map[str, ObjectData] objects,
     map[str, list[str]] properties,
     map[str, list[str]] references,
     map[LevelData, LevelChecker] level_data,
-    list[RuleData] applied_rules,
 	PSGame game
 ];
 
@@ -126,12 +128,12 @@ Engine new_engine(PSGame game)
         [],
 		[], 
 		[],
+        (),
 		0, 
 		(),
 		(),
         (),
         (),
-        [],
 		game
 	>;
 
@@ -1180,8 +1182,10 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
             if (isDirection(dir)) {
                 if (!(name in found_objects)) found_objects += [name];
                 list[str] all_references = get_references(name, c.references);
-                found_objects += [name | str name <- get_references(name, c.references), name in lc.starting_objects_names];
-                found_objects += [name | str name <- get_references(name, c.combinations), name in lc.starting_objects_names];
+                found_objects += [name | str name <- get_references(name, c.references), 
+                    any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
+                found_objects += [name | str name <- get_references(name, c.combinations), 
+                    any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
             }
         }
     } 
@@ -1221,6 +1225,8 @@ LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c
 
 LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
+    println("NEW LEVEL \n");
+
     bool new_objects = true;
     list[list[Rule]] applied_rules = [];
     list[list[Rule]] applied_late_rules = [];
@@ -1239,7 +1245,7 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
     list[list[Rule]] current = engine.rules + engine.late_rules;
 
-    list[str] previous_objs = [];
+    list[list[str]] previous_objs = [];
 
     while(previous_objs != lc.starting_objects_names) {
 
@@ -1249,34 +1255,51 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
             
             // Each rewritten rule in rulegroup contains same objects so take one
             Rule rule = lrule[0];
+            list[str] required = [];
 
             for (RulePart rp <- rule.left) {
                 
                 if (!(rp is part)) continue;
 
-                bool applied = true;
-
                 for (RuleContent rc <- rp.contents) {
                     if ("..." in rc.content) continue;
-
-                    list[str] required = [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == ""), !(name == "...")];
-                    if (!(all(str rule_obj <- required, rule_obj in lc.starting_objects_names))) {
-                        applied = false;
-                    }
+                    required += [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == ""), !(name == "...")];
                 }
+            }
 
-                if (!(applied)) continue;
-                if (!(rule.right[0] is part)) {   
-                    if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
-                    if (!(rule.late) && !(lrule in applied_rules)) {
-                        applied_rules += [lrule];
-                    }
-                    continue;
+            int applied = 0;
+            list[list[str]] placeholder = lc.starting_objects_names;
+            
+            for (int i <- [0..size(required)]) {
+
+                str required_rc = required[i];
+                if (any(int j <- [0..size(placeholder)], required_rc in placeholder[j])) {
+                    applied += 1;
+                } else break;
+
+            }
+
+            if (applied == size(required)) {
+
+                // if (!(rule.right[0] is part)) {   
+                //     if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
+                //     if (!(rule.late) && !(lrule in applied_rules)) {
+                //         applied_rules += [lrule];
+                //     }
+                //     continue;
+                // }
+
+                list[list[RuleContent]] list_rc = [rulepart.contents | rulepart <- rule.right, rulepart is part];
+                list[list[str]] new_objects_list = [];
+                for (list[RuleContent] lrc <- list_rc) {
+
+                    list[str] new_objects = [name | rc <- lrc, name <- rc.content, !(name == "no"), 
+                        !(isDirection(name)), !(name == ""), !(name == "..."), 
+                        !(any(list[str] objects <- lc.starting_objects_names, name in objects))];
+
+                    if (size(new_objects) > 0) new_objects_list += [new_objects];
+
                 }
-                list[RuleContent] lrc = [rulepart.contents | rulepart <- rule.right, rulepart is part][0];
-
-                list[str] new_objects_list = [name | rc <- lrc, name <- rc.content, !(name == "no"), 
-                    !(isDirection(name)), !(name == ""), !(name == "..."), !(name in lc.starting_objects_names)];
                 
                 lc.starting_objects_names += new_objects_list;
 
@@ -1284,6 +1307,7 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
                 if (!(rule.late) && !(lrule in applied_rules)) {
                     applied_rules += [lrule];
                 }
+
             }
         }
     }
@@ -1298,7 +1322,6 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
         if (indexed_late[i] in applied_late_rules) applied_late_rules_in_order += [indexed_late[i]];
     }
 
-
     lc.applied_late_rules = applied_late_rules_in_order;
     lc.applied_rules = applied_rules_in_order;
 
@@ -1310,16 +1333,14 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 LevelChecker starting_objects(Level level, LevelChecker lc) {
 
     list[Object] all_objects = [];
-    list[str] object_names = [];
+    list[list[str]] object_names = [];
 
     for (Coords coords <- level.objects<0>) {
         for (Object obj <- level.objects[coords]) {
             if (!(obj in all_objects)) {
                 
                 all_objects += obj;
-
-                object_names += obj.current_name;
-                for (str name <- obj.possible_names) if (!(name in object_names)) object_names += name;
+                object_names += [[obj.current_name] + obj.possible_names];
             }
         }
     }
@@ -1353,6 +1374,54 @@ map[LevelData, LevelChecker] check_game_per_level(Engine engine, Checker c, bool
 
 }
 
+map[RuleData, tuple[int, str]] index_rules(list[RuleData] rules) {
+
+    map[RuleData, tuple[int, str]] indexed_rules = ();
+    int index = 0;
+
+    for (RuleData rd <- rules) {
+        str rule_string = convert_rule(rd.left, rd.right);
+        indexed_rules += (rd: <index, rule_string>);
+        index += 1;
+    }
+
+    return indexed_rules;
+}
+
+str convert_rule(list[RulePart] left, list[RulePart] right) {
+
+    str rule = "";
+    if (any(RulePart rp <- left, rp is prefix)) rule += rp.prefix;
+
+    for (int i <- [0..size(left)]) {
+        RulePart rp = left[i];
+
+        if (!(rp is part)) continue;
+        rule += " [ ";
+        for (RuleContent rc <- rp.contents) {
+            for (str content <- rc.content) rule += "<content> ";
+            if (i < size(left) - 1) rule += " | ";
+        }
+        rule += " ] ";
+    }
+
+    rule += " -\> ";
+
+    for (int i <- [0..size(right)]) {
+        RulePart rp = right[i];
+
+        if (!(rp is part)) continue;
+        rule += " [ ";
+        for (RuleContent rc <- rp.contents) {
+            for (str content <- rc.content) rule += "<content> ";
+            if (i < size(right) - 1) rule += " | ";
+        }
+        rule += " ] ";
+    }
+    return rule;
+}
+
+
 Engine compile(Checker c) {
 
 	Engine engine = new_engine(c.game);
@@ -1366,7 +1435,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[1];
+    engine.current_level = engine.converted_levels[2];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
@@ -1383,6 +1452,7 @@ Engine compile(Checker c) {
     }
 
     engine.level_data = check_game_per_level(engine, c);
+    engine.indexed_rules = index_rules(engine.game.rules);
 
     // for (list[Rule] rule <- engine.level_data[engine.current_level.original].applied_late_rules) println(rule[0]);
 

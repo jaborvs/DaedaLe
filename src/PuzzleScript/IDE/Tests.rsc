@@ -7,7 +7,7 @@ import ParseTree;
 
 void main(){
 	println("Test");
-	tree = ps_parse(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Games/Game2.PS|);
+	tree = ps_parse(|project://automatedpuzzlescript/src/PuzzleScript/Test/Games/Game2.PS|);
 	//ps_outline(tree);
 	//ps_check(tree);
 	//
@@ -18,7 +18,7 @@ void main(){
 	//	}
 	//}
 	
-	//run_game(tree, |project://AutomatedPuzzleScript/src/PuzzleScript/IDE/Tests.rsc|);
+	//run_game(tree, |project://automatedpuzzlescript/src/PuzzleScript/IDE/Tests.rsc|);
 	
 	build_game(tree);
 

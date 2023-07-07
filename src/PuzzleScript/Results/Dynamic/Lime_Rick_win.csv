@@ -1,0 +1,6 @@
+level,applied_rule
+1, horizontal [ > Player No Obstacle  ]  ->  [ PlayerBodyH  | PlayerHead1  |  ] 
+1,  [ > Player  ]  ->  [ Player  ] 
+1, UP [ UP PlayerHead1 No Obstacle  ]  ->  [ PlayerBodyV  | PlayerHead2  |  ] 
+1, UP [ UP PlayerHead2 No Obstacle  ]  ->  [ PlayerBodyV  | PlayerHead3  |  ] 
+1, DOWN [ Player No Obstacle  ]  ->  [ PlayerBodyV PlayerHead1  ] 

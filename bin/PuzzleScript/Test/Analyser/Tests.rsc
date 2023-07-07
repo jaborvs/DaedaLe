@@ -16,35 +16,35 @@ void main() {
 	DynamicChecker d_checker;
 	
 	println("Instant Victory");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1InstantVictory.PS|);
+	game = load(|project://automatedpuzzlescript/src/PuzzleScript/Test/Analyser/BadGame1InstantVictory.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 	d_checker = analyse_game(engine);
 	print_msgs(d_checker);
 	
 	println("Rule Similarity");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
+	game = load(|project://automatedpuzzlescript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 	d_checker = analyse_game(engine);
 	print_msgs(d_checker);
 	
 	println("Unidirectional Solutions");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1Unidirectional.PS|);
+	game = load(|project://automatedpuzzlescript/src/PuzzleScript/Test/Analyser/BadGame1Unidirectional.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 	d_checker = analyse_stupid_solution(engine);
 	print_msgs(d_checker);
 	
 	println("Difficulty Increase");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
+	game = load(|project://automatedpuzzlescript/src/PuzzleScript/Test/Analyser/BadGame1RuleSimilar.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 	d_checker = analyse_game(engine);
 	print_msgs(d_checker);
 	
 	println("Get Rule type");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1RuleCompare.PS|);
+	game = load(|project://automatedpuzzlescript/src/PuzzleScript/Test/Analyser/BadGame1RuleCompare.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 	
@@ -53,7 +53,7 @@ void main() {
 	}
 	
 	println("Impossible Victory");
-	game = load(|project://AutomatedPuzzleScript/src/PuzzleScript/Test/Analyser/BadGame1ImpossibleVictory.PS|);
+	game = load(|project://automatedpuzzlescript/src/PuzzleScript/Test/Analyser/BadGame1ImpossibleVictory.PS|);
 	checker = check_game(game);
 	engine = compile(checker);
 	//d_checker = analyse_game(engine);
