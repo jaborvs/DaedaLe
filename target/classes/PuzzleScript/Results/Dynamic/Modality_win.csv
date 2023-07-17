@@ -1,7 +1,7 @@
 level,applied_rule
-1,  [ > Player Nonblack Crate Nonblack  ]  ->  [ > Player Nonblack > Crate Nonblack  ] 
-2,  [ > Player Black Crate Black  ]  ->  [ > Player Black > Crate Black  ] 
-2,  [ > Player Nonblack Crate Nonblack  ]  ->  [ > Player Nonblack > Crate Nonblack  ] 
-3,  [ > Player Black Crate Black  ]  ->  [ > Player Black > Crate Black  ] 
-3,  [ > Player Nonblack Crate Nonblack  ]  ->  [ > Player Nonblack > Crate Nonblack  ] 
+1, 0
+2, 1
+2, 0
+3, 1
+3, 0
 

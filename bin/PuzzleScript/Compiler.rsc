@@ -1225,8 +1225,6 @@ LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c
 
 LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
-    println("NEW LEVEL \n");
-
     bool new_objects = true;
     list[list[Rule]] applied_rules = [];
     list[list[Rule]] applied_late_rules = [];
@@ -1435,7 +1433,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[2];
+    engine.current_level = engine.converted_levels[0];
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {

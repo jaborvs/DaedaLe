@@ -405,9 +405,9 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
 
                         Engine engine_before = engine;
                         engine = apply(engine, found_objects, rp_left[i].contents, rp_right[i].contents, direction);
-                        if (!(rule.original in engine.level_data[engine.current_level.original].actual_applied_rules)) {
-                            engine.level_data[engine.current_level.original].actual_applied_rules += [rule.original];
-                        }
+                        // if (!(rule.original in engine.level_data[engine.current_level.original].actual_applied_rules)) {
+                        engine.level_data[engine.current_level.original].actual_applied_rules += [rule.original];
+                        // }
                         applied += 1;
                     }
                 }
@@ -783,8 +783,6 @@ bool check_conditions(Engine engine, str condition) {
 
 // Prints the current level
 void print_level(Engine engine, Checker c) {
-
-    println("Hoi\n");
     
     tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
     // println(level_size);

@@ -9,6 +9,7 @@ module PuzzleScript::Test::Engine::Tests
 // import PuzzleScript::IDE::IDE;
 
 import PuzzleScript::Report;
+import PuzzleScript::DynamicAnalyser;
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
@@ -19,6 +20,7 @@ import util::Eval;
 import Type;
 import util::Math;
 import List;
+import String;
 
 import util::Benchmark;
 
@@ -38,8 +40,8 @@ void main() {
 	Level level;
 
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/heroes_of_sokoban.PS|);
-	game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
-	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|);
+	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/modality.PS|);
+	game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
@@ -48,8 +50,114 @@ void main() {
 
 	checker = check_game(game);
 	engine = compile(checker);
+    
+    // for (RuleData rd <- engine.game.rules) {
 
+    //     println(engine.indexed_rules[rd][1]);
+
+    // }
+
+    // return;
+
+    engine.current_level = engine.converted_levels[0];
     Level save_level = engine.current_level;
+
+    list[str] possible_moves = ["up", "left", "down", "right"];
+    
+    for (int i <- [0..1]) {
+        engine.current_level = engine.converted_levels[i];
+        list[list[str]] dead_ends = [];
+        list[list[str]] dead_end_rules = [];
+        int total = 0;
+
+        list[str] winning_moves = bfs(engine, possible_moves, checker, "win");
+        list[str] winning_moves_rules = [];
+        println("Found winning moves <winning_moves>.\nNow trying to find dead-ends.");
+
+        bool dead_end = false;
+
+        for (int i <- [0..size(winning_moves)] && !dead_end) {
+
+            engine = execute_move(engine, checker, winning_moves[i]);
+            if (i == size(winning_moves) - 1) continue;
+
+            for (str move <- possible_moves) {
+
+                // Don't perform a move that is part of the winning moves
+                if (i < size(winning_moves) - 1) {
+                    if (winning_moves[i + 1] == move) continue;
+                }
+
+                Engine new_engine = execute_move(engine, checker, move);
+                // if (engine != new_engine) total += 1;
+                // if (check_conditions(new_engine, "dead_end")) {
+                //     dead_ends += [winning_moves[0..i+1] + [move]];
+                //     continue;
+                // }
+
+                for (str move2 <- possible_moves) {
+                    if ((move == "right" && move2 == "left") || (move == "left" && "move2" == "right")) continue;
+                    if ((move == "up" && move2 == "down") || (move == "down" && move2 == "up")) continue;
+
+                    Engine new_engine2 = execute_move(new_engine, checker, move2);
+
+                    // print_level(new_engine2, checker);
+
+                    // Check if level is still winnable with deviation from winning path
+                    // OPTION 1
+                    int total = 0;
+                    for (str move3 <- possible_moves) {
+                        Engine new_engine3 = execute_move(new_engine2, checker, move3);
+                        if (convert_tuples(new_engine3) == convert_tuples(new_engine2)) total += 1;
+                        else break;
+                    }
+
+                    if (total == 4) {
+                        print_level(new_engine2, checker);
+                        dead_ends += [winning_moves[0..i+1] + [move] + [move2]];
+                        list[str] rules = [];
+                        for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules) {
+                            if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) {
+                                rules += [engine.indexed_rules[rd2][1]];
+                            }
+                        }
+                        dead_end_rules += [rules];
+                        dead_end = true;
+                    }
+
+                    // OPTION 2
+                    // if (check_conditions(new_engine2, "dead_end")) dead_ends += [winning_moves[0..i+1] + [move] + [move2]];
+
+                }
+            }
+        }
+
+        for (RuleData rd <- engine.level_data[engine.current_level.original].actual_applied_rules) {
+            if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) {
+                winning_moves_rules += [engine.indexed_rules[rd2][1]];
+            }
+        }
+
+        resolve_verbs(winning_moves_rules);
+        for (list[str] rules <- dead_end_rules) {
+            resolve_verbs(rules);
+        }
+
+        println(dead_ends);
+    }
+
+
+
+    return;
+
+    list[list[str]] all_winning = all_bfs(engine, ["up", "left", "down", "right"], checker, "win");
+    println(all_winning);
+    engine.current_level = save_level;
+    print_level(engine, checker);
+    list[list[str]] all_losing = all_bfs(engine, ["up", "left", "down", "right"], checker, "same_state");
+    println(all_losing);
+
+    return;
 
     // println("==== Multiple layer object test ====");
 
