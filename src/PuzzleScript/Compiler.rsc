@@ -1456,7 +1456,7 @@ Engine compile(Checker c) {
 
 	// engine.layers = [convert_layer(x, c) | x <- c.game.layers];
 
-	// engine.objects = (x.coords : x | x <- c.game.objects);
+	engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
 	
 	return engine;
 }

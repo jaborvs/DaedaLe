@@ -15,6 +15,7 @@ import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import PuzzleScript::Verbs;
 import IO;
 import util::Eval;
 import Type;
@@ -28,6 +29,7 @@ import util::Benchmark;
 // 		int rand = arbInt(size(objs));
 // 		return objs[rand];
 // 	}
+
 
 void main() {
 
@@ -76,10 +78,10 @@ void main() {
 
         bool dead_end = false;
 
-        for (int i <- [0..size(winning_moves)] && !dead_end) {
+        for (int i <- [0..size(winning_moves)]) {
 
             engine = execute_move(engine, checker, winning_moves[i]);
-            if (i == size(winning_moves) - 1) continue;
+            if (i == size(winning_moves) - 1 || dead_end) continue;
 
             for (str move <- possible_moves) {
 
@@ -100,8 +102,6 @@ void main() {
                     if ((move == "up" && move2 == "down") || (move == "down" && move2 == "up")) continue;
 
                     Engine new_engine2 = execute_move(new_engine, checker, move2);
-
-                    // print_level(new_engine2, checker);
 
                     // Check if level is still winnable with deviation from winning path
                     // OPTION 1
@@ -134,16 +134,17 @@ void main() {
 
         for (RuleData rd <- engine.level_data[engine.current_level.original].actual_applied_rules) {
             if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) {
-                winning_moves_rules += [engine.indexed_rules[rd2][1]];
+                winning_moves_rules += engine.indexed_rules[rd2][1];
             }
         }
 
-        resolve_verbs(winning_moves_rules);
+        resolve_verbs(winning_moves_rules, true);
+        println("");
         for (list[str] rules <- dead_end_rules) {
-            resolve_verbs(rules);
+            resolve_verbs(rules, false);
         }
 
-        println(dead_ends);
+        // println(dead_ends);
     }
 
 

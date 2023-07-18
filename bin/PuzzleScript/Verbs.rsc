@@ -27,31 +27,28 @@ void main() {
 }
 
 
-void resolve_verbs(list[str] sequence_rules) {
+void resolve_verbs(list[str] sequence_rules, bool winning) {
 
     list[str] verbs = [];
+    bool climbing = false;
 
-    for (list[str] rules <- sequence_rules) {
+    for (str rule <- sequence_rules) {
 
-        bool climbing = false;
-
-        for (str rule <- rules) {
-
-            if (climbing && !(rule in CLIMB)) {
-                verbs += ["climb, "];
-                climbing = false;
-            }
-
-            if (rule == CRAWL) verbs += ["crawl, "];
-            else if (rule == CLIMB[0]) climbing = true;
-            else if (rule == FALL) verbs += ["fall, "];
+        if (climbing && !(rule in CLIMB)) {
+            verbs += ["climb, "];
+            climbing = false;
         }
+
+        if (rule == CRAWL) verbs += ["crawl, "];
+        else if (rule == CLIMB[0]) climbing = true;
+        else if (rule == FALL) verbs += ["fall, "];
+        // else if (rule == EAT) verbs += ["eat"];
     }
 
-    verbs += ["stuck"];
+    if (!winning) verbs += ["stuck"];
 
     for (str verb <- verbs) {
-        println("verb);
+        println(verb);
     }
 
 }

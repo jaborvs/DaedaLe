@@ -17,6 +17,9 @@ import salix::Node;
 import List;
 import String;
 import IO;
+import lang::json::IO; // todo: typed JSON messages
+
+
 
 @doc{This is the basic Message data type that clients
 will extend with concrete constructors.
@@ -40,48 +43,71 @@ data Handle
  */
  
 // the "current" top-level views; set by render and initialize
-private map[str id, value viewContext] contexts = ();
+//private map[str id, value viewContext] contexts = ();
+
 // transient property used only in the encode function when constructing a single view (single app render loop, can not be used for decoding incomming requests)
-private str curAppId;
+//private str curAppId;
 
 // a bidirectional map from values (functions/Msg) to ints, with an id counter.
-// the closures map is use to implement sharing of anonymous functions created through `partial`.
+// the closures map is used to implement sharing of anonymous functions created through `partial`.
 alias Encoding = tuple[int id, map[int, value] from, map[value, int] to, map[int, value] closures]; 
 
-alias RenderState = map[value viewContext, Encoding encoding];
+//alias RenderState = map[value viewContext, Encoding encoding];
 
-private RenderState state = (); 
+//private RenderState state = ();
 
-private void initViewContext(str id, void(&T) view) {
-  curAppId = id;
-  contexts[id] = view;
-  
-  // NB: don't initialize to empty, because subs/commands also
-  // might change the encoding table during `update`.
-  value x = view; // workaround bug.
-  if (x notin state) {
-    state[x] = <0, (), (), ()>; 
+@doc{This represents the administration of closure and event messages. It is only persistent
+during one render cycle; as per switchTo and switchFrom.}
+Encoding state = <0, (), (), ()>; 
+
+@doc{To support multiplexing of multiple apps using the same web server.
+switchTo and switchFrom will  select the "active" app from this map,
+and restore, its state after the render cycle. It is therefore imperative
+to call switchTo at the start, and switchFrom at the end of a cycle.}
+map[str, Encoding] apps = ();
+
+// should always be called first, before init, and handle message.
+void switchTo(str appId) {
+  if (appId notin apps) {
+    apps[appId] = <0, (), (), ()>;
   }
+  state = apps[appId];
+  stack = [];
 }
+
+void switchFrom(str appId) {
+   apps[appId] = state;
+}
+
+//private void initViewContext(str id, void(&T) view) {
+//  //contexts[id] = view;
+//  
+//  // NB: don't initialize to empty, because subs/commands also
+//  // might change the encoding table during `update`.
+//  value x = view; // workaround bug.
+//  if (x notin state) {
+//    state[x] = <0, (), (), ()>; 
+//  }
+//}
  
  // encode functions (for handlers) as integers
-private int _encode(str id, value x) {
-  Encoding enc = state[contexts[id]];
-  if (x notin enc.to) {
-    enc.id += 1;
-    enc.from[enc.id] = x;
-    enc.to[x] = enc.id;
-    state[contexts[id]] = enc; 
+private int _encode(value x) {
+  //Encoding enc = state[contexts[id]];
+  if (x notin state.to) {
+    state.id += 1;
+    state.from[state.id] = x;
+    state.to[x] = state.id; 
   }
-  return enc.to[x];
+  return state.to[x];
 }
 
-private &T(&V) _partial(str id, list[value] key, &T(&V) closure) {
-  int h = _encode(id, key);
-  if (h notin state[contexts[id]].closures) {
-    state[contexts[id]].closures[h] = closure; 
+private &T(&V) _partial(list[value] key, &T(&V) closure) {
+  int h = _encode(key);
+  if (h notin state.closures) {
+    state.closures[h] = closure; 
   }
-  if (&T(&V) f := state[contexts[id]].closures[h]) {
+  //if (&T(&V) f := state[contexts[id]].closures[h]) {
+  if (&T(&V) f := state.closures[h]) {
     return f;
   }
   assert false: "couldn\'t find closure";
@@ -89,38 +115,38 @@ private &T(&V) _partial(str id, list[value] key, &T(&V) closure) {
   throw "couldn\'t find closure";
 }
 
-&T(&V) partial(str id, &T(&U0, &V) f, &U0 u0) 
-  = _partial(id, [f, u0], &T(&V v) { return f(u0, v); });
+&T(&V) partial(&T(&U0, &V) f, &U0 u0) 
+  = _partial([f, u0], &T(&V v) { return f(u0, v); });
   
-&T(&V) partial(str id, &T(&U0, &U1, &V) f, &U0 u0, &U1 u1) 
-  = _partial(id, [f, u0, u1], &T(&V v) { return f(u0, u1, v); });
+&T(&V) partial(&T(&U0, &U1, &V) f, &U0 u0, &U1 u1) 
+  = _partial([f, u0, u1], &T(&V v) { return f(u0, u1, v); });
    
-&T(&V) partial(str id, &T(&U0, &U1, &U2, &V) f, &U0 u0, &U1 u1, &U2 u2) 
-  = _partial(id, [f, u0, u1, u2], &T(&V v) { return f(u0, u1, u2, v); });
+&T(&V) partial(&T(&U0, &U1, &U2, &V) f, &U0 u0, &U1 u1, &U2 u2) 
+  = _partial([f, u0, u1, u2], &T(&V v) { return f(u0, u1, u2, v); });
    
-&T(&V) partial(str id, &T(&U0, &U1, &U2, &U3, &V) f, &U0 u0, &U1 u1, &U2 u2, &U3 u3) 
-  = _partial(id, [f, u0, u1, u2, u3], &T(&V v) { return f(u0, u1, u2, u3, v); }); 
+&T(&V) partial(&T(&U0, &U1, &U2, &U3, &V) f, &U0 u0, &U1 u1, &U2 u2, &U3 u3) 
+  = _partial([f, u0, u1, u2, u3], &T(&V v) { return f(u0, u1, u2, u3, v); }); 
 
 
 // retrieve the actual function corresponding to a handle identity.
-private &U _decode(str id, int funcId, type[&U] _) = d
+private &U _decode(int funcId, type[&U] _) = d
   when
-    &U d := state[contexts[id]].from[funcId];
+    &U d := state.from[funcId];
     
-private default &U _decode(str id, int funcId, type[&U] _) { _printState(); throw "No state found for app with id `<id>` and function id `<funcId>`"; }
+private default &U _decode(int funcId, type[&U] _) { throw "No corresponding function found with `<funcId> (<state>)`"; }
 
 @doc{The stack of active msg transformers at some point during rendering.}
 private list[Msg(Msg)] mappers = [];
 
-Handle encode(value x) = encode(curAppId, x);
+//Handle encode(value x) = encode(curAppId, x);
 
 // `encode` encodes its argument and all active mappers into a handle.
-Handle encode(str id, value x)
-  = handle(_encode(id, x), maps=[ _encode(id, f) | Msg(Msg) f <- mappers ]);
+Handle encode(value x)
+  = handle(_encode(x), maps=[ _encode(f) | Msg(Msg) f <- mappers ]);
 
-&T decode(str id, Handle h, type[&T] t) = decode(id, h.id, t); 
+&T decode(Handle h, type[&T] t) = decode(h.id, t); 
 
-&T decode(str id, int funcId, type[&T] t) = _decode(id, funcId, t); 
+&T decode(int funcId, type[&T] t) = _decode(funcId, t); 
 
 /*
  * Rendering
@@ -156,14 +182,12 @@ private list[Node] pop() {
 
 
 @doc{Initialize viewContext for an initial model, so that cmds are properly mapped.}
-tuple[list[Cmd], &T] initialize(str id, &T() init, void(&T) view) {
-  initViewContext(id, view);
+tuple[list[Cmd], &T] initialize(&T() init, void(&T) view) {
   return execute(init);
 }
 
 @doc{Render turns void returning views for a model &T into an Node node.}  
-Node render(str id, &T model, void(&T) block) {
-  initViewContext(id, block);
+Node render(&T model, void(&T) block) {
   push([]); 
   block(model);
   // TODO: assert top is not empty and size == 1
@@ -176,13 +200,25 @@ Node render(void() block) {
   return pop()[0];
 }
 
+private list[map[str, value]] extra = [];
+
+void withExtra(map[str, value] stuff, void() block) {
+  extra += [stuff];
+  block();
+  //extra = extra[0..-1]; build pops
+}
 
 @doc{The basic build function to construct html elements on the stack.
 The list of argument values can contain any number of Attr values.
-The last argument (if any) can be a block, an Node node, or a value.
+The last argument (if any) can be a blouitck, an Node node, or a value.
 In the latter case it is converted to a txt node.}
-void build(list[value] vals, Node(list[Node], list[Attr]) elt) {
-  
+void build(list[value] vals, str tagName) {
+  map[str, value] myExtra = ();
+  if (size(extra) > 0) {
+    myExtra = extra[-1];  
+    extra = extra[0..-1]; // pop here; we don't want  propagate extra down.
+  }
+
   push([]); // start a new scope for this element's children
   
   if (vals != []) { 
@@ -196,15 +232,19 @@ void build(list[value] vals, Node(list[Node], list[Attr]) elt) {
       _text(vals[-1]);
     }
   }
-  
+
   // construct the `elt` using the kids at the top of the stack
   // and any attributes in vals and add it to the parent's list of children.
-  add(elt(pop(), [ a | Attr a <- vals ]));
-  
+  list[Attr] as = [ a | Attr a <- vals ];
+  Node theNode = hnode(element(), tagName=tagName, kids=pop(), attrs=attrsOf(as), props=propsOf(as), events=eventsOf(as));
+  if (myExtra != ()) {
+    theNode.extra = myExtra;
+  }
+  add(theNode);
 }
 
 @doc{Create a text node from an arbitrary value.}
-void _text(value v) = add(txt("<v>")); // TODO: HTML encode.
+void _text(value v) = add(hnode(txt(), contents="<v>")); // TODO: HTML encode.
 
 
 /*
@@ -218,12 +258,12 @@ data Sub // Subscriptions
   ;
 
 @doc{Smart constructors for constructing encoded subscriptions.}
-Sub timeEvery(str id, Msg(int) int2msg, int interval)
-  = subscription("timeEvery", encode(id, int2msg), args = ("interval": interval));
+Sub timeEvery(Msg(int) int2msg, int interval)
+  = subscription("timeEvery", encode(int2msg), args = ("interval": interval));
 
-alias Subs[&T] = list[Sub](str, &T);
+alias Subs[&T] = list[Sub](&T);
 
-list[Sub] noSubs(str _, &T _) = [];
+list[Sub] noSubs(&T _) = [];
 
 
 @doc{Commands represent actions that need to be performed at the client.}
@@ -242,9 +282,8 @@ void do(Cmd cmd) {
 }  
   
 // the pendant of render, but on init and update
-tuple[list[Cmd], &T] execute(str appId, Msg msg, &T(Msg, &T) update, &T model) 
+tuple[list[Cmd], &T] execute(Msg msg, &T(Msg, &T) update, &T model) 
   = execute(&T() { 
-      curAppId = appId;
       return update(msg, model); 
     });
 
@@ -257,6 +296,10 @@ tuple[list[Cmd], &T] execute(&T() init) {
 @doc{Smart constructors for constructing encoded commands.}
 Cmd random(Msg(int) f, int from, int to)
   = command("random", encode(f), args = ("from": from, "to": to));
+  
+Cmd setFocus(Msg() f, str id)
+  = command("setFocus", encode(f), args = ("id": id));
+
 
 /*
  * Event decoders
@@ -270,35 +313,46 @@ data Hnd // Handlers for events
  * Message parsing
  */  
   
-alias Parser = Msg(str,str,Handle,map[str,str]);  
+alias Parser = Msg(str,Handle,map[str,value]);  
   
 @doc{Convert request parameters to a Msg value. Active mappers at `path`
 transform the message according to f.}
-Msg params2msg(str id, map[str, str] params, Parser parse) 
-  = parse(id, params["type"], toHandle(params), params);
+Msg params2msg(map[str, value] params, Parser parse) 
+  = parse(params["type"], toHandle(params), params);
 
 @doc{Parse request parameters into a Handle.}
-Handle toHandle(map[str, str] params)
-  = handle(toInt(params["id"]), maps=toMaps(params["maps"] ? ""));
+Handle toHandle(map[str, value] params)
+  = handle(params["id"], maps=toMaps(params["maps"] ? ""));
 
 list[int] toMaps(str x) = [ toInt(i) | str i <- split(";", x), i != "" ];
 
-Msg parseMsg(str id, "nothing", Handle h, map[str, str] p) 
-  = applyMaps(id, h, decode(id, h, #Msg)); 
+Msg parseMsg("nothing", Handle h, map[str, value] p) 
+  = applyMaps(h, decode(h, #Msg)); 
 
-Msg parseMsg(str id, "string", Handle h, map[str,str] p) 
-  = applyMaps(id, h, decode(id, h, #Msg(str))(p["value"]));
+Msg parseMsg("string", Handle h, map[str,value] p) 
+  = applyMaps(h, decode(h, #Msg(str))(v))
+  when str v := p["value"];
 
-Msg parseMsg(str id, "boolean", Handle h, map[str,str] p) 
-  = applyMaps(id, h, decode(id, h, #Msg(bool))(p["value"] == "true"));
+Msg parseMsg("boolean", Handle h, map[str, value] p) 
+  = applyMaps(h, decode(h, #Msg(bool))(p["value"] == "true"));
 
-Msg parseMsg(str id, "integer", Handle h, map[str,str] p) 
-  = applyMaps(id, h, decode(id, h, #Msg(int))(toInt(p["value"])));
+Msg parseMsg("integer", Handle h, map[str, value] p) 
+  = applyMaps(h, decode(h, #Msg(int))(p["value"]));
 
-Msg parseMsg(str id, "real", Handle h, map[str,str] p)
-  = applyMaps(id, h, decode(id, h, #Msg(real))(toReal(p["value"])));
+Msg parseMsg("real", Handle h, map[str,value] p)
+  = applyMaps(h, decode(h, #Msg(real))(p["value"]));
 
-Msg applyMaps(str id, Handle h, Msg msg) = ( msg | decode(id, m, #(Msg(Msg)))(it) | int m <- h.maps );
+Msg parseMsg("values", Handle h, map[str,value] p)
+  = applyMaps(h, decode(h, #Msg(value,value))(p["value1"], p["value2"]));
+
+Msg parseMsg("json", Handle h, map[str, value] p)
+  = applyMaps(h, decode(h, t)(p))
+  when type[Msg(map[str,value])] t := #Msg(map[str,value]);
+
+
+Msg applyMaps(Handle h, Msg msg) = ( msg | decode(m, #(Msg(Msg)))(it) | int m <- h.maps );
+
+
 
 /*
  * Mapping
@@ -314,8 +368,8 @@ private &T withMapper(Msg(Msg) f, &T() block) {
 
 // bug: if same name as other mapped, if calling the other
 // it can call this one...
-list[Sub] mapSubs(str appId, Msg(Msg) f, &T t, list[Sub](str, &T) subs) 
-  = withMapper(f, list[Sub]() { return subs(appId, t); });
+list[Sub] mapSubs(Msg(Msg) f, &T t, list[Sub](&T) subs) 
+  = withMapper(f, list[Sub]() { return subs(t); });
 
 &T mapCmds(Msg(Msg) f, Msg msg, &T t, &T(Msg, &T) upd) 
   = withMapper(f, &T() { return upd(msg, t); });
@@ -331,19 +385,7 @@ void mapView(Msg(Msg) f, &T t, void(&T) block) {
 // Some debugging utils
 
 void _reset() {
-  state = ();
+  state = <0, (), (), ()>;
   mappers = [];
   stack = [];
 }
-
-bool _printState() {
-  for (str id <- contexts) {
-    println("Function table for <contexts[id]>: ");
-      for (int k <- state[contexts[id]].from) {
-        print("  <k>: ");
-        println(state[contexts[id]].from[k]);
-    }
-  }
-  return true;
-}
-

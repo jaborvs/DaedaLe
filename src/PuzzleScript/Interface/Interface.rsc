@@ -289,10 +289,8 @@ App[str]() load_app(Engine engine, Checker checker){
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
 	// DynamicChecker dc = analyse_game(engine);
 
-    println("Past DynamicChecker");
-	
 	// Model init() = <"none", title, engine, 0, toMessages(dc.msgs)>;
-	Model init() = <"none", title, engine, checker>;
+	Model init() = <"none", title, engine, checker, 0>;
 	SalixApp[Model] gameApp(str appId = "root") = makeApp(appId, init, view, update);
     
     println("Making gameWebApp");
