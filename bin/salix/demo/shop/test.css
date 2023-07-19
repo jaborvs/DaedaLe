@@ -2,6 +2,7 @@ body {
   font-family: 'Georgia';
   /*background: url('bg.jpg') no-repeat 50% 50% fixed; 
     background-size: cover;*/
+    background-color: rgb(255, 0, 0);
 }
 
 h1 {
