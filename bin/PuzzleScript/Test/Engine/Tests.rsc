@@ -64,6 +64,8 @@ void main() {
     engine.current_level = engine.converted_levels[0];
     Level save_level = engine.current_level;
 
+    bfs(engine, ["up","down","left","right"], model.engine.checker, "win");
+
     list[str] possible_moves = ["up", "left", "down", "right"];
     
     for (int i <- [0..1]) {

@@ -2,6 +2,16 @@ body {
     background-color: rgb(125, 190, 110);
 }
 
+#header {
+    text-align: center;
+    width: 100%;
+    height: 20px;
+}
+
+.main {
+    display: flex;
+}
+
 .trans {
     color: white;
     width: 21px;
@@ -13,11 +23,18 @@ body {
     text-align: center;
 }
 
+#left, #right {
+    flex-grow: 1;
+}
 
-.left {
+/* .left {
     display: inline-table;
     margin: 10px;
 }
+
+.right {
+    margin-left: 0px;
+} */
 
 .true {
     color: darkgreen;
@@ -45,10 +62,10 @@ overflow-x: auto;
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(19, 1fr);
     grid-gap: 0px;
-    width: 60px;
-    height: 60px;
+    width: 600px;
+    height: 600px;
 }
 
 .cell {

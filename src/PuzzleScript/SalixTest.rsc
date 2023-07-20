@@ -11,6 +11,7 @@ import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import PuzzleScript::DynamicAnalyser;
 
 import String;
 import List;
@@ -33,9 +34,13 @@ data Msg
 	| win()
 	| direction(int i)
     | editorChange(map[str,value] delta)
+    | load_design()
+    | analyse()
 	;
 
 Model update(Msg msg, Model model){
+
+    println(msg);
 
 	if (model.engine.current_level is level){
 		switch(msg){
@@ -49,15 +54,41 @@ Model update(Msg msg, Model model){
 			}
 			case restart(): model.input = "restart";
             case editorChange(map[str,value] delta):
-                println("editor change");
+                println(delta);
+            case load_design(): { 
+                println("Reloading"); 
+                model = reload(model.code);
+            }
+            case analyse(): {
+                println("Analyse? Ok!");
+                model.engine.level_data[model.engine.current_level.original].shortest_path = bfs(model.engine, ["up","down","left","right"], model.checker, "win");
+                println("Done");
+            }
 			default: return model;
 		}
 		
 		// model.engine.msg_queue = [];
-		model.engine = execute_move(model.engine, model.checker, model.input);
+        println("Executing move <model.input>");
+        if (msg is direction) model.engine = execute_move(model.engine, model.checker, model.input);
+        println("Executed move <model.input>");
 	}
 
     return model;
+}
+
+Model reload(str src) {
+
+    println("Reloading game");
+
+	PSGame game = load(src);
+	Checker checker = check_game(game);
+	Engine engine = compile(checker);
+
+	str title = get_prelude(engine.game.prelude, "title", "Unknown");
+ 
+	Model init() = <"none", title, engine, checker, 0, readFile(src)>;
+    return init();
+
 }
 
 void view_panel(Model m){
@@ -70,21 +101,44 @@ void view_panel(Model m){
     });
 }
 
+void view_options(Model m){
+    div(class("panel"), () {
+        h3("Get insights");
+        button(onClick(analyse()), "Analyse");
+    });
+}
+
+void view_results(Model m) {
+    div(class("panel"), () {
+        h3("Results");
+        p("Shortest path = <m.engine.level_data[m.engine.current_level.original].shortest_path>");
+
+    });
+}
+
 void view(Model m) {
 
+    div(class("header"), () {
+        h2(m.title);
+    });
+
     div(class("main"), () {
-		p(m.input);
-		h2(m.title);
-        ace("myAce", event=onAceChange(editorChange), code = m.code);
 
 		div(class("left"), () {
-            view_panel(m);
+            ace("myAce", event=onAceChange(editorChange), code = m.code);
+            button(onClick(load_design()), "reload");
         });
 		// div(class("left"), () {view_layers(m);});
 		// div(class("left"), onKeyDown(direction), () {
 		// 	h3("Level");
         // div(class("simple"), () {view_level_simple(m);});
-        div(class("grid"), () {view_level(m);});
+        div(class("right"), () {
+            div(class("grid"), () {view_level(m);});
+            println("Showed level");
+            view_panel(m);
+            view_options(m);
+            view_results(m);
+        });
 		// });
 	});
 }
@@ -171,6 +225,8 @@ void view_level(Model m) {
 
 default void view_sprite(Model m, str name){
 
+    println(name);
+
     // if (!m.engine.objects[name]?) return;
 	ObjectData obj = m.engine.objects[name];
 	table(class("sprite"), class("cell"), () {
@@ -206,13 +262,16 @@ void view_sprite(Model m, str _ : "transparent"){
 	});
 }
 
+
+
 App[Model]() main() {
 
-	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|);
+    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-	game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
+    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|;
+	game = load(game_loc);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/byyourside.PS|);
 
 	checker = check_game(game);
@@ -220,7 +279,7 @@ App[Model]() main() {
 
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
 
-	Model init() = <"none", title, engine, checker, 0, "">;
+	Model init() = <"none", title, engine, checker, 0, readFile(game_loc)>;
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/style.css"]), update);
     // SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view), update);
 

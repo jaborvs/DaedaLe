@@ -123,7 +123,7 @@ list[str] bfs(Engine starting, list[str] moves, Checker c, str condition) {
 
         for (m <- moves) {
 
-            // println("Trying <current[1] + [m]>");
+            println("Trying <current[1] + [m]>");
 
             Engine beforeState = current[0];
             Engine newState = execute_move(current[0], c, m);

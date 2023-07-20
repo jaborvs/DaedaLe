@@ -15,8 +15,11 @@ PuzzleScript::AST::PSGame load(loc path) {
 
 PuzzleScript::AST::PSGame load(str src) {
 
+  println("1.1");
   start[PSGame] t = ps_parse(src);
+  println("1.2");
   PuzzleScript::AST::PSGame g = ps_implode(t);
+  println("1.3");
   return g;
 }
 
