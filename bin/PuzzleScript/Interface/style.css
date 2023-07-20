@@ -1,5 +1,6 @@
 body {
-    background-color: rgb(125, 190, 110);
+    background-color: #272822;
+    color: white;
 }
 
 #header {
@@ -23,8 +24,15 @@ body {
     text-align: center;
 }
 
-#left, #right {
+#left, #middle, #right {
     flex-grow: 1;
+    display: flex;
+}
+
+.left, .middle, .right {
+    border-color: white;
+    border-radius: 5px;
+    border: solid;
 }
 
 /* .left {
@@ -60,38 +68,49 @@ overflow-x: auto;
     grid-template-rows: 250px 1fr;
 } */
 
+.divflex {
+    flex: 1 1 auto;
+    display: flex;
+
+}
+
 .grid {
-    display: grid;
-    grid-template-columns: repeat(19, 1fr);
     grid-gap: 0px;
-    width: 600px;
-    height: 600px;
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    height: 400px;
+}
+
+.row {
+    border-collapse: collapse;
+    width: 400px;
+    flex: 1 1 auto;
+    flex-direction: row;
+    display: flex;
 }
 
 .cell {
     border-collapse: collapse;
-    width: 100%;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
 }
 
-.cell td {
-    /* width: 10px;
-    height: 10px; */
-    border: 1px solid black;
-    text-align: center;
+.sprite {
+    border-collapse: collapse;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.pixel {
+    display: flex;
+    flex: 1 1 auto;
 }
 
 .layer {
 grid-area: 1 / 1 / 2 / 2;
-}
-
-/* .cell {
-    height: 50px;
-    width: 50px;
-} */
-
-.pixel{
-    width: 10px;
-    height: 10px;
 }
 
 .black {

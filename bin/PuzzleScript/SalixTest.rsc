@@ -40,8 +40,6 @@ data Msg
 
 Model update(Msg msg, Model model){
 
-    println(msg);
-
 	if (model.engine.current_level is level){
 		switch(msg){
 			case direction(int i): {
@@ -60,17 +58,13 @@ Model update(Msg msg, Model model){
                 model = reload(model.code);
             }
             case analyse(): {
-                println("Analyse? Ok!");
                 model.engine.level_data[model.engine.current_level.original].shortest_path = bfs(model.engine, ["up","down","left","right"], model.checker, "win");
-                println("Done");
             }
 			default: return model;
 		}
 		
 		// model.engine.msg_queue = [];
-        println("Executing move <model.input>");
         if (msg is direction) model.engine = execute_move(model.engine, model.checker, model.input);
-        println("Executed move <model.input>");
 	}
 
     return model;
@@ -132,12 +126,14 @@ void view(Model m) {
 		// div(class("left"), onKeyDown(direction), () {
 		// 	h3("Level");
         // div(class("simple"), () {view_level_simple(m);});
-        div(class("right"), () {
+        div(class("middle"), onKeyDown(direction), () {
             div(class("grid"), () {view_level(m);});
-            println("Showed level");
-            view_panel(m);
-            view_options(m);
-            view_results(m);
+            div(class(""), () {view_panel(m);});
+            div(class(""), () {view_options(m);});
+            // if (m.engine.level_data[m.engine.current_level.original].shortest_path != [""]) view_results(m);
+        });
+        div(class("right"), () {
+            if (m.engine.level_data[m.engine.current_level.original].shortest_path != [""]) view_results(m);
         });
 		// });
 	});
@@ -189,6 +185,8 @@ void view_level(Model m) {
         tuple[int width, int height] level_size = m.engine.level_data[m.engine.current_level.original].size;
 
         for (int i <- [0..level_size.height]) {
+
+            div(class("row"), () {
             for (int j <- [0..level_size.width]) {
 
                 if (m.engine.current_level.objects[<i,j>]?) {
@@ -196,16 +194,17 @@ void view_level(Model m) {
                     if (size(m.engine.current_level.objects[<i,j>]) > 0) {
                         obj = m.engine.current_level.objects[<i,j>][size(m.engine.current_level.objects[<i,j>]) - 1];
                     } else {
-                        td(class("transparent"), class("cell"), () {view_sprite(m, "transparent");});
+                        div(class("transparent"), class("cell"), () {view_sprite(m, "transparent");});
                         continue;
                     }
-                    td(class(obj.current_name), class("cell"), () {view_sprite(m, obj.current_name);});
+                    div(class(obj.current_name), class("cell"), () {view_sprite(m, obj.current_name);});
                 }
                 else {
-                    td(class("transparent"), class("cell"), () {view_sprite(m, "transparent");});
+                    div(class("transparent"), class("cell"), () {view_sprite(m, "transparent");});
                 }
 
             }
+            ;});
         }
 
 		// for (Layer lyr <- layers){
@@ -225,22 +224,21 @@ void view_level(Model m) {
 
 default void view_sprite(Model m, str name){
 
-    println(name);
-
     // if (!m.engine.objects[name]?) return;
 	ObjectData obj = m.engine.objects[name];
-	table(class("sprite"), class("cell"), () {
+	// table(class("sprite"), class("cell"), () {
+	div(class("sprite"), () {
 		for (int i <- [0..5]){
-			tr((){
+			div(class("divflex"), (){
 				for (int j <- [0..5]){
 					if(isEmpty(obj.sprite)){
-						td(class("pixel"), class(toLowerCase(obj.colors[0])));
+						div(class("pixel"), class(toLowerCase(obj.colors[0])));
 					} else {
 						Pixel pix = obj.sprite[i][j];
 						if (pix.pixel == "."){
-							td(class("pixel"), class("transparent"));
+							div(class("pixel"), class("transparent"));
 						} else {
-							td(class("pixel"), class(toLowerCase(obj.colors[toInt(pix.pixel)])));
+							div(class("pixel"), class(toLowerCase(obj.colors[toInt(pix.pixel)])));
 						}
 					}
 					
@@ -251,11 +249,11 @@ default void view_sprite(Model m, str name){
 }
 
 void view_sprite(Model m, str _ : "transparent"){
-	table(class("sprite"), class("cell"), () {
+	div(class("sprite"), () {
 		for (int _ <- [0..5]){
-			tr((){
+			div(class("divflex"), (){
 				for (int _ <- [0..5]){
-					td(class("pixel"), class("transparent"));
+					div(class("pixel"), class("transparent"));
 				}
 			});
 		}
@@ -266,11 +264,11 @@ void view_sprite(Model m, str _ : "transparent"){
 
 App[Model]() main() {
 
-    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
+    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|;
+    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|;
 	game = load(game_loc);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/byyourside.PS|);
 
