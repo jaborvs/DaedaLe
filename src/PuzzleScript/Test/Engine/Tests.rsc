@@ -7,6 +7,8 @@ module PuzzleScript::Test::Engine::Tests
 // import util::Web;
 
 // import PuzzleScript::IDE::IDE;
+import util::ShellExec;
+import lang::json::IO;
 
 import PuzzleScript::Report;
 import PuzzleScript::DynamicAnalyser;
@@ -30,6 +32,41 @@ import util::Benchmark;
 // 		return objs[rand];
 // 	}
 
+// public str greetInPython() {
+//     Py::PyObject myModule = pyModule("mymodule");
+//     Py::PyObject pyFunc = myModule.("greet"); // Access the function 'greet' from the 'mymodule' Python module.
+//     str result = Py::callObject(pyFunc, []).toString();
+//     return result;
+// }
+
+str pixel_to_json(Engine engine) {
+
+    tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
+    str json = "[";
+
+    for (int i <- [0..level_size.height]) {
+        for (int j <- [0..level_size.width]) {
+
+            str name = engine.current_level.objects[<i,j>].current_name;
+            ObjectData obj = engine.objects[name];
+
+            json += "{";
+            for (int k <- [0..5]) {
+                for (int l <- [0..5]) {
+                    json += "{";
+                    json += "\"x\": <i * 5 + k>,";
+                    json += "\"y\": <j * 5 + l>,";
+                    json += "\"color\": <toLowerCase(obj.colors[0])>";
+                    json += "}";
+                }
+            }
+            json += "}";
+        }
+    }
+
+    return json;
+
+}
 
 void main() {
 
@@ -52,14 +89,21 @@ void main() {
 
 	checker = check_game(game);
 	engine = compile(checker);
-    
-    // for (RuleData rd <- engine.game.rules) {
 
-    //     println(engine.indexed_rules[rd][1]);
+    // list[list[value]] colors =[[0,1,"red"]];
+    // str json_data = toJSON(colors);
+    // str json_data = "[{\"x\": 1, \"y\": 2, \"color\": \"red\"}, {\"x\": 1, \"y\": 2, \"color\": \"red\"}]";
+    str json_data = pixel_to_json(engine);
+    print(json_data);
+    return;
 
-    // }
 
-    // return;
+    println("Start");
+    int before = cpuTime();
+    println("Output = <exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/|, args = [json_data])>");
+    println("Took: <(cpuTime() - before) / 1000000000.00> sec");
+
+    return;
 
     engine.current_level = engine.converted_levels[0];
     Level save_level = engine.current_level;

@@ -23,6 +23,32 @@
       <div id="root">
       </div>
     </div>
+    <form id="dslForm">
+        <label for="inputText">Enter your DSL code:</label>
+        <textarea id="inputText" rows="4" cols="50"></textarea>
+        <input type="submit" value="Parse and Process">
+      </form>
+      <div id="output"></div>
+    
+      <script>
+        document.getElementById('dslForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          const inputText = document.getElementById('inputText').value;
+    
+          // Create a new FormData object to send the input data
+          const formData = new FormData();
+          formData.append('inputText', inputText);
+    
+          fetch('/parse', {
+            method: 'POST',
+            body: formData // Send the FormData object as the request body
+          })
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+          });
+        });
+      </script>
     
 </body>
 </html>

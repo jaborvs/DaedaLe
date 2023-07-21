@@ -51,7 +51,7 @@ Attr onAceChange(Msg(map[str,value]) f)
 
 void ace(str name, str code="", Attr event = null(), str theme="ace/theme/monokai", str mode="ace/mode/javascript",
   Maybe[Mode] modeDefinition = nothing(),
-  AceAddons modes=ACE_MODES, AceAddons themes=ACE_THEMES, str width="600px", str height="1000px"
+  AceAddons modes=ACE_MODES, AceAddons themes=ACE_THEMES, str width="30vw", str height="1000px"
   ) {
     
     div(class("salix-alien"), id(name), attr("onClick", initCode(name, theme, mode)), () {

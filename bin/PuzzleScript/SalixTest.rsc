@@ -6,6 +6,8 @@ import salix::App;
 import salix::Index;
 import salix::ace::Editor;
 
+import util::Benchmark;
+
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
@@ -113,13 +115,14 @@ void view_results(Model m) {
 void view(Model m) {
 
     div(class("header"), () {
-        h2(m.title);
+        h1(style(("text-shadow": "1px 1px 2px black")), "PuzzleScript");
     });
 
     div(class("main"), () {
 
 		div(class("left"), () {
-            ace("myAce", event=onAceChange(editorChange), code = m.code);
+            // ace("myAce", event=onAceChange(editorChange), code = m.code);
+            ace("myAce", code = m.code);
             button(onClick(load_design()), "reload");
         });
 		// div(class("left"), () {view_layers(m);});
@@ -127,16 +130,27 @@ void view(Model m) {
 		// 	h3("Level");
         // div(class("simple"), () {view_level_simple(m);});
         div(class("middle"), onKeyDown(direction), () {
-            div(class("grid"), () {view_level(m);});
-            div(class(""), () {view_panel(m);});
-            div(class(""), () {view_options(m);});
-            // if (m.engine.level_data[m.engine.current_level.original].shortest_path != [""]) view_results(m);
+            div (class("grid"), () {view_level(m);});
+            div(class("data"), () {
+                div(class(""), () {view_panel(m);});
+                div(class(""), () {view_options(m);});
+                if (m.engine.level_data[m.engine.current_level.original].shortest_path != []) view_results(m);
+            });
         });
         div(class("right"), () {
-            if (m.engine.level_data[m.engine.current_level.original].shortest_path != [""]) view_results(m);
+            div(class("tutomate"), () {
+
+                h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%")), "Tutomate");
+                form("Hello");
+
+            });
+            // if (m.engine.level_data[m.engine.current_level.original].shortest_path != []) view_results(m);
         });
 		// });
 	});
+    // div(class("footer"), () {
+    //     h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%")), "Tutomate");
+    // });
 }
 
 void view_level_simple(Model m) {
@@ -182,6 +196,8 @@ void view_level(Model m) {
 		// list[Layer] layers = m.engine.current_level.layers;
 		// view_background(m);
 
+        println("Resolving sprites");
+
         tuple[int width, int height] level_size = m.engine.level_data[m.engine.current_level.original].size;
 
         for (int i <- [0..level_size.height]) {
@@ -207,6 +223,8 @@ void view_level(Model m) {
             ;});
         }
 
+        println("Done");
+
 		// for (Layer lyr <- layers){
 		// 	table(class("layer"), () {
 		// 		for (Line line <- lyr) {
@@ -227,6 +245,9 @@ default void view_sprite(Model m, str name){
     // if (!m.engine.objects[name]?) return;
 	ObjectData obj = m.engine.objects[name];
 	// table(class("sprite"), class("cell"), () {
+
+    // real before = cpuTime() / 1000000000.00;
+
 	div(class("sprite"), () {
 		for (int i <- [0..5]){
 			div(class("divflex"), (){
@@ -238,7 +259,9 @@ default void view_sprite(Model m, str name){
 						if (pix.pixel == "."){
 							div(class("pixel"), class("transparent"));
 						} else {
-							div(class("pixel"), class(toLowerCase(obj.colors[toInt(pix.pixel)])));
+                            // println(pix.color[0]);
+                            div(class("pixel"), style(("background-color": pix.color)));
+							// else div(class("pixel"), class(toLowerCase(obj.colors[toInt(pix.pixel)])));
 						}
 					}
 					
@@ -246,6 +269,8 @@ default void view_sprite(Model m, str name){
 			});
 		}
 	});
+
+    // println((cpuTime() - before) / 1000000000.00);
 }
 
 void view_sprite(Model m, str _ : "transparent"){
@@ -266,9 +291,9 @@ App[Model]() main() {
 
     // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
-	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|);
-	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
-    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|;
+	// loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|;
+	loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
+    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|;
 	game = load(game_loc);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/byyourside.PS|);
 
