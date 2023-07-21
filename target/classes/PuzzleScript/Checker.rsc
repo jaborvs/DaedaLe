@@ -48,7 +48,7 @@ data Condition (loc src = |unknown:///|)
 
 // anno loc Condition.src;
 
-map[str, str] COLORS = (
+public map[str, str] COLORS = (
 	"black"   		: "#000000",
 	"white"			: "#FFFFFF",
 	"grey"			: "#555555",

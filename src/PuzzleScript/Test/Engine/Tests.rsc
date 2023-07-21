@@ -32,38 +32,51 @@ import util::Benchmark;
 // 		return objs[rand];
 // 	}
 
-// public str greetInPython() {
-//     Py::PyObject myModule = pyModule("mymodule");
-//     Py::PyObject pyFunc = myModule.("greet"); // Access the function 'greet' from the 'mymodule' Python module.
-//     str result = Py::callObject(pyFunc, []).toString();
-//     return result;
-// }
-
 str pixel_to_json(Engine engine) {
 
     tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
+
+    // int total = 2;
+    // int current = 0;
+
     str json = "[";
 
     for (int i <- [0..level_size.height]) {
+
+        // current += 1;
+
         for (int j <- [0..level_size.width]) {
 
-            str name = engine.current_level.objects[<i,j>].current_name;
+            if (!(engine.current_level.objects[<i,j>])?) continue;
+
+            list[Object] objects = engine.current_level.objects[<i,j>];
+            str name = objects[size(objects) - 1].current_name;
             ObjectData obj = engine.objects[name];
 
-            json += "{";
             for (int k <- [0..5]) {
                 for (int l <- [0..5]) {
                     json += "{";
-                    json += "\"x\": <i * 5 + k>,";
-                    json += "\"y\": <j * 5 + l>,";
-                    json += "\"color\": <toLowerCase(obj.colors[0])>";
-                    json += "}";
+                    json += "\"x\": <j * 5 + l>,";
+                    json += "\"y\": <i * 5 + k>,";
+                    if(isEmpty(obj.sprite)) json += "\"c\": \"<COLORS[toLowerCase(obj.colors[0])]>\"";
+                    else {
+                        Pixel pix = obj.sprite[k][l];
+                        if (COLORS[pix.color]?) json += "\"c\": \"<COLORS[pix.color]>\"";
+						else if (pix.pixel != ".") json += "\"c\": \"<pix.color>\"";
+                        else json += "\"c\": \"#FFFFFF\"";
+                    }
+                    json += "},";
                 }
             }
-            json += "}";
         }
+        // if (current == total) break;
     }
+    json = json[0..size(json) - 1];
+    json += "]";
 
+    // println(size(json));
+
+    // writeFile(|project://automatedpuzzlescript/src/PuzzleScript/json.txt|, json);
     return json;
 
 }
@@ -94,13 +107,12 @@ void main() {
     // str json_data = toJSON(colors);
     // str json_data = "[{\"x\": 1, \"y\": 2, \"color\": \"red\"}, {\"x\": 1, \"y\": 2, \"color\": \"red\"}]";
     str json_data = pixel_to_json(engine);
-    print(json_data);
-    return;
-
+    // print(json_data);
 
     println("Start");
     int before = cpuTime();
     println("Output = <exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/|, args = [json_data])>");
+    // println("Output = <exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/|)>");
     println("Took: <(cpuTime() - before) / 1000000000.00> sec");
 
     return;
