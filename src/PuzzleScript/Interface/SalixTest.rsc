@@ -1,4 +1,4 @@
-module PuzzleScript::SalixTest
+module PuzzleScript::Interface::SalixTest
 
 import salix::HTML;
 import salix::Core;
@@ -7,6 +7,8 @@ import salix::Index;
 import salix::ace::Editor;
 
 import util::Benchmark;
+import util::ShellExec;
+import lang::json::IO;
 
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
@@ -23,7 +25,7 @@ import IO;
 
 public int i = 0;
 
-alias Model = tuple[str input, str title, Engine engine, Checker checker, int update, str code];
+alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, str code];
 
 data Msg 
 	= left() 
@@ -40,7 +42,57 @@ data Msg
     | analyse()
 	;
 
+tuple[str,str,str] pixel_to_json(Engine engine, int index) {
+
+    engine.current_level.player;
+
+    tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
+
+    str json = "[";
+
+    for (int i <- [0..level_size.height]) {
+
+        for (int j <- [0..level_size.width]) {
+
+            if (!(engine.current_level.objects[<i,j>])? || isEmpty(engine.current_level.objects[<i,j>])) {
+                continue;
+            }
+
+            list[Object] objects = engine.current_level.objects[<i,j>];
+
+            str name = objects[size(objects) - 1].current_name;
+            ObjectData obj = engine.objects[name];
+
+            for (int k <- [0..5]) {
+                for (int l <- [0..5]) {
+
+                    json += "{";
+                    json += "\"x\": <j * 5 + l>,";
+                    json += "\"y\": <i * 5 + k>,";
+                    if(isEmpty(obj.sprite)) json += "\"c\": \"<COLORS[toLowerCase(obj.colors[0])]>\"";
+                    else {
+                        Pixel pix = obj.sprite[k][l];
+                        if (COLORS[pix.color]?) json += "\"c\": \"<COLORS[pix.color]>\"";
+						else if (pix.pixel != ".") json += "\"c\": \"<pix.color>\"";
+                        else json += "\"c\": \"#FFFFFF\"";
+                    }
+                    json += "},";
+                }
+            }
+        }
+    }
+    json = json[0..size(json) - 1];
+    json += "]";
+
+    // writeFile(|project://automatedpuzzlescript/src/PuzzleScript/json.txt|, json);
+    return <json, "{\"width\": <level_size.width>, \"height\": <level_size.height>}", "{\"index\": <index>}">;
+
+}
+
+
 Model update(Msg msg, Model model){
+
+    model.index += 1;
 
 	if (model.engine.current_level is level){
 		switch(msg){
@@ -66,7 +118,12 @@ Model update(Msg msg, Model model){
 		}
 		
 		// model.engine.msg_queue = [];
-        if (msg is direction) model.engine = execute_move(model.engine, model.checker, model.input);
+        if (msg is direction) {
+            model.engine = execute_move(model.engine, model.checker, model.input);
+            println(model.engine.current_level.player);
+            tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
+            exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/|, args = [json_data[0], json_data[1], json_data[2]]);
+        }
 	}
 
     return model;
@@ -130,7 +187,13 @@ void view(Model m) {
 		// 	h3("Level");
         // div(class("simple"), () {view_level_simple(m);});
         div(class("middle"), onKeyDown(direction), () {
-            div (class("grid"), () {view_level(m);});
+            // div (class("test"), () {});
+            // div (class("grid"), () {view_level(m);});
+            // div (style(("background-size": "contain")), class("grid"), () {view_level_picture(m);});
+            // img(style(("width": "40vw", "height": "vh")), onMouseEnter(direction(37)), class("grid"), () {}); 
+            div(style(("width": "40vw", "height": "40vh")), () {
+                img(style(("width": "40vw", "height": "40vh", "image-rendering": "pixelated")), (src("PuzzleScript/Interface/output_image<m.index>.png")), () {});
+            });
             div(class("data"), () {
                 div(class(""), () {view_panel(m);});
                 div(class(""), () {view_options(m);});
@@ -185,6 +248,11 @@ void view_level_simple(Model m) {
 
 }
 
+void view_level_picture(Model m) {
+
+    p(m.input);
+
+}
 
 
 void view_level(Model m) {
@@ -301,6 +369,11 @@ App[Model]() main() {
 	engine = compile(checker);
 
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
+
+    println("Current level");
+
+    tuple[str, str, str] json_data = pixel_to_json(engine, 0);
+    exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/|, args = [json_data[0], json_data[1], json_data[2]]);
 
 	Model init() = <"none", title, engine, checker, 0, readFile(game_loc)>;
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/style.css"]), update);

@@ -37,8 +37,37 @@ body {
 .data {
     text-align: center;
     overflow:auto;
-    width:40vw;
+    width:30vw;
 }
+
+.test {
+    position: relative;
+    width: 40vw; /* Set the size of the container */
+    height: 40vw;
+    background-color: #e0e0e0;
+  }
+  
+  .test::before,
+  .test::after {
+    content: '';
+    position: absolute;
+    /* width: px;
+    height: 50px; */
+  }
+  
+  /* Color the squares using background colors */
+  .test::before {
+    top: 10px;
+    left: 10px;
+    background-color: red;
+  }
+  
+  .test::after {
+    top: 70px;
+    left: 70px;
+    background-color: blue;
+  }
+  
 
 #left, #middle, #right {
     flex-grow: 1;
@@ -60,7 +89,7 @@ body {
 
 .right {
     margin-left: 0px;
-    width: 30vw;
+    width: 40vw;
 }
 
 .true {
@@ -97,8 +126,10 @@ overflow-x: auto;
     grid-gap: 0px;
     display: flex;
     flex-direction: column;
-    width: 40vw;
-    height: 40vw;
+    width: 30vw;
+    height: 30vw;
+    /* background-image: url("output_image.png"); */
+    /* background-size: contain; */
 }
 
 .row {
