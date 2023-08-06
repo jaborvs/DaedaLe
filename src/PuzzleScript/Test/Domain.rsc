@@ -9,15 +9,16 @@ syntax Lesson
   = lesson: "lesson" ID name "{" Elem* elems "}";
 
 syntax Elem 
-    = dead_end: "fails if" ID name "in corner;";
-    // | win_condition: "learn to" {Verb verb","}* ";"
-    // | verb_definition: "verb" Verb verb;
+    = dead_end: "fails if" ID name "in corner"
+    | win_condition: "learn to" {ID name","}*
+    | verb_definition: "verb" ID name "=" Mechanism mechanism;
 
 // syntax Verb  //climb, fall
 //   = verb: ID name "[" Mechanism* mechanisms "]";
 
-// syntax Mechanism
-//   = mechanism: "[" {INT line ","}* "]"; 
+syntax Mechanism
+  = mechanism: "[" {Number "," }* rule_nrs "]";
+//   = mechanism: "[" INT* rule_nrs "]"; 
 
 keyword Keyword
   = "deck" | "dimension" | "cardType" | "cards" | "card" | "of"
@@ -29,8 +30,23 @@ keyword Keyword
 lexical ID
   = id: ([a-zA-Z_$] [a-zA-Z0-9_$]* !>> [a-zA-Z0-9_$]) val \ Keyword;
 
-// lexical INT
-//  = [0-9]+ val;
+// layout LAYOUTLIST
+//   = LAYOUT* !>> [\t-\n \r \ ] !>> "//" !>> "/*";
+
+layout LAYOUTLIST
+  = LAYOUT* !>> "//" !>> "/*";
+
+
+lexical LAYOUT
+  = Comment
+  | [\t-\n \r \ ];
+  
+lexical Comment
+  // "/*" (![*] | [*] !>> [/])* "*/" 
+  = "//" ![\n]* [\n];
+
+lexical Number
+ = [0-9]+ val;
 
 // syntax Trace
 //   = "[" {Action ","}* "]";
@@ -56,9 +72,9 @@ data Lesson = lesson(ID name)
             | lesson(ID name, list[Elem] elems);
 
 data Elem 
-    = dead_end(ID name);
-    // | goal(list[Verb] verbs)
-    // | verbdef(Verb verb);
+    = dead_end(ID name)
+    | win_condition(ID name)
+    | verb_definition(ID name, Mechanism mechansism);
 
 // data End =
 //     end(ID name);
@@ -66,8 +82,8 @@ data Elem
 // data Verb
 //     = verb(ID name, list[Mechanism] mechansisms);
 
-// data Mechanism 
-//     = mechanism(list[INT] rule_nrs);
+data Mechanism 
+    = mechanism(list[Number] rule_nrs);
 
 
 

@@ -92,11 +92,10 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
 
 Model update(Msg msg, Model model){
 
-    model.index += 1;
-
 	if (model.engine.current_level is level){
 		switch(msg){
 			case direction(int i): {
+                model.index += 1;
 				switch(i){
 					case 37: model.input = "left";
 					case 38: model.input = "up";
@@ -131,15 +130,13 @@ Model update(Msg msg, Model model){
 
 Model reload(str src) {
 
-    println("Reloading game");
-
 	PSGame game = load(src);
 	Checker checker = check_game(game);
 	Engine engine = compile(checker);
 
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
  
-	Model init() = <"none", title, engine, checker, 0, readFile(src)>;
+	Model init() = <"none", title, engine, checker, 0, src>;
     return init();
 
 }
@@ -164,7 +161,8 @@ void view_options(Model m){
 void view_results(Model m) {
     div(class("panel"), () {
         h3("Results");
-        p("Shortest path = <m.engine.level_data[m.engine.current_level.original].shortest_path>");
+        p("Dead ends = <size(m.engine.level_data[m.engine.current_level.original].shortest_path)> steps");
+        p("Shortest path = <size(m.engine.level_data[m.engine.current_level.original].shortest_path)> steps");
 
     });
 }
@@ -191,7 +189,7 @@ void view(Model m) {
             // div (class("grid"), () {view_level(m);});
             // div (style(("background-size": "contain")), class("grid"), () {view_level_picture(m);});
             // img(style(("width": "40vw", "height": "vh")), onMouseEnter(direction(37)), class("grid"), () {}); 
-            div(style(("width": "40vw", "height": "40vh")), () {
+            div(style(("width": "40vw", "height": "40vh")), onKeyDown(direction), () {
                 img(style(("width": "40vw", "height": "40vh", "image-rendering": "pixelated")), (src("PuzzleScript/Interface/output_image<m.index>.png")), () {});
             });
             div(class("data"), () {
@@ -216,151 +214,151 @@ void view(Model m) {
     // });
 }
 
-void view_level_simple(Model m) {
+// void view_level_simple(Model m) {
 
-	if (m.engine.current_level is message){
-		p("#####################################################");
-		p(m.engine.current_level.msg);
-		p("#####################################################");
-	} else {
-        tuple[int width, int height] level_size = m.engine.level_data[m.engine.current_level.original].size;
-        // println(level_size);
-        for (int i <- [0..level_size.height]) {
+// 	if (m.engine.current_level is message){
+// 		p("#####################################################");
+// 		p(m.engine.current_level.msg);
+// 		p("#####################################################");
+// 	} else {
+//         tuple[int width, int height] level_size = m.engine.level_data[m.engine.current_level.original].size;
+//         // println(level_size);
+//         for (int i <- [0..level_size.height]) {
 
-            list[str] line = [];
+//             list[str] line = [];
 
-            for (int j <- [0..level_size.width]) {
+//             for (int j <- [0..level_size.width]) {
 
-                if (m.engine.current_level.objects[<i,j>]?) {
-                    list[Object] objects = m.engine.current_level.objects[<i,j>];
+//                 if (m.engine.current_level.objects[<i,j>]?) {
+//                     list[Object] objects = m.engine.current_level.objects[<i,j>];
                     
-                    if (size(objects) > 1) line += objects[size(objects) - 1].char;
-                    else if (size(objects) == 1) line += objects[0].char;
-                }
-                else line += ".";
-            }
+//                     if (size(objects) > 1) line += objects[size(objects) - 1].char;
+//                     else if (size(objects) == 1) line += objects[0].char;
+//                 }
+//                 else line += ".";
+//             }
 
-            p(intercalate("", line));
-            line = [];
-        }
-        p("");
-    }
+//             p(intercalate("", line));
+//             line = [];
+//         }
+//         p("");
+//     }
 
-}
+// }
 
-void view_level_picture(Model m) {
+// void view_level_picture(Model m) {
 
-    p(m.input);
+//     p(m.input);
 
-}
+// }
 
 
-void view_level(Model m) {
-	if (m.engine.current_level is message){
-		p("#####################################################");
-		p(m.engine.current_level.msg);
-		p("#####################################################");
-	} else {
-		// list[Layer] layers = m.engine.current_level.layers;
-		// view_background(m);
+// void view_level(Model m) {
+// 	if (m.engine.current_level is message){
+// 		p("#####################################################");
+// 		p(m.engine.current_level.msg);
+// 		p("#####################################################");
+// 	} else {
+// 		// list[Layer] layers = m.engine.current_level.layers;
+// 		// view_background(m);
 
-        println("Resolving sprites");
+//         println("Resolving sprites");
 
-        tuple[int width, int height] level_size = m.engine.level_data[m.engine.current_level.original].size;
+//         tuple[int width, int height] level_size = m.engine.level_data[m.engine.current_level.original].size;
 
-        for (int i <- [0..level_size.height]) {
+//         for (int i <- [0..level_size.height]) {
 
-            div(class("row"), () {
-            for (int j <- [0..level_size.width]) {
+//             div(class("row"), () {
+//             for (int j <- [0..level_size.width]) {
 
-                if (m.engine.current_level.objects[<i,j>]?) {
-                    Object obj;
-                    if (size(m.engine.current_level.objects[<i,j>]) > 0) {
-                        obj = m.engine.current_level.objects[<i,j>][size(m.engine.current_level.objects[<i,j>]) - 1];
-                    } else {
-                        div(class("transparent"), class("cell"), () {view_sprite(m, "transparent");});
-                        continue;
-                    }
-                    div(class(obj.current_name), class("cell"), () {view_sprite(m, obj.current_name);});
-                }
-                else {
-                    div(class("transparent"), class("cell"), () {view_sprite(m, "transparent");});
-                }
+//                 if (m.engine.current_level.objects[<i,j>]?) {
+//                     Object obj;
+//                     if (size(m.engine.current_level.objects[<i,j>]) > 0) {
+//                         obj = m.engine.current_level.objects[<i,j>][size(m.engine.current_level.objects[<i,j>]) - 1];
+//                     } else {
+//                         div(class("transparent"), class("cell"), () {view_sprite(m, "transparent");});
+//                         continue;
+//                     }
+//                     div(class(obj.current_name), class("cell"), () {view_sprite(m, obj.current_name);});
+//                 }
+//                 else {
+//                     div(class("transparent"), class("cell"), () {view_sprite(m, "transparent");});
+//                 }
 
-            }
-            ;});
-        }
+//             }
+//             ;});
+//         }
 
-        println("Done");
+//         println("Done");
 
-		// for (Layer lyr <- layers){
-		// 	table(class("layer"), () {
-		// 		for (Line line <- lyr) {
-		// 			tr(() {
-		// 				for (Object obj <- line) {
-		// 					td(class(obj.name), class("cell"), () {view_sprite(m, obj.name);});
-		// 				}
-		// 			});
-		// 		}
+// 		// for (Layer lyr <- layers){
+// 		// 	table(class("layer"), () {
+// 		// 		for (Line line <- lyr) {
+// 		// 			tr(() {
+// 		// 				for (Object obj <- line) {
+// 		// 					td(class(obj.name), class("cell"), () {view_sprite(m, obj.name);});
+// 		// 				}
+// 		// 			});
+// 		// 		}
 				
-		// 	});
-		// }
-	}
-}
+// 		// 	});
+// 		// }
+// 	}
+// }
 
-default void view_sprite(Model m, str name){
+// default void view_sprite(Model m, str name){
 
-    // if (!m.engine.objects[name]?) return;
-	ObjectData obj = m.engine.objects[name];
-	// table(class("sprite"), class("cell"), () {
+//     // if (!m.engine.objects[name]?) return;
+// 	ObjectData obj = m.engine.objects[name];
+// 	// table(class("sprite"), class("cell"), () {
 
-    // real before = cpuTime() / 1000000000.00;
+//     // real before = cpuTime() / 1000000000.00;
 
-	div(class("sprite"), () {
-		for (int i <- [0..5]){
-			div(class("divflex"), (){
-				for (int j <- [0..5]){
-					if(isEmpty(obj.sprite)){
-						div(class("pixel"), class(toLowerCase(obj.colors[0])));
-					} else {
-						Pixel pix = obj.sprite[i][j];
-						if (pix.pixel == "."){
-							div(class("pixel"), class("transparent"));
-						} else {
-                            // println(pix.color[0]);
-                            div(class("pixel"), style(("background-color": pix.color)));
-							// else div(class("pixel"), class(toLowerCase(obj.colors[toInt(pix.pixel)])));
-						}
-					}
+// 	div(class("sprite"), () {
+// 		for (int i <- [0..5]){
+// 			div(class("divflex"), (){
+// 				for (int j <- [0..5]){
+// 					if(isEmpty(obj.sprite)){
+// 						div(class("pixel"), class(toLowerCase(obj.colors[0])));
+// 					} else {
+// 						Pixel pix = obj.sprite[i][j];
+// 						if (pix.pixel == "."){
+// 							div(class("pixel"), class("transparent"));
+// 						} else {
+//                             // println(pix.color[0]);
+//                             div(class("pixel"), style(("background-color": pix.color)));
+// 							// else div(class("pixel"), class(toLowerCase(obj.colors[toInt(pix.pixel)])));
+// 						}
+// 					}
 					
-				}
-			});
-		}
-	});
+// 				}
+// 			});
+// 		}
+// 	});
 
-    // println((cpuTime() - before) / 1000000000.00);
-}
+//     // println((cpuTime() - before) / 1000000000.00);
+// }
 
-void view_sprite(Model m, str _ : "transparent"){
-	div(class("sprite"), () {
-		for (int _ <- [0..5]){
-			div(class("divflex"), (){
-				for (int _ <- [0..5]){
-					div(class("pixel"), class("transparent"));
-				}
-			});
-		}
-	});
-}
+// void view_sprite(Model m, str _ : "transparent"){
+// 	div(class("sprite"), () {
+// 		for (int _ <- [0..5]){
+// 			div(class("divflex"), (){
+// 				for (int _ <- [0..5]){
+// 					div(class("pixel"), class("transparent"));
+// 				}
+// 			});
+// 		}
+// 	});
+// }
 
 
 
 App[Model]() main() {
 
-    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
+    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
 	// loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|;
-	loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
+	// loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
     // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|;
 	game = load(game_loc);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/byyourside.PS|);

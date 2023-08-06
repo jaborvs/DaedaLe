@@ -5,6 +5,7 @@ import List;
 import Type;
 import Set;
 import IO;
+import PuzzleScript::DynamicAnalyser;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Utils;
@@ -804,5 +805,76 @@ void print_level(Engine engine, Checker c) {
         line = [];
     }
     println("");
+
+}
+
+
+list[list[str]] get_dead_ends(Engine engine, Checker checker, list[str] winning_moves) {
+
+    list[str] possible_moves = ["up", "left", "down", "right"];
+    list[list[str]] dead_ends = [];
+    // list[list[str]] dead_end_rules = [];
+
+    int total = 0;
+    bool dead_end = false;
+
+    for (int i <- [0..size(winning_moves)]) {
+
+        engine = execute_move(engine, checker, winning_moves[i]);
+        if (i == size(winning_moves) - 1) continue;
+        // if (i == size(winning_moves) - 1 || dead_end) continue;
+
+        for (str move <- possible_moves) {
+
+            // Don't perform a move that is part of the winning moves
+            if (i < size(winning_moves) - 1 && winning_moves[i + 1] == move) continue;
+
+            Engine new_engine = execute_move(engine, checker, move);
+            // if (engine != new_engine) total += 1;
+            // if (check_conditions(new_engine, "dead_end")) {
+            //     dead_ends += [winning_moves[0..i+1] + [move]];
+            //     continue;
+            // }
+
+            if (engine == new_engine) continue;
+
+            // Skip moves that moves the player back
+            for (str move2 <- possible_moves) {
+                if ((move == "right" && move2 == "left") || (move == "left" && "move2" == "right")) continue;
+                if ((move == "up" && move2 == "down") || (move == "down" && move2 == "up")) continue;
+
+                Engine new_engine2 = execute_move(new_engine, checker, move2);
+
+                if (new_engine2 == new_engine) continue;
+
+                // OPTION 1 - Stuck keyword
+                int total = 0;
+                for (str move3 <- possible_moves) {
+                    Engine new_engine3 = execute_move(new_engine2, checker, move3);
+                    if (convert_tuples(new_engine3) == convert_tuples(new_engine2)) total += 1;
+                    else break;
+                }
+
+                if (total == 4) {
+                    print_level(new_engine2, checker);
+                    dead_ends += [winning_moves[0..i+1] + [move] + [move2]];
+                    list[str] rules = [];
+                    for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules) {
+                        if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) {
+                            rules += [engine.indexed_rules[rd2][1]];
+                        }
+                    }
+                    // dead_end_rules += [rules];
+                    dead_end = true;
+                }
+
+                // OPTION 2 - Corner keyword
+                // if (check_conditions(new_engine2, "dead_end")) dead_ends += [winning_moves[0..i+1] + [move] + [move2]];
+
+            }
+        }
+    }
+
+    return nub(dead_ends);
 
 }

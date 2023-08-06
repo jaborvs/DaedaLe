@@ -1,1 +1,6 @@
-tutorialTest{lessonflying{fails ifcratein corner;}}
+tutorial Test {
+    lesson flying {
+        fails if crate in corner
+        verb fly = []
+    }
+}
