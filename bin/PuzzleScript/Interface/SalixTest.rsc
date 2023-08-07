@@ -40,6 +40,7 @@ data Msg
     | editorChange(map[str,value] delta)
     | load_design()
     | analyse()
+    | show(list[str] movements)
 	;
 
 tuple[str,str,str] pixel_to_json(Engine engine, int index) {
@@ -113,6 +114,9 @@ Model update(Msg msg, Model model){
             case analyse(): {
                 model.engine.level_data[model.engine.current_level.original].shortest_path = bfs(model.engine, ["up","down","left","right"], model.checker, "win");
             }
+            case show(list[str] movements): {
+                show_moves(movements, m);
+            }
 			default: return model;
 		}
 		
@@ -126,6 +130,22 @@ Model update(Msg msg, Model model){
 	}
 
     return model;
+}
+
+void show_moves(list[str] movements) {
+
+    for (str move <- movements) {
+
+        switch(move) {
+            case "left": direction(37);
+            case 38: model.input = "up";
+            case 39: model.input = "right";
+            case 40: model.input = "down";
+        }
+
+    }
+
+
 }
 
 Model reload(str src) {
@@ -163,6 +183,7 @@ void view_results(Model m) {
         h3("Results");
         p("Dead ends = <size(m.engine.level_data[m.engine.current_level.original].shortest_path)> steps");
         p("Shortest path = <size(m.engine.level_data[m.engine.current_level.original].shortest_path)> steps");
+        button(onClick(show(m.engine.level_data[m.engine.current_level.original].shortest_path)), "Show");
 
     });
 }
@@ -170,7 +191,7 @@ void view_results(Model m) {
 void view(Model m) {
 
     div(class("header"), () {
-        h1(style(("text-shadow": "1px 1px 2px black")), "PuzzleScript");
+        h1(style(("text-shadow": "1px 1px 2px black", "font-family": "Pixel", "font-size": "50px")), "PuzzleScript");
     });
 
     div(class("main"), () {

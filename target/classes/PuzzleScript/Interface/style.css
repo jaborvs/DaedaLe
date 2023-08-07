@@ -45,35 +45,6 @@ body {
     width:40vw;
 }
 
-.test {
-    position: relative;
-    width: 20vw; /* Set the size of the container */
-    height: 20vw;
-    background-color: #e0e0e0;
-  }
-  
-  .test::before,
-  .test::after {
-    content: '';
-    position: absolute;
-    /* width: px;
-    height: 50px; */
-  }
-  
-  /* Color the squares using background colors */
-  .test::before {
-    top: 10px;
-    left: 10px;
-    background-color: red;
-  }
-  
-  .test::after {
-    top: 70px;
-    left: 70px;
-    background-color: blue;
-  }
-  
-
 #left, #middle, #right {
     flex-grow: 1;
     display: flex;
@@ -104,6 +75,11 @@ body {
     margin-left: 5%;
     margin-right: 5%;
     width: 90%;
+    background: rgba(255, 255, 255, 0);
+    border-radius: 5%;
+    /* border-color: rgba(255,255,255,0.3); */
+    color: #f5d696;
+    padding: 2%;
     /* height: 50%; */
 }
 
@@ -156,6 +132,11 @@ overflow-x: auto;
 @font-face {
     font-family: 'BubbleGum';
     src: url('Bubblegum.ttf');
+}
+
+@font-face {
+    font-family: 'Pixel';
+    src: url('pixel.ttf');
 }
 
 .row {

@@ -830,22 +830,26 @@ list[list[str]] get_dead_ends(Engine engine, Checker checker, list[str] winning_
             if (i < size(winning_moves) - 1 && winning_moves[i + 1] == move) continue;
 
             Engine new_engine = execute_move(engine, checker, move);
-            // if (engine != new_engine) total += 1;
-            // if (check_conditions(new_engine, "dead_end")) {
-            //     dead_ends += [winning_moves[0..i+1] + [move]];
-            //     continue;
-            // }
+            if (convert_tuples(new_engine) == convert_tuples(engine)) continue;
 
-            if (engine == new_engine) continue;
-
+            int total = 0;
             // Skip moves that moves the player back
             for (str move2 <- possible_moves) {
-                if ((move == "right" && move2 == "left") || (move == "left" && "move2" == "right")) continue;
-                if ((move == "up" && move2 == "down") || (move == "down" && move2 == "up")) continue;
 
                 Engine new_engine2 = execute_move(new_engine, checker, move2);
 
-                if (new_engine2 == new_engine) continue;
+                if (convert_tuples(new_engine2) == convert_tuples(new_engine)) {
+                    total += 1;
+                    if (total < 4) continue;
+                }
+                if (total == 4) {
+                    dead_ends += [winning_moves[0..i+1] + [move]];
+                    list[str] rules = [];
+                    for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules) {
+                        if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) rules += [engine.indexed_rules[rd2][1]];
+                    }
+                    break;           
+                }
 
                 // OPTION 1 - Stuck keyword
                 int total = 0;
@@ -856,13 +860,10 @@ list[list[str]] get_dead_ends(Engine engine, Checker checker, list[str] winning_
                 }
 
                 if (total == 4) {
-                    print_level(new_engine2, checker);
                     dead_ends += [winning_moves[0..i+1] + [move] + [move2]];
                     list[str] rules = [];
                     for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules) {
-                        if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) {
-                            rules += [engine.indexed_rules[rd2][1]];
-                        }
+                        if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) rules += [engine.indexed_rules[rd2][1]];
                     }
                     // dead_end_rules += [rules];
                     dead_end = true;
@@ -875,6 +876,6 @@ list[list[str]] get_dead_ends(Engine engine, Checker checker, list[str] winning_
         }
     }
 
-    return nub(dead_ends);
+    return dup(dead_ends);
 
 }
