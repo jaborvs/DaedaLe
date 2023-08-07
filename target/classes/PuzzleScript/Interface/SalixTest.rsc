@@ -26,6 +26,7 @@ import IO;
 public int i = 0;
 
 alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, str code, int path_index];
+// alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, str code];
 
 data Msg 
 	= left() 
@@ -40,12 +41,29 @@ data Msg
     | editorChange(map[str,value] delta)
     | load_design()
     | analyse()
-    | show(list[str] movements, int dir)
+    | show(list[str] movements)
 	;
 
-tuple[str,str,str] pixel_to_json(Engine engine, int index) {
+tuple[str, str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
 
-    // engine.current_level.player;
+    tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
+
+    println("a");
+    str json = "[";
+
+    for (Coords coord <- coords) {
+        json += "{\"x\":<coord[1]>, \"y\":<coord[0]>},";
+    }
+    println("b");
+    json = json[0..size(json) - 1];
+    json += "]";
+
+    println("c");
+    return <json, "{\"width\": <level_size.width>, \"height\": <level_size.height>}", "{\"index\": <index>}">;
+
+}
+
+tuple[str,str,str] pixel_to_json(Engine engine, int index) {
 
     tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
 
@@ -85,7 +103,6 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
     json = json[0..size(json) - 1];
     json += "]";
 
-    // writeFile(|project://automatedpuzzlescript/src/PuzzleScript/json.txt|, json);
     return <json, "{\"width\": <level_size.width>, \"height\": <level_size.height>}", "{\"index\": <index>}">;
 
 }
@@ -93,10 +110,12 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
 
 Model update(Msg msg, Model model){
 
+    bool execute = false;
+
 	if (model.engine.current_level is level){
 		switch(msg){
 			case direction(int i): {
-                model.index += 1;
+                execute = true;
 				switch(i){
 					case 37: model.input = "left";
 					case 38: model.input = "up";
@@ -112,24 +131,35 @@ Model update(Msg msg, Model model){
                 model = reload(model.code);
             }
             case analyse(): {
-                model.engine.level_data[model.engine.current_level.original].shortest_path = bfs(model.engine, ["up","down","left","right"], model.checker, "win");
+                list[str] winning_moves = ["up","up","up","down"];
+                model.engine.level_data[model.engine.current_level.original].shortest_path = winning_moves;
+                model.engine.level_data[model.engine.current_level.original].dead_ends = [winning_moves];
+                // model.engine.level_data[model.engine.current_level.original].dead_ends = get_dead_ends(model.engine, model.checker, winning_moves);
+                
+                
+                // model.engine.level_data[model.engine.current_level.original].shortest_path = bfs(model.engine, ["up","down","left","right"], model.checker, "win");
             }
-            case show(list[str] movements, int dir): {
-                if (model.path_index + dir >= 0 && model.path_index + dir < size(movements)) { 
-                    model.input = movements[model.path_index + dir];
-                    model.path_index += dir;
+            case show(list[str] movements): {
+                list[Coords] coords = [model.engine.current_level.player[0]];
+                for (int i <- [0..size(movements)]) {
+                    model.engine = execute_move(model.engine, model.checker, movements[i]);
+                    coords += [model.engine.current_level.player[0]];
                 }
+
+                tuple[str, str, str] json_data = coords_to_json(model.engine, coords, model.index);
+                exec("./dead_end.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2]]);
+
             }
 			default: return model;
 		}
 		
-		// model.engine.msg_queue = [];
-        if (msg is direction || model.input != "") {
+        if (execute) {
+            model.index += 1;
+            println(model.input);
             model.engine = execute_move(model.engine, model.checker, model.input);
-            println(model.engine.current_level.player);
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
-            exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/|, args = [json_data[0], json_data[1], json_data[2]]);
-            model.input = "";
+            exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2]]);
+            execute = false;
         }
 	}
 
@@ -186,56 +216,51 @@ void view_options(Model m){
 void view_results(Model m) {
     div(class("panel"), () {
         h3("Results");
-        p("Dead ends = <size(m.engine.level_data[m.engine.current_level.original].shortest_path)> steps");
-        p("Shortest path = <size(m.engine.level_data[m.engine.current_level.original].shortest_path)> steps");
-
-        println("1");
-
-        button(onClick(show(m.engine.level_data[m.engine.current_level.original].shortest_path, 1)), "Next move");
-        button(onClick(show(m.engine.level_data[m.engine.current_level.original].shortest_path, -1)), "Previous move");
-
-        println("2");
+        LevelChecker lc = m.engine.level_data[m.engine.current_level.original];
+        p("Dead ends = <size(lc.shortest_path)> steps");
+        p("Shortest path = <size(lc.shortest_path)> steps");
+        for (int i <- [0..size(lc.dead_ends)]) {
+            p(onMouseEnter(show(lc.dead_ends[i])), "<i>");
+        }
+        // button(onClick(show(m.engine.level_data[m.engine.current_level.original].shortest_path, 1)), "Next move");
+        // button(onClick(show(m.engine.level_data[m.engine.current_level.original].shortest_path, -1)), "Previous move");
 
     });
 }
 
 void view(Model m) {
 
-    div(() {
+    div(class("header"), () {
+        h1(style(("text-shadow": "1px 1px 2px black", "font-family": "Pixel", "font-size": "50px")), "PuzzleScript");
+    });
 
-        div(class("header"), () {
-            h1(style(("text-shadow": "1px 1px 2px black", "font-family": "Pixel", "font-size": "50px")), "PuzzleScript");
-        });
+    div(class("main"), () {
 
-        div(class("main"), () {
-
-            div(class("left"), () {
-                // ace("myAce", event=onAceChange(editorChange), code = m.code);
-                div(class("left_top"), () {
-                    h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Editor"); 
-                    ace("myAce", code = m.code);
-                    button(onClick(load_design()), "reload");
-                });
-                div(class("left_bottom"), () {
-                    div(class("tutomate"), () {
-                        h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Tutomate");
-                        textarea(class("textfield"), "Hello");
-                    });
+        div(class("left"), () {
+            // ace("myAce", event=onAceChange(editorChange), code = m.code);
+            div(class("left_top"), () {
+                h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Editor"); 
+                ace("myAce", code = m.code);
+                button(onClick(load_design()), "reload");
+            });
+            div(class("left_bottom"), () {
+                div(class("tutomate"), () {
+                    h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Tutomate");
+                    textarea(class("textfield"), "Hello");
                 });
             });
-            div(class("right"), onKeyDown(direction), () {
-                div(style(("width": "40vw", "height": "40vh")), onKeyDown(direction), () {
-                    img(style(("width": "40vw", "height": "40vh", "image-rendering": "pixelated")), (src("PuzzleScript/Interface/output_image<m.index>.png")), () {});
-                });
-                div(class("data"), () {
-                    div(class(""), () {view_panel(m);});
-                    div(class(""), () {view_options(m);});
-                    if (m.engine.level_data[m.engine.current_level.original].shortest_path != []) view_results(m);
-                });
+        });
+        div(class("right"), onKeyDown(direction), () {
+            div(style(("width": "40vw", "height": "40vh")), onKeyDown(direction), () {
+                img(style(("width": "40vw", "height": "40vh", "image-rendering": "pixelated")), (src("PuzzleScript/Interface/output_image<m.index>.png")), () {});
+            });
+            div(class("data"), () {
+                div(class(""), () {view_panel(m);});
+                div(class(""), () {view_options(m);});
+                if (m.engine.level_data[m.engine.current_level.original].shortest_path != []) view_results(m);
             });
         });
     });
-
 }
 
 App[Model]() main() {
@@ -256,7 +281,7 @@ App[Model]() main() {
     println("Current level");
 
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
-    exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/|, args = [json_data[0], json_data[1], json_data[2]]);
+    exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2]]);
 
 	Model init() = <"none", title, engine, checker, 0, readFile(game_loc), 0>;
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/style.css"]), update);

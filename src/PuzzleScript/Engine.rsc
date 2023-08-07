@@ -564,6 +564,8 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
 // Applies movement, checks which rules apply, executes movement, checks which late rules apply
 Engine execute_move(Engine engine, Checker c, str direction) {
 
+    println("Hoi");
+
     // println("Executing move <direction>");
     // println("Player pos = <engine.current_level.player[0]>");
     // println("Object at 0,1 = <engine.current_level.objects[<1,0>]>");
@@ -574,6 +576,7 @@ Engine execute_move(Engine engine, Checker c, str direction) {
     engine = apply_moves(engine, engine.current_level);
     engine = apply_rules(engine, engine.current_level, direction, true);
 
+    println("Hoi2");
     return engine;
 
 }

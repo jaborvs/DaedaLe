@@ -90,6 +90,7 @@ alias LevelChecker = tuple[
     int moveable_amount_level,
     tuple[int width, int height] size,
     list[RuleData] actual_applied_rules,
+    list[list[str]] dead_ends,
     list[str] shortest_path,
     list[list[Rule]] applied_rules,
     list[list[Rule]] applied_late_rules,
@@ -98,7 +99,7 @@ alias LevelChecker = tuple[
 ];
 
 LevelChecker new_level_checker(Level level) {
-    return <[], [], [], 0, <0,0>, [], [], [], [], [], level>;
+    return <[], [], [], 0, <0,0>, [], [], [], [], [], [], level>;
 }
 
 
