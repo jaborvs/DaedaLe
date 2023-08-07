@@ -177,14 +177,26 @@ void view(Model m) {
 
 		div(class("left"), () {
             // ace("myAce", event=onAceChange(editorChange), code = m.code);
-            ace("myAce", code = m.code);
-            button(onClick(load_design()), "reload");
+            div(class("left_top"), () {
+                h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Editor"); 
+                ace("myAce", code = m.code);
+                button(onClick(load_design()), "reload");
+            });
+            div(class("left_bottom"), () {
+                div(class("tutomate"), () {
+                    h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Tutomate");
+                    textarea(class("textfield"), "Hello");
+                });
+            });
         });
 		// div(class("left"), () {view_layers(m);});
 		// div(class("left"), onKeyDown(direction), () {
 		// 	h3("Level");
         // div(class("simple"), () {view_level_simple(m);});
-        div(class("middle"), onKeyDown(direction), () {
+        // div(class("middle"), () {
+        //     // if (m.engine.level_data[m.engine.current_level.original].shortest_path != []) view_results(m);
+        // });
+        div(class("right"), onKeyDown(direction), () {
             // div (class("test"), () {});
             // div (class("grid"), () {view_level(m);});
             // div (style(("background-size": "contain")), class("grid"), () {view_level_picture(m);});
@@ -197,15 +209,6 @@ void view(Model m) {
                 div(class(""), () {view_options(m);});
                 if (m.engine.level_data[m.engine.current_level.original].shortest_path != []) view_results(m);
             });
-        });
-        div(class("right"), () {
-            div(class("tutomate"), () {
-
-                h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%")), "Tutomate");
-                form("Hello");
-
-            });
-            // if (m.engine.level_data[m.engine.current_level.original].shortest_path != []) view_results(m);
         });
 		// });
 	});
@@ -355,10 +358,10 @@ void view(Model m) {
 
 App[Model]() main() {
 
-    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
+    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
 	// loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|;
-	// loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
+	loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
     // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|;
 	game = load(game_loc);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/byyourside.PS|);
