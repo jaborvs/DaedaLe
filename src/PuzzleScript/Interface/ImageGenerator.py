@@ -28,7 +28,7 @@ resulting_image = convert_data_to_image()
 # resulting_image = resulting_image.resize((300,300), Image.BICUBIC)
 
 # Save the image
-if index > 1: os.remove(f"output_image{index - 1}.png")
+if index > 1 and sys.argv[4]: os.remove(f"output_image{index - 1}.png")
 resulting_image.save(f"output_image{index}.png", quality=100, subsampling=0)
 
 # # Optionally, display the image

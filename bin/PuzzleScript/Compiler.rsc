@@ -107,6 +107,7 @@ alias Engine = tuple[
     list[LevelData] levels,
 	list[Level] converted_levels,
     int all_objects,
+    Level begin_level,
 	Level current_level,
 	list[Condition] conditions,
 	list[list[Rule]] rules,
@@ -126,6 +127,7 @@ Engine new_engine(PSGame game)
         [], 
         0,
 		message("", level_data([])),
+        message("", level_data([])),
         [],
 		[], 
 		[],
@@ -1434,7 +1436,9 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[1];
+    engine.current_level = engine.converted_levels[0];
+    Level begin_level = engine.current_level;
+    engine.begin_level = begin_level;
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {

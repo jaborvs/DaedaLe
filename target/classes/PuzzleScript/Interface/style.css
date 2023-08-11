@@ -1,6 +1,11 @@
 body {
-    background-color: #f5d696;
+    /* background-color: #f5d696; */
     color: white;
+    background-color: #362900;
+    opacity: 1;
+    background-image:  repeating-linear-gradient(45deg, #644700 25%, transparent 25%, transparent 75%, #644700 75%, #644700), repeating-linear-gradient(45deg, #644700 25%, #362900 25%, #362900 75%, #644700 75%, #644700);
+    background-position: 0 0, 27px 27px;
+    background-size: 54px 54px;
 }
 
 .header {
@@ -52,14 +57,20 @@ body {
 
 .left, .middle, .right {
     border-color: white;
-    border-radius: 5px;
     border: solid;
     background-color: #272822;
 }
 
 .left {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
     height: 100%;
     width: 50vw;
+}
+
+.right {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;   
 }
 
 

@@ -5,6 +5,7 @@ import salix::Core;
 import salix::App;
 import salix::Index;
 import salix::ace::Editor;
+import salix::Node;
 
 import util::Benchmark;
 import util::ShellExec;
@@ -25,6 +26,9 @@ import IO;
 
 public int i = 0;
 
+data CurrentLine = currentline(int column, int row);
+data JsonData = alldata(CurrentLine \start, str action, list[str] lines, CurrentLine end, int id);
+
 alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, str code, int path_index];
 // alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, str code];
 
@@ -35,7 +39,7 @@ data Msg
 	| down() 
 	| action() 
 	| undo() 
-	| restart()
+	| reload()
 	| win()
 	| direction(int i)
     | editorChange(map[str,value] delta)
@@ -123,31 +127,46 @@ Model update(Msg msg, Model model){
 					case 40: model.input = "down";
 				}
 			}
-			case restart(): model.input = "restart";
-            case editorChange(map[str,value] delta):
-                println(delta);
+			case reload(): model.engine.current_level = model.engine.begin_level;
+            case editorChange(map[str,value] delta): {
+
+                // AllData trysel = parseJSON(#AllData, "{\"ones\":1}");
+                // println(trysel);
+
+                // list[value] hah = fromJSON(asJSON(delta<1>));
+                // println(delta == parseJSON(#map[str,value], asJSON(delta<1>)));
+                // println(asJSON(delta["payload"]));
+                JsonData json_change = parseJSON(#JsonData, asJSON(delta["payload"]));
+                println(json_change.action);
+                // println(typeOf(json_change["end"]));
+                // node end = json_change["end"];
+                // println(end);
+            }
             case load_design(): { 
                 println("Reloading"); 
                 model = reload(model.code);
             }
             case analyse(): {
-                list[str] winning_moves = ["up","up","up","down"];
+                list[str] winning_moves = bfs(model.engine, ["up","down","left","right"], model.checker, "win");
                 model.engine.level_data[model.engine.current_level.original].shortest_path = winning_moves;
-                model.engine.level_data[model.engine.current_level.original].dead_ends = [winning_moves];
-                // model.engine.level_data[model.engine.current_level.original].dead_ends = get_dead_ends(model.engine, model.checker, winning_moves);
+                model.engine.level_data[model.engine.current_level.original].dead_ends = get_dead_ends(model.engine, model.checker, winning_moves);
+
+                // model.engine.level_data[model.engine.current_level.original].dead_ends = [winning_moves];
                 
-                
-                // model.engine.level_data[model.engine.current_level.original].shortest_path = bfs(model.engine, ["up","down","left","right"], model.checker, "win");
             }
             case show(list[str] movements): {
-                list[Coords] coords = [model.engine.current_level.player[0]];
-                for (int i <- [0..size(movements)]) {
-                    model.engine = execute_move(model.engine, model.checker, movements[i]);
-                    coords += [model.engine.current_level.player[0]];
-                }
+                // list[Coords] coords = [model.engine.current_level.player[0]];
+                // for (int i <- [0..size(movements)]) {
+                //     model.engine = execute_move(model.engine, model.checker, movements[i]);
+                //     coords += [model.engine.current_level.player[0]];
+                // }
 
-                tuple[str, str, str] json_data = coords_to_json(model.engine, coords, model.index);
-                exec("./dead_end.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2]]);
+                // tuple[str, str, str] json_data = coords_to_json(model.engine, coords, model.index);
+
+
+
+                exec("./dead_end.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "0"]);
+
 
             }
 			default: return model;
@@ -158,11 +177,12 @@ Model update(Msg msg, Model model){
             println(model.input);
             model.engine = execute_move(model.engine, model.checker, model.input);
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
-            exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2]]);
+            exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
             execute = false;
         }
 	}
 
+    println("Returning model");
     return model;
 }
 
@@ -198,17 +218,18 @@ Model reload(str src) {
 
 void view_panel(Model m){
     div(class("panel"), () {
-        h3("Buttons");
-        button(onClick(direction(37)), "left");
-        button(onClick(direction(39)), "right");
-        button(onClick(direction(38)), "up");
-        button(onClick(direction(40)), "down");
+        h3(style(("font-family": "BubbleGum")), "Buttons");
+        button(onClick(direction(37)), "Left");
+        button(onClick(direction(39)), "Right");
+        button(onClick(direction(38)), "Up");
+        button(onClick(direction(40)), "Down");
+        button(onClick(reload()), "Restart");
     });
 }
 
 void view_options(Model m){
     div(class("panel"), () {
-        h3("Get insights");
+        h3(style(("font-family": "BubbleGum")), "Get insights");
         button(onClick(analyse()), "Analyse");
     });
 }
@@ -240,19 +261,22 @@ void view(Model m) {
             // ace("myAce", event=onAceChange(editorChange), code = m.code);
             div(class("left_top"), () {
                 h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Editor"); 
-                ace("myAce", code = m.code);
-                button(onClick(load_design()), "reload");
+                ace("myAce", event=onAceChange(editorChange), code = m.code);
+                button(onClick(load_design()), "Reload");
             });
             div(class("left_bottom"), () {
                 div(class("tutomate"), () {
                     h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Tutomate");
-                    textarea(class("textfield"), "Hello");
+                    // textarea(class("textfield"), "Hello");
+                    ace("tutomate", width="100%", height="15%", code = "");
                 });
             });
         });
         div(class("right"), onKeyDown(direction), () {
             div(style(("width": "40vw", "height": "40vh")), onKeyDown(direction), () {
-                img(style(("width": "40vw", "height": "40vh", "image-rendering": "pixelated")), (src("PuzzleScript/Interface/output_image<m.index>.png")), () {});
+                int index = 0;
+                index = (m.engine.current_level == m.engine.begin_level) ? 0 : m.index;
+                img(style(("width": "40vw", "height": "40vh", "image-rendering": "pixelated")), (src("PuzzleScript/Interface/output_image<index>.png")), () {});
             });
             div(class("data"), () {
                 div(class(""), () {view_panel(m);});
@@ -265,10 +289,15 @@ void view(Model m) {
 
 App[Model]() main() {
 
-    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
+
+    // TestData trysel = parseJSON(#TestData, "{\"start\":{\"column\":0,\"row\":4},\"action\":\"remove\",\"lines\":[\"(\"],\"end\":{\"column\":1,\"row\":4},\"id\":1}");
+    // println(trysel);
+
+
+    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
 	// loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|;
-	loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
+	// loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
     // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|;
 	game = load(game_loc);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/byyourside.PS|);
@@ -278,10 +307,8 @@ App[Model]() main() {
 
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
 
-    println("Current level");
-
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
-    exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2]]);
+    exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
 
 	Model init() = <"none", title, engine, checker, 0, readFile(game_loc), 0>;
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/style.css"]), update);
