@@ -118,6 +118,7 @@ alias Engine = tuple[
     map[str, list[str]] properties,
     map[str, list[str]] references,
     map[LevelData, LevelChecker] level_data,
+    bool analyzed,
 	PSGame game
 ];
 
@@ -137,6 +138,7 @@ Engine new_engine(PSGame game)
 		(),
         (),
         (),
+        false,
 		game
 	>;
 
@@ -1353,9 +1355,7 @@ LevelChecker starting_objects(Level level, LevelChecker lc) {
 
 }
 
-
-
-map[LevelData, LevelChecker] check_game_per_level(Engine engine, Checker c, bool debug=false) {
+map[LevelData, LevelChecker] check_size_per_level(Engine engine, Checker c, bool debug=false) {
 
     map[LevelData, LevelChecker] allLevelData = ();
     PSGame g = engine.game;
@@ -1364,14 +1364,29 @@ map[LevelData, LevelChecker] check_game_per_level(Engine engine, Checker c, bool
 
         LevelChecker lc = new_level_checker(level);
 
-        lc.size = <size(level.original.level[0]), size(level.original.level)>;;
-        lc = starting_objects(level, lc);
-        lc = applied_rules(engine, lc);
-        lc = moveable_objects_in_level(engine, lc, c, level);
+        lc.size = <size(level.original.level[0]), size(level.original.level)>;
         allLevelData += (level.original: lc);
-
     }
     return allLevelData;
+
+}
+
+
+
+Engine check_game_per_level(Engine engine, Checker c, bool debug=false) {
+
+
+    for (LevelData ld <- engine.level_data<0>) {
+
+        LevelChecker lc = engine.level_data[ld];
+
+        lc = starting_objects(lc.original, lc);
+        lc = applied_rules(engine, lc);
+        lc = moveable_objects_in_level(engine, lc, c, lc.original);
+        engine.level_data[ld] = lc;
+        
+    }
+    return engine;
 
 }
 
@@ -1454,7 +1469,7 @@ Engine compile(Checker c) {
 
     }
 
-    engine.level_data = check_game_per_level(engine, c);
+    engine.level_data = check_size_per_level(engine, c);
     engine.indexed_rules = index_rules(engine.game.rules);
 
     // for (list[Rule] rule <- engine.level_data[engine.current_level.original].applied_late_rules) println(rule[0]);

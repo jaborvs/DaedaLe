@@ -126,7 +126,9 @@ list[str] bfs(Engine starting, list[str] moves, Checker c, str condition) {
             println("Trying <current[1] + [m]>");
 
             Engine beforeState = current[0];
+            println(beforeState.analyzed);
             Engine newState = execute_move(current[0], c, m);
+            println(newState.analyzed);
 
             if (condition == "same_state" && beforeState == newState) {
                 if (current[1] in moveSequences<0>) moveSequences[current[1]] += 1;

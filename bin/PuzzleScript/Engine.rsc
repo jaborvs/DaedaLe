@@ -564,6 +564,12 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
 // Applies movement, checks which rules apply, executes movement, checks which late rules apply
 Engine execute_move(Engine engine, Checker c, str direction) {
 
+    if (engine.analyzed == false) {
+        println("Analyzing");
+        engine = check_game_per_level(engine, c);
+        engine.analyzed = true;
+    }
+
     engine = move_player(engine, engine.current_level, direction, c);
     engine = apply_rules(engine, engine.current_level, direction, false);
     engine = apply_moves(engine, engine.current_level);
