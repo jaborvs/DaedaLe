@@ -89,17 +89,21 @@ alias LevelChecker = tuple[
     list[str] moveable_objects,
     int moveable_amount_level,
     tuple[int width, int height] size,
-    list[RuleData] actual_applied_rules,
+    map[int, list[RuleData]] actual_applied_rules,
+    list[str] applied_moves,
+    
     list[list[str]] dead_ends,
     list[str] shortest_path,
+
     list[list[Rule]] applied_rules,
     list[list[Rule]] applied_late_rules,
+
     list[LevelData] messages,
     Level original
 ];
 
 LevelChecker new_level_checker(Level level) {
-    return <[], [], [], 0, <0,0>, [], [], [], [], [], [], level>;
+    return <[], [], [], 0, <0,0>, (), [], [], [], [], [], [], level>;
 }
 
 
@@ -1441,7 +1445,6 @@ str convert_rule(list[RulePart] left, list[RulePart] right) {
 Engine compile(Checker c) {
 
 	Engine engine = new_engine(c.game);
-	// engine.sounds = (x : c.sound_events[x].seeds | x <- c.sound_events);
 	engine.conditions = c.conditions;
     engine.levels = c.game.levels;  
     engine.properties = c.all_properties;
@@ -1470,6 +1473,8 @@ Engine compile(Checker c) {
     }
 
     engine.level_data = check_size_per_level(engine, c);
+    engine = check_game_per_level(engine, c);
+    engine.analyzed = true;
     engine.indexed_rules = index_rules(engine.game.rules);
 
     // for (list[Rule] rule <- engine.level_data[engine.current_level.original].applied_late_rules) println(rule[0]);

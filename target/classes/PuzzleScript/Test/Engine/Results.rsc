@@ -1,12 +1,5 @@
-module PuzzleScript::Test::Engine::Tests
+module PuzzleScript::Test::Engine::Results
 
-// import util::IDEServices;
-// import vis::Charts;
-// import vis::Presentation;
-// import vis::Layout;
-// import util::Web;
-
-// import PuzzleScript::IDE::IDE;
 import util::ShellExec;
 import lang::json::IO;
 
@@ -27,10 +20,6 @@ import String;
 
 import util::Benchmark;
 
-// Object randomObject(list[Object] objs){
-// 		int rand = arbInt(size(objs));
-// 		return objs[rand];
-// 	}
 
 void main() {
 
@@ -49,7 +38,6 @@ void main() {
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|);
 	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|);
-	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/byyourside.PS|);
 
 	checker = check_game(game);
 	engine = compile(checker);
@@ -57,30 +45,79 @@ void main() {
     engine.current_level = engine.converted_levels[0];
     Level save_level = engine.current_level;
 
-    list[str] possible_moves = ["up", "left", "down", "right"];
+    list[str] possible_moves = ["up", "right", "left", "down"];
+
+    str title = "";
+    for(PreludeData p <- engine.game.prelude){
+        if(p.key == "title") {
+            title = toLowerCase(replaceAll(p.string, ",", " "));
+            title = toLowerCase(replaceAll(title, " ", ""));
+            break;
+        }
+    }
+
+    println(title);
     
-    for (int i <- [0..1]) {
+    for (int i <- [1..3]) {
 
         engine.current_level = engine.converted_levels[i];
-        list[str] winning_moves =  bfs(engine, possible_moves, checker, "win");
-        list[list[str]] dead_ends = get_dead_ends(engine, checker, winning_moves);
-        // list[list[str]] dead_end_rules = [];
+        engine.level_data[engine.current_level.original].actual_applied_rules = ();
 
-        list[str] winning_moves_rules = [];
+        for (RuleData rd <- engine.indexed_rules<0>) {
+            println(convert_rule(rd.left, rd.right));
+        }
 
-        // for (RuleData rd <- engine.level_data[engine.current_level.original].actual_applied_rules) {
+        // Get succesful path and corresponding skills
+        tuple[Engine engine, list[str] winning_moves] result = bfs(engine, possible_moves, checker, "win", 1);
+        println("Winning moves: <size(result.winning_moves)>");
+        
+        
+        // list[str] winning_moves_rules = [];
+
+        // for (list[RuleData] rd <- result.engine.level_data[engine.current_level.original].actual_applied_rules<1>) {
+        //     RuleData rd = rd[0];
         //     if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) {
         //         winning_moves_rules += engine.indexed_rules[rd2][1];
         //     }
         // }
 
-        // resolve_verbs(winning_moves_rules, true);
-        // println("");
-        // for (list[str] rules <- dead_end_rules) {
-        //     resolve_verbs(rules, false);
-        // }
 
-        println(dead_ends);
+        for (int i <- [0..size(result.winning_moves)]) {
+            if (i in result.engine.level_data[engine.current_level.original].actual_applied_rules<0>) {
+                RuleData rd = result.engine.level_data[engine.current_level.original].actual_applied_rules[i][0];
+                resolve_verb(convert_rule(rd.left, rd.right), true, title);
+            } else {
+                println("crawl");
+            }
+        }
+
+        println("##### Dead ends ##### \n");
+        // Now get all the dead_ends and the skills that lead to this dead end
+        list[tuple[Engine engine, list[str] dead_ends]] result_dead_ends = get_dead_ends(engine, checker, result.winning_moves);
+
+        for (int i <- [0..size(result_dead_ends)]) {
+
+            println("<i + 1>.");
+            list[str] rules = result_dead_ends[i].dead_ends;
+            Engine engine = result_dead_ends[i].engine;
+
+            println(rules);
+            // println(engine.)
+            
+            for (int i <- [0..size(rules)]) {
+                if (i in engine.level_data[engine.current_level.original].actual_applied_rules<0>) {
+                    RuleData rd = engine.level_data[engine.current_level.original].actual_applied_rules[i][0];
+                    resolve_verb(convert_rule(rd.left, rd.right), true, title);
+                } else {
+                    println("walk");
+                }
+            }
+            resolve_verbs(rules, false, title);
+        }
+
+        // println(dead_ends);
+
+        println(size(result.winning_moves));
     }
 
 

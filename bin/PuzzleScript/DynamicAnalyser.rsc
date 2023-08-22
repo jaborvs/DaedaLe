@@ -103,48 +103,50 @@ void main() {
 //     return [];
 // }
 
-list[str] bfs(Engine starting, list[str] moves, Checker c, str condition) {
+tuple[Engine, list[str]] bfs(Engine starting, list[str] moves, Checker c, str condition, int heuristics) {
     
+    int cycles = 0;
     set[TupleObjects] visited = {};
     list[tuple[Engine, list[str], real]] queue = [<starting, [], 0.0>];
     map[list[str], int] moveSequences = ();
 
     while (!isEmpty(queue)) {
-        queue = sort(queue, bool(tuple[Engine, list[str], real] a, tuple[Engine, list[str], real] b){return a[2] < b[2]; });
+        if (heuristics == 1) {
+            queue = sort(queue, bool(tuple[Engine, list[str], real] a, tuple[Engine, list[str], real] b){return a[2] < b[2]; });
+        }
         tuple[Engine, list[str], real] current = head(queue);
         queue = tail(queue);
 
         if (condition != "same_state") {
             if (check_conditions(current[0], condition)) {
-                return current[1];
+                // println(cycles);
+                return <current[0], current[1]>;
             }
         }
         visited += {convert_tuples(current[0])};
 
         for (m <- moves) {
 
-            println("Trying <current[1] + [m]>");
-
             Engine beforeState = current[0];
-            println(beforeState.analyzed);
-            Engine newState = execute_move(current[0], c, m);
-            println(newState.analyzed);
+            Engine newState = execute_move(current[0], c, m, 0);
+            cycles += 1;
 
             if (condition == "same_state" && beforeState == newState) {
                 if (current[1] in moveSequences<0>) moveSequences[current[1]] += 1;
                 else moveSequences += (current[1]: 1);
 
-                if (moveSequences[current[1]] == 4) return current[1];
+                if (moveSequences[current[1]] == 4) return <current[0], current[1]>;
             }    
 
             if (!(convert_tuples(newState) in visited)) {
-                real heuristic = calculate_heuristic(newState);
+                real heuristic = 0.0;
+                if (heuristics == 1) heuristic = calculate_heuristic(newState);
                 queue += [<newState, current[1] + [m], heuristic>];
             }  
         }
     }
 
-    return [];
+    return <starting, []>;
 }
 
 

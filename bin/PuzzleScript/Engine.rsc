@@ -325,9 +325,15 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
 }
 
 
-Engine apply_rules(Engine engine, Level current_level, str direction, bool late) {
+Engine apply_rules(Engine engine, Level current_level, str direction, bool late, int allrules) {
 
-    list[list[Rule]] applied_rules = late ? engine.level_data[current_level.original].applied_late_rules : engine.level_data[current_level.original].applied_rules;
+    list[list[Rule]] applied_rules = [];
+
+    if (allrules == 0) {
+        applied_rules = late ? engine.level_data[current_level.original].applied_late_rules : engine.level_data[current_level.original].applied_rules;
+    } else {
+        applied_rules = late ? engine.late_rules : engine.rules;
+    }
 
     for (list[Rule] rulegroup <- applied_rules) {
 
@@ -407,7 +413,8 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late)
                         Engine engine_before = engine;
                         engine = apply(engine, found_objects, rp_left[i].contents, rp_right[i].contents, direction);
                         // if (!(rule.original in engine.level_data[engine.current_level.original].actual_applied_rules)) {
-                        engine.level_data[engine.current_level.original].actual_applied_rules += [rule.original];
+                        int index = size(engine.level_data[current_level.original].applied_moves);
+                        engine.level_data[engine.current_level.original].actual_applied_rules += (index: [rule.original]);
                         // }
                         applied += 1;
                     }
@@ -562,18 +569,15 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
 }
 
 // Applies movement, checks which rules apply, executes movement, checks which late rules apply
-Engine execute_move(Engine engine, Checker c, str direction) {
-
-    if (engine.analyzed == false) {
-        println("Analyzing");
-        engine = check_game_per_level(engine, c);
-        engine.analyzed = true;
-    }
+Engine execute_move(Engine engine, Checker c, str direction, int allrules) {
 
     engine = move_player(engine, engine.current_level, direction, c);
-    engine = apply_rules(engine, engine.current_level, direction, false);
+    engine = apply_rules(engine, engine.current_level, direction, false, allrules);
     engine = apply_moves(engine, engine.current_level);
-    engine = apply_rules(engine, engine.current_level, direction, true);
+    engine = apply_rules(engine, engine.current_level, direction, true, allrules);
+
+    engine.level_data[engine.current_level.original].applied_moves += [direction];
+
     return engine;
 
 }
@@ -809,10 +813,10 @@ void print_level(Engine engine, Checker c) {
 }
 
 
-list[list[str]] get_dead_ends(Engine engine, Checker checker, list[str] winning_moves) {
+list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, list[str] winning_moves) {
 
     list[str] possible_moves = ["up", "left", "down", "right"];
-    list[list[str]] dead_ends = [];
+    list[tuple[Engine, list[str]]] dead_ends = [];
     // list[list[str]] dead_end_rules = [];
 
     int total = 0;
@@ -820,7 +824,7 @@ list[list[str]] get_dead_ends(Engine engine, Checker checker, list[str] winning_
 
     for (int i <- [0..size(winning_moves)]) {
 
-        engine = execute_move(engine, checker, winning_moves[i]);
+        engine = execute_move(engine, checker, winning_moves[i], 0);
         if (i == size(winning_moves) - 1) continue;
         // if (i == size(winning_moves) - 1 || dead_end) continue;
 
@@ -829,42 +833,42 @@ list[list[str]] get_dead_ends(Engine engine, Checker checker, list[str] winning_
             // Don't perform a move that is part of the winning moves
             if (i < size(winning_moves) - 1 && winning_moves[i + 1] == move) continue;
 
-            Engine new_engine = execute_move(engine, checker, move);
+            Engine new_engine = execute_move(engine, checker, move, 0);
             if (convert_tuples(new_engine) == convert_tuples(engine)) continue;
 
             int total = 0;
             // Skip moves that moves the player back
             for (str move2 <- possible_moves) {
 
-                Engine new_engine2 = execute_move(new_engine, checker, move2);
+                Engine new_engine2 = execute_move(new_engine, checker, move2, 0);
 
                 if (convert_tuples(new_engine2) == convert_tuples(new_engine)) {
                     total += 1;
                     if (total < 4) continue;
                 }
                 if (total == 4) {
-                    dead_ends += [winning_moves[0..i+1] + [move]];
-                    list[str] rules = [];
-                    for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules) {
-                        if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) rules += [engine.indexed_rules[rd2][1]];
-                    }
+                    dead_ends += [<new_engine, winning_moves[0..i+1] + [move]>];
+                    // list[str] rules = [];
+                    // for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules) {
+                    //     if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) rules += [engine.indexed_rules[rd2][1]];
+                    // }
                     break;           
                 }
 
                 // OPTION 1 - Stuck keyword
                 int total = 0;
                 for (str move3 <- possible_moves) {
-                    Engine new_engine3 = execute_move(new_engine2, checker, move3);
+                    Engine new_engine3 = execute_move(new_engine2, checker, move3, 0);
                     if (convert_tuples(new_engine3) == convert_tuples(new_engine2)) total += 1;
                     else break;
                 }
 
                 if (total == 4) {
-                    dead_ends += [winning_moves[0..i+1] + [move] + [move2]];
-                    list[str] rules = [];
-                    for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules) {
-                        if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) rules += [engine.indexed_rules[rd2][1]];
-                    }
+                    dead_ends += [<new_engine2, winning_moves[0..i+1] + [move] + [move2]>];
+                    // list[str] rules = [];
+                    // for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules<1>) {
+                    //     if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) rules += [engine.indexed_rules[rd2][1]];
+                    // }
                     // dead_end_rules += [rules];
                     dead_end = true;
                 }
@@ -876,6 +880,6 @@ list[list[str]] get_dead_ends(Engine engine, Checker checker, list[str] winning_
         }
     }
 
-    return dup(dead_ends);
+    return dead_ends;
 
 }

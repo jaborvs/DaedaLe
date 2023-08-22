@@ -129,11 +129,9 @@ Model update(Msg msg, Model model){
 			case reload(): model.engine.current_level = model.engine.begin_level;
             case codeChange(map[str,value] delta): {
                 JsonData json_change = parseJSON(#JsonData, asJSON(delta["payload"]));
-                println("Hoooi1");
                 model = update_code(model, json_change, 0);
             }
             case dslChange(map[str,value] delta): {
-                println("Hoooi2");
                 println(asJSON(delta["payload"]));
                 JsonData json_change = parseJSON(#JsonData, asJSON(delta["payload"]));
                 println(json_change);
