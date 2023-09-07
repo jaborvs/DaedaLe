@@ -58,14 +58,21 @@ void main() {
 
     println(title);
     
-    for (int i <- [1..3]) {
+    for (int i <- [0..3]) {
 
         engine.current_level = engine.converted_levels[i];
-        engine.level_data[engine.current_level.original].actual_applied_rules = ();
+        engine.applied_data[engine.current_level.original].actual_applied_rules = ();
 
-        for (RuleData rd <- engine.indexed_rules<0>) {
-            println(convert_rule(rd.left, rd.right));
+        list[str] moves = ["right","up","up","up", "up", "right"];
+        for (str move <- moves) {
+            println("Executing move <move>");
+            engine = execute_move(engine, checker, move, 0);
+            print_level(engine, checker);
         }
+
+        // println(engine.applied_data[engine.current_level.original].applied_moves);
+        // println(engine.applied_data[engine.current_level.original].actual_applied_rules);
+        return;
 
         // Get succesful path and corresponding skills
         tuple[Engine engine, list[str] winning_moves] result = bfs(engine, possible_moves, checker, "win", 1);
@@ -83,8 +90,8 @@ void main() {
 
 
         for (int i <- [0..size(result.winning_moves)]) {
-            if (i in result.engine.level_data[engine.current_level.original].actual_applied_rules<0>) {
-                RuleData rd = result.engine.level_data[engine.current_level.original].actual_applied_rules[i][0];
+            if (i in result.engine.applied_data[engine.current_level.original].actual_applied_rules<0>) {
+                RuleData rd = result.engine.applied_data[engine.current_level.original].actual_applied_rules[i][0];
                 resolve_verb(convert_rule(rd.left, rd.right), true, title);
             } else {
                 println("crawl");
@@ -97,16 +104,12 @@ void main() {
 
         for (int i <- [0..size(result_dead_ends)]) {
 
-            println("<i + 1>.");
             list[str] rules = result_dead_ends[i].dead_ends;
             Engine engine = result_dead_ends[i].engine;
-
-            println(rules);
-            // println(engine.)
             
             for (int i <- [0..size(rules)]) {
-                if (i in engine.level_data[engine.current_level.original].actual_applied_rules<0>) {
-                    RuleData rd = engine.level_data[engine.current_level.original].actual_applied_rules[i][0];
+                if (i in engine.applied_data[engine.current_level.original].actual_applied_rules<0>) {
+                    RuleData rd = engine.applied_data[engine.current_level.original].actual_applied_rules[i][0];
                     resolve_verb(convert_rule(rd.left, rd.right), true, title);
                 } else {
                     println("walk");
@@ -172,7 +175,7 @@ void main() {
 
     return;
     engine.current_level = save_level;
-    engine.level_data[engine.current_level.original].actual_applied_rules = [];
+    engine.applied_data[engine.current_level.original].actual_applied_rules = [];
 
     old_player_pos = engine.current_level.player[0];
     engine = execute_move(engine, checker, "right");
@@ -205,7 +208,7 @@ void main() {
     }
     
     engine.current_level = save_level;
-    engine.level_data[engine.current_level.original].actual_applied_rules = [];
+    engine.applied_data[engine.current_level.original].actual_applied_rules = [];
 
 
     list[str] losing_moves = ["up", "up"];
@@ -222,7 +225,7 @@ void main() {
     println("\n=== Mutliple rule test ====");
 
     engine.current_level = save_level;
-    engine.level_data[engine.current_level.original].actual_applied_rules = [];
+    engine.applied_data[engine.current_level.original].actual_applied_rules = [];
 
     old_player_pos = engine.current_level.player[0];
     engine = execute_move(engine, checker, "up");

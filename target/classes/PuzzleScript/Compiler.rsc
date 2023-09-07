@@ -17,9 +17,6 @@ alias Layer = list[Line];
 data Level (loc src = |unknown:///|)
 	= level(
         map[Coords, list[Object]] objects,
-		// Layer layer, 
-		// list[Layer] checkpoint,
-		// list[str] objectdata,
 		tuple[Coords, str] player,
 		LevelData original
 	)
@@ -83,30 +80,6 @@ Rule new_rule(RuleData r, str direction, list[RulePart] left, list[RulePart] rig
 		r
 	>;
 
-alias LevelChecker = tuple[
-    list[Object] starting_objects,
-    list[list[str]] starting_objects_names,
-    list[str] moveable_objects,
-    int moveable_amount_level,
-    tuple[int width, int height] size,
-    map[int, list[RuleData]] actual_applied_rules,
-    list[str] applied_moves,
-    
-    list[list[str]] dead_ends,
-    list[str] shortest_path,
-
-    list[list[Rule]] applied_rules,
-    list[list[Rule]] applied_late_rules,
-
-    list[LevelData] messages,
-    Level original
-];
-
-LevelChecker new_level_checker(Level level) {
-    return <[], [], [], 0, <0,0>, (), [], [], [], [], [], [], level>;
-}
-
-
 alias Engine = tuple[
     list[LevelData] levels,
 	list[Level] converted_levels,
@@ -122,6 +95,7 @@ alias Engine = tuple[
     map[str, list[str]] properties,
     map[str, list[str]] references,
     map[LevelData, LevelChecker] level_data,
+    map[LevelData, AppliedData] applied_data,
     bool analyzed,
 	PSGame game
 ];
@@ -142,9 +116,39 @@ Engine new_engine(PSGame game)
 		(),
         (),
         (),
+        (),
         false,
 		game
 	>;
+
+alias LevelChecker = tuple[
+    list[Object] starting_objects,
+    list[list[str]] starting_objects_names,
+    list[str] moveable_objects,
+    int moveable_amount_level,
+    tuple[int width, int height] size,
+    list[LevelData] messages,
+    list[list[Rule]] applied_rules,
+    list[list[Rule]] applied_late_rules,
+    Level original
+];
+
+LevelChecker new_level_checker(Level level) {
+    return <[], [], [], 0, <0,0>, [], [], [], level>;
+}
+
+alias AppliedData = tuple[
+    list[Coords] travelled_coords,
+    map[int, list[RuleData]] actual_applied_rules,
+    map[int, list[str]] applied_moves,
+    list[list[str]] dead_ends,
+    list[str] shortest_path,
+    Level original
+];
+
+AppliedData new_applied_data(Level level) {
+    return <[], (), (), [], [], level>;
+}
 
 ObjectData get_object(int id, Engine engine) 
 	= [x | x <- engine.game.objects, x.id == id][0];
@@ -176,90 +180,7 @@ data RuleContent
 	| empty()
 	;
 
-//alias RuleContent = list[RuleReference];
 alias RulePartContents = list[RuleContent];
-
-//ANY CHANGES TO THE VALUES ON THE RIGHT MUST BE MIRRORED IN THE FUNCTION BELOW
-map[str, str] relative_mapping = (
-	"\>": "relative_right",
-	"\<": "relative_left",
-	"v": "relative_down",
-	"^": "relative_up"
-);
-
-// str format_relatives(list[str] absolutes){
-// 	return "
-// 	"str relative_right = \"<absolutes[0]>\";
-// 	"str relative_left = \"<absolutes[1]>\";
-// 	"str relative_down = \"<absolutes[2]>\";
-// 	"str relative_up = \"<absolutes[3]>\";
-// 	";
-// }
-
-// matching
-str absolufy(str force) {
-	if (force in absolute_directions_single){
-		return "/<force>/";
-	} else if (force in relative_mapping){
-		return relative_mapping[force];
-	} else if (force == "moving"){
-		return "/left|right|up|down/";
-	} else if (force == "horizontal") {
-		return "/left|right/";
-	} else if (force == "vertical") {
-		return "/up|down/";
-	} else if (force == "randomdir") {
-		return "randomDir()";
-	} else {
-		return force;
-	}
-}
-	
-//replacement
-str absolufy(str force, Coords index) {
-	if (force in absolute_directions_single){
-		return "\"<force>\"";
-	} else if (force in relative_mapping){
-		return relative_mapping[force];
-	} else if (force in ["moving", "vertical", "horizontal"]){
-		return "direction<unique(index)>";
-	} else if (force == "randomdir") {
-		return "randomDir()";
-	} else {
-		return force;
-	}
-}
-
-
-Command convert_command(RulePartContents _: command(str cmd)) {
-	Command command;
-	switch(cmd){
-		case /cancel/: command = Command::cancel();
-		case /checkpoint/: command = Command::checkpoint();
-		case /restart/: command = Command::restart();
-		case /win/: command = Command::win();
-		case /again/: command = Command::again();
-		default: throw "Expected valid command, got <cmd>";
-	}
-	
-	return command;
-}
-
-Command convert_command(RulePartContents _: sound(str snd)) {
-	return Command::sound(snd);
-}
-
-
-Object new_transparent(Coords coords) = transparent("trans", -1, coords);
-
-set[str] convert_layer(LayerData l, Checker c){
-	set[str] layer = {};
-	for (str ref <- l.layer){
-		layer +=  toSet(resolve_reference(ref, c, l.src).objs);
-	}
-	
-	return layer;
-}
 
 LayerData get_layer(list[str] object, PSGame game) {
 
@@ -272,7 +193,6 @@ LayerData get_layer(list[str] object, PSGame game) {
             }
         }
     }
-
     return layer_empty("");
 
 }
@@ -284,7 +204,6 @@ map[str, str] resolve_player_name(Checker c) {
 
     if (any(str key <- c.references<0>, size(key) == 1, "player" in c.references[key])) return (key: "player");
     
-    // if (any(str key <- c.references<0>, key == "player")) possible_names += c.references[key];
     for (str key <- c.combinations<0>) {
         if ("player" in c.combinations[key]) start_name += (key: "player");
     }
@@ -301,48 +220,6 @@ map[str, str] resolve_player_name(Checker c) {
     return start_name;
 
 }
-
-// tuple[str, str] resolve_player_name(Checker c) {
-
-//     list[str] possible_player_names = [];
-//     tuple[str char, str current_name] current_name = <"", "">;
-
-//     if(any(str key <- c.references<0>, str reference <- c.references[key], "player" == reference)) possible_player_names += c.references[key];
-//     if(any(str key <- c.combinations<0>, str reference <- c.combinations[key], "player" == reference)) possible_player_names += c.combinations[key];
-
-//     if (possible_player_names == []) {
-//         if (any(str key <- c.references<0>, size(key) == 1 && "player" in c.references[key])) return <key, "player">;
-//     }
-
-
-//     for (str name <- c.combinations<0>) {
-//         if (any(str ref <- c.combinations[name], ref in possible_player_names, ref == "player")) {
-//             return <name, ref>;
-//         }
-//     }
-
-
-
-//     for (str name <- c.references<0>) {
-
-//         if (any(str ref <- c.references[name], size(name) == 1, ref == "player")) {
-//             return <name,ref>;
-//         }
-
-//         if (any(str ref <- c.references[name], ref in possible_player_names, size(name) == 1)) {
-//             return <name, ref>;
-//         } 
-//     }
-
-//     if (current_name != <"", "">) return current_name;
-
-
-//     return current_name;
-
-//     // return possible_player_names[0];
-
-// }
-
 
 // Go over each character in the level and convert the character to all possible references
 Level convert_level(LevelData level, Checker c) {
@@ -448,9 +325,7 @@ map[str, list[str]] relativeDict = (
 set[value] all_directions = directionaggregates<0> + relativeDict["right"];
 
 bool isDirection (str dir) {
-
     return (dir in relativeDict["right"] || dir in relativeDirs);
-
 }
 
 bool directionalRule(list[RulePart] left, list[RulePart] right) {
@@ -490,9 +365,7 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Ch
     for (Rule rule <- new_rule_directions) {
         Rule absolute_rule = convertRelativeDirsToAbsolute(rule);
         Rule atomized_rule = atomizeAggregates(checker, absolute_rule);
-        // Rule synonym_rule = rephraseSynonyms(checker, atomized_rule);
         new_rules += [atomized_rule];
-        // new_rules += [rephraseSynonyms(checker, atomized_rule)];
     }
 
     // Step 2
@@ -513,7 +386,6 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Ch
 
     return new_rules4;
 
-
 }
 
 list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _), str direction) {
@@ -524,24 +396,14 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _), str dir
     list[RuleContent] lhs = get_rulecontent(left);
     list[RuleContent] rhs = get_rulecontent(right);
 
-    // for (RulePart rp <- left) {
-    //     if (rp is prefix && rp.prefix != "late") {
-
     if (direction in directionaggregates && directionalRule(left, right)) {
         list[str] directions = directionaggregates[toLowerCase(direction)];
-        // list[str] directions = directionaggregates[toLowerCase(rp.prefix)];
 
         for (str direction <- directions) {
             cloned_rule = new_rule(rd, direction, left, right);
             new_rule_directions += cloned_rule;
         }
     }
-    // else {
-    //     cloned_rule = new_rule(rd, direction, left, right);
-    //     new_rule_directions += cloned_rule; 
-    // } 
-    //     }        
-    // }
 
     // No direction prefix was registered, meaning all directions apply
     if (cloned_rule.direction == "" && directionalRule(left, right)) {
@@ -618,7 +480,6 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
                 } else {
                     new_content += [""] + [rc.content[i]];
                 }
-                // new_rc += [dir] + [rc.content[i]];
             }
             rc.content = new_content;
             new_rc += rc;
@@ -667,7 +528,6 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
                 } else {
                     new_content += [""] + [rc.content[i]];
                 }
-                // new_rc += [dir] + [rc.content[i]];
             }
             rc.content = new_content;
             new_rc += rc;
@@ -858,7 +718,6 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
         }
     }
 
-
     for (int i <- [0..size(result)]) {
 
         Rule cur_rule = result[i];
@@ -876,8 +735,6 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
             str ambiguousMovement_attachedObject = replacementInfo[3];
 
             if (occurrenceCount == 1) {
-                //do the replacement
-
                 for (int l <- [0..size(cur_rule.left)]) {
                     if (!(cur_rule.left[l] is part)) continue;
                     for (int j <- [0..size(cur_rule.left[l].contents)]) {
@@ -941,7 +798,6 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
     }      
 
     return result;
-
 }
 
 RuleContent concretizeMovingInCellByAmbiguousMovementName(RuleContent rc, str ambiguousMovement, str concreteDirection) {
@@ -960,7 +816,6 @@ RuleContent concretizeMovingInCellByAmbiguousMovementName(RuleContent rc, str am
     }
 
     rc.content = new_rc;
-
     return rc;    
 }
 
@@ -968,7 +823,6 @@ RuleContent concretizeMovingInCellByAmbiguousMovementName(RuleContent rc, str am
 RuleContent concretizeMovingInCell(Rule rule, RuleContent rc, str ambiguous, str nametomove, str concr_dir) {
 
     list[str] new_rc = [];
-
     for (int i <- [0..size(rc.content)]) {
 
         if (i mod 2 == 1) continue;
@@ -979,17 +833,13 @@ RuleContent concretizeMovingInCell(Rule rule, RuleContent rc, str ambiguous, str
             new_rc += [rc.content[i]] + [rc.content[i + 1]];
         }
     }
-
     rc.content = new_rc;
-
     return rc;
-
 }
 
 list[list[str]] getMovings(list[str] cell) {
 
     list[list[str]] result = [];
-
     for (int i <- [0..size(cell)]) {
 
         if (i mod 2 == 1) continue;
@@ -1000,18 +850,12 @@ list[list[str]] getMovings(list[str] cell) {
         if (direction in directionaggregates<0>) {
             result += [[name, direction]];
         }
-
     }
 
     return result;
-
-
 }
 
-
 list[Rule] concretizePropertyRule(Checker c, Rule rule) {
-
-    // For later
 
     for (int i  <- [0..size(rule.left)]) {
 
@@ -1110,11 +954,8 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
 
                         }
                         break;
-
                     }
-
                 }
-
 
                 if (shouldRemove) {
 
@@ -1125,17 +966,14 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
                     break;
                 }
             }
-        }
-        
+        }   
     }
-
     return result;
 }
 
 RuleContent concretizePropertyInCell(Rule rule, RuleContent rc, str property, str concreteType) {
     
     list[str] new_rc = [];    
-
     for (int j <- [0..size(rc.content)]) {
 
         if (j mod 2 == 1) continue;
@@ -1148,14 +986,12 @@ RuleContent concretizePropertyInCell(Rule rule, RuleContent rc, str property, st
     }
 
     rc.content = new_rc;
-
     return rc;    
 }
 
 RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
 
     list[str] new_rc = [];
-
     for (int i <- [0..size(rc.content)]) {
 
         if (i mod 2 == 1) continue;
@@ -1174,9 +1010,7 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
     }
 
     rc.content = new_rc;
-
     return rc;
-
 }
 
 LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, list[RuleContent] rule_side) {
@@ -1198,11 +1032,8 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
             }
         }
     } 
-
     lc.moveable_objects += dup(found_objects);
     return lc;
-
-
 }
 
 LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c, Level level) {
@@ -1227,9 +1058,7 @@ LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c
     }
 
     lc.moveable_amount_level = amount_in_level;
-
     return lc;
-
 }
 
 LevelChecker applied_rules(Engine engine, LevelChecker lc) {
@@ -1288,14 +1117,6 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
             if (applied == size(required)) {
 
-                // if (!(rule.right[0] is part)) {   
-                //     if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
-                //     if (!(rule.late) && !(lrule in applied_rules)) {
-                //         applied_rules += [lrule];
-                //     }
-                //     continue;
-                // }
-
                 list[list[RuleContent]] list_rc = [rulepart.contents | rulepart <- rule.right, rulepart is part];
                 list[list[str]] new_objects_list = [];
                 for (list[RuleContent] lrc <- list_rc) {
@@ -1314,7 +1135,6 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
                 if (!(rule.late) && !(lrule in applied_rules)) {
                     applied_rules += [lrule];
                 }
-
             }
         }
     }
@@ -1333,7 +1153,6 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
     lc.applied_rules = applied_rules_in_order;
 
     return lc;
-
 }
 
 
@@ -1354,9 +1173,7 @@ LevelChecker starting_objects(Level level, LevelChecker lc) {
     
     lc.starting_objects = all_objects;
     lc.starting_objects_names = object_names;
-
     return lc;
-
 }
 
 map[LevelData, LevelChecker] check_size_per_level(Engine engine, Checker c, bool debug=false) {
@@ -1375,10 +1192,7 @@ map[LevelData, LevelChecker] check_size_per_level(Engine engine, Checker c, bool
 
 }
 
-
-
 Engine check_game_per_level(Engine engine, Checker c, bool debug=false) {
-
 
     for (LevelData ld <- engine.level_data<0>) {
 
@@ -1441,7 +1255,6 @@ str convert_rule(list[RulePart] left, list[RulePart] right) {
     return rule;
 }
 
-
 Engine compile(Checker c) {
 
 	Engine engine = new_engine(c.game);
@@ -1474,15 +1287,12 @@ Engine compile(Checker c) {
 
     engine.level_data = check_size_per_level(engine, c);
     engine = check_game_per_level(engine, c);
+    for (Level level <- engine.converted_levels) {
+        engine.applied_data[level.original] = new_applied_data(level);
+    }
     engine.analyzed = true;
     engine.indexed_rules = index_rules(engine.game.rules);
-
-    // for (list[Rule] rule <- engine.level_data[engine.current_level.original].applied_late_rules) println(rule[0]);
-
-	// engine.layers = [convert_layer(x, c) | x <- c.game.layers];
-
 	engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
 	
 	return engine;
 }
-

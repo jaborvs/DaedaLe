@@ -72,43 +72,13 @@ void main() {
             int before = cpuTime();
             engine = execute_move(engine, checker, move, i);
             println((cpuTime() - before) / 1000000000.00);
-            println(size(engine.level_data[engine.current_level.original].actual_applied_rules));
-            engine.level_data[engine.current_level.original].actual_applied_rules = [];
+            print_level(engine, checker);
 
         }
-
 
     }
 
 
-    
-    // for (int i <- [0..1]) {
-
-    //     engine.current_level = engine.converted_levels[i];
-    //     list[str] winning_moves =  bfs(engine, possible_moves, checker, "win");
-    //     list[list[str]] dead_ends = get_dead_ends(engine, checker, winning_moves);
-    //     // list[list[str]] dead_end_rules = [];
-
-    //     list[str] winning_moves_rules = [];
-
-    //     // for (RuleData rd <- engine.level_data[engine.current_level.original].actual_applied_rules) {
-    //     //     if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) {
-    //     //         winning_moves_rules += engine.indexed_rules[rd2][1];
-    //     //     }
-    //     // }
-
-    //     // resolve_verbs(winning_moves_rules, true);
-    //     // println("");
-    //     // for (list[str] rules <- dead_end_rules) {
-    //     //     resolve_verbs(rules, false);
-    //     // }
-
-    //     println(dead_ends);
-    // }
-
-
-
-    // println(dead_ends);
     return;
 
     list[list[str]] all_winning = all_bfs(engine, ["up", "left", "down", "right"], checker, "win");

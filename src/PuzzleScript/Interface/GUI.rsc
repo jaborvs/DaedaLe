@@ -1,4 +1,4 @@
-module PuzzleScript::Interface::SalixTest
+module PuzzleScript::Interface::GUI
 
 import salix::HTML;
 import salix::Core;
@@ -29,8 +29,8 @@ public int i = 0;
 data CurrentLine = currentline(int column, int row);
 data JsonData = alldata(CurrentLine \start, str action, list[str] lines, CurrentLine end, int id);
 
-alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, int begin_index, str code, str dsl, bool analyzed];
-// alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, str code];
+alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, int begin_index, str code, str dsl, bool analyzed, Dead_Ends de];
+alias Dead_Ends = list[tuple[Engine, list[str]]];
 
 data Msg 
 	= left() 
@@ -47,7 +47,7 @@ data Msg
     | textUpdated()
     | load_design()
     | analyse()
-    | show(list[str] movements)
+    | show(int i)
 	;
 
 tuple[str, str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
@@ -144,13 +144,23 @@ Model update(Msg msg, Model model){
                 exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "0"]);
             }
             case analyse(): {
+                // tuple[Engine engine, list[str] winning_moves] result = bfs(model.engine, ["up","down","left","right"], model.checker, "win", 1);
+                // model.engine.applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
+                // println("Finding dead_ends now");
+
+                // model.engine.level_data[model.engine.current_level.original].dead_ends = get_dead_ends(model.engine, model.checker, ["right", "right", "right", "right", "right", "right", "right", "up", "up", "up", "up", "right"]);
+                model.de = get_dead_ends(model.engine, model.checker, ["right", "right", "right", "right", "up", "up", "right"]);
                 model.analyzed = true;
-                println(model.dsl);
-                // list[str] winning_moves = bfs(model.engine, ["up","down","left","right"], model.checker, "win");
-                // model.engine.level_data[model.engine.current_level.original].shortest_path = winning_moves;
-                // model.engine.level_data[model.engine.current_level.original].dead_ends = get_dead_ends(model.engine, model.checker, winning_moves);
+
             }
-            case show(list[str] movements): {
+            case show(int i): {
+                println("Showing <i>");
+                Engine engine = model.de[i][0];
+                list[Coords] coords = engine.applied_data[engine.current_level.original].travelled_coords;
+                println("Coords = <coords>");
+                tuple[str, str, str] json_data = coords_to_json(engine, coords, model.index);
+                tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
+                exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
                 exec("./dead_end.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "0"]);
             }
 			default: return model;
@@ -159,7 +169,7 @@ Model update(Msg msg, Model model){
         if (execute) {
             model.index += 1;
             println(model.input);
-            model.engine = execute_move(model.engine, model.checker, model.input);
+            model.engine = execute_move(model.engine, model.checker, model.input, 0);
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
             exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
             execute = false;
@@ -195,8 +205,6 @@ Model update_code(Model model, JsonData oink, int category) {
     if (category == 0) model.code = new_code;
     else model.dsl = new_code;
 
-    println(new_line);
-
     return model;
 }
 
@@ -208,7 +216,7 @@ Model reload(str src, int index) {
 
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
  
-	Model init() = <"none", title, engine, checker, index, index, src, "", false>;
+	Model init() = <"none", title, engine, checker, index, index, src, "", false, []>;
     return init();
 
 }
@@ -224,21 +232,18 @@ void view_panel(Model m){
     });
 }
 
-// void view_options(Model m){
-//     div(class("panel"), () {
-//         h3(style(("font-family": "BubbleGum")), "Get insights");
-//         button(onClick(analyse()), "Analyse");
-//     });
-// }
-
 void view_results(Model m) {
+
     div(class("panel"), () {
         h3("Results");
-        LevelChecker lc = m.engine.level_data[m.engine.current_level.original];
+        AppliedData ad = m.engine.applied_data[m.engine.current_level.original];
+        println("0");
         p("DSL = <m.dsl>");
-        p("Shortest path = <size(lc.shortest_path)> steps");
-        for (int i <- [0..size(lc.dead_ends)]) {
-            p(onMouseEnter(show(lc.dead_ends[i])), "<i>");
+        println("1");
+        p("Shortest path = <size(ad.shortest_path)> steps");
+        println("2");
+        for (int i <- [0..size(m.de)]) {
+            p(onMouseEnter(show(i)), "<i>");
         }
     });
 }
@@ -277,7 +282,6 @@ void view(Model m) {
             });
             div(class("data"), () {
                 div(class(""), () {view_panel(m);});
-                // div(class(""), () {view_options(m);});
                 if (m.analyzed) view_results(m);
             });
         });
@@ -287,12 +291,7 @@ void view(Model m) {
 App[Model]() main() {
 
     loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
-	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/coincounter.PS|);
-	// loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/Tutorials/push.PS|;
-	// loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
-    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/sokoban_basic.PS|;
 	game = load(game_loc);
-	// game = load(|project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/byyourside.PS|);
 
 	checker = check_game(game);
 	engine = compile(checker);
@@ -302,13 +301,10 @@ App[Model]() main() {
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
     exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
 
-	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), "", false>;
+	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), "", false, []>;
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/style.css"]), update);
-    // SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view), update);
 
     App[Model] counterWebApp()
-    //   = webApp(counterApp(), |project://automatedpuzzlescript/src/PuzzleScript/Interface/index.html|, |project://automatedpuzzlescript/src|);
-    //   = webApp(counterApp(), |project://automatedpuzzlescript/src/PuzzleScript/Interface/index.html|);
       = webApp(counterApp(), |project://automatedpuzzlescript/src/|);
 
     return counterWebApp;

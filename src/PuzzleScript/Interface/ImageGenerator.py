@@ -13,23 +13,14 @@ def convert_data_to_image():
     img = Image.new('RGB', (size['width'] * 5, size['height'] * 5), color='white')
     pixels = img.load()
 
-    # Map data points to image pixels
     for item in data:
         x, y, color = item['x'], item['y'], ImageColor.getcolor(item['c'], "RGB")
-        pixels[x, y] = color  # Set the pixel color based on the data
+        pixels[x, y] = color
 
     return img
 
-
-# Convert data to image
 index = json.loads(sys.argv[3])['index']
 resulting_image = convert_data_to_image()
 
-# resulting_image = resulting_image.resize((300,300), Image.BICUBIC)
-
-# Save the image
 if index > 1 and sys.argv[4]: os.remove(f"output_image{index - 1}.png")
 resulting_image.save(f"output_image{index}.png", quality=100, subsampling=0)
-
-# # Optionally, display the image
-# resulting_image.show()

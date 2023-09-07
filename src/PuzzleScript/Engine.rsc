@@ -13,12 +13,6 @@ import PuzzleScript::Compiler;
 import util::Eval;
 import util::Math;
 
-void print_message(str string){
-	println("#####################################################");
-	println(string);
-	println("#####################################################");
-}
-
 // Returns the differing coordinates based on the direction
 Coords get_dir_difference(str dir) {
 
@@ -115,7 +109,6 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
 
     } else {
 
-
         list[Object] objects_same_pos = engine.current_level.objects[object.coords];
         tuple[bool, list[Object]] has_required_objs = has_objects(rc.content, direction, objects_same_pos, engine);
         if (has_required_objs[0]) object_matches_criteria += !(isEmpty(has_required_objs[1])) ? [has_required_objs[1]] : 
@@ -128,7 +121,6 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     if (size(lhs) <= index) {
         return object_matches_criteria;
     }
-    
 
     // Second part: Now that objects in current cell meet the criteria, check if required neighbors exist
     Coords dir_difference = get_dir_difference(direction);
@@ -285,12 +277,8 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
                     dir, get_layer(all_references, engine.game), highest_id + 1)];
 
             }
-
-
         }
-
         if (current != []) replacements += [current];
-
     }
 
     // Do the actual replacements
@@ -316,11 +304,8 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
 
             if (!(new_obj in new_objects)) new_objects += new_obj;
         }
-
         engine.current_level.objects[objects_coords] = new_objects;
-
     }
-
     return engine;
 }
 
@@ -412,25 +397,21 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late,
 
                         Engine engine_before = engine;
                         engine = apply(engine, found_objects, rp_left[i].contents, rp_right[i].contents, direction);
-                        // if (!(rule.original in engine.level_data[engine.current_level.original].actual_applied_rules)) {
-                        int index = size(engine.level_data[current_level.original].applied_moves);
-                        engine.level_data[engine.current_level.original].actual_applied_rules += (index: [rule.original]);
-                        // }
+                        AppliedData ad = engine.applied_data[current_level.original];
+                        int index = size(ad.applied_moves<0>);
+                        if (index in ad.actual_applied_rules<0>) engine.applied_data[engine.current_level.original].actual_applied_rules[index] += [rule.original];
+                        else engine.applied_data[engine.current_level.original].actual_applied_rules += (index: [rule.original]);
                         applied += 1;
                     }
                 }
                 else {
                     can_be_applied = false;
                 }
-                applicable = [];
-                all_found_objects = [];
-
             }
         }
     }
 
     return engine; 
-
 }
 
 // Moves object to desired position by adding object to list of objects at that position
@@ -493,23 +474,14 @@ Level try_move(Object obj, Level current_level) {
     if (same_layer_obj.char != "") new_object = same_layer_obj;
     else new_object = other;
 
-    // for (int i <- [0..size(objs_at_new_pos)]) {
-
-        // Object new_object = objs_at_new_pos[i];
-
-        // Object moves together with other objects
-        // if (obj.layer == new_object.layer && new_object.direction != "") {
     if (new_object.direction != "") {
 
         current_level = try_move(new_object, current_level);
         current_level = try_move(obj, current_level);
-        // object = try_move(new_object, current_level);
     }
     // Object can move one pos
-    // else if(obj.layer != new_object.layer && new_object.direction == "") {
     else if (obj.layer != new_object.layer) {
         current_level = move_to_pos(current_level, old_pos, new_pos, obj);
-        // current_level.objects[new_pos] = remove(current_level.objects[new_pos], i);
     } else {
         for (Coords coords <- current_level.objects<0>) {
             for (int i <- [0..size(current_level.objects[coords])]) {
@@ -522,12 +494,7 @@ Level try_move(Object obj, Level current_level) {
             }
         }
     }
-
-    // }
-
     return current_level;
-
-
 }
 
 // Applies all the moves of objects with a direction set
@@ -541,11 +508,9 @@ Engine apply_moves(Engine engine, Level current_level) {
                 current_level = try_move(obj, current_level);
             }
         }
-
         engine.current_level = current_level;
         updated_objects = [];
     }
-
     return engine;
 }
 
@@ -565,7 +530,6 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
     
     engine.current_level = current_level;
     return engine;
-
 }
 
 // Applies movement, checks which rules apply, executes movement, checks which late rules apply
@@ -576,10 +540,11 @@ Engine execute_move(Engine engine, Checker c, str direction, int allrules) {
     engine = apply_moves(engine, engine.current_level);
     engine = apply_rules(engine, engine.current_level, direction, true, allrules);
 
-    engine.level_data[engine.current_level.original].applied_moves += [direction];
+    int index = size(engine.applied_data[engine.current_level.original].applied_moves<0>);
+    engine.applied_data[engine.current_level.original].applied_moves[index] = [direction];
+    engine.applied_data[engine.current_level.original].travelled_coords += [engine.current_level.player[0]];
 
     return engine;
-
 }
 
 
@@ -729,16 +694,13 @@ bool in_corner(Object object, Engine engine, LevelChecker lc) {
                     satisfies += !(name in lc.moveable_objects);
                 }
             }
-
         }
 
         if (size(satisfies) == 2 && (all(x <- satisfies, x == true))) {
             return true;
         }
     }
-
     return false;
-
 }
 
 bool check_dead_end(Engine engine, str amount, str object) {
@@ -750,9 +712,7 @@ bool check_dead_end(Engine engine, str amount, str object) {
             if (toLowerCase(object) in obj.possible_names || toLowerCase(object) == obj.current_name) found += obj;
         }
     }
-
     return any(Object obj <- found, in_corner(obj, engine, engine.level_data[engine.current_level.original]));
-
 }
 
 // Checks if current state satisfies all the win conditions
@@ -812,23 +772,35 @@ void print_level(Engine engine, Checker c) {
 
 }
 
-
 list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, list[str] winning_moves) {
+
+    println("In dead_ends");
 
     list[str] possible_moves = ["up", "left", "down", "right"];
     list[tuple[Engine, list[str]]] dead_ends = [];
-    // list[list[str]] dead_end_rules = [];
 
     int total = 0;
     bool dead_end = false;
+    println("1");
+
 
     for (int i <- [0..size(winning_moves)]) {
+        
+        println("2");
 
+        println("Executing move <winning_moves[i]>");
         engine = execute_move(engine, checker, winning_moves[i], 0);
+
+        println("3");
+
         if (i == size(winning_moves) - 1) continue;
-        // if (i == size(winning_moves) - 1 || dead_end) continue;
+
+        println("4");
+        println(size(possible_moves));
 
         for (str move <- possible_moves) {
+
+            println("Now executing move <move>");
 
             // Don't perform a move that is part of the winning moves
             if (i < size(winning_moves) - 1 && winning_moves[i + 1] == move) continue;
@@ -848,10 +820,6 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
                 }
                 if (total == 4) {
                     dead_ends += [<new_engine, winning_moves[0..i+1] + [move]>];
-                    // list[str] rules = [];
-                    // for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules) {
-                    //     if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) rules += [engine.indexed_rules[rd2][1]];
-                    // }
                     break;           
                 }
 
@@ -865,21 +833,14 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
 
                 if (total == 4) {
                     dead_ends += [<new_engine2, winning_moves[0..i+1] + [move] + [move2]>];
-                    // list[str] rules = [];
-                    // for (RuleData rd <- new_engine2.level_data[engine.current_level.original].actual_applied_rules<1>) {
-                    //     if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) rules += [engine.indexed_rules[rd2][1]];
-                    // }
-                    // dead_end_rules += [rules];
                     dead_end = true;
                 }
 
                 // OPTION 2 - Corner keyword
                 // if (check_conditions(new_engine2, "dead_end")) dead_ends += [winning_moves[0..i+1] + [move] + [move2]];
-
             }
         }
     }
 
     return dead_ends;
-
 }
