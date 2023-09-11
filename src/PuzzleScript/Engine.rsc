@@ -774,33 +774,19 @@ void print_level(Engine engine, Checker c) {
 
 list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, list[str] winning_moves) {
 
-    println("In dead_ends");
-
     list[str] possible_moves = ["up", "left", "down", "right"];
     list[tuple[Engine, list[str]]] dead_ends = [];
 
     int total = 0;
     bool dead_end = false;
-    println("1");
-
 
     for (int i <- [0..size(winning_moves)]) {
-        
-        println("2");
 
-        println("Executing move <winning_moves[i]>");
         engine = execute_move(engine, checker, winning_moves[i], 0);
-
-        println("3");
 
         if (i == size(winning_moves) - 1) continue;
 
-        println("4");
-        println(size(possible_moves));
-
         for (str move <- possible_moves) {
-
-            println("Now executing move <move>");
 
             // Don't perform a move that is part of the winning moves
             if (i < size(winning_moves) - 1 && winning_moves[i + 1] == move) continue;

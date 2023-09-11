@@ -29,8 +29,9 @@ public int i = 0;
 data CurrentLine = currentline(int column, int row);
 data JsonData = alldata(CurrentLine \start, str action, list[str] lines, CurrentLine end, int id);
 
-alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, int begin_index, str code, str dsl, bool analyzed, Dead_Ends de, str image];
+alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, int begin_index, str code, str dsl, bool analyzed, Dead_Ends de, Win win, str image];
 alias Dead_Ends = list[tuple[Engine, list[str]]];
+alias Win = tuple[Engine engine, list[str] winning_moves];
 
 data Msg 
 	= left() 
@@ -47,10 +48,10 @@ data Msg
     | textUpdated()
     | load_design()
     | analyse()
-    | show(int i)
+    | show(Engine engine, int win)
 	;
 
-tuple[str, str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
+tuple[str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
 
     tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
 
@@ -62,7 +63,7 @@ tuple[str, str, str] coords_to_json(Engine engine, list[Coords] coords, int inde
     json = json[0..size(json) - 1];
     json += "]";
 
-    return <json, "{\"width\": <level_size.width>, \"height\": <level_size.height>}", "{\"index\": <index>}">;
+    return <json, "{\"index\": <index>}">;
 
 }
 
@@ -145,28 +146,30 @@ Model update(Msg msg, Model model){
             case analyse(): {
                 tuple[Engine engine, list[str] winning_moves] result = bfs(model.engine, ["up","down","left","right"], model.checker, "win", 1);
                 model.engine.applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
+                model.win = result;
                 model.de = get_dead_ends(model.engine, model.checker, result.winning_moves);
                 model.analyzed = true;
             }
-            case show(int i): {
-                Engine engine = model.de[i][0];
+            case show(Engine engine, int win): {
                 list[Coords] coords = engine.applied_data[engine.current_level.original].travelled_coords;
                 tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
-                println(model.index + 1);
                 exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
-                json_data = coords_to_json(engine, coords, model.index + 1);
-                exec("./dead_end.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "0"]);
+                tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
+                println("Rendering image with win: <win == 0 ? "0" : "1">");
+                exec("./path.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
                 model.index += 1;
-                model.image = "PuzzleScript/Interface/dead_image<model.index>.png";
-
+                model.image = "PuzzleScript/Interface/path<model.index>.png";
             }
 			default: return model;
 		}
 		
         if (execute) {
             model.index += 1;
-            println(model.input);
             model.engine = execute_move(model.engine, model.checker, model.input, 0);
+            if (check_conditions(model.engine, "win")) {
+                model.engine.index += 1;
+                model.engine.current_level = model.engine.converted_levels[model.engine.index];
+            }
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
             exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
             execute = false;
@@ -214,7 +217,7 @@ Model reload(str src, int index) {
 
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
  
-	Model init() = <"none", title, engine, checker, index, index, src, "", false, [], "">;
+	Model init() = <"none", title, engine, checker, index, index, src, "", false, [], <engine,[]>, "PuzzleScript/Interface/output_image<index>.png">;
     return init();
 
 }
@@ -235,13 +238,11 @@ void view_results(Model m) {
     div(class("panel"), () {
         h3("Results");
         AppliedData ad = m.engine.applied_data[m.engine.current_level.original];
-        println("0");
         p("DSL = <m.dsl>");
-        println("1");
-        p("Shortest path = <size(ad.shortest_path)> steps");
-        println("2");
+        p("Shortest path = ");
+        button(onClick(show(m.win.engine, 1)), "<size(m.win.winning_moves)>");
         for (int i <- [0..size(m.de)]) {
-            button(onClick(show(i)), "<i>");
+            button(onClick(show(m.de[i][0], 0)), "<i>");
         }
     });
 }
@@ -276,8 +277,6 @@ void view(Model m) {
             div(style(("width": "40vw", "height": "40vh")), onKeyDown(direction), () {
                 int index = 0;
                 index = (m.index == m.begin_index) ? m.begin_index : m.index;
-                println(m.index);
-                println(m.begin_index);
                 img(style(("width": "40vw", "height": "40vh", "image-rendering": "pixelated")), (src("<m.image>")), () {});
             });
             div(class("data"), () {
@@ -301,7 +300,7 @@ App[Model]() main() {
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
     exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
 
-	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), "", false, [], "PuzzleScript/Interface/output_image0.png">;
+	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), "", false, [], <engine,[]>, "PuzzleScript/Interface/output_image0.png">;
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/style.css"]), update);
 
     App[Model] counterWebApp()
