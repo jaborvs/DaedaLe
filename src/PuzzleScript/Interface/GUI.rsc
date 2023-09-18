@@ -16,7 +16,9 @@ import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import PuzzleScript::Verbs;
 import PuzzleScript::DynamicAnalyser;
+import PuzzleScript::Test::Domain;
 
 import String;
 import List;
@@ -111,6 +113,19 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
 
 }
 
+int get_level_index(Engine engine, Level current_level) {
+
+    println("1111");
+
+    int index = 0;
+    while (engine.converted_levels[index].original != current_level.original) {
+        println(index);
+        index += 1;
+    }
+    return index;
+
+}
+
 
 Model update(Msg msg, Model model){
 
@@ -127,13 +142,15 @@ Model update(Msg msg, Model model){
 					case 40: model.input = "down";
 				}
 			}
-			case reload(): model.engine.current_level = model.engine.begin_level;
+			case reload(): {
+                model.engine.current_level = model.engine.begin_level;
+                model.image = "PuzzleScript/Interface/output_image0.png";
+            }
             case codeChange(map[str,value] delta): {
                 JsonData json_change = parseJSON(#JsonData, asJSON(delta["payload"]));
                 model = update_code(model, json_change, 0);
             }
             case dslChange(map[str,value] delta): {
-                println(asJSON(delta["payload"]));
                 JsonData json_change = parseJSON(#JsonData, asJSON(delta["payload"]));
                 model = update_code(model, json_change, 1);
             }
@@ -146,19 +163,40 @@ Model update(Msg msg, Model model){
             case analyse(): {
                 tuple[Engine engine, list[str] winning_moves] result = bfs(model.engine, ["up","down","left","right"], model.checker, "win", 1);
                 model.engine.applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
+                
+                // Save respective engine states
                 model.win = result;
                 model.de = get_dead_ends(model.engine, model.checker, result.winning_moves);
+
                 model.analyzed = true;
             }
             case show(Engine engine, int win): {
+                // Get travelled coordinates and generate image that shows coordinates
+                // 'win' argument determines the color of the path
+
+                println("0.00");
                 list[Coords] coords = engine.applied_data[engine.current_level.original].travelled_coords;
                 tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
+                println("0.0");
                 exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
                 tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
-                println("Rendering image with win: <win == 0 ? "0" : "1">");
+                println("0.1");
                 exec("./path.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
                 model.index += 1;
                 model.image = "PuzzleScript/Interface/path<model.index>.png";
+
+                println("0.2");
+
+                int level_index = get_level_index(engine, engine.current_level);
+
+                println("\n\n0");
+                map[int,list[RuleData]] rules = engine.applied_data[engine.current_level.original].actual_applied_rules;
+                println("1");
+                Tutorial tutorial = tutorial_build(model.dsl);
+                println("2");
+                resolve_verbs(engine, rules<1>, tutorial.lessons[level_index].verbs, tutorial.lessons[level_index].elems, win);
+                println("3");
+
             }
 			default: return model;
 		}
@@ -180,31 +218,31 @@ Model update(Msg msg, Model model){
     return model;
 }
 
-Model update_code(Model model, JsonData oink, int category) {
+Model update_code(Model model, JsonData jd, int category) {
 
     str code = category == 0 ? model.code : model.dsl;
     list[str] code_lines = split("\n", code);
     str new_line = "";
 
-    int row = oink.\start.row;
-    int begin = oink.\start.column;
-    int end = oink.end.column;
+    int row = jd.\start.row;
+    int begin = jd.\start.column;
+    int end = jd.end.column;
 
-    switch(oink.action) {
+    switch(jd.action) {
         case "remove": {
             new_line = code_lines[row][0..begin] + code_lines[row][end..];
         }
         case "insert": {
-            println(code_lines[row][0..begin]);
-            println(code_lines[row][begin..]);
-            new_line = code_lines[row][0..begin] + intercalate("", oink.lines) + code_lines[row][begin..];
+            new_line = code_lines[row][0..begin] + intercalate("", jd.lines) + code_lines[row][begin..];
         }
     }
-    code_lines[oink.\start.row] = new_line;
+    code_lines[jd.\start.row] = new_line;
     str new_code = intercalate("\n", code_lines);
     
     if (category == 0) model.code = new_code;
     else model.dsl = new_code;
+
+    println(model.dsl);
 
     return model;
 }
@@ -235,14 +273,16 @@ void view_panel(Model m){
 
 void view_results(Model m) {
 
+    println("Showing results");
+
     div(class("panel"), () {
         h3("Results");
         AppliedData ad = m.engine.applied_data[m.engine.current_level.original];
-        p("DSL = <m.dsl>");
-        p("Shortest path = ");
-        button(onClick(show(m.win.engine, 1)), "<size(m.win.winning_moves)>");
+        p("-- Shortest path --");
+        button(onClick(show(m.win.engine, 1)), "<size(m.win.winning_moves)> steps");
+        p("-- Dead ends --");
         for (int i <- [0..size(m.de)]) {
-            button(onClick(show(m.de[i][0], 0)), "<i>");
+            button(onClick(show(m.de[i][0], 0)), "<i + 1>");
         }
     });
 }

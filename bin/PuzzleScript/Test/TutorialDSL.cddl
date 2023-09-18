@@ -1,6 +1,20 @@
-tutorial Test {
-    lesson flying {
-        fails if crate in corner
-        verb fly = []
+tutorial hoi {
+    lesson 1 {
+        {
+            fly [1 2 3]
+        }
+        {
+            learns to fly
+            fails if fly
+            learns to fly
+        }
+    };
+    lesson 2 {
+        {
+            crawl [1 2 4]
+        }
+        {}
+
+
     }
 }

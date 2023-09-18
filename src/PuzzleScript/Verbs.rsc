@@ -7,6 +7,7 @@ import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+import PuzzleScript::Test::Domain;
 import IO;
 import util::Eval;
 import Type;
@@ -15,59 +16,21 @@ import List;
 
 import util::Benchmark;
 
-public map[str, map[str, list[str]]] verbs = ("limerick": ("crawl": [" [ \> Player No Obstacle  ]  -\>  [ PlayerBodyH PlayerHead1  ] "],
-                                                            "climb": [" [ UP PlayerHead1 No Obstacle  ]  -\>  [ PlayerBodyV PlayerHead2  ] ", 
-                                                                    " [ UP PlayerHead2 No Obstacle  ]  -\>  [ PlayerBodyV PlayerHead3  ] ",
-                                                                    " [ UP PlayerHead3 No Obstacle  ]  -\>  [ PlayerBodyV PlayerHead4  ] ",
-                                                                    " [ UP PlayerHead4 No Obstacle  ]  -\>  [ PlayerHead4  ] "],
-                                                            "fall": [" [ Player No Obstacle  ]  -\>  [ PlayerBodyV PlayerHead1  ] "],
-                                                            "eat": [" [ Player Apple  |  ]  [ PlayerBody  ]  -\>  [ Player Apple  |  ]  [  ] ",
-                                                                    " [ Player Apple  ]  -\>  [ Player  ] "],
-                                                            "push": ["horizontal [ \> Player Crate No Obstacle  ]  -\>  [ PlayerBodyH  | PlayerHead1  | Crate  |  ] "]),
-                                                "modality": ("push": [" [ \> Player Black Crate Black  ]  -\>  [ \> Player Black \> Crate Black  ] "],
-                                                            "push2": [" [ \> Player Nonblack Crate Nonblack  ]  -\>  [ \> Player Nonblack \> Crate Nonblack  ] "]),
-                                                "blockfaker": ("vanish": [" [ PurpleBlock PurpleBlock PurpleBlock  ]  -\>  [  ] "],
-                                                            "vanish2": [" [ GreenBlock GreenBlock GreenBlock  ]  -\>  [  ] "],
-                                                            "vanish3": [" [ OrangeBlock OrangeBlock OrangeBlock  ]  -\>  [  ] "],
-                                                            "vanish4": [" [ BlueBlock BlueBlock BlueBlock  ]  -\>  [  ] "],
-                                                            "vanish5": [" [ PinkBlock PinkBlock PinkBlock  ]  -\>  [  ] "],
-                                                            "push": [" [ \> Moveable Moveable  ]  -\>  [ \> Moveable \> Moveable  ] "]));
+list[str] resolve_verbs(Engine engine, list[RuleData] rules, list[Verb] verb_definitions, list[Elem] elems, int win) {
 
-// public str CRAWL = "horizontal [ \> Player No Obstacle  ]  -\>  [ PlayerBodyH  | PlayerHead1  |  ] ";
-// public list[str] CLIMB = ["UP [ UP PlayerHead1 No Obstacle  ]  -\>  [ PlayerBodyV  | PlayerHead2  |  ] ", 
-//                           "UP [ UP PlayerHead2 No Obstacle  ]  -\>  [ PlayerBodyV  | PlayerHead3  |  ] "];
-// public str FALL = "DOWN [ Player No Obstacle  ]  -\>  [ PlayerBodyV PlayerHead1  ] ";
+    println(verb_definitions);
+    println(elems);
+    println(win);
+    
+    // for (int i <- [0..size(rules)]) {
+    //     if (i in engine.applied_data[engine.current_level.original].actual_applied_rules<0>) {
+    //         RuleData rd = engine.applied_data[engine.current_level.original].actual_applied_rules[i][0];
+    //         resolve_verb(convert_rule(rd.left, rd.right), true, title);
+    //     } else {
+    //         verbs += ["walk"];
+    //     }
+    // }
 
-// public map[str, map[str, [RuleData]]] verbs_per_game = ("LimeRick": ("stuck": []));  
+    return verbs;
 
-void main() {
-
-}
-
-
-void resolve_verbs(list[str] sequence_rules, bool winning, str title) {
-
-    map[str, list[str]] game_verbs = verbs[title];
-
-    for (str rule <- sequence_rules) {
-        for (str verb <- game_verbs<0>) {
-            if (rule in game_verbs[verb]) println(verb);
-        }
-    }
-}
-
-void resolve_verb(str rule, bool winning, str title) {
-
-    // println("#####");
-    // println(rule + "H");
-
-    map[str, list[str]] game_verbs = verbs[title];
-
-    for (str verb <- game_verbs<0>) {
-
-        // println(rule in game_verbs[verb]);
-        // println(game_verbs[verb]);
-
-        if (rule in game_verbs[verb]) println(verb);
-    }
 }
