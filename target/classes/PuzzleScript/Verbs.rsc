@@ -13,24 +13,68 @@ import util::Eval;
 import Type;
 import util::Math;
 import List;
+import Set;
 
 import util::Benchmark;
 
-list[str] resolve_verbs(Engine engine, list[RuleData] rules, list[Verb] verb_definitions, list[Elem] elems, int win) {
+tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[RuleData]] rules, list[Verb] verb_definitions, list[Elem] elems, int win) {
 
-    println(verb_definitions);
-    println(elems);
-    println(win);
-    
-    // for (int i <- [0..size(rules)]) {
-    //     if (i in engine.applied_data[engine.current_level.original].actual_applied_rules<0>) {
-    //         RuleData rd = engine.applied_data[engine.current_level.original].actual_applied_rules[i][0];
-    //         resolve_verb(convert_rule(rd.left, rd.right), true, title);
-    //     } else {
-    //         verbs += ["walk"];
-    //     }
-    // }
+    println("0");
 
-    return verbs;
+
+    realised_verbs = [];
+    not_realised_verbs = [];
+    list[str] all_verbs = [];
+
+    map[str, list[RuleData]] verb_rules = ();
+
+    println("1");
+
+    // Resolve rule data for verbs
+    for (Verb verb <- verb_definitions) {
+
+        if (size(verb.numbers) == 0) verb_rules += (verb.name: []);;
+
+        for (int nr <- verb.numbers) {
+            for (RuleData rd <- engine.indexed_rules<0>) {
+                if (engine.indexed_rules[rd][0] == nr) {
+                    if (verb_rules[verb.name]?) verb_rules[verb.name] += [rd];
+                    else verb_rules += (verb.name: [rd]);
+                }
+            }
+        }
+    }
+
+    println("2");
+
+    for (int i <- [0..(max(rules<0>))]) {
+
+        if (!rules[i]?) {
+            if (any(Verb verb <- verb_definitions, size(verb.numbers) == 0)) {
+                println("Verb <verb.name> has 0 rule nrs");
+                all_verbs += verb.name;
+            }
+            continue;
+        }
+        
+        list[RuleData] lrd = rules[i];
+
+        for (Verb verb <- verb_definitions) {
+            if (any(RuleData rd <- verb_rules[verb.name], rd.src in [x.src | x <- lrd])) {
+                all_verbs += verb.name;
+            }
+        }
+    }
+
+    for (Elem elem <- elems) {
+            for (str verb <- elem.names) {
+                for (list[RuleData] lrd <- rules<1>) {
+                    if (any(RuleData rd <- verb_rules[verb], rd.src in [x.src | x <- lrd]) && !(verb in realised_verbs)) realised_verbs += verb;
+                }
+                if (!(verb in not_realised_verbs) && !(verb in realised_verbs)) not_realised_verbs += verb;
+            }
+    }
+
+    return <realised_verbs, not_realised_verbs, all_verbs>;
 
 }

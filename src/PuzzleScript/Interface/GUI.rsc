@@ -28,10 +28,32 @@ import IO;
 
 public int i = 0;
 
+str start_dsl = "tutorial blockfaker {
+    lesson 2 {
+        {
+            walk []
+            push [0]
+            collide [1]
+            vanishpink [2]
+            vanishblue [3]
+            vanishpurple [4]
+            vanishorange [5]
+            vanishgreen [6]
+        }
+        {
+            learns to vanishpink
+            learns to vanishblue
+            learns to vanishpurple
+            learns to vanishorange
+            learns to vanishgreen
+        }        
+    }
+}";
+
 data CurrentLine = currentline(int column, int row);
 data JsonData = alldata(CurrentLine \start, str action, list[str] lines, CurrentLine end, int id);
 
-alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, int begin_index, str code, str dsl, bool analyzed, Dead_Ends de, Win win, str image];
+alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, int begin_index, str code, str dsl, bool analyzed, Dead_Ends de, Win win, str image, tuple[list[str],list[str],list[str]] learning_goals];
 alias Dead_Ends = list[tuple[Engine, list[str]]];
 alias Win = tuple[Engine engine, list[str] winning_moves];
 
@@ -115,14 +137,11 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
 
 int get_level_index(Engine engine, Level current_level) {
 
-    println("1111");
-
     int index = 0;
     while (engine.converted_levels[index].original != current_level.original) {
-        println(index);
         index += 1;
     }
-    return index;
+    return index + 1;
 
 }
 
@@ -171,31 +190,34 @@ Model update(Msg msg, Model model){
                 model.analyzed = true;
             }
             case show(Engine engine, int win): {
+                
                 // Get travelled coordinates and generate image that shows coordinates
                 // 'win' argument determines the color of the path
-
-                println("0.00");
                 list[Coords] coords = engine.applied_data[engine.current_level.original].travelled_coords;
                 tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
-                println("0.0");
                 exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
                 tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
-                println("0.1");
                 exec("./path.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
                 model.index += 1;
                 model.image = "PuzzleScript/Interface/path<model.index>.png";
 
-                println("0.2");
-
+                println("a");
                 int level_index = get_level_index(engine, engine.current_level);
+                println("b");
 
-                println("\n\n0");
                 map[int,list[RuleData]] rules = engine.applied_data[engine.current_level.original].actual_applied_rules;
-                println("1");
                 Tutorial tutorial = tutorial_build(model.dsl);
-                println("2");
-                resolve_verbs(engine, rules<1>, tutorial.lessons[level_index].verbs, tutorial.lessons[level_index].elems, win);
-                println("3");
+                println("c");
+
+                println(level_index);
+                println(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index));
+
+                Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
+
+                println(lesson);
+
+                model.learning_goals = resolve_verbs(engine, rules, lesson.verbs, lesson.elems, win);
+                println("d");
 
             }
 			default: return model;
@@ -242,8 +264,6 @@ Model update_code(Model model, JsonData jd, int category) {
     if (category == 0) model.code = new_code;
     else model.dsl = new_code;
 
-    println(model.dsl);
-
     return model;
 }
 
@@ -255,7 +275,7 @@ Model reload(str src, int index) {
 
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
  
-	Model init() = <"none", title, engine, checker, index, index, src, "", false, [], <engine,[]>, "PuzzleScript/Interface/output_image<index>.png">;
+	Model init() = <"none", title, engine, checker, index, index, src, "", false, [], <engine,[]>, "PuzzleScript/Interface/output_image<index>.png", <[],[],[]>>;
     return init();
 
 }
@@ -283,6 +303,22 @@ void view_results(Model m) {
         p("-- Dead ends --");
         for (int i <- [0..size(m.de)]) {
             button(onClick(show(m.de[i][0], 0)), "<i + 1>");
+        }
+        if (m.learning_goals != <[],[],[]>) {
+
+            p("-- The following verbs have been used --");
+            // for (int i <- [0..size(m.learning_goals[2])]) {
+                p("<intercalate(", ", m.learning_goals[2])>");
+            // }
+
+            p("-- The following learning goals are realised --");
+            // for (int i <- [0..size(m.learning_goals[0])]) {
+                p("<intercalate(", ", m.learning_goals[0])>");
+            // }
+            p("-- The following learning goals are not realised --");
+            // for (int i <- [0..size(m.learning_goals[1])]) {
+                p("<intercalate(", ", m.learning_goals[1])>");
+            // }
         }
     });
 }
@@ -329,7 +365,7 @@ void view(Model m) {
 
 App[Model]() main() {
 
-    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
+    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
 	game = load(game_loc);
 
 	checker = check_game(game);
@@ -340,7 +376,8 @@ App[Model]() main() {
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
     exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
 
-	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), "", false, [], <engine,[]>, "PuzzleScript/Interface/output_image0.png">;
+	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), start_dsl, false, [], <engine,[]>, "PuzzleScript/Interface/output_image0.png", <[],[],[]>>;
+    Tutorial tutorial = tutorial_build(start_dsl);
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/style.css"]), update);
 
     App[Model] counterWebApp()
