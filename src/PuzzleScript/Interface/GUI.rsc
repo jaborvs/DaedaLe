@@ -18,7 +18,7 @@ import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Verbs;
 import PuzzleScript::DynamicAnalyser;
-import PuzzleScript::Test::Domain;
+import PuzzleScript::Test::AST;
 
 import String;
 import List;
@@ -29,25 +29,37 @@ import IO;
 public int i = 0;
 
 str start_dsl = "tutorial blockfaker {
-    lesson 2 {
-        {
-            walk []
-            push [0]
-            collide [1]
-            vanishpink [2]
-            vanishblue [3]
-            vanishpurple [4]
-            vanishorange [5]
-            vanishgreen [6]
-        }
-        {
-            learns to vanishpink
-            learns to vanishblue
-            learns to vanishpurple
-            learns to vanishorange
-            learns to vanishgreen
-        }        
+
+    verb walk []
+    verb push [0]
+    verb collide [1]
+    verb vanishpink [2]
+    verb vanishblue [3]
+    verb vanishpurple [4]
+    verb vanishorange [5]
+    verb vanishgreen [6]
+
+    lesson 1: Push {
+        learn to push
     }
+    
+    lesson 2: Vanish {
+        learn to vanishpink
+        learn to vanishblue
+        learn to vanishpurple
+        learn to vanishorange
+        learn to vanishgreen
+    }
+    
+    lesson 3: Hoi {
+        learn to vanishpink
+    }
+    lesson 4: Hoi {
+        learn to vanishblue
+    }
+    lesson 5: Hoi {
+        fail if push
+    }        
 }";
 
 data CurrentLine = currentline(int column, int row);
@@ -180,6 +192,7 @@ Model update(Msg msg, Model model){
                 exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "0"]);
             }
             case analyse(): {
+
                 tuple[Engine engine, list[str] winning_moves] result = bfs(model.engine, ["up","down","left","right"], model.checker, "win", 1);
                 model.engine.applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
                 
@@ -190,6 +203,21 @@ Model update(Msg msg, Model model){
                 model.analyzed = true;
             }
             case show(Engine engine, int win): {
+
+                println(1);
+                int level_index = get_level_index(engine, engine.current_level);
+                println(2);
+
+                Tutorial tutorial = tutorial_build(model.dsl);
+                println(3);
+
+                Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
+                if (!(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index))) {
+                    println("Lesson <level_index> not found!");
+                    return model;
+                }
+                println(4);
+
                 
                 // Get travelled coordinates and generate image that shows coordinates
                 // 'win' argument determines the color of the path
@@ -200,24 +228,20 @@ Model update(Msg msg, Model model){
                 exec("./path.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
                 model.index += 1;
                 model.image = "PuzzleScript/Interface/path<model.index>.png";
+                println(5);
 
-                println("a");
-                int level_index = get_level_index(engine, engine.current_level);
-                println("b");
 
                 map[int,list[RuleData]] rules = engine.applied_data[engine.current_level.original].actual_applied_rules;
-                Tutorial tutorial = tutorial_build(model.dsl);
-                println("c");
+                println("5.5");
+                println(typeOf(engine));
+                println(typeOf(rules));
+                println(typeOf(tutorial.verbs));
+                println(typeOf(lesson.elems));
+                println(win);
 
-                println(level_index);
-                println(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index));
+                model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, win);
+                println(6);
 
-                Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
-
-                println(lesson);
-
-                model.learning_goals = resolve_verbs(engine, rules, lesson.verbs, lesson.elems, win);
-                println("d");
 
             }
 			default: return model;

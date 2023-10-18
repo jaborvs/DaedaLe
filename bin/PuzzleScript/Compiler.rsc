@@ -7,6 +7,7 @@ import Set;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Utils;
+import PuzzleScript::Engine;
 
 import IO;
 
@@ -1020,8 +1021,10 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
     for (RuleContent rc <- rule_side) {
         for (int i <- [0..(size(rc.content))]) {
             if (i mod 2 == 1) continue;
+            
             str dir = rc.content[i];
             str name = rc.content[i + 1];
+            
             if (isDirection(dir)) {
                 if (!(name in found_objects)) found_objects += [name];
                 list[str] all_references = get_references(name, c.references);
@@ -1053,7 +1056,12 @@ LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c
 
     for (Coords coord <- level.objects<0>) {
         for (Object obj <- level.objects[coord]) {
-            if (obj.current_name in lc.moveable_objects) amount_in_level += 1;
+            if (obj.current_name in lc.moveable_objects) {
+                amount_in_level += 1;
+            }
+            else if (any(str name <- obj.possible_names, name in lc.moveable_objects)) {
+                amount_in_level += 1;
+            }
         }
     }
 
@@ -1267,7 +1275,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[2];
+    engine.current_level = engine.converted_levels[0];
     Level begin_level = engine.current_level;
     engine.begin_level = begin_level;
 

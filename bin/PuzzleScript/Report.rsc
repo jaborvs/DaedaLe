@@ -58,6 +58,7 @@ void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
             
                 checker = check_game(game);
                 engine = compile(checker);
+
                 generate_report_per_level(engine, RuleDir, CountableDir);
 
             }
@@ -66,13 +67,12 @@ void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
 
 }
 
-// This function is used to generate reports and create charts for each game
-// Content generate_report_per_level(Engine engine, loc directory) {
 void generate_report_per_level(Engine engine, loc rule_directory, loc count_directory) {
 
     str levelOutput = "";
 
     list[Level] levels = engine.converted_levels;
+
     map[LevelData, LevelChecker] ld = engine.level_data;
 
     str title = "";
@@ -107,6 +107,8 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
 
     int levelIndex = 1;
 
+    println("Generating report for <title>");
+
     for (Level level <- levels) {
 
         if (level.original is level_empty) continue;
@@ -120,7 +122,7 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
 
         real level_size = ld[level.original].size[0] * ld[level.original].size[1] / 100.0;
 
-        appendToFile(count_directory, "<levelIndex>,<level_size>,<size(ld[level.original].moveable_objects)>\n");
+        appendToFile(count_directory, "<levelIndex>,<level_size>,<ld[level.original].moveable_amount_level>\n");
         for (list[Rule] rule <- rules) {
 
             if (any(RuleData rd <- engine.game.rules, rd.src == rule[0].original.src)) {
@@ -128,7 +130,6 @@ void generate_report_per_level(Engine engine, loc rule_directory, loc count_dire
             }
 
         }
-        // appendToFile(rule_directory, "<levelIndex>,<rules>\n");
         levelIndex += 1;
 
     }
