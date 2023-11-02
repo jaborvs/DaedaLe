@@ -18,7 +18,7 @@ import Set;
 
 import util::Benchmark;
 
-tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[RuleData]] rules, list[Verb] verb_definitions, list[Elem] elems, int win) {
+tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[RuleData]] rules, list[Verb] verb_definitions, list[Elem] elems, int length) {
 
     println(1111);
 
@@ -47,7 +47,7 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
 
     println("1.3");
 
-    for (int i <- [0..(max(rules<0>))]) {
+    for (int i <- [0..length]) {
 
         if (!rules[i]?) {
             if (any(Verb verb <- verb_definitions, size(verb.numbers) == 0)) {
@@ -73,6 +73,9 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
     }
 
     for (Elem elem <- elems) {
+
+        if (elem is description) continue;
+
         for (ID id_name <- elem.names) {
 
             str verb = id_name.name;

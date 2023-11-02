@@ -28,38 +28,45 @@ import IO;
 
 public int i = 0;
 
-str start_dsl = "tutorial blockfaker {
+str start_dsl = "
+tutorial limerick {
 
-    verb walk []
-    verb push [0]
-    verb collide [1]
-    verb vanishpink [2]
-    verb vanishblue [3]
-    verb vanishpurple [4]
-    verb vanishorange [5]
-    verb vanishgreen [6]
+    verb topclimb [0]
+    verb largeclimb [1]
+    verb mediumclimb [2]
+    verb normalclimb [3]
+    verb push [4]
+    verb crawl [5]
+    verb eat [6]
+    verb eat2 [7]
+    verb cancel [8]
+    verb snakefall [9]
+        
+    lesson 1: Lesson {
+        \"In this lesson, the player learns that the snake is able to climb\"
+        learn to normalclimb     
+    }
 
-    lesson 1: Push {
-        learn to push
+    lesson 2: Lesson {
+        \"This lesson teaches that a snake can stack its body on top of each other to reach the goal\"
+        learn to normalclimb     
+    }
+
+    lesson 3: Lesson {
+        learn to normalclimb     
+    }
+
+    lesson 4: Lesson {
+        learn to mediumclimb    
     }
     
-    lesson 2: Vanish {
-        learn to vanishpink
-        learn to vanishblue
-        learn to vanishpurple
-        learn to vanishorange
-        learn to vanishgreen
+    lesson 5: Lesson {
+        learn to mediumclimb    
     }
-    
-    lesson 3: Hoi {
-        learn to vanishpink
+
+    lesson 6: Lesson {
+        learn to largeclimb     
     }
-    lesson 4: Hoi {
-        learn to vanishblue
-    }
-    lesson 5: Hoi {
-        fail if push
-    }        
 }";
 
 data CurrentLine = currentline(int column, int row);
@@ -84,7 +91,7 @@ data Msg
     | textUpdated()
     | load_design()
     | analyse()
-    | show(Engine engine, int win)
+    | show(Engine engine, int win, int length)
 	;
 
 tuple[str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
@@ -202,7 +209,7 @@ Model update(Msg msg, Model model){
 
                 model.analyzed = true;
             }
-            case show(Engine engine, int win): {
+            case show(Engine engine, int win, int length): {
 
                 println(1);
                 int level_index = get_level_index(engine, engine.current_level);
@@ -232,14 +239,8 @@ Model update(Msg msg, Model model){
 
 
                 map[int,list[RuleData]] rules = engine.applied_data[engine.current_level.original].actual_applied_rules;
-                println("5.5");
-                println(typeOf(engine));
-                println(typeOf(rules));
-                println(typeOf(tutorial.verbs));
-                println(typeOf(lesson.elems));
-                println(win);
 
-                model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, win);
+                model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, length);
                 println(6);
 
 
@@ -323,10 +324,10 @@ void view_results(Model m) {
         h3("Results");
         AppliedData ad = m.engine.applied_data[m.engine.current_level.original];
         p("-- Shortest path --");
-        button(onClick(show(m.win.engine, 1)), "<size(m.win.winning_moves)> steps");
+        button(onClick(show(m.win.engine, 1, size(m.win.winning_moves))), "<size(m.win.winning_moves)> steps");
         p("-- Dead ends --");
         for (int i <- [0..size(m.de)]) {
-            button(onClick(show(m.de[i][0], 0)), "<i + 1>");
+            button(onClick(show(m.de[i][0], 0, size(m.de[i][1]))), "<i + 1>");
         }
         if (m.learning_goals != <[],[],[]>) {
 
@@ -389,7 +390,7 @@ void view(Model m) {
 
 App[Model]() main() {
 
-    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/blockfaker.PS|;
+    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
 	game = load(game_loc);
 
 	checker = check_game(game);
