@@ -16,8 +16,7 @@ loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Tutorials/demo/
 3. Using Tutomate requires executing the following commands in Rascal's REPL.
 ```
 import PuzzleScript::Interface::GUI;
-game = load(game_loc);
-main()();
+main(game_loc)();
 ```
 These commands host the interface through which the analyses can take place.
 The DSL can be edited in the GUI file.

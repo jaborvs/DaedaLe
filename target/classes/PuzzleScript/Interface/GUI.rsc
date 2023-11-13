@@ -382,10 +382,9 @@ void view(Model m) {
     });
 }
 
-App[Model]() main() {
+App[Model]() main(loc game_loc) {
 
-    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|;
-	// game = load(game_loc);
+	game = load(game_loc);
 
 	checker = check_game(game);
 	engine = compile(checker);
