@@ -1275,7 +1275,7 @@ Engine compile(Checker c) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }
 
-    engine.current_level = engine.converted_levels[5];
+    engine.current_level = engine.converted_levels[0];
     Level begin_level = engine.current_level;
     engine.begin_level = begin_level;
 

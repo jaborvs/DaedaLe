@@ -7,8 +7,8 @@ import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
-import PuzzleScript::Test::AST;
-import PuzzleScript::Test::Syntax;
+import PuzzleScript::Tutorials::AST;
+import PuzzleScript::Tutorials::Syntax;
 import IO;
 import util::Eval;
 import Type;
@@ -19,8 +19,6 @@ import Set;
 import util::Benchmark;
 
 tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[RuleData]] rules, list[Verb] verb_definitions, list[Elem] elems, int length) {
-
-    println(1111);
 
     realised_verbs = [];
     not_realised_verbs = [];
@@ -43,10 +41,6 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
         }
     }
 
-    println(verb_rules<0>);
-
-    println("1.3");
-
     for (int i <- [0..length]) {
 
         if (!rules[i]?) {
@@ -56,7 +50,6 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
             }
             continue;
         }
-        println("1.4");
         
         list[RuleData] lrd = rules[i];
 
@@ -69,7 +62,6 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
             println(all_verbs);
         }
 
-        println("1.5");
     }
 
     for (Elem elem <- elems) {
@@ -85,7 +77,6 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
             if (!(verb in not_realised_verbs) && !(verb in realised_verbs)) not_realised_verbs += verb;
         }
     }
-    println("1.6");
 
     return <realised_verbs, not_realised_verbs, all_verbs>;
 

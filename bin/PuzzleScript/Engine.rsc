@@ -800,6 +800,7 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
 
                 Engine new_engine2 = execute_move(new_engine, checker, move2, 0);
 
+                // OPTION 1 - Stuck keyword
                 if (convert_tuples(new_engine2) == convert_tuples(new_engine)) {
                     total += 1;
                     if (total < 4) continue;
@@ -809,7 +810,6 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
                     break;           
                 }
 
-                // OPTION 1 - Stuck keyword
                 int total = 0;
                 for (str move3 <- possible_moves) {
                     Engine new_engine3 = execute_move(new_engine2, checker, move3, 0);
@@ -822,8 +822,9 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
                     dead_end = true;
                 }
 
+
                 // OPTION 2 - Corner keyword
-                // if (check_conditions(new_engine2, "dead_end")) dead_ends += [winning_moves[0..i+1] + [move] + [move2]];
+                // if (check_conditions(new_engine2, "dead_end")) dead_ends += [<new_engine, winning_moves[0..i+1] + [move] + [move2]>];
             }
         }
     }

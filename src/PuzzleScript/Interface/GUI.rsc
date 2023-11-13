@@ -18,7 +18,7 @@ import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Verbs;
 import PuzzleScript::DynamicAnalyser;
-import PuzzleScript::Test::AST;
+import PuzzleScript::Tutorials::AST;
 
 import String;
 import List;
@@ -28,45 +28,49 @@ import IO;
 
 public int i = 0;
 
-str start_dsl = "
-tutorial limerick {
+str start_dsl = "tutorial blockfaker {
 
-    verb topclimb [0]
-    verb largeclimb [1]
-    verb mediumclimb [2]
-    verb normalclimb [3]
-    verb push [4]
-    verb crawl [5]
-    verb eat [6]
-    verb eat2 [7]
-    verb cancel [8]
-    verb snakefall [9]
-        
-    lesson 1: Lesson {
-        \"In this lesson, the player learns that the snake is able to climb\"
-        learn to normalclimb     
-    }
+    verb walk []
+    verb push [0]
+    verb collide [1]
+    verb vanishpink [2]
+    verb vanishblue [3]
+    verb vanishpurple [4]
+    verb vanishorange [5]
+    verb vanishgreen [6]
 
-    lesson 2: Lesson {
-        \"This lesson teaches that a snake can stack its body on top of each other to reach the goal\"
-        learn to normalclimb     
-    }
-
-    lesson 3: Lesson {
-        learn to normalclimb     
-    }
-
-    lesson 4: Lesson {
-        learn to mediumclimb    
+    lesson 1: Push {
+        \"First, the player is taught how to push a block\"
+        learn to push
     }
     
-    lesson 5: Lesson {
-        learn to mediumclimb    
+    lesson 2: Vanish {
+        \"By using the push mechanic, the player moves blocks to make other blocks vanish\"
+        learn to push
+        learn to vanishpurple
+        learn to vanishorange
     }
-
-    lesson 6: Lesson {
-        learn to largeclimb     
+    
+    lesson 3: Obstacle {
+        \"Here a dead end is introduced. If the player vanishes the purple blocks too early, the level can not be completed\"
+        learn to push
+        fail if vanishpink
     }
+    lesson 4: Combinations {
+        \"Different techniques should be applied to complete the level\"
+        learn to push
+        learn to vanishgreen
+        learn to vanishorange
+    }
+    lesson 5: Moveables {
+        \"This level uses all the moveable objects\"
+        learn to push
+        learn to vanishpink
+        learn to vanishpurple
+        learn to vanishorange
+        learn to vanishblue
+        learn to vanishgreen
+    }        
 }";
 
 data CurrentLine = currentline(int column, int row);
@@ -211,20 +215,14 @@ Model update(Msg msg, Model model){
             }
             case show(Engine engine, int win, int length): {
 
-                println(1);
                 int level_index = get_level_index(engine, engine.current_level);
-                println(2);
 
                 Tutorial tutorial = tutorial_build(model.dsl);
-                println(3);
-
                 Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
                 if (!(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index))) {
                     println("Lesson <level_index> not found!");
                     return model;
                 }
-                println(4);
-
                 
                 // Get travelled coordinates and generate image that shows coordinates
                 // 'win' argument determines the color of the path
@@ -235,14 +233,10 @@ Model update(Msg msg, Model model){
                 exec("./path.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
                 model.index += 1;
                 model.image = "PuzzleScript/Interface/path<model.index>.png";
-                println(5);
-
 
                 map[int,list[RuleData]] rules = engine.applied_data[engine.current_level.original].actual_applied_rules;
 
                 model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, length);
-                println(6);
-
 
             }
 			default: return model;
@@ -390,8 +384,8 @@ void view(Model m) {
 
 App[Model]() main() {
 
-    loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Test/demo/limerick.PS|;
-	game = load(game_loc);
+    // loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|;
+	// game = load(game_loc);
 
 	checker = check_game(game);
 	engine = compile(checker);
