@@ -1,4 +1,4 @@
-# ScriptButler
+# TutoMate
 PuzzleScript is a textual language for puzzle game design created by Stephen Lavelle.
 The PuzzleScript engine can be found here: https://github.com/increpare/PuzzleScript
 
