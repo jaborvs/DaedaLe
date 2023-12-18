@@ -45,7 +45,6 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
 
         if (!rules[i]?) {
             if (any(Verb verb <- verb_definitions, size(verb.numbers) == 0)) {
-                println("Verb <verb.name.name> has 0 rule nrs");
                 all_verbs += verb.name.name;
             }
             continue;
@@ -54,12 +53,9 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
         list[RuleData] lrd = rules[i];
 
         for (Verb verb <- verb_definitions) {
-            println(verb.name.name);
             if (any(RuleData rd <- verb_rules[verb.name.name], rd.src in [x.src | x <- lrd])) {
-                println("1.411");
                 all_verbs += verb.name.name;
             }
-            println(all_verbs);
         }
 
     }

@@ -45,7 +45,7 @@ tuple[Engine, list[str]] bfs(Engine starting, list[str] moves, Checker c, str co
             Engine newState = execute_move(current[0], c, m, 0);
             cycles += 1;
 
-            println("Trying <current[1] + [m]>");
+            // println("Trying <current[1] + [m]>");
 
             if (condition == "same_state" && beforeState == newState) {
                 if (current[1] in moveSequences<0>) moveSequences[current[1]] += 1;

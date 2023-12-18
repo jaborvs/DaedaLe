@@ -1,5 +1,6 @@
 module PuzzleScript::Report
 
+import PuzzleScript::Interface::GUI;
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
@@ -15,164 +16,92 @@ import String;
 import util::Benchmark;
 
 
-data ParseResult
-  = src_parse_error(loc file)
-  | src_ambiguous(loc file, str rule, str input)
-  | src_implode_error(loc file, start[PSGame] tree)
-  | src_success(loc file, start[PSGame] tree, PSGame game);
+// data ParseResult
+//   = src_parse_error(loc file)
+//   | src_ambiguous(loc file, str rule, str input)
+//   | src_implode_error(loc file, start[PSGame] tree)
+//   | src_success(loc file, start[PSGame] tree, PSGame game);
 
-data CheckResult
-  = chk_error() 
-  | chk_success(Checker checker, int errors, int warnings, int infos);
+// data CheckResult
+//   = chk_error() 
+//   | chk_success(Checker checker, int errors, int warnings, int infos);
   
-data Summary
-  = summary_error()
-  | summary(str title, str author, int objects, 
-            int layers, int collisions, int rules, int conditions, int levels, bool zoom);
+// data Summary
+//   = summary_error()
+//   | summary(str title, str author, int objects, 
+//             int layers, int collisions, int rules, int conditions, int levels, bool zoom);
 
-void main() {
 
-    loc DemoDir = |project://automatedpuzzlescript/src/PuzzleScript/Test/Tutorials|;
-    loc CountableDir = |project://automatedpuzzlescript/src/PuzzleScript/Results/Countables|;
-    loc RuleDir = |project://automatedpuzzlescript/src/PuzzleScript/Results/Rules|;
+void save_results(list[list[Model]] models, str category) {
 
-	PSGame game;
-	Checker checker;
-	Engine engine;
-	Level level;
 
-    generate_reports(CountableDir, RuleDir, DemoDir);
+    println("1");
+    loc verb_dir = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Results/Verbs|;
+    generate_reports(models, verb_dir, category);
 
 }
 
-void generate_reports(loc CountableDir, loc RuleDir, loc DemoDir) {
+void generate_reports(list[list[Model]] models, loc verb_dir, str category) {
 
-    for(loc file <- DemoDir.ls){
-        if(file.extension == "txt"){
-        
-            // Creates ast
-            ParseResult p = parseFile(file);
-        
-            // If parseresult is success (has the tree and ast):
-            if(src_success(loc file, start[PSGame] tree, PSGame game) := p) {
-            
-                checker = check_game(game);
-                engine = compile(checker);
-
-                generate_report_per_level(engine, RuleDir, CountableDir);
-
-            }
-        }
-    }
-
-}
-
-void generate_report_per_level(Engine engine, loc rule_directory, loc count_directory) {
-
+    println("2");
     str levelOutput = "";
 
-    list[Level] levels = engine.converted_levels;
+    if (size(models) == 0) return;
 
-    map[LevelData, LevelChecker] ld = engine.level_data;
+    list[Level] levels = models[0][0].engine.converted_levels;
+
+    map[LevelData, LevelChecker] ld = models[0][0].win.engine.level_data;
 
     str title = "";
     str author = "";
 
-    for(PreludeData p <- engine.game.prelude){
+    for(PreludeData p <- models[0][0].engine.game.prelude){
         if(p.key == "title") {
         title = replaceAll(p.string, ",", " ");
         break;
         }
     }
+    println("3");
     
-    for(PreludeData p <- engine.game.prelude){
+    for(PreludeData p <- models[0][0].engine.game.prelude){
         if(p.key == "author") {
         author = replaceAll(p.string, ",", " ");
         break;
         }
     }
 
+    println("4");
+
     title = replaceAll(title, " ", "_");
+
+    println(verb_dir.path + "/<title + "_" + category>.csv");
     
-    count_directory.path = count_directory.path + "/<title>.csv";
-    str filePath = count_directory.authority + count_directory.path;
-    if (!isFile(count_directory)) touch(count_directory);
+    verb_dir.path = verb_dir.path + "/<title + "_" + category>.csv";
+    str filePath = verb_dir.authority + verb_dir.path;
+    if (!isFile(verb_dir)) {
+        touch(verb_dir);
+        writeFile(verb_dir, "level,actions,length,verbs,time,comply,not_comply\n");
+    }
 
-    rule_directory.path = rule_directory.path + "/<title>.csv";
-    filePath = rule_directory.authority + rule_directory.path;
-    if (!isFile(rule_directory)) touch(rule_directory);
-
-    writeFile(count_directory, "level,size,moveable_objects\n");
-    writeFile(rule_directory, "level,rules\n");
-
-    int levelIndex = 1;
+    int levelIndex = get_level_index(models[0][0].engine, models[0][0].engine.current_level);
 
     println("Generating report for <title>");
 
-    for (Level level <- levels) {
+    for (list[Model] model <- models) {
 
-        if (level.original is level_empty) continue;
-        if (engine.level_data[level.original].size[1] == 1) {
-            println(engine.level_data[level.original].size);
-            continue;
+        if (category == "win") {
+            appendToFile(verb_dir, "<levelIndex>,<intercalate(" ", model[0].win.winning_moves)>,<size(model[0].win.winning_moves)>,<intercalate(" ", model[0].learning_goals[2])>, <model[0].win.time>,<intercalate(" ", model[0].learning_goals[0])>,<intercalate(" ", model[0].learning_goals[1])>\n");
         }
+        else if (category == "fails") {
 
-        int applied_rules = size(ld[level.original].applied_rules) + size(ld[level.original].applied_late_rules);
-        list[list[Rule]] rules = ld[level.original].applied_rules + ld[level.original].applied_late_rules;
-
-        real level_size = ld[level.original].size[0] * ld[level.original].size[1] / 100.0;
-
-        appendToFile(count_directory, "<levelIndex>,<level_size>,<ld[level.original].moveable_amount_level>\n");
-        for (list[Rule] rule <- rules) {
-
-            if (any(RuleData rd <- engine.game.rules, rd.src == rule[0].original.src)) {
-                appendToFile(rule_directory, "<levelIndex>, <engine.indexed_rules[rd][0]>\n");
+            for (Model model <- model) {
+                for (tuple[Engine, list[str]] dead_end <- model.de[0]) {
+                    appendToFile(verb_dir, "<levelIndex>,<intercalate(" ", dead_end[1])>,<size(dead_end[1])>,<intercalate(" ", model.learning_goals[2])>, <model.de[1]>,<intercalate(" ", model.learning_goals[0])>,<intercalate(" ", model.learning_goals[1])>\n");     
+                }
             }
-
         }
+
         levelIndex += 1;
 
     }
-    appendToFile(count_directory, "\n");
-    appendToFile(rule_directory, "\n");
-
-    // Only get level_data for visualizing purposes
-    // list[LevelData] level_data_ld = [x | x <- levels, x is level_data];
-
-    // return lineChart(["size", "moving objects", "applied rules", "messages"],
-    //         [<"<x>",(ld[level_data_ld[x]].size.width)> | x <- [0..size(level_data_ld)]], 
-    //         [<"<x>",(size(ld[level_data_ld[x]].moveable_objects))> | x <- [0..size(level_data_ld)]], 
-    //         [<"<x>",(size(ld[level_data_ld[x]].applied_rules))> | x <- [0..size(level_data_ld)]],
-    //         [<"<x>",(size(ld[level_data_ld[x]].messages))> | x <- [0..size(level_data_ld)]]);
-
-}
-
-
-public ParseResult parseFile(loc file) {
-    str src = readFile(file);
-    loc preFile = file;  
-    preFile.extension = "PS";
-    writeFile(preFile, src);
-
-    ParseResult result = src_parse_error(preFile);
-    try {
-
-        // Create tree and AST
-        start[PSGame] tree = ps_parse(preFile);
-
-        PSGame ast = ps_implode(tree);
-        try {
-            result = src_success(preFile, tree, ast);      
-        } catch x: {
-            result = src_implode_error(preFile, tree);
-        }
-    }
-    catch Ambiguity(loc l, str rule, str s): {
-        result = src_ambiguous(l, rule, s);
-    } 
-    catch ParseError(loc l): {
-        result = src_parse_error(l);
-    }
-
-    return result;
 }

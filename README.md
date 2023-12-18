@@ -10,7 +10,7 @@ More information about setting up Rascal can be found here: https://www.rascal-m
 
 2. Setting the to-be-analysed game is done in the following way.
 ```
-loc game_loc = |project://automatedpuzzlescript/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|;
+loc game_loc = |project://automatedpuzzlescript/Tutomate/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|;
 ```
 
 3. Using Tutomate requires executing the following commands in Rascal's REPL.

@@ -136,7 +136,7 @@ App[&T] webApp(SalixApp[&T] app, loc static, map[str,str] headers = ()) {
     } 
 
     if (get(/^\/salix\/<rest:.*?>\.<ext:[^.]*>$/) := req) {
-      loc l = |project://automatedpuzzlescript/src/salix/<rest>.<ext>|;
+      loc l = |project://automatedpuzzlescript/Tutomate/src/salix/<rest>.<ext>|;
     //   loc l = |project://salix-core/src/main/rascal/salix/<rest>.<ext>|;
       println("l = <l>");
       if (!exists(l)) {

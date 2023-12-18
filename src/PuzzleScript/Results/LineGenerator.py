@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 # Specify the directory where the CSV files are located
-directory = '/Users/dennisvet/Documents/Documents/GitHub/automatedpuzzlescript/automatedpuzzlescript/src/PuzzleScript/Results/Countables'
+directory = '/Users/dennisvet/Documents/Documents/GitHub/automatedpuzzlescript/Tutomate/automatedpuzzlescript/Tutomate/src/PuzzleScript/Results/Countables'
 
 # Use a style for the plots
 plt.style.use('seaborn-darkgrid')

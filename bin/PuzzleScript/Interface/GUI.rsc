@@ -11,6 +11,7 @@ import util::Benchmark;
 import util::ShellExec;
 import lang::json::IO;
 
+import PuzzleScript::Report;
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
@@ -25,8 +26,6 @@ import List;
 import Type;
 import Set;
 import IO;
-
-public int i = 0;
 
 str start_dsl = "tutorial blockfaker {
 
@@ -54,6 +53,7 @@ str start_dsl = "tutorial blockfaker {
     lesson 3: Obstacle {
         \"Here a dead end is introduced. If the player vanishes the purple blocks too early, the level can not be completed\"
         learn to push
+        learn to vanishpurple
         fail if vanishpink
     }
     lesson 4: Combinations {
@@ -77,8 +77,8 @@ data CurrentLine = currentline(int column, int row);
 data JsonData = alldata(CurrentLine \start, str action, list[str] lines, CurrentLine end, int id);
 
 alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, int begin_index, str code, str dsl, bool analyzed, Dead_Ends de, Win win, str image, tuple[list[str],list[str],list[str]] learning_goals];
-alias Dead_Ends = list[tuple[Engine, list[str]]];
-alias Win = tuple[Engine engine, list[str] winning_moves];
+alias Dead_Ends = tuple[list[tuple[Engine, list[str]]], real];
+alias Win = tuple[Engine engine, list[str] winning_moves, real time];
 
 data Msg 
 	= left() 
@@ -95,6 +95,7 @@ data Msg
     | textUpdated()
     | load_design()
     | analyse()
+    | analyse_all()
     | show(Engine engine, int win, int length)
 	;
 
@@ -168,6 +169,36 @@ int get_level_index(Engine engine, Level current_level) {
 
 }
 
+Model extract_goals(Engine engine, int win, int length, Model model) {
+
+    int level_index = get_level_index(engine, engine.current_level);
+
+    Tutorial tutorial = tutorial_build(model.dsl);
+    Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
+    if (!(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index))) {
+        println("Lesson <level_index> not found!");
+        return model;
+    }
+    
+    // Get travelled coordinates and generate image that shows coordinates
+    // 'win' argument determines the color of the path
+    list[Coords] coords = engine.applied_data[engine.current_level.original].travelled_coords;
+    tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
+    exec("./image.sh", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
+    tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
+    exec("./path.sh", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
+    model.index += 1;
+    model.image = "PuzzleScript/Interface/path<model.index>.png";
+
+    map[int,list[RuleData]] rules = engine.applied_data[engine.current_level.original].actual_applied_rules;
+
+    model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, length);
+
+    return model;
+
+
+}
+
 
 Model update(Msg msg, Model model){
 
@@ -200,44 +231,78 @@ Model update(Msg msg, Model model){
                 model.index += 1;
                 model = reload(model.code, model.index);
                 tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
-                exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "0"]);
+                exec("./image.sh", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "0"]);
+            }
+            case analyse_all(): {
+
+                int i = 0;
+
+                for (Level level <- model.engine.converted_levels) {
+
+                    list[list[Model]] win_models = [];
+                    list[Model] losing_models = [];
+                    list[list[Model]] all_losing_models = [];
+
+                    Model new_model = model;
+                    new_model.engine.current_level = level; 
+
+                    print_level(new_model.engine, new_model.checker);                  
+
+                    int before = cpuTime();
+                    tuple[Engine engine, list[str] winning_moves] result = bfs(new_model.engine, ["up","down","left","right"], new_model.checker, "win", 1);
+                    real actual_time = (cpuTime() - before) / 1000000.00;
+                    
+                    tuple[Engine engine, list[str] winning_moves, real time] result_time = <result[0], result[1], actual_time>;
+                    
+                    new_model.engine.applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
+                    
+                    // Save respective engine states
+                    new_model.win = result_time;
+                    new_model = extract_goals(new_model.win.engine, 0, size(new_model.win.winning_moves), new_model);
+                    win_models += [[new_model]];
+
+                    // before = cpuTime();
+                    // list[tuple[Engine, list[str]]] results = get_dead_ends(new_model.engine, new_model.checker, result.winning_moves);
+                    // actual_time = (cpuTime() - before) / 1000000.00;
+
+                    // new_model.de = <results, actual_time>;
+
+                    // for (tuple[Engine, list[str]] dead_ends <- new_model.de[0]) {
+                    //     new_model = extract_goals(dead_ends[0], 0, size(dead_ends[1]), new_model);
+                    //     losing_models += [new_model];
+                    // }
+
+                    // all_losing_models += [losing_models];
+
+                    println("Saving results");
+                    println(typeOf(win_models));
+
+                    save_results(win_models, "win");
+                    // save_results(all_losing_models, "fails");
+
+
+                }
+
+
             }
             case analyse(): {
 
+                int before = cpuTime();
                 tuple[Engine engine, list[str] winning_moves] result = bfs(model.engine, ["up","down","left","right"], model.checker, "win", 1);
+                real actual_time = (cpuTime() - before) / 1000000.00;
+                tuple[Engine engine, list[str] winning_moves, real time] result_time = <result[0], result[1], actual_time>;
+                
                 model.engine.applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
                 
                 // Save respective engine states
-                model.win = result;
-                model.de = get_dead_ends(model.engine, model.checker, result.winning_moves);
+                model.win = result_time;
+                // model.de = get_dead_ends(model.engine, model.checker, result.winning_moves);
 
                 model.analyzed = true;
             }
             case show(Engine engine, int win, int length): {
 
-                int level_index = get_level_index(engine, engine.current_level);
-
-                Tutorial tutorial = tutorial_build(model.dsl);
-                Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
-                if (!(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index))) {
-                    println("Lesson <level_index> not found!");
-                    return model;
-                }
-                
-                // Get travelled coordinates and generate image that shows coordinates
-                // 'win' argument determines the color of the path
-                list[Coords] coords = engine.applied_data[engine.current_level.original].travelled_coords;
-                tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
-                exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
-                tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
-                exec("./path.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
-                model.index += 1;
-                model.image = "PuzzleScript/Interface/path<model.index>.png";
-
-                map[int,list[RuleData]] rules = engine.applied_data[engine.current_level.original].actual_applied_rules;
-
-                model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, length);
-
+                model = extract_goals(engine, win, length, model);
             }
 			default: return model;
 		}
@@ -250,7 +315,7 @@ Model update(Msg msg, Model model){
                 model.engine.current_level = model.engine.converted_levels[model.engine.index];
             }
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
-            exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
+            exec("./image.sh", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
             execute = false;
             model.image = "PuzzleScript/Interface/output_image<model.index>.png";
         }
@@ -294,7 +359,7 @@ Model reload(str src, int index) {
 
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
  
-	Model init() = <"none", title, engine, checker, index, index, src, "", false, [], <engine,[]>, "PuzzleScript/Interface/output_image<index>.png", <[],[],[]>>;
+	Model init() = <"none", title, engine, checker, index, index, src, "", false, <[], 0.0>, <engine,[], 0.0>, "PuzzleScript/Interface/output_image<index>.png", <[],[],[]>>;
     return init();
 
 }
@@ -310,37 +375,32 @@ void view_panel(Model m){
     });
 }
 
-void view_results(Model m) {
+// void view_results(Model m) {
 
-    println("Showing results");
+//     div(class("panel"), () {
+//         h3("Results");
+//         AppliedData ad = m.engine.applied_data[m.engine.current_level.original];
+//         p("-- Shortest path --");
+//         button(onClick(show(m.win.engine, 1, size(m.win.winning_moves))), "<size(m.win.winning_moves)> steps");
+//         p("-- Dead ends --");
+//         for (int i <- [0..size(m.de[0])]) {
+//             button(onClick(show(m.de[i][0], 0, size(m.de[i][1]))), "<i + 1>");
+//         }
 
-    div(class("panel"), () {
-        h3("Results");
-        AppliedData ad = m.engine.applied_data[m.engine.current_level.original];
-        p("-- Shortest path --");
-        button(onClick(show(m.win.engine, 1, size(m.win.winning_moves))), "<size(m.win.winning_moves)> steps");
-        p("-- Dead ends --");
-        for (int i <- [0..size(m.de)]) {
-            button(onClick(show(m.de[i][0], 0, size(m.de[i][1]))), "<i + 1>");
-        }
-        if (m.learning_goals != <[],[],[]>) {
+//         if (m.learning_goals != <[],[],[]>) {
 
-            p("-- The following verbs have been used --");
-            // for (int i <- [0..size(m.learning_goals[2])]) {
-                p("<intercalate(", ", m.learning_goals[2])>");
-            // }
+//             p("-- The following verbs have been used --");
+//             p("<intercalate(", ", m.learning_goals[2])>");
 
-            p("-- The following learning goals are realised --");
-            // for (int i <- [0..size(m.learning_goals[0])]) {
-                p("<intercalate(", ", m.learning_goals[0])>");
-            // }
-            p("-- The following learning goals are not realised --");
-            // for (int i <- [0..size(m.learning_goals[1])]) {
-                p("<intercalate(", ", m.learning_goals[1])>");
-            // }
-        }
-    });
-}
+//             p("-- The following learning goals are realised --");
+//             p("<intercalate(", ", m.learning_goals[0])>");
+
+//             p("-- The following learning goals are not realised --");
+//             p("<intercalate(", ", m.learning_goals[1])>");
+
+//         }
+//     });
+// }
 
 void view(Model m) {
 
@@ -351,7 +411,6 @@ void view(Model m) {
     div(class("main"), () {
 
         div(class("left"), () {
-            // ace("myAce", event=onAceChange(editorChange), code = m.code);
             div(class("left_top"), () {
                 h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Editor"); 
                 ace("myAce", event=onAceChange(codeChange), code = m.code);
@@ -364,6 +423,7 @@ void view(Model m) {
                     div(class("panel"), () {
                         h3(style(("font-family": "BubbleGum")), "Get insights");
                         button(onClick(analyse()), "Analyse");
+                        button(onClick(analyse_all()), "Analyse all");
                     });
                 });
             });
@@ -374,10 +434,10 @@ void view(Model m) {
                 index = (m.index == m.begin_index) ? m.begin_index : m.index;
                 img(style(("width": "40vw", "height": "40vh", "image-rendering": "pixelated")), (src("<m.image>")), () {});
             });
-            div(class("data"), () {
-                div(class(""), () {view_panel(m);});
-                if (m.analyzed) view_results(m);
-            });
+            // div(class("data"), () {
+            //     div(class(""), () {view_panel(m);});
+            //     if (m.analyzed) view_results(m);
+            // });
         });
     });
 }
@@ -392,14 +452,14 @@ App[Model]() main(loc game_loc) {
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
 
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
-    exec("./image.sh", workingDir=|project://automatedpuzzlescript/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
+    exec("./image.sh", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = [json_data[0], json_data[1], json_data[2], "1"]);
 
-	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), start_dsl, false, [], <engine,[]>, "PuzzleScript/Interface/output_image0.png", <[],[],[]>>;
+	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), start_dsl, false, <[],0.0>, <engine,[],0.0>, "PuzzleScript/Interface/output_image0.png", <[],[],[]>>;
     Tutorial tutorial = tutorial_build(start_dsl);
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/style.css"]), update);
 
     App[Model] counterWebApp()
-      = webApp(counterApp(), |project://automatedpuzzlescript/src/|);
+      = webApp(counterApp(), |project://automatedpuzzlescript/Tutomate/src/|);
 
     return counterWebApp;
 

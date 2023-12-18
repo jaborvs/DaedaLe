@@ -24,8 +24,8 @@ import util::Benchmark;
 
 void main() {
 
-    loc DemoDir = |project://automatedpuzzlescript/src/PuzzleScript/Test/Tutorials|;
-    loc DynamicDir = |project://automatedpuzzlescript/src/PuzzleScript/Results/Dynamic|;
+    loc DemoDir = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Test/Tutorials|;
+    loc DynamicDir = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Results/Dynamic|;
 
 	PSGame game;
 	Checker checker;
