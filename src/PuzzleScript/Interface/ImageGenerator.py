@@ -7,7 +7,8 @@ import json
 
 def convert_data_to_image():
 
-    data = json.loads(sys.argv[1])
+    with open(sys.argv[1], 'r') as data_file:
+        data = json.loads(data_file.read())
     size = json.loads(sys.argv[2])
 
     img = Image.new('RGB', (size['width'] * 5, size['height'] * 5), color='white')
@@ -19,6 +20,7 @@ def convert_data_to_image():
 
     return img
 
+print(sys.argv[2])
 index = json.loads(sys.argv[3])['index']
 resulting_image = convert_data_to_image()
 
