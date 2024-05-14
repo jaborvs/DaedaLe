@@ -28,15 +28,16 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/jaborvs/DaedaLe">
-    <img src="img/logo.jpg" alt="Logo" width="80" height="80">
-  </a>
+    <a href="https://github.com/jaborvs/DaedaLe">
+        <img src="img/logo.jpg" alt="Logo" width="80" height="80">
+    </a>
 
-<h2 align="center" style="font-size: 60px">DaedaLe</h2>
-  <p align="center">
-    A tutorial level generator for PuzzleScript
-  </p>
+    <p align="center" style="font-size: 80px; font-weight: bolder;">DaedaLe</p>
+    <p align="center">
+        A tutorial level generator for PuzzleScript
+    </p>
 </div>
+<br />
 
 
 
