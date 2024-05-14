@@ -1,5 +1,5 @@
+### Ignore bin files
 bin
-.DS_Store
+
+### Ignore target build output directory
 target/
-*.txt
-src/PuzzleScript/Rewrite.rsc
