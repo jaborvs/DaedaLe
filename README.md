@@ -26,13 +26,13 @@
 
 
 <!-- PROJECT LOGO -->
+<style>h1,h2,h3,h4 { border-bottom: 0; } </style>
 <br />
 <div align="center">
-    <style>h1,h2,h3,h4 { border-bottom: 0; } </style>
     <a href="https://github.com/jaborvs/DaedaLe">
         <img src="img/logo.jpg" alt="Logo" width="80" height="80">
     </a>
-    <h3 align="center">DaedaLe</h3>
+    <h1 align="center">DaedaLe</h1>
     <p align="center">
         A tutorial level generator for PuzzleScript
     </p>
