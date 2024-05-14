@@ -32,7 +32,7 @@
     <img src="img/logo.jpg" alt="Logo" width="80" height="80">
   </a>
 
-<h3 align="center">DaedaLe</h3>
+<h1 align="center">DaedaLe</h1>
   <p align="center">
     A tutorial level generator for PuzzleScript
   </p>
@@ -41,21 +41,20 @@
 
 
 <!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
+## Table of Contents
+<ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
+        <a href="#about-the-project">About The Project</a>
+        <ul>
         <li><a href="#built-with">Built With</a></li>
-      </ul>
+        </ul>
     </li>
     <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
+        <a href="#getting-started">Getting Started</a>
+        <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
-      </ul>
+        </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
@@ -63,8 +62,7 @@
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
+</ol>
 
 
 
@@ -73,7 +71,7 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://example.com)
 
-Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `github_username`, `repo_name`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `project_title`, `project_description`
+Here's a blank template to get started: To avoid retyping too much info. 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -183,8 +181,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com
-
+Borja Velasco - borja.velasco.st@gmail.com
 Project Link: [https://github.com/jaborvs/DaedaLe](https://github.com/jaborvs/DaedaLe)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
