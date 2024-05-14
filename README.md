@@ -29,17 +29,13 @@ A Tutorial Generation Tool for PuzzleScript. PuzzleScript is an online, open-sou
         </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
     <li><a href="#references">References</a></li>
     <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
 </ol>
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-
 [![Product Name Screen Shot][product-screenshot]](https://example.com)
 
 Here's a blank template to get started: To avoid retyping too much info. 
@@ -47,17 +43,17 @@ Here's a blank template to get started: To avoid retyping too much info.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Built With
+* [![Rascal][Rascal.org]][Rascal-url]
+* [![Python][Python.org]][Python-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- GETTING STARTED -->
 ## Getting Started
-
 This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
-
 This is an example of how to list things you need to use the software and how to install them.
 * npm
   ```sh
@@ -65,7 +61,6 @@ This is an example of how to list things you need to use the software and how to
   ```
 
 ### Installation
-
 1. Get a free API Key at [https://example.com](https://example.com)
 2. Clone the repo
    ```sh
@@ -84,7 +79,6 @@ This is an example of how to list things you need to use the software and how to
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-
 Use this space to show useful examples of how a project can be used. 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -94,16 +88,16 @@ Use this space to show useful examples of how a project can be used.
 <a id="1">[1]</a> 
 S. Lavelle. Puzzlescript. [Online]. 2023. URL: https://github.com/increpare/PuzzleScript (visited on 01/12/2024).
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 <!-- LICENSE -->
 ## License
-
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
-
 DaedaLe was conceived and developed within the scope of my Master's thesis pursued within the 
 MSc program in Software Engineering at the University of Amsterdam. 
 I want to thank my thesis supervisor, Riemer van Rozen, for 
@@ -145,3 +139,7 @@ the creator of TutoMate.
 [Bootstrap-url]: https://getbootstrap.com
 [JQuery.com]: https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white
 [JQuery-url]: https://jquery.com 
+[Python.org]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
+[Python-url]: https://www.python.org/
+[Rascal.org]: https://img.shields.io/badge/Rascal-100000?style=for-the-badge&logo=Rascal&logoColor=85A1AE
+[Rascal-url]: https://www.rascal-mpl.org/
