@@ -1,5 +1,11 @@
+/*
+ * @Module: GUI
+ * @Desc:   Module that contains de GUI code for the generation tool
+ */
 module PuzzleScript::Interface::GUI
 
+/*****************************************************************************/
+// --- General modules imports ------------------------------------------------
 import salix::HTML;
 import salix::Core;
 import salix::App;
@@ -11,6 +17,13 @@ import util::Benchmark;
 import util::ShellExec;
 import lang::json::IO;
 
+import String;
+import List;
+import Type;
+import Set;
+import IO;
+
+// --- Own modules imports ----------------------------------------------------
 import PuzzleScript::Report;
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
@@ -21,12 +34,8 @@ import PuzzleScript::Verbs;
 import PuzzleScript::DynamicAnalyser;
 import PuzzleScript::Tutorials::AST;
 
-import String;
-import List;
-import Type;
-import Set;
-import IO;
-
+/*****************************************************************************/
+// --- Global defines ---------------------------------------------------------
 str start_dsl = "tutorial blockfaker {
 
     verb walk []
@@ -73,13 +82,76 @@ str start_dsl = "tutorial blockfaker {
     }        
 }";
 
-data CurrentLine = currentline(int column, int row);
-data JsonData = alldata(CurrentLine \start, str action, list[str] lines, CurrentLine end, int id);
+/*****************************************************************************/
+// --- Data Structures defines ------------------------------------------------
 
-alias Model = tuple[str input, str title, Engine engine, Checker checker, int index, int begin_index, str code, str dsl, bool analyzed, Dead_Ends de, Win win, str image, tuple[list[str],list[str],list[str]] learning_goals];
-alias Dead_Ends = tuple[list[tuple[Engine, list[str]]], real];
-alias Win = tuple[Engine engine, list[str] winning_moves, real time];
+/*
+ *  @Name:  CurrentLine
+ *  @Desc:  Current line data structure
+ */
+data CurrentLine = currentline(
+    int column,                                             // Column no.
+    int row                                                 // Row no.
+    );
 
+/*
+ *  @Name:  JsonData (???)
+ *  @Desc:  JSON data structure
+ */
+data JsonData = alldata(
+    CurrentLine \start,                                     // Start position 
+    str action,                                             // Action 
+    list[str] lines,                                        // Lines
+    CurrentLine end,                                        // End position
+    int id                                                  // Identifier
+    );
+
+/*
+ *  @Name:  Model
+ *  @Desc:  Aplication Model data structure
+ */
+alias Model = tuple[ 
+    str input,                                              // Input
+    str title,                                              // Title
+    Engine engine,                                          // Engine
+    Checker checker,                                        // Syntax checker
+    int index,                                              // Index (???)
+    int begin_index,                                        // Begin index (???)
+    str code,                                               // PuzzleScript code
+    str dsl,                                                // DSL code
+    bool analyzed,                                          // Analyzed boolean (???)
+    Dead_Ends de,                                           // Level dead ends (???)
+    Win win,                                                // Win (???)
+    str image,                                              // Level image (???)
+    tuple[list[str],list[str],list[str]] learning_goals     // Learning goals (???)
+    ];
+
+/*
+ *  @Name:  Dead_Ends
+ *  @Desc:  Dead ends data structure
+ */
+alias Dead_Ends = tuple[ 
+    list[
+        tuple[Engine engine,                                // Engine
+        list[str] loosing_moves]                            // Loosing moves
+        ] loosing_moves_list,                               // Loosing moves list
+    real time                                               // Execution time (???)
+    ];
+
+/*
+ *  @Name:  Win
+ *  @Desc:  Win data structure
+ */
+alias Win = tuple[
+    Engine engine,                                          // Engine (???)
+    list[str] winning_moves,                                // Winning moves
+    real time                                               // Execution time (???)
+    ];
+
+/*
+ *  @Name:  Msg
+ *  @Desc:  Message function
+ */
 data Msg 
 	= left() 
 	| right() 
@@ -99,10 +171,20 @@ data Msg
     | show(Engine engine, int win, int length)
 	;
 
+/*****************************************************************************/
+// --- Public Funtions --------------------------------------------------------
+
+/*
+ *  @Name:  coords_to_json
+ *  @Desc:  Converts the coordinates to JSON format for the level GUI representation
+ *  @Param:
+ *      engine  Engine of the application
+ *      coords  Coordinates to converted
+ *      index   Index (???)
+ *  @Ret:   Tuple containing the coordinates in json and the index in json
+ */
 tuple[str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
-
     tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
-
     str json = "[";
 
     for (Coords coord <- coords) {
@@ -115,16 +197,21 @@ tuple[str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
 
 }
 
+/*
+ *  @Name:  pixel_to_json
+ *  @Desc:  Converts a pixel to JSON format for the level GUI representation
+ *  @Param:
+ *      engine  Engine of the application
+ *      index   Index (???)
+ *  @Ret:   Tuple containing the coordinates in json, the level size in json 
+ *          and the index in json
+ */
 tuple[str,str,str] pixel_to_json(Engine engine, int index) {
-
     tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
-
     str json = "[";
 
     for (int i <- [0..level_size.height]) {
-
         for (int j <- [0..level_size.width]) {
-
             if (!(engine.current_level.objects[<i,j>])? || isEmpty(engine.current_level.objects[<i,j>])) {
                 continue;
             }
@@ -136,7 +223,6 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
 
             for (int k <- [0..5]) {
                 for (int l <- [0..5]) {
-
                     json += "{";
                     json += "\"x\": <j * 5 + l>,";
                     json += "\"y\": <i * 5 + k>,";
@@ -152,6 +238,7 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
             }
         }
     }
+
     json = json[0..size(json) - 1];
     json += "]";
 
@@ -159,22 +246,39 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
 
 }
 
+/*
+ *  @Name:  get_level_index
+ *  @Desc:  Gets the index of the current represented level
+ *  @Param:
+ *      engine          Engine of the application
+ *      current_level   Current represented level
+ *  @Ret:   Index of the level (???)
+ */
 int get_level_index(Engine engine, Level current_level) {
-
     int index = 0;
+
     while (engine.converted_levels[index].original != current_level.original) {
         index += 1;
     }
-    return index + 1;
 
+    return index + 1;
 }
 
+/*
+ *  @Name:  extract_goals
+ *  @Desc:  Gets the goals of the current level after it has been solved
+ *  @Param:
+ *      engine          Engine of the application
+ *      win             Boolean that determines the color of the path (1: victory green, 0: defeat red)
+ *      length          (???)
+ *      model           Application model
+ *  @Ret:   Updated model of the application (???)
+ */
 Model extract_goals(Engine engine, int win, int length, Model model) {
-
     int level_index = get_level_index(engine, engine.current_level);
-
     Tutorial tutorial = tutorial_build(model.dsl);
     Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
+
     if (!(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index))) {
         println("Lesson <level_index> not found!");
         return model;
@@ -184,11 +288,13 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
     // 'win' argument determines the color of the path
     list[Coords] coords = engine.applied_data[engine.current_level.original].travelled_coords;
     tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
+
     data_loc = |project://DaedaLe/src/PuzzleScript/Interface/data.txt|;
     writeFile(data_loc, json_data[0]);
     exec("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+
     tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
-    exec("./path.sh", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
+    exec("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/|, args = ["PathGenerator.py", new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
     model.index += 1;
     model.image = "PuzzleScript/Interface/path<model.index>.png";
 
@@ -197,18 +303,23 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
     model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, length);
 
     return model;
-
-
 }
 
-
+/*
+ *  @Name:  update
+ *  @Desc:  Updates the current GUI representation
+ *  @Param:
+ *      engine          Engine of the application
+ *      model           Application model
+ *  @Ret:   Updated model of the application (???)
+ */
 Model update(Msg msg, Model model){
-
     bool execute = false;
 
 	if (model.engine.current_level is level){
 		switch(msg){
-			case direction(int i): {
+            // ''Direction' button has been pressed: LEFT, UP, RIGHT, DOWN
+			case direction(int i): {                
                 execute = true;
 				switch(i){
 					case 37: model.input = "left";
@@ -217,32 +328,35 @@ Model update(Msg msg, Model model){
 					case 40: model.input = "down";
 				}
 			}
-			case reload(): {
+            // 'Reload' button has been pressed
+			case reload(): {                            
                 model.engine.current_level = model.engine.begin_level;
                 model.image = "PuzzleScript/Interface/output_image0.png";
             }
-            case codeChange(map[str,value] delta): {
+            // PuzzleScript code has been changed
+            case codeChange(map[str,value] delta): {    
                 JsonData json_change = parseJSON(#JsonData, asJSON(delta["payload"]));
                 model = update_code(model, json_change, 0);
             }
+            // DSL code has been changed
             case dslChange(map[str,value] delta): {
                 JsonData json_change = parseJSON(#JsonData, asJSON(delta["payload"]));
                 model = update_code(model, json_change, 1);
             }
+            // Design has been loaded
             case load_design(): {
                 model.index += 1;
                 model = reload(model.code, model.index);
                 tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
+
                 data_loc = |project://DaedaLe/src/PuzzleScript/Interface/data.txt|;
                 writeFile(data_loc, json_data[0]);
                 exec("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
             }
+            // 'Analyse All' button has been pressed
             case analyse_all(): {
-
                 int i = 0;
-
                 for (Level level <- model.engine.converted_levels) {
-
                     list[list[Model]] win_models = [];
                     list[Model] losing_models = [];
                     list[list[Model]] all_losing_models = [];
@@ -283,17 +397,16 @@ Model update(Msg msg, Model model){
 
                     save_results(win_models, "win");
                     // save_results(all_losing_models, "fails");
-
-
                 }
-
-
             }
+            // 'Analyse' button has been pressed
             case analyse(): {
-
                 int before = cpuTime();
+                println("1");
                 tuple[Engine engine, list[str] winning_moves] result = bfs(model.engine, ["up","down","left","right"], model.checker, "win", 1);
+                println("2");
                 real actual_time = (cpuTime() - before) / 1000000.00;
+                println("3");
                 tuple[Engine engine, list[str] winning_moves, real time] result_time = <result[0], result[1], actual_time>;
                 
                 model.engine.applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
@@ -304,14 +417,19 @@ Model update(Msg msg, Model model){
 
                 model.analyzed = true;
             }
+            // Show has been called
             case show(Engine engine, int win, int length): {
-
                 model = extract_goals(engine, win, length, model);
             }
+            // Default case
 			default: return model;
 		}
 		
+        println("4");
+        // In case we have done a manual move we update the index, check if we have won and update
+        // the leve representation
         if (execute) {
+            println("5");
             model.index += 1;
             model.engine = execute_move(model.engine, model.checker, model.input, 0);
             if (check_conditions(model.engine, "win")) {
@@ -326,12 +444,21 @@ Model update(Msg msg, Model model){
             model.image = "PuzzleScript/Interface/output_image<model.index>.png";
         }
 	}
-
+    println("6");
     return model;
 }
 
+/*
+ *  @Name:  update_code
+ *  @Desc:  Notifies when PuzzleScript code or the DSL code has been changed
+ *  @Param:
+ *      model       Application model
+ *      jd          PuzzleScript code
+ *      category    Boolean that determines whether the PuzzleScript of DSL
+*                   code has been changed
+ *  @Ret:   Updated model of the application (???)
+ */
 Model update_code(Model model, JsonData jd, int category) {
-
     str code = category == 0 ? model.code : model.dsl;
     list[str] code_lines = split("\n", code);
     str new_line = "";
@@ -357,8 +484,15 @@ Model update_code(Model model, JsonData jd, int category) {
     return model;
 }
 
+/*
+ *  @Name:  reload
+ *  @Desc:  Reloads the current PuzzleScript code
+ *  @Param:
+ *      src     Location of the game file
+ *      index   Index (???)
+ *  @Ret:   Default application model
+ */
 Model reload(str src, int index) {
-
 	PSGame game = load(src);
 	Checker checker = check_game(game);
 	Engine engine = compile(checker);
@@ -367,9 +501,14 @@ Model reload(str src, int index) {
  
 	Model init() = <"none", title, engine, checker, index, index, src, "", false, <[], 0.0>, <engine,[], 0.0>, "PuzzleScript/Interface/output_image<index>.png", <[],[],[]>>;
     return init();
-
 }
 
+/*
+ *  @Name:  view_panel
+ *  @Desc:  Loads the buttons in the GUI
+ *  @Param:
+ *      model   Application model
+ */
 void view_panel(Model m){
     div(class("panel"), () {
         h3(style(("font-family": "BubbleGum")), "Buttons");
@@ -381,35 +520,45 @@ void view_panel(Model m){
     });
 }
 
-// void view_results(Model m) {
+/*
+ *  @Name:  view_results
+ *  @Desc:  Loads the results of the analysis in the GUI
+ *  @Param:
+ *      model   Application model
+ */
+void view_results(Model m) {
+    div(class("panel"), () {
+        h3("Results");
+        AppliedData ad = m.engine.applied_data[m.engine.current_level.original];
+        p("-- Shortest path --");
+        button(onClick(show(m.win.engine, 1, size(m.win.winning_moves))), "<size(m.win.winning_moves)> steps");
+        p("-- Dead ends --");
+        for (int i <- [0..size(m.de[0])]) {
+            button(onClick(show(m.de[i][0], 0, size(m.de[i][1]))), "<i + 1>");
+        }
 
-//     div(class("panel"), () {
-//         h3("Results");
-//         AppliedData ad = m.engine.applied_data[m.engine.current_level.original];
-//         p("-- Shortest path --");
-//         button(onClick(show(m.win.engine, 1, size(m.win.winning_moves))), "<size(m.win.winning_moves)> steps");
-//         p("-- Dead ends --");
-//         for (int i <- [0..size(m.de[0])]) {
-//             button(onClick(show(m.de[i][0], 0, size(m.de[i][1]))), "<i + 1>");
-//         }
+        if (m.learning_goals != <[],[],[]>) {
 
-//         if (m.learning_goals != <[],[],[]>) {
+            p("-- The following verbs have been used --");
+            p("<intercalate(", ", m.learning_goals[2])>");
 
-//             p("-- The following verbs have been used --");
-//             p("<intercalate(", ", m.learning_goals[2])>");
+            p("-- The following learning goals are realised --");
+            p("<intercalate(", ", m.learning_goals[0])>");
 
-//             p("-- The following learning goals are realised --");
-//             p("<intercalate(", ", m.learning_goals[0])>");
+            p("-- The following learning goals are not realised --");
+            p("<intercalate(", ", m.learning_goals[1])>");
 
-//             p("-- The following learning goals are not realised --");
-//             p("<intercalate(", ", m.learning_goals[1])>");
+        }
+    });
+}
 
-//         }
-//     });
-// }
-
+/*
+ *  @Name:  view
+ *  @Desc:  Loads the application in the GUI
+ *  @Param:
+ *      model   Application model
+ */
 void view(Model m) {
-
     div(class("header"), () {
         h1(style(("text-shadow": "1px 1px 2px black", "font-family": "Pixel", "font-size": "50px")), "PuzzleScript");
     });
@@ -448,7 +597,12 @@ void view(Model m) {
     });
 }
 
-App[Model]() main() {
+/*
+ *  @Name:  main()
+ *  @Desc:  Runs the application
+ *  @Ret:   Call to run the application
+ */
+App[Model] main() {
 
     game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/blockfaker.PS|;
 	game = load(game_loc);
@@ -470,5 +624,5 @@ App[Model]() main() {
     App[Model] counterWebApp()
       = webApp(counterApp(), |project://DaedaLe/src/|);
 
-    return counterWebApp;
+    return counterWebApp();
 }
