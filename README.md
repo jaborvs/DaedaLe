@@ -32,7 +32,7 @@
     <img src="img/logo.jpg" alt="Logo" width="80" height="80">
   </a>
 
-<h1 align="center">DaedaLe</h1>
+<h2 align="center" style="font-size: 60px">DaedaLe</h2>
   <p align="center">
     A tutorial level generator for PuzzleScript
   </p>
@@ -41,7 +41,6 @@
 
 
 <!-- TABLE OF CONTENTS -->
-<summary>
 ## Table of Contents
 <ol>
     <li>
@@ -64,8 +63,6 @@
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
 </ol>
-</summary>
-
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
