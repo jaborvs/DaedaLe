@@ -1,7 +1,17 @@
+/*
+ * @Module: AST
+ * @Desc:   Module to parse the AST of a PuzzleScript game
+ */
 module PuzzleScript::AST
 
+/*****************************************************************************/
+// --- General modules imports ------------------------------------------------
 import List;
 
+/*****************************************************************************/
+// --- Global defines ---------------------------------------------------------
+
+// Section annotation (Deprecated in 2024 rascal)
 anno loc PreludeData@location;
 anno loc PSGame@location;
 anno loc Section@location;
@@ -28,65 +38,101 @@ anno str LayerData@label;
 anno str LevelData@label;
 anno str Pixel@color;
 
+/*
+ *  @Name:  PSGame
+ *  @Desc:  Data structure for a PuzzleScript game AST
+ */
 data PSGame (loc src = |unknown:///|)
-  = game(list[Prelude] pr, list[Section] sections)
-  | game(
-      list[PreludeData] prelude, 
-      list[ObjectData] objects,
-      list[LegendData] legend,
-      list[SoundData] sounds,
-      list[LayerData] layers,
-      list[RuleData] rules,
-      list[ConditionData] conditions,
-      list[LevelData] levels,
-      list[Section] sections
+  = game(list[Prelude] pr, list[Section] sections)  // Game composed of a prelude and a list of sections
+  | game(                                           // Game composed of several lists:
+      list[PreludeData] prelude,                    // Prelude list
+      list[ObjectData] objects,                     // Objects list
+      list[LegendData] legend,                      // Legend list
+      list[SoundData] sounds,                       // Sounds list
+      list[LayerData] layers,                       // Layers list
+      list[RuleData] rules,                         // Rules list
+      list[ConditionData] conditions,               // Conditions list
+      list[LevelData] levels,                       // Levels list
+      list[Section] sections                        // Sections list
   )
-  | game_empty(str)
+  | game_empty(str)                                 // Empty game
   ;
- 	
+
+/*
+ *  @Name:  Prelude
+ *  @Desc:  Data structure for the Prelude section
+ */ 	
 data Prelude (loc src = |unknown:///|)
-  = prelude(list[PreludeData] datas);
+  = prelude(list[PreludeData] datas);               // Prelude data
 
+/*
+ *  @Name:  PreludeData
+ *  @Desc:  Data structure for the data of the Prelude section
+ */ 	
 data PreludeData (loc src = |unknown:///|)
-  = prelude_data(str key, str string, str)
-  | prelude_empty(str);  
+  = prelude_data(str key, str string, str)          // Title, author and website
+  | prelude_empty(str);                             // Emptu prelude
 	
+/*
+ *  @Name:  Section
+ *  @Desc:  Data structure for the remaining PuzzleScript sections
+ */ 
 data Section (loc src = |unknown:///|)
-  = s_objects(str sep1, str name, str sep2, list[ObjectData] objects)
-  | s_legend(str sep1, str name, str sep2, list[LegendData] legend)
-  | s_sounds(str sep1 , str name, str sep2, list[SoundData] sounds)
-  | s_layers(str sep1, str name, str sep2, list[LayerData] layers)
-  | s_rules(str sep1, str name, str sep2, list[RuleData] rules)
-  | s_conditions(str sep1, str name, str sep2, list[ConditionData] conditions)
-  | s_levels(str sep1, str name, str sep2, list[LevelData] levels)
-  | s_empty(str sep1, str name, str sep2, str linebreaks)
+  = s_objects(str sep1, str name, str sep2, list[ObjectData] objects)               // Objects section
+  | s_legend(str sep1, str name, str sep2, list[LegendData] legend)                 // Legend section
+  | s_sounds(str sep1 , str name, str sep2, list[SoundData] sounds)                 // Sounds section
+  | s_layers(str sep1, str name, str sep2, list[LayerData] layers)                  // Layers section
+  | s_rules(str sep1, str name, str sep2, list[RuleData] rules)                     // Rules section
+  | s_conditions(str sep1, str name, str sep2, list[ConditionData] conditions)      // Win Conditions section
+  | s_levels(str sep1, str name, str sep2, list[LevelData] levels)                  // Levels section 
+  | s_empty(str sep1, str name, str sep2, str linebreaks)                           // Empty section
   ;
 
+/*
+ *  @Name:  ObjectData
+ *  @Desc:  Data structure for the game objects of the Objects section
+ */ 
 data ObjectData (loc src = |unknown:///|)
-  = object_data(str name, list[str] legend, str, list[str] colors, str, list[Sprite] spr)
-  | object_data(str name, list[str] legend, list[str] colors, list[list[Pixel]] sprite, int id)
-  | object_empty(str)
+  = object_data(str name, list[str] legend, str, list[str] colors, str, list[Sprite] spr)           // Name, legend characters, (???), colors, (???), sprite
+  | object_data(str name, list[str] legend, list[str] colors, list[list[Pixel]] sprite, int id)     // Name, legend characters, colors, sprite, identifier
+  | object_empty(str)                                                                               // Empty object
   ;
-	
+
+/*
+ *  @Name:  Sprite
+ *  @Desc:  Data structure for an object's sprite
+ */ 	
 data Sprite 
   = sprite( 
-      str line0, str,
-      str line1, str,
-      str line2, str, 
-      str line3, str,
-      str line4, str
+      str line0, str,   // Line 0, (???)
+      str line1, str,   // Line 1, (???)
+      str line2, str,   // Line 2, (???)
+      str line3, str,   // Line 3, (???)
+      str line4, str    // Line 4, (???)
   );
       
+/*
+ *  @Name:  Pixel
+ *  @Desc:  Data structure for an game pixel
+ */ 
 data Pixel
-  = pixel(str pixel);
+  = pixel(str pixel);   // Pixel
 
+/*
+ *  @Name:  LegendOperation
+ *  @Desc:  Data structure for the game legend operations
+ */ 
 data LegendOperation
-  = legend_or(str id)
-  | legend_and(str id)
+  = legend_or(str id)   // Or identifier
+  | legend_and(str id)  // And identifier
   ;
 
+/*
+ *  @Name:  LegendData
+ *  @Desc:  Data structure for the game legend data
+ */ 
 data LegendData (loc src = |unknown:///|)
-  = legend_data(str legend, str first, list[LegendOperation] others, str)
+  = legend_data(str legend, str first, list[LegendOperation] others, str)  
   | legend_alias(str legend, list[str] values)
   | legend_combined(str legend, list[str] values)
   | legend_error(str legend, list[str] values)
