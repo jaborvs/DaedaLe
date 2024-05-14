@@ -21,6 +21,7 @@
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
 
 
@@ -32,18 +33,8 @@
   </a>
 
 <h3 align="center">DaedaLe</h3>
-
   <p align="center">
     A tutorial level generator for PuzzleScript
-    <br />
-    <a href="https://github.com/jaborvs/DaedaLe"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/jaborvs/DaedaLe">View Demo</a>
-    ·
-    <a href="https://github.com/jaborvs/DaedaLe/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    ·
-    <a href="https://github.com/jaborvs/DaedaLe/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
   </p>
 </div>
 
