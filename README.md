@@ -10,7 +10,7 @@ More information about setting up Rascal can be found here: https://www.rascal-m
 
 2. Setting the to-be-analysed game is done in the following way.
 ```
-loc game_loc = |project://automatedpuzzlescript/DaedaLe/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|;
+loc game_loc = |project://DaedaLe/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|;
 ```
 
 3. Using DaedaLe requires executing the following commands in Rascal's REPL.
