@@ -43,8 +43,8 @@ Here's a blank template to get started: To avoid retyping too much info.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Built With
-* [![Rascal][Rascal.org]][Rascal-url]
-* [![Python][Python.org]][Python-url]
+[![Rascal][Rascal.org]][Rascal-url]
+[![Python][Python.org]][Python-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -141,5 +141,5 @@ the creator of TutoMate.
 [JQuery-url]: https://jquery.com 
 [Python.org]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 [Python-url]: https://www.python.org/
-[Rascal.org]: https://img.shields.io/badge/Rascal-100000?style=for-the-badge&logo=Rascal&logoColor=85A1AE
+[Rascal.org]: https://img.shields.io/badge/Rascal-85A1AE?style=for-the-badge&logo=Rascal&logoColor=85A1AE
 [Rascal-url]: https://www.rascal-mpl.org/
