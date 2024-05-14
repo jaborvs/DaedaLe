@@ -43,6 +43,9 @@ Here's a blank template to get started: To avoid retyping too much info.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Built With
+
+DaedaLe has been built using the following programming languages:
+
 [![Rascal][Rascal.org]][Rascal-url]
 [![Python][Python.org]][Python-url]
 
