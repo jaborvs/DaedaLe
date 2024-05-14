@@ -18,12 +18,10 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
+[![Contributors][contributors-shield]][[contributors-url](https://github.com/jaborvs/DaedaLe/graphs/contributors)]
+[![Forks][forks-shield]][\[forks-url\]](https://github.com/jaborvs/DaedaLe/forks)
+[![Stargazers][stars-shield]][\[stars-url\]](https://github.com/jaborvs/DaedaLe/stargazers)
 [![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
 
 
 
