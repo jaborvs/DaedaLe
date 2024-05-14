@@ -98,8 +98,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 <!-- REFERENCES -->
 ## References
 <a id="1">[1]</a> 
-S. Lavelle. Puzzlescript. [Online]. 2023. url: https://github.com/increpare/PuzzleScript (visited on
-01/12/2024).
+S. Lavelle. Puzzlescript. [Online]. 2023. URL: https://github.com/increpare/PuzzleScript (visited on 01/12/2024).
 
 <!-- LICENSE -->
 ## License
@@ -120,7 +119,13 @@ Project Link: [https://github.com/jaborvs/DaedaLe](https://github.com/jaborvs/Da
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-
+DaedaLe was conceived and developed within the scope of my Master's thesis pursued within the 
+MSc program in Software Engineering at the University of Amsterdam. 
+I want to thank my thesis supervisor, Riemer van Rozen, for 
+his invaluable guidance and support throughout the entire duration of the project. 
+Furthermore, I wish to acknowledge the contributions of previous collaborators to the 
+project repository, namely Clement Julia, the creator of ScriptButler, and Dennis Vet, 
+the creator of TutoMate.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
