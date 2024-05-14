@@ -32,7 +32,7 @@
     <a href="https://github.com/jaborvs/DaedaLe">
         <img src="img/logo.jpg" alt="Logo" width="80" height="80">
     </a>
-    <h1 align="center">DaedaLe</h1>
+    <h3 align="center">DaedaLe</h3>
     <p align="center">
         A tutorial level generator for PuzzleScript
     </p>
