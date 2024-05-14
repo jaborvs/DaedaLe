@@ -23,15 +23,15 @@ import util::Benchmark;
 
 void main() {
 
-    loc DemoDir = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Test/Tutorials|;
-    loc ReportDir = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Results|;
+    loc DemoDir = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Test/Tutorials|;
+    loc ReportDir = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Results|;
 
 	PSGame game;
 	Checker checker;
 	Engine engine;
 	Level level;
 
-	game = load(|project://automatedpuzzlescript/Tutomate/bin/PuzzleScript/Tutorials/demo/limerick.PS|);
+	game = load(|project://automatedpuzzlescript/DaedaLe/bin/PuzzleScript/Tutorials/demo/limerick.PS|);
 
 	checker = check_game(game);
 	engine = compile(checker);

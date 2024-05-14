@@ -28,15 +28,15 @@ import util::Benchmark;
 
 void main() {
 
-    loc DemoDir = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Tutorials/TutorialGames|;
-    loc ReportDir = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Results|;
+    loc DemoDir = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Tutorials/TutorialGames|;
+    loc ReportDir = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Results|;
 
 	PSGame game;
 	Checker checker;
 	Engine engine;
 	Level level;
 
-	game = load(|project://automatedpuzzlescript/Tutomate/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|);
+	game = load(|project://automatedpuzzlescript/DaedaLe/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|);
 
 	checker = check_game(game);
 	engine = compile(checker);

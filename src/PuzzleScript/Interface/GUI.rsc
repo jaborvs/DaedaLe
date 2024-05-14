@@ -184,11 +184,11 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
     // 'win' argument determines the color of the path
     list[Coords] coords = engine.applied_data[engine.current_level.original].travelled_coords;
     tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
-    data_loc = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/data.txt|;
+    data_loc = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Interface/data.txt|;
     writeFile(data_loc, json_data[0]);
-    exec("python3", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+    exec("python3", workingDir=|project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
     tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
-    exec("./path.sh", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
+    exec("./path.sh", workingDir=|project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Interface/|, args = [new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
     model.index += 1;
     model.image = "PuzzleScript/Interface/path<model.index>.png";
 
@@ -233,9 +233,9 @@ Model update(Msg msg, Model model){
                 model.index += 1;
                 model = reload(model.code, model.index);
                 tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
-                data_loc = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/data.txt|;
+                data_loc = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Interface/data.txt|;
                 writeFile(data_loc, json_data[0]);
-                exec("python3", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+                exec("python3", workingDir=|project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
             }
             case analyse_all(): {
 
@@ -319,9 +319,9 @@ Model update(Msg msg, Model model){
                 model.engine.current_level = model.engine.converted_levels[model.engine.index];
             }
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
-            data_loc = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/data.txt|;
+            data_loc = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Interface/data.txt|;
             writeFile(data_loc, json_data[0]);
-            exec("python3", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+            exec("python3", workingDir=|project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
             execute = false;
             model.image = "PuzzleScript/Interface/output_image<model.index>.png";
         }
@@ -423,9 +423,9 @@ void view(Model m) {
                 button(onClick(load_design()), "Reload");
             });
             div(class("left_bottom"), () {
-                div(class("tutomate"), () {
-                    h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Tutomate");
-                    ace("tutomate", event=onAceChange(dslChange), code = m.dsl, width="100%", height="15%");
+                div(class("DaedaLe"), () {
+                    h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "DaedaLe");
+                    ace("DaedaLe", event=onAceChange(dslChange), code = m.dsl, width="100%", height="15%");
                     div(class("panel"), () {
                         h3(style(("font-family": "BubbleGum")), "Get insights");
                         button(onClick(analyse()), "Analyse");
@@ -450,7 +450,7 @@ void view(Model m) {
 
 App[Model]() main() {
 
-    game_loc = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Tutorials/demo/blockfaker.PS|;
+    game_loc = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Tutorials/demo/blockfaker.PS|;
 	game = load(game_loc);
 
 	checker = check_game(game);
@@ -459,9 +459,9 @@ App[Model]() main() {
 	str title = get_prelude(engine.game.prelude, "title", "Unknown");
 
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
-    data_loc = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/data.txt|;
+    data_loc = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Interface/data.txt|;
     writeFile(data_loc, json_data[0]);
-    tmp = execWithCode("python3", workingDir=|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+    tmp = execWithCode("python3", workingDir=|project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Interface/|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
     println(tmp[1]);
     println(tmp[0]);
 
@@ -470,7 +470,7 @@ App[Model]() main() {
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/style.css"]), update);
 
     App[Model] counterWebApp()
-      = webApp(counterApp(), |project://automatedpuzzlescript/Tutomate/src/|);
+      = webApp(counterApp(), |project://automatedpuzzlescript/DaedaLe/src/|);
 
     return counterWebApp;
 }

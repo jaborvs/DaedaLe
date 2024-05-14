@@ -8,7 +8,7 @@ import Type;
 
 void get_tutorial() {
 
-    loc file = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Test/TutorialDSL.cddl|;
+    loc file = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Test/TutorialDSL.cddl|;
     str content = readFile(file);
 
     println(content);

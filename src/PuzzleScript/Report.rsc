@@ -36,7 +36,7 @@ module PuzzleScript::Report
 
 
 //     println("1");
-//     loc verb_dir = |project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Results/Verbs|;
+//     loc verb_dir = |project://automatedpuzzlescript/DaedaLe/src/PuzzleScript/Results/Verbs|;
 //     generate_reports(models, verb_dir, category);
 
 // }
