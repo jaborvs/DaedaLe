@@ -623,7 +623,7 @@ App[Model] main() {
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
     data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
     writeFile(data_loc, json_data[0]);
-    tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+    execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
 
 	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), start_dsl, false, <[],0.0>, <engine,[],0.0>, "PuzzleScript/Interface/bin/output_image0.png", <[],[],[]>>;
     Tutorial tutorial = tutorial_build(start_dsl);
