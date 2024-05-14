@@ -1,2 +1,0 @@
-title, author, objects, layers, collisions, rules, winconditions, levels, zoom, sloc, comment lines, blank lines,parse result,check result, errors, warnings, file
-Notsnake, Terry Cavanagh, 3, 3, 0, 2, 1, 1, false,50, 0, 17,success,success, 0, 0,|project://automatedpuzzlescript/Tutomate/src/PuzzleScript/Test/demo/notsnake.txt|
