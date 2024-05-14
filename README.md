@@ -26,44 +26,42 @@
 
 
 <!-- PROJECT LOGO -->
-<style>h1,h2,h3,h4 { border-bottom: 0; } </style>
 <br />
 <div align="center">
     <a href="https://github.com/jaborvs/DaedaLe">
         <img src="img/logo.jpg" alt="Logo" width="80" height="80">
     </a>
     <h1 align="center">DaedaLe</h1>
-    <p align="center">
-        A tutorial level generator for PuzzleScript
-    </p>
 </div>
 <br />
 
 
 
 <!-- TABLE OF CONTENTS -->
-## Table of Contents
-<ol>
-    <li>
-        <a href="#about-the-project">About The Project</a>
-        <ul>
-            <li><a href="#built-with">Built With</a></li>
-        </ul>
-    </li>
-    <li>
-        <a href="#getting-started">Getting Started</a>
-        <ul>
-            <li><a href="#prerequisites">Prerequisites</a></li>
-            <li><a href="#installation">Installation</a></li>
-        </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-</ol>
+<details open>
+    <h2>Table of Contents</h2>
+    <ol>
+        <li>
+            <a href="#about-the-project">About The Project</a>
+            <ul>
+                <li><a href="#built-with">Built With</a></li>
+            </ul>
+        </li>
+        <li>
+            <a href="#getting-started">Getting Started</a>
+            <ul>
+                <li><a href="#prerequisites">Prerequisites</a></li>
+                <li><a href="#installation">Installation</a></li>
+            </ul>
+        </li>
+        <li><a href="#usage">Usage</a></li>
+        <li><a href="#roadmap">Roadmap</a></li>
+        <li><a href="#contributing">Contributing</a></li>
+        <li><a href="#license">License</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="#acknowledgments">Acknowledgments</a></li>
+    </ol>
+</details>
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
