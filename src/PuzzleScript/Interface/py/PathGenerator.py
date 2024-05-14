@@ -29,4 +29,4 @@ for i in range(len(data)):
 
 # Save the image
 # if index > 1 and sys.argv[4]: os.remove(f"dead_image{index - 1}.png")
-color_coded_image.save(f"path{index}.png", quality=100, subsampling=0)
+color_coded_image.save(f"bin/path{index}.png", quality=100, subsampling=0)

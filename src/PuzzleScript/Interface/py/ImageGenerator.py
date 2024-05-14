@@ -19,10 +19,9 @@ def convert_data_to_image():
         pixels[x, y] = color
 
     return img
-
-print(sys.argv[2])
+print('hello')
 index = json.loads(sys.argv[3])['index']
 resulting_image = convert_data_to_image()
 
-if index > 1 and sys.argv[4]: os.remove(f"output_image{index - 1}.png")
-resulting_image.save(f"output_image{index}.png", quality=100, subsampling=0)
+if index > 1 and sys.argv[4]: os.remove(f"../bin/output_image{index - 1}.png")
+resulting_image.save(f"../bin/output_image{index}.png", quality=100, subsampling=0)
