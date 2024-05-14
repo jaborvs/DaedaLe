@@ -18,24 +18,24 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-[![Contributors][contributors-shield]][https://github.com/jaborvs/DaedaLe/graphs/contributors]
-[![Forks][forks-shield]][https://github.com/jaborvs/DaedaLe/forks]
-[![Stargazers][stars-shield]][https://github.com/jaborvs/DaedaLe/stargazers]
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
-
 
 
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/github_username/repo_name">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  <a href="https://github.com/jaborvs/DaedaLe">
+    <img src="img/logo.jpg" alt="Logo" width="80" height="80">
   </a>
 
-<h3 align="center">project_title</h3>
+<h3 align="center">DaedaLe</h3>
 
   <p align="center">
-    project_description
+    A tutorial level generator for PuzzleScript
     <br />
     <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a>
     <br />
