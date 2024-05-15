@@ -11,22 +11,30 @@ import PuzzleScript::Engine;
 
 import IO;
 
-data Object = game_object(str char, str current_name, list[str] possible_names, Coords coords, str direction, LayerData layer, int id);
+data Object = game_object(
+    str char,                   // Legend representation char
+    str current_name,           // Current state of the player
+    list[str] possible_names,   // All possible names for the player (See limerick player)
+    Coords coords,              // Current position of the object
+    str direction,              // Stores where the object moves (Gravity)
+    LayerData layer,            // Layer where it exists
+    int id                      // Identifier (could have multiple objects with the same name)
+    );
 alias Line = list[list[Object]];
 alias Layer = list[Line];
 
 data Level (loc src = |unknown:///|)
 	= level(
-        map[Coords, list[Object]] objects,
-		tuple[Coords, str] player,
-		LevelData original
+        map[Coords, list[Object]] objects,  // Coordinate and the list of objects (for different layers)
+		tuple[Coords, str] player,          // Keep
+		LevelData original                  // Node from the AST 
 	)
-	| message(str msg, LevelData original)
+	| message(str msg, LevelData original)  // For message representation in between levels
 	;
 
-alias Coords = tuple[int x, int y];
+alias Coords = tuple[int x, int y];     // Coordinates
 
-data Command (loc src = |unknown:///|)
+data Command (loc src = |unknown:///|)  // Comment later
 	= message(str string)
 	| sound(str event)
 	| cancel()
@@ -39,18 +47,22 @@ data Command (loc src = |unknown:///|)
 	
 alias Rule = tuple[
 	bool late,
-	set[Command] commands,
-    str direction,
-	set[str] directions,
-	list[RulePart] left,
-	list[RulePart] right,
-	int used,
-    map[str, tuple[str, int, str, str, int, int]] movingReplacement,
-    map[str, tuple[str, int, str]] aggregateDirReplacement,
-    map[str, tuple[str, int]] propertyReplacement,
-	RuleData original
+	set[Command] commands,                                              // Set of commands (cancel)
+    str direction,                                                      // Concrete direction (LEFT, RIGHT, UP, DOWN)
+	set[str] directions,                                                // (???)
+	list[RulePart] left,                                                // Left part of the rule
+	list[RulePart] right,                                               // Right part
+	int used,                                                           // Counts the amount of times it has been used (???)
+    map[str, tuple[str, int, str, str, int, int]] movingReplacement,    // Don't think we need this (XXX)
+    map[str, tuple[str, int, str]] aggregateDirReplacement,             // Don't think we need this (XXX)
+    map[str, tuple[str, int]] propertyReplacement,                      // Don't think we need this (XXX)
+	RuleData original                                                   // Node from the AST
 ];
 
+/*
+ * @Desc:   Create a new rule given the data
+ *
+ */
 Rule new_rule(RuleData r)
 	= <
 		false, 
@@ -82,23 +94,23 @@ Rule new_rule(RuleData r, str direction, list[RulePart] left, list[RulePart] rig
 	>;
 
 alias Engine = tuple[
-    list[LevelData] levels,
-	list[Level] converted_levels,
-    int all_objects,
-    Level begin_level,
-	Level current_level,
-	list[Condition] conditions,
-	list[list[Rule]] rules,
-    list[list[Rule]] late_rules,
-    map[RuleData, tuple[int, str]] indexed_rules,
-	int index,
-	map[str, ObjectData] objects,
-    map[str, list[str]] properties,
-    map[str, list[str]] references,
-    map[LevelData, LevelChecker] level_data,
-    map[LevelData, AppliedData] applied_data,
-    bool analyzed,
-	PSGame game
+    list[LevelData] levels,                             // All the original data is the AST Nodes
+	list[Level] converted_levels,                       // The actual data type we use
+    int all_objects,                                    // Number of objects
+    Level begin_level,                                  // First level
+	Level current_level,                                // Current level playing
+	list[Condition] conditions,                         // Win conditions   
+	list[list[Rule]] rules,                             // Converted rules 
+    list[list[Rule]] late_rules,                        // Converted late rules
+    map[RuleData, tuple[int, str]] indexed_rules,       // Keep the order of the rules: AST node, <no. rule in code, rule string>
+	int index,                                          // (???)
+	map[str, ObjectData] objects,                       // name of the object, AST node of the object
+    map[str, list[str]] properties,                     // first part of the legend 
+    map[str, list[str]] references,                     // something similar to the prev.
+    map[LevelData, LevelChecker] level_data,            // How many moveable objects are in the game, how many rules will you be able to apply
+    map[LevelData, AppliedData] applied_data,           // What is used in the BFS
+    bool analyzed,                                      // If it has been analyzed or not
+	PSGame game                                         // AST Node
 ];
 
 Engine new_engine(PSGame game)		
