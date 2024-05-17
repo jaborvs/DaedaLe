@@ -209,6 +209,7 @@ tuple[str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
 tuple[str,str,str] pixel_to_json(Engine engine, int index) {
     tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
     str json = "[";
+    tmp = 0;
 
     for (int i <- [0..level_size.height]) {
         for (int j <- [0..level_size.width]) {
@@ -229,9 +230,30 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
                     if(isEmpty(obj.sprite)) json += "\"c\": \"<COLORS[toLowerCase(obj.colors[0])]>\"";
                     else {
                         Pixel pix = obj.sprite[k][l];
-                        if (COLORS[pix.color]?) json += "\"c\": \"<COLORS[pix.color]>\"";
-						else if (pix.pixel != ".") json += "\"c\": \"<pix.color>\"";
-                        else json += "\"c\": \"#FFFFFF\"";
+                        if (pix.pixel == ".") {
+                            println(". pixel");
+                            tmp = 1;
+                        }
+                        if (COLORS[pix.color]?) {
+                            if (tmp == 1) {
+                                println("Default case!");
+                                tmp = 0;
+                            }
+                            json += "\"c\": \"<COLORS[pix.color]>\"";
+                        }
+                        // I think this never runs (XXX)
+						else if (pix.pixel != ".") {
+                            if (tmp == 1) {
+                                println("Other case!");
+                                tmp = 0;
+                            }
+                            json += "\"c\": \"<pix.color>\"";
+                        }
+                        else {
+                            json += "\"c\": \"#FFFFFF\"";
+                            println("Other 2 case!");
+                            tmp = 0;
+                        }
                     }
                     json += "},";
                 }
@@ -294,7 +316,8 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
     exec("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
 
     tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
-    exec("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["PathGenerator.py", new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
+    tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["PathGenerator.py", new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
+    println(tmp);
     model.index += 1;
     model.image = "PuzzleScript/Interface/bin/path<model.index>.png";
 
@@ -510,7 +533,7 @@ Model reload(str src, int index) {
 
 /*
  *  @Name:  view_panel
- *  @Desc:  Loads the buttons in the GUI
+ *  @Desc:  Loads the HTML of the movement buttons in the GUI
  *  @Param:
  *      model   Application model
  */
@@ -527,7 +550,7 @@ void view_panel(Model m){
 
 /*
  *  @Name:  view_results
- *  @Desc:  Loads the results of the analysis in the GUI
+ *  @Desc:  Loads the HTML of the analysis' results in the GUI
  *  @Param:
  *      model   Application model
  */
@@ -559,7 +582,7 @@ void view_results(Model m) {
 
 /*
  *  @Name:  view
- *  @Desc:  Loads the application in the GUI
+ *  @Desc:  Loads the HTML of the application in the GUI
  *  @Param:
  *      model   Application model
  */
@@ -612,7 +635,7 @@ void view(Model m) {
  */
 App[Model] main() {
 
-    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/blockfaker.PS|;
+    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/blockfaker.PS|;
 	game = load(game_loc);
 
 	checker = check_game(game);
