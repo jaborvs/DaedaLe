@@ -635,7 +635,7 @@ void view(Model m) {
  */
 App[Model] main() {
 
-    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/blockfaker.PS|;
+    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
 	game = load(game_loc);
 
 	checker = check_game(game);

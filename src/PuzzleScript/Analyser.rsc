@@ -1,3 +1,8 @@
+/*
+ * @Module: Analyser    
+ * @Desc:   (DEPRECATED)
+ */
+
 module PuzzleScript::Analyser
 
 import PuzzleScript::Messages;
@@ -246,6 +251,8 @@ DynamicChecker analyse_game(Engine engine){
 }
 
 DynamicChecker analyse_unidirectional_solution(DynamicChecker c, Engine engine, Level level){
+    println("ASDFASDFASDFASDFASDFASDFASDFASDFASDFASDF");
+
 	for (str dir <- ["down", "left", "right", "up"]){		
 		list[Layer] old_layers = deep_copy(level.layers);
 		int loops = 0;
