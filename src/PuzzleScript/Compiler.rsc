@@ -1,3 +1,9 @@
+/*
+ * @Module: Compiler
+ * @Desc:   Module that compiles the AST.
+ * @Auth:   Dennis Vet    -> code
+ *          Borja Velasco -> code, comments
+ */
 module PuzzleScript::Compiler
 
 import String;
@@ -24,13 +30,23 @@ alias Line = list[list[Object]];
 alias Layer = list[Line];
 
 data Level (loc src = |unknown:///|)
-	= level(
+    = level(
         map[Coords, list[Object]] objects,  // Coordinate and the list of objects (for different layers)
-		tuple[Coords, str] player,          // Keep
-		LevelData original                  // Node from the AST 
-	)
+        tuple[Coords, str] player,          // Keep
+        LevelData original                  // Node from the AST 
+    )
 	| message(str msg, LevelData original)  // For message representation in between levels
 	;
+
+// = level(
+//     map[
+//         LayerData layer,
+//         map[Coords, Object obj] 
+//     ],
+//     tuple[Coords, str] player,
+//     LevelData original
+// )
+
 
 alias Coords = tuple[int x, int y];     // Coordinates
 

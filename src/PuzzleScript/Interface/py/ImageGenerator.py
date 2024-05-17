@@ -10,11 +10,16 @@ def convert_data_to_image():
         data = json.loads(data_file.read())
     size = json.loads(sys.argv[2])
 
-    img = Image.new('RGB', (size['width'] * 5, size['height'] * 5), color='white')
+    img = Image.new('RGBA', (size['width'] * 5, size['height'] * 5), color='white')
     pixels = img.load()
 
     for item in data:
-        x, y, color = item['x'], item['y'], ImageColor.getcolor(item['c'], "RGB")
+        x, y = item['x'], item['y'] 
+        color_code = item['c']
+        if color_code == '......':
+            continue
+        else:
+            color = ImageColor.getcolor(color_code, "RGB")
         pixels[x, y] = color
 
     return img

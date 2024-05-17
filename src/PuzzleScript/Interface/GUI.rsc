@@ -1,6 +1,8 @@
 /*
  * @Module: GUI
- * @Desc:   Module that contains de GUI code for the generation tool
+ * @Desc:   Module that contains de GUI code for the generation tool.
+ * @Auth:   Dennis Vet    -> code
+ *          Borja Velasco -> code, comments
  */
 module PuzzleScript::Interface::GUI
 
@@ -219,43 +221,47 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
 
             list[Object] objects = engine.current_level.objects[<i,j>];
 
-            str name = objects[size(objects) - 1].current_name;
-            ObjectData obj = engine.objects[name];
+            // str name = objects[size(objects) - 1].current_name;
+            // ObjectData obj = engine.objects[name];
 
-            for (int k <- [0..5]) {
-                for (int l <- [0..5]) {
-                    json += "{";
-                    json += "\"x\": <j * 5 + l>,";
-                    json += "\"y\": <i * 5 + k>,";
-                    if(isEmpty(obj.sprite)) json += "\"c\": \"<COLORS[toLowerCase(obj.colors[0])]>\"";
-                    else {
-                        Pixel pix = obj.sprite[k][l];
-                        if (pix.pixel == ".") {
-                            println(". pixel");
-                            tmp = 1;
-                        }
-                        if (COLORS[pix.color]?) {
-                            if (tmp == 1) {
-                                println("Default case!");
-                                tmp = 0;
-                            }
-                            json += "\"c\": \"<COLORS[pix.color]>\"";
-                        }
-                        // I think this never runs (XXX)
-						else if (pix.pixel != ".") {
-                            if (tmp == 1) {
-                                println("Other case!");
-                                tmp = 0;
-                            }
-                            json += "\"c\": \"<pix.color>\"";
+            several = false;
+            if (size(objects) > 1) several = true;
+
+            for (Object my_obj <- objects) {
+                if (several) println(my_obj);
+
+                str name = my_obj.current_name;
+                ObjectData obj = engine.objects[name];
+
+                for (int k <- [0..5]) {
+                    for (int l <- [0..5]) {
+                        json += "{";
+                        json += "\"x\": <j * 5 + l>,";
+                        json += "\"y\": <i * 5 + k>,";
+
+                        if(isEmpty(obj.sprite)) {
+                            json += "\"c\": \"<COLORS[toLowerCase(obj.colors[0])]>\"";
                         }
                         else {
-                            json += "\"c\": \"#FFFFFF\"";
-                            println("Other 2 case!");
-                            tmp = 0;
+                            Pixel pix = obj.sprite[k][l];
+                            if (pix.pixel == ".") {
+                                println("Transparent pixel");
+                                json += "\"c\": \"......\"";
+                            }
+                            else if (COLORS[pix.color]?) {
+                                json += "\"c\": \"<COLORS[pix.color]>\"";
+                            }
+                            // I think this never runs (XXX)
+                            else if (pix.pixel != ".") {
+                                json += "\"c\": \"<pix.color>\"";
+                            }
+                            else {
+                                println("We should never get here");
+                                json += "\"c\": \"#FFFFFF\"";
+                            }
                         }
+                        json += "},";
                     }
-                    json += "},";
                 }
             }
         }
