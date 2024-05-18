@@ -228,7 +228,7 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
             if (size(objects) > 1) several = true;
 
             for (Object my_obj <- objects) {
-                if (several) println(my_obj);
+                // if (several) println(my_obj);
 
                 str name = my_obj.current_name;
                 ObjectData obj = engine.objects[name];
@@ -245,7 +245,7 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
                         else {
                             Pixel pix = obj.sprite[k][l];
                             if (pix.pixel == ".") {
-                                println("Transparent pixel");
+                                // println("Transparent pixel");
                                 json += "\"c\": \"......\"";
                             }
                             else if (COLORS[pix.color]?) {
@@ -256,7 +256,7 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
                                 json += "\"c\": \"<pix.color>\"";
                             }
                             else {
-                                println("We should never get here");
+                                // println("We should never get here");
                                 json += "\"c\": \"#FFFFFF\"";
                             }
                         }

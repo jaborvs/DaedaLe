@@ -252,14 +252,22 @@ map[str, str] resolve_player_name(Checker c) {
 
 // Go over each character in the level and convert the character to all possible references
 Level convert_level(LevelData level, Checker c) {
-
     map[Coords, list[Object]] objects = ();
     tuple[Coords, str] player = <<0,0>, "">;
     map[str, str] player_name = resolve_player_name(c);
     int id = 0;
 
-    for (int i <- [0..size(level.level)]) {
+    str background_char = "";
+    for (str bg_char <- c.references<0>){
+        if ("background" in c.references[bg_char]) {
+            background_char = bg_char;
+        }
+    }
+    list[str] background_references = get_all_references(background_char, c.references);
+    LayerData background_ld = get_layer(background_references, c.game);
+    str background_name = c.references[background_char][0];
 
+    for (int i <- [0..size(level.level)]) {
  		list[str] char_list = split("", level.level[i]);
 
         for (int j <- [0..size(char_list)]) {
@@ -268,18 +276,31 @@ Level convert_level(LevelData level, Checker c) {
 
             if (char in player_name<0>) player = <<i,j>, player_name[char]>;
 
+            // println("Char:");
+            // println(char);
+            // println("References:");
+            // println(c.references<0>);
+            // println("Combinations:");
+            // println(c.combinations<0>);
+            // println();
             if (char in c.references<0>) {
-
                 list[str] all_references = get_all_references(char, c.references);
                 LayerData ld = get_layer(all_references, c.game);
                 str name = c.references[char][0];
 
-                list[Object] object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
-
-                if (<i,j> in objects) objects[<i,j>] += object;
-                else objects += (<i,j>: object);
-
+                
+                list[Object] background = [game_object(background_char, background_name, background_references,<i,j>, "", background_ld, id)];
                 id += 1;
+
+                list[Object] new_object = [];
+                if (char != background_char) {
+                    new_object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
+                    id += 1;
+                }
+
+                list[Object] object = background + new_object;
+                if (<i,j> in objects) objects[<i,j>] += object;
+                else objects[<i,j>] = object;
 
             }
             else if (char in c.combinations<0>) {
