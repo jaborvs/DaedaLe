@@ -29,45 +29,63 @@ import PuzzleScript::Utils;
 /*****************************************************************************/
 // --- Data structures defines ------------------------------------------------
 
-
 /*
  * @Name:   Checker
+ * @Desc:   Data structure that contains all relevant information of a 
+ *          PuzzleScript game to be checked (???). They are ordered in terms 
+ *          of how they appear on a PuzzleScript file
  */
-alias Checker = tuple[
-	list[Msg] msgs,
-	bool debug_flag,
-	map[str, list[str]] references,
-	list[str] objects,
-	map[str, list[str]] combinations,
-	list[str] layer_list,
-	map[str, tuple[list[int] seeds, loc pos]] sound_events,
-	list[str] used_sounds,
-	list[Condition] conditions,
-	map[str, str] prelude,
-	list[str] used_objects,
-	list[str] used_references,
-    list[str] all_moveable_objects,
-    map[str, list[str]] all_properties,
-    list[str] all_char_refs,
-	PSGame game
+alias Checker = tuple[                
+	map[str, str] prelude,                                      // Prelude section: Game's and author's name (???)                         
+    bool debug_flag,                                            // Debug flag
+	list[str] objects,                                          // List of all game objects
+    list[str] used_objects,                                     // List of all used game objects
+    list[str] all_moveable_objects,                             // List of all moveable game objects
+	map[str, list[str]] references,        // Map of references: name and its list of references (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
+	list[str] used_references,                                  // List of used references
+    list[str] all_char_refs,                                    // (???)
+	map[str, list[str]] combinations,    // Map of combinations: name and its list of combinations (e.g., @ = Crate and Target)
+    list[str] layer_list,                                       // List of game layers
+    map[                                                        // Map of game sounds:
+        str,                                               //      Name
+        tuple[list[int] seeds, loc pos]              //      Tuple: list of seeds and their location on file (???)
+        ] sound_events,                                         
+    list[str] used_sounds,                                      // List of used game sounds
+	list[Condition] conditions,                                 // List of game win conditions
+    list[Msg] msgs,                                             // List of game messages
+    map[str, list[str]] all_properties,        // Map of all properties: name and list of all properties
+	PSGame game                                                 // AST node of a PuzzleScript game
 ];
 
+/*
+ * @Name:   Reference
+ * @Desc:   Data structure for the references of a PuzzleScript game legend
+ *          (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
+ */
 alias Reference = tuple[
-	list[str] objs, 
-	Checker c,
-	list[str] references
+	list[str] objs,         // List of objects referenced
+	Checker c,              // Checker
+	list[str] references    // List of references (???)
 ];
 
+/*
+ * @Name:   Condition
+ * @Desc:   Data structure for the win conditions of a PuzzleScript game
+ */
 data Condition (loc src = |unknown:///|)
-	= some_objects(list[str] objects, ConditionData original)
-	| no_objects(list[str] objects, ConditionData original)
-	| all_objects_on(list[str] objects, list[str] on, ConditionData original)
-	| some_objects_on(list[str] objects, list[str] on, ConditionData original)
-	| no_objects_on(list[str] objects, list[str] on, ConditionData original)
+	= some_objects(list[str] objects, ConditionData original)                       // Some type win condition
+	| no_objects(list[str] objects, ConditionData original)                         // No type win condition
+	| all_objects_on(list[str] objects, list[str] on, ConditionData original)       // All type win condition
+	| some_objects_on(list[str] objects, list[str] on, ConditionData original)      // Some on type win condition
+	| no_objects_on(list[str] objects, list[str] on, ConditionData original)        // No on type win condition
 	;
 
 // anno loc Condition.src;
 
+/*
+ * @Name:   COLORS
+ * @Desc:   Enummeration containing all the PuzzleScript colors.
+ */
 public map[str, str] COLORS = (
 	"black"   		: "#000000",
 	"white"			: "#FFFFFF",
@@ -98,22 +116,59 @@ public map[str, str] COLORS = (
 
 str default_mask = "@None@";
 		
+
+/*****************************************************************************/
+// --- Public functions -------------------------------------------------------
+
+/*
+ * @Name:   new_checker
+ * @Desc:   Constructor function to create a new empty checker given an AST node
+ *          of a PuzzleScript game
+ * @Params: 
+ *      debug_flag  Boolean indicating whether or not we are in the debug mode
+ *      game        AST node of a PuzzleScript game
+ */
 Checker new_checker(bool debug_flag, PSGame game){		
-	return <[], debug_flag, (), [], (), [], (), [], [], (), [], [], [], (), [], game>;
+    return <(), debug_flag, [], [], [], (), [], [], (), [], (), [], [], [], (), game>;
 }
 
-//get a value from the prelude if it exists, else return the default
+/*
+ * @Name:   get_prelude
+ * @Desc:   Function to get the data of the prelude section lines
+ * @Params:
+ *      values          AST nodes of the game's Prelude section
+ *      key             One of the prelude section's keys (title, author, homepage)
+ *      default_str     (???)
+ * @Ret:    String with the name of the game, author or the webpage 
+ *          (depending on key)
+ */
 str get_prelude(list[PreludeData] values, str key, str default_str){
 	v = [x | x <- values, toLowerCase(x.key) == toLowerCase(key)];
+
 	if (!isEmpty(v)) return v[0].string;
-	
 	return default_str;
 }
 
+/*
+ * @Name:   check_valid_name
+ * @Desc:   Function to check if a name is valid using a regular expression
+ *          and verifiying is not one of the used coding keywords
+ * @Param:  
+ *      name    String to be checked
+ * @Ret:    Boolean determining if valid
+ */
 bool check_valid_name(str name){
 	return /^<x:[a-z0-9_]+>$/i := name && !(toLowerCase(name) in keywords);
 }
 
+/*
+ * @Name:   check_valid_name
+ * @Desc:   Function to check if a legend is valid using a regular expression and
+ *          checking if it is not one of the coding keywords
+ * @Param:
+ *      name String containing the name of the legend element
+ * @Ret:    Boolean determining if valid
+ */
 bool check_valid_legend(str name){
 	if (size(name) > 1){
 		return check_valid_name(name);
@@ -122,6 +177,16 @@ bool check_valid_legend(str name){
 	}
 }
 
+/*
+ * @Name:   check_existing_legend
+ * @Desc:   Function to check if a legend exists
+ * @Param:  
+ *      name    String containing the name of the legend element
+ *      values  All values that it is associated with (using or/and)
+ *      pos     Location in the PuzzleScript file
+ *      c       Checker
+ * @Ret:    List of messages (???)
+ */
 list[Msg] check_existing_legend(str name, list[str] values, loc pos, Checker c){
 	list[Msg] msgs = [];
 
@@ -131,6 +196,15 @@ list[Msg] check_existing_legend(str name, list[str] values, loc pos, Checker c){
 	return msgs;
 }
 
+/*
+ * @Name:   check_undefined_object
+ * @Desc:   Function to check undefined objects
+ * @Param:  
+ *      name    String containing the name of the object
+ *      pos     Location in the PuzzleScript file
+ *      c       Checker
+ * @Ret:    List of messages (???)
+ */
 list[Msg] check_undefined_object(str name, loc pos, Checker c){
 	list[Msg] msgs = [];
 	
@@ -141,7 +215,16 @@ list[Msg] check_undefined_object(str name, loc pos, Checker c){
 	return msgs;
 }
 
-
+/*
+ * @Name:   resolve_reference
+ * @Desc:   Function to resolve the references of an object or a legend character
+ * @Param:  
+ *      raw_name    Name of the element to be reference resolved
+ *      c           Checker
+ *      pos         Location in the PuzzleScript file
+ *      allowed     Determines where the reference is allowed. Why objects (???)
+ * @Ret:    A reference object containing the references object
+ */
 Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]){
 	Reference r;
 	
@@ -149,18 +232,15 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 	list[str] references = [];	
 	str name = toLowerCase(raw_name);
 	
-    // If there is already a reference to the name
+    // Case 1: There is already a reference to the name
 	if (name in c.references && c.references[name] == [name]) return <[name], c, references>;
 	
 	references += [toLowerCase(name)];
 
-    // println("name = <name>");
-
+    // Case 2:  The name is inside the legend combinations
 	if (name in c.combinations) {
-
 		if ("combinations" in allowed) {
 			for (str n <- c.combinations[name]) {
-
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
 				c = r.c;
@@ -169,9 +249,9 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 		} else {
 			c.msgs += [invalid_object_type("combinations", name, error(), pos)];
 		}
+    // Case 3: The name is inside the legend references 
 	} else if (name in c.references) {
 		if ("properties" in allowed) {
-
 			for (str n <- c.references[name]) {
 				r = resolve_reference(n, c, pos);
 				objs += r.objs;
@@ -181,6 +261,7 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 		} else {
 			c.msgs += [invalid_object_type("properties", name, error(), pos)];
 		}
+    // Case 4: Object not defined, we include an error
 	} else {
 		c.msgs += [undefined_object(raw_name, error(), pos)];
 	}
@@ -188,16 +269,50 @@ Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=
 	return <dup(objs), c, references>;
 }
 
+/*
+ * @Name:   resolve_properties
+ * @Desc:   Function to resolve the properties of a game. Properties are resolved
+ *          references. We perform the transitive closure of the references
+ *          (e.g., "player":["playerhead1","playerhead2","playerhead3","playerhead4"
+ *                 "playerbody":["playerbodyh","playerbodyv"])
+ * @Param:  
+ *      c   Checker
+ * @Ret:    Tuple that contains
+ *              map[
+ *                  str,        Name of the property
+ *                  list[str]   Names of the objects associated to the property
+ *              ]
+ *              list[str]       Those objects that either are a 1 to 1 reference or
+ *                              that are part of a combination (there are duplicates)
+ *
+ * @Example:
+ *      For the legend of Lime Rick:
+ *          Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4
+ *          Obstacle = PlayerBodyH or PlayerBodyV or Wall or Crate or Player
+ *          PlayerBody = PlayerBodyH or PlayerBodyV
+ *          . = Background
+ *          P = PlayerHead1
+ *          # = Wall
+ *          E = Exit
+ *          A = Apple
+ *          C = Crate
+ *      We would return:
+ *          map = (
+ *              "player":["playerhead1","playerhead2","playerhead3","playerhead4"],
+ *              "playerbody":["playerbodyh","playerbodyv"],
+ *              "obstacle":["playerbodyh","playerbodyv","wall","crate","playerhead1","playerhead2","playerhead3","playerhead4"]       
+ *          )
+ *          list = ["exit","background","playerhead1","apple","wall","crate"]
+ */
 tuple[map[str, list[str]], list[str]] resolve_properties(Checker c) {
-
     map[str, list[str]] properties_dict = ();
     list[str] char_refs = [];
 
     for (str name <- c.references<0>) {
-        
         list[str] references = [];
+
         if (size(c.references[name]) > 1) {
-            for (str reference <- c.references[name]) references += get_map_input(c, reference);
+            for (str reference <- c.references[name]) references += get_map_input(c, reference);    // Performs the transitive closure
             properties_dict += (name: references);
         } 
         else if (size(name) == 1) {
@@ -206,19 +321,21 @@ tuple[map[str, list[str]], list[str]] resolve_properties(Checker c) {
     }
 
     for (str name <- c.combinations<0>) {
-
-        if (size(name) == 1) {
-            char_refs += [ref | ref <- c.combinations[name]];
-        }
-
+        if (size(name) == 1) char_refs += [ref | ref <- c.combinations[name]];
     }
 
     return <properties_dict, char_refs>;
-
 }
 
+/*
+ * @Name:   get_map_input
+ * @Desc:   It performs the transitive closure for the references
+ * @Param:  
+ *      c       Checker
+ *      name    String containing the name of the reference
+ * @Ret:    List containing the resolved references
+ */
 list[str] get_map_input(Checker c, str name) {
-
     list[str] propertylist = [];
 
     if (c.references[name]?) {
@@ -228,9 +345,18 @@ list[str] get_map_input(Checker c, str name) {
     }
 
     return propertylist;
-
 }
 
+/*
+ * @Name:   resolve_references
+ * @Desc:   Functions that resolves the references of a list of legend elements
+ * @Param:
+ *      names       List of legend elements to be reference resolved
+ *      c           Checker
+ *      pos         Location in file
+ *      allowed     Determines where the reference is allowed. Why objects (???)    
+ * @Ret:    Reference object with the resolved references
+ */
 Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]) {
 	list[str] objs = [];
 	list[str] references = [];
@@ -246,50 +372,76 @@ Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allo
 	return <dup(objs), c, references>;
 }
 
+/*
+ * @Name:   check_valid_real
+ * @Desc:   Function that checks if a string contains a positive real number
+ * @Param:
+ *      v   String to be checked
+ * @Ret:    Boolean determining if valid
+ */
 bool check_valid_real(str v) {
 	try
 		real i = toReal(v);
 	catch IllegalArgument: return false;
-	
 	return i > 0;
 }
 
-// errors
-//	invalid_prelud_key
-//	existing_prelude_key
-//	missing_prelude_value
-//	invalid_prelude_value
-// warnings
+
+
+/*
+ * @Name:   check_prelude
+ * @Desc:   Function to check the prelude section. The used keywords are defined 
+ *          in the Utils file
+ * @Param:
+ *      pr  AST node with the prelude data
+ *      c   Checker
+ * @Ret:   Checker with updated errors and warnings
+ *      Errors
+ *          invalid_prelud_key
+ *	        existing_prelude_key
+ *          missing_prelude_value
+ *          invalid_prelude_value
+ *      Warnings
+ *          redundant_prelude_value
+ */
 Checker check_prelude(PreludeData pr, Checker c){
 	str key = toLowerCase(pr.key);
+
+    // Case 1: Not a defined keyword
 	if (!(key in prelude_keywords)){
 		c.msgs += [invalid_prelude_key(pr.key, error(), pr.src)];
 		return c;
 	}
 	
+    // Case 2: Already defined keyword
 	if (key in c.prelude){
 		c.msgs += [existing_prelude_key(pr.key, error(), pr.src)];
-	}
-	
-	if (key in prelude_without_arguments){
+    // Case 3: Key in prelude_without_arguments (???)
+	} else if (key in prelude_without_arguments){
 		if (pr.string != "") c.msgs += [redundant_prelude_value(pr.key, warn(), pr.src)];
 		c.prelude[key] = "None";
+    // Case 4: Key in prelude_with_arguments
 	} else {
+        // Case 4.1: Missing argument
 		if (pr.string == ""){
 			c.msgs += [missing_prelude_value(pr.key, error(), pr.src)];
 			return c;
 		}
+        // Case 4.2: Argument of type int
 		if (key in prelude_with_arguments_int) {
 			if (!(check_valid_real(pr.string))) c.msgs += [invalid_prelude_value(key, pr.string, "real", error(), pr.src)];
 			c.prelude[key] = pr.string;
+        // Case 4.3: Argument of type string
 		} else {
+            // Case 4.3.1: Argument of type str_dim
 			if (key in prelude_with_arguments_str_dim) {
 				if (!(/[0-9]+x[0-9]+/i := pr.string)) c.msgs += [invalid_prelude_value(key, pr.string, "height code", error(), pr.src)];
 				c.prelude[key] = pr.string;
+            // Case 4.3.2: Argument of type str_color
 			} else if (key in prelude_with_arguments_str_color) {
-				// complicated to validate since it can be both an hex code or a color name
-				// so for now we do nothing
+				// Complicated to validate since it can be both an hex code or a color name so for now we do nothing
 				c.prelude[key] = pr.string;
+            // Case 4.3.3: Other cases not considered (title, author, homepage...)
 			} else {
 				c.prelude[key] = pr.string;
 			}
