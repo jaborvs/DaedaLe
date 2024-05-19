@@ -1,6 +1,7 @@
 /*
  * @Module: Analyser    
- * @Desc:   (DEPRECATED)
+ * @Desc:   (DEPRECATED: No docs)
+ * @Auth:   Clement Julia -> code
  */
 
 module PuzzleScript::Analyser

@@ -1,18 +1,38 @@
+/*
+ * @Module: AST
+ * @Desc:   Module to parse the AST of a PuzzleScript game. It contains all the 
+ *          AST node data structure definitions and some toString methods for 
+ *          them
+ * @Auth:   Dennis Vet    -> code
+ *          Borja Velasco -> comments
+ */
 module PuzzleScript::Checker
+
+/*****************************************************************************/
+// --- General modules imports ------------------------------------------------
+import util::Math;
+import String;
+import List;
+import Type;
+import IO;
 
 // For visualizing
 import util::IDEServices;
 import vis::Charts;
 
+/*****************************************************************************/
+// --- Own modules imports ------------------------------------------------
 import PuzzleScript::AST;
-import util::Math;
-import IO;
-import List;
-import String;
-import Type;
 import PuzzleScript::Messages;
 import PuzzleScript::Utils;
 
+/*****************************************************************************/
+// --- Data structures defines ------------------------------------------------
+
+
+/*
+ * @Name:   Checker
+ */
 alias Checker = tuple[
 	list[Msg] msgs,
 	bool debug_flag,
