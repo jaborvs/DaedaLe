@@ -101,7 +101,7 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
         resp = transition(initCommands, currentModel.val);
       } 
 
-	  // otherwise parse the message and do transition
+      // otherwise parse the message and do transition
       case message(map[str,value] params): {
         Msg msg = params2msg(params, parser);
         
@@ -114,7 +114,7 @@ SalixApp[&T] makeApp(str appId, &T() init, void(&T) view, &T(Msg, &T) update,
       }
       
       default: throw "Invalid Salix request <req>";
-   }	   
+   }       
    
    switchFrom(appId);
    return resp;

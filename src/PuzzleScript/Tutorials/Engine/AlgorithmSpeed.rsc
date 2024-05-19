@@ -22,24 +22,24 @@ import String;
 import util::Benchmark;
 
 // Object randomObject(list[Object] objs){
-// 		int rand = arbInt(size(objs));
-// 		return objs[rand];
-// 	}
+//         int rand = arbInt(size(objs));
+//         return objs[rand];
+//     }
 
 void main() {
 
     loc DemoDir = |project://DaedaLe/src/PuzzleScript/Test/Tutorials|;
     loc ReportDir = |project://DaedaLe/src/PuzzleScript/Results|;
 
-	PSGame game;
-	Checker checker;
-	Engine engine;
-	Level level;
+    PSGame game;
+    Checker checker;
+    Engine engine;
+    Level level;
 
-	game = load(|project://DaedaLe/bin/PuzzleScript/Test/Tutorials/modality.PS|);
+    game = load(|project://DaedaLe/bin/PuzzleScript/Test/Tutorials/modality.PS|);
 
-	checker = check_game(game);
-	engine = compile(checker);
+    checker = check_game(game);
+    engine = compile(checker);
 
     engine.current_level = engine.converted_levels[5];
     Level save_level = engine.current_level;

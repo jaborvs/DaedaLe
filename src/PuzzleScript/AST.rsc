@@ -65,18 +65,18 @@ data PSGame (loc src = |unknown:///|)
 /*
  * @Name:   Prelude
  * @Desc:   AST node for the Prelude section
- */ 	
+ */     
 data Prelude (loc src = |unknown:///|)
   = prelude(list[PreludeData] datas);               // Prelude data (???)
 
 /*
  * @Name:   PreludeData
  * @Desc:   AST node for the data of the Prelude
- */ 	
+ */     
 data PreludeData (loc src = |unknown:///|)
   = prelude_data(str key, str string, str)          // Title, author and website
   | prelude_empty(str);                             // Empty prelude section
-	
+    
 /*
  * @Name:   Section
  * @Desc:   AST node for the remaining PuzzleScript sections
@@ -105,7 +105,7 @@ data ObjectData (loc src = |unknown:///|)
 /*
  * @Name:   Sprite
  * @Desc:   AST node for object's sprite. Defined as a 5x5 matrix.
- */ 	
+ */     
 data Sprite 
   = sprite( 
       str line0, str,   // Line 0,
@@ -137,11 +137,11 @@ data LegendOperation
  */ 
 data LegendData (loc src = |unknown:///|)
   = legend_data(str legend, str first, list[LegendOperation] others, str)   // (???)
-  | legend_alias(str legend, list[str] values)                              // (???)
+  | legend_reference(str legend, list[str] values)                              // (???)
   | legend_combined(str legend, list[str] values)                           // (???)
   | legend_error(str legend, list[str] values)                              // (???)
   | legend_empty(str)                                                       // Empty legend section
-  ;	
+  ;    
 
 /*
  * @Name:   SoundData
@@ -151,7 +151,7 @@ data SoundData (loc src = |unknown:///|)
   = sound_data(list[str] sound, str)    // List of sounds, Comment (???)
   | sound_empty(str)                    // Empty sound section
   ;
-	
+    
 /*
  * @Name:   LayerData
  * @Desc:   AST node for the game layers
@@ -255,5 +255,5 @@ str toString(RulePart _: sound(str snd)){
  * @Ret:    string containing the RulePart
  */ 
 str toString(RulePart _: prefix(str pr)){
-	return pr;
+    return pr;
 }

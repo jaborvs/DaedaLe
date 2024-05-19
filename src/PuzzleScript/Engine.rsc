@@ -784,8 +784,6 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
 
         engine = execute_move(engine, checker, winning_moves[i], 0);
 
-        if (i == size(winning_moves) - 1) continue;
-
         for (str move <- possible_moves) {
 
             // Don't perform a move that is part of the winning moves
@@ -797,6 +795,7 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
             int total = 0;
             // Skip moves that moves the player back
             for (str move2 <- possible_moves) {
+
 
                 Engine new_engine2 = execute_move(new_engine, checker, move2, 0);
 
@@ -829,5 +828,6 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
         }
     }
 
+    println("Exiting");
     return dead_ends;
 }

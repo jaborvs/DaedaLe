@@ -95,8 +95,8 @@ REPLModel replUpdate(tuple[Msg, str](str) eval, list[str](str) complete, Maybe[s
       }
       else if (s == "\a1b[B") { // arrow down
         if (model.pointer < size(model.history) - 1) {
-	        model.pointer += 1;
-	        model = replaceLine(model, model.history[model.pointer], highlight);
+            model.pointer += 1;
+            model = replaceLine(model, model.history[model.pointer], highlight);
         }
       }
       else if (s == "\t") {

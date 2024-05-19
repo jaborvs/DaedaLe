@@ -91,8 +91,8 @@ Model update(Msg msg, Model m) {
         m.cart[i] = m.cart[i][amount = m.cart[i].amount + 1];
       }
       else {
-	      m.cart += [entry(m.articles[idx].id, 1)];
-	    }
+          m.cart += [entry(m.articles[idx].id, 1)];
+        }
     }
     
     case removeFromCart(int idx): {

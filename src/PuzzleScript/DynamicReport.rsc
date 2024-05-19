@@ -27,10 +27,10 @@ void main() {
     loc DemoDir = |project://DaedaLe/src/PuzzleScript/Test/Tutorials|;
     loc DynamicDir = |project://DaedaLe/src/PuzzleScript/Results/Dynamic|;
 
-	PSGame game;
-	Checker checker;
-	Engine engine;
-	Level level;
+    PSGame game;
+    Checker checker;
+    Engine engine;
+    Level level;
 
     generate_reports(DemoDir, DynamicDir);
 

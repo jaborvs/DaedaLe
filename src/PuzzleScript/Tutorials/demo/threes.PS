@@ -520,16 +520,16 @@ late down [ 9 | ... | 9 ] -> [ 0 | ... | 8 Carry ]
 
 startloop
 
-	late right [ no Number | ... | 0 | Number Carry ] -> [ | ... | 1 | Number ]
-	late right [ no Number | ... | 1 | Number Carry ] -> [ | ... | 2 | Number ]
-	late right [ no Number | ... | 2 | Number Carry ] -> [ | ... | 3 | Number ]
-	late right [ no Number | ... | 3 | Number Carry ] -> [ | ... | 4 | Number ]
-	late right [ no Number | ... | 4 | Number Carry ] -> [ | ... | 5 | Number ]
-	late right [ no Number | ... | 5 | Number Carry ] -> [ | ... | 6 | Number ]
-	late right [ no Number | ... | 6 | Number Carry ] -> [ | ... | 7 | Number ]
-	late right [ no Number | ... | 7 | Number Carry ] -> [ | ... | 8 | Number ]
-	late right [ no Number | ... | 8 | Number Carry ] -> [ | ... | 9 | Number ]
-	late right [ no Number | ... | 9 no Carry | Number Carry ] -> [ | ... | 0 Carry | Number ]
+    late right [ no Number | ... | 0 | Number Carry ] -> [ | ... | 1 | Number ]
+    late right [ no Number | ... | 1 | Number Carry ] -> [ | ... | 2 | Number ]
+    late right [ no Number | ... | 2 | Number Carry ] -> [ | ... | 3 | Number ]
+    late right [ no Number | ... | 3 | Number Carry ] -> [ | ... | 4 | Number ]
+    late right [ no Number | ... | 4 | Number Carry ] -> [ | ... | 5 | Number ]
+    late right [ no Number | ... | 5 | Number Carry ] -> [ | ... | 6 | Number ]
+    late right [ no Number | ... | 6 | Number Carry ] -> [ | ... | 7 | Number ]
+    late right [ no Number | ... | 7 | Number Carry ] -> [ | ... | 8 | Number ]
+    late right [ no Number | ... | 8 | Number Carry ] -> [ | ... | 9 | Number ]
+    late right [ no Number | ... | 9 no Carry | Number Carry ] -> [ | ... | 0 Carry | Number ]
     late right [ no Number | 0 Carry ] -> [ | 0 ]
 
 endloop

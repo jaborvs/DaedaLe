@@ -47,28 +47,28 @@ syntax Section
    | @Foldable s_levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? LevelData+ levels
    | s_empty: SectionDelimiter? SectionKeyword Newlines SectionDelimiter?
    ;
- 	
+     
 syntax Prelude
   = prelude: PreludeData+
   ;
-	
+    
 syntax PreludeData
   = prelude_data: KeywordID key String* string Newline
   | prelude_empty: Newline;
   
 syntax Sound
-  = sound: 'sfx' SoundIndex;	
-		
+  = sound: 'sfx' SoundIndex;    
+        
 syntax Color
   = @category="Color" ID;
-	
+    
 syntax ObjectName
   = @category="ObjectName" ID;
 
 syntax ObjectData
   = @Foldable object_data: ObjectName LegendKey? Newline Colors Newline Sprite?
   | object_empty: Newline;
-	
+    
 syntax SpritePixel
   = @category="SpritePixel" SpriteP;
 
@@ -82,7 +82,7 @@ syntax Sprite
     SpritePixel+ Newline 
     SpritePixel+ Newline
     SpritePixel+ Newline;
-	
+    
 syntax LegendOperation
   = legend_or: 'or' ObjectName
   | legend_and: 'and' ObjectName;
@@ -90,10 +90,10 @@ syntax LegendOperation
 syntax LegendData
   = legend_data: LegendKey '=' ObjectName LegendOperation*  Newline
   | legend_empty: Newline;
-	
+    
 syntax SoundID
   = @category="SoundID" ID;
-	
+    
 syntax SoundData
   = sound_data: SoundID+ Newline
   | sound_empty: Newline;
@@ -101,7 +101,7 @@ syntax SoundData
 syntax LayerData
   = layer_data: (ObjectName ','?)+ Newline
   | layer_empty: Newline;
-	
+    
 syntax RuleData
   = rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newline
   | @Foldable rule_loop: 'startloop' RuleData+ 'endloop' Newline
@@ -109,7 +109,7 @@ syntax RuleData
 
 syntax RuleContent
   = content: IDOrDirectional*;
-	
+    
 syntax RulePart
   = part: '[' {RuleContent '|'}+ ']';
 
@@ -119,7 +119,7 @@ syntax Prefix
 syntax Command
   = @category="Keyword" command: CommandKeyword
   | @category="Keyword" sound: Sound;
-	
+    
 syntax ConditionID
   = @category="ConditonID" ID;
 

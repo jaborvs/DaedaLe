@@ -46,7 +46,7 @@ map[str,Hnd] eventsOf(list[Attr] attrs) = ( k: v | event(str k, Hnd v) <- attrs 
 
 Node bareHtml(Node n) {
   return visit(n) {
-  	case h:hnode(element()) => hnode(element(),tagName=h.tagName, kids=h.kids, attrs=h.attrs)
+      case h:hnode(element()) => hnode(element(),tagName=h.tagName, kids=h.kids, attrs=h.attrs)
   }
 }
 

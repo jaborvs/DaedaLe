@@ -72,7 +72,7 @@ start[PSGame] annotate(start[PSGame] t) {
         insert appl(prod(def, symbols, {\tag("category"("ObjectName"))}), args);
       }
     }
-		
+        
     case c: appl(prod(def, symbols, {\tag("category"("ConditonID"))}), args): {
       if (toLowerCase(unparse(c)) in condition_keywords){
         insert appl(prod(def, symbols, {\tag("category"("Keyword"))}), args);
@@ -80,7 +80,7 @@ start[PSGame] annotate(start[PSGame] t) {
         insert appl(prod(def, symbols, {\tag("category"("ObjectName"))}), args);
       }
     }
-		
+        
     case c: appl(prod(def, symbols, {\tag("category"("IDorDirectional"))}), args): {
       if (toLowerCase(unparse(c)) in rulepart_keywords){
         insert appl(prod(def, symbols, {\tag("category"("Keyword"))}), args);
@@ -102,9 +102,9 @@ str to_color(str index, list[str] colors){
   try
     int s = toInt(index);
   catch IllegalArgument: return "unknown";
-	
+    
   if (s < size(colors)) return colors[s];
-	
+    
   return "unknown";
 }
 
@@ -113,15 +113,15 @@ LegendData process_legend(LegendData l) {
   list[str] values = [l.first];
   list[str] aliases = [];
   list[str] combined = [];
-	
+    
   for (LegendOperation other <- l.others) {
     switch(other){
       case legend_or(id): aliases += id;
       case legend_and(id): combined += id;
     }
   }
-	
-  LegendData new_l = legend_alias(legend, values + aliases);
+    
+  LegendData new_l = legend_reference(legend, values + aliases);
   if (size(aliases) > 0 && size(combined) > 0) {
     new_l = legend_error(legend, values + aliases + combined);
   } else if (size(combined) > 0) {
@@ -143,7 +143,7 @@ ObjectData process_object(ObjectData obj, int index){
       [pixel(x) | x <- split("", obj.spr[0].line3)],
       [pixel(x) | x <- split("", obj.spr[0].line4)]
     ];
-		
+        
     for (int i <- [0..size(sprite_line)]){
       for (int j <- [0..size(sprite_line[i])]){
         try
@@ -152,7 +152,7 @@ ObjectData process_object(ObjectData obj, int index){
       }
     }
   }
-	
+    
   ObjectData new_obj = object_data(obj.name, obj.legend, obj.colors, sprite_line, index);
 
   new_obj.src = new_obj.src;
@@ -227,7 +227,7 @@ PSGame post(PSGame game) {
     case list[LevelData] levels =>
       [level | level <- levels, !(level_empty() := level)]
   };
-  	
+      
   // assign to correct section
   visit(game2){
     case Section s: s_objects(_,_,_,_): objects += s.objects;
@@ -237,9 +237,9 @@ PSGame post(PSGame game) {
     case Section s: s_rules(_,_,_,_): rules += s.rules;
     case Section s: s_conditions(_,_,_,_): conditions += s.conditions;
     case Section s: s_levels(_,_,_,_): levels += s.levels;   
-  	case PreludeData p: prelude += [p];
+      case PreludeData p: prelude += [p];
   }
-	
+    
   //fix sprite
   processed_objects = [];
   int index = 0;
@@ -249,18 +249,18 @@ PSGame post(PSGame game) {
         index += 1;
     }
   }
-	
+    
   // validate legends and process
   processed_legend = [process_legend(l) | LegendData l <- legend];
-		
+        
   //unnest layers
   processed_layers = [process_layer(l) | LayerData l <- layers];
-	
+    
   //unest levels
   processed_levels = [process_level(l) | LevelData l <- levels];
-	
+    
   if (!isEmpty(game.pr)) pr = game.pr[0].datas;
-	
+    
   PSGame new_game = PSGame::game(
     prelude, 
     processed_objects, 
@@ -274,6 +274,6 @@ PSGame post(PSGame game) {
   );
 
   new_game.src = game.src;
-	
+    
   return new_game;
 }

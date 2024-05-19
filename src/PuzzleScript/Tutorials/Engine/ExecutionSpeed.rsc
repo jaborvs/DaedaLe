@@ -22,24 +22,24 @@ import String;
 import util::Benchmark;
 
 // Object randomObject(list[Object] objs){
-// 		int rand = arbInt(size(objs));
-// 		return objs[rand];
-// 	}
+//         int rand = arbInt(size(objs));
+//         return objs[rand];
+//     }
 
 void main() {
 
     loc DemoDir = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames|;
     loc ReportDir = |project://DaedaLe/src/PuzzleScript/Results|;
 
-	PSGame game;
-	Checker checker;
-	Engine engine;
-	Level level;
+    PSGame game;
+    Checker checker;
+    Engine engine;
+    Level level;
 
-	game = load(|project://DaedaLe/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|);
+    game = load(|project://DaedaLe/bin/PuzzleScript/Tutorials/demo/blockfaker.PS|);
 
-	checker = check_game(game);
-	engine = compile(checker);
+    checker = check_game(game);
+    engine = compile(checker);
 
     engine.current_level = engine.converted_levels[0];
     Level save_level = engine.current_level;

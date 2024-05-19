@@ -38,8 +38,64 @@ import PuzzleScript::Tutorials::AST;
 
 /*****************************************************************************/
 // --- Global defines ---------------------------------------------------------
-str start_dsl = "tutorial blockfaker {
+str limerick_dsl = "tutorial limerick {
+    verb topclimb [0]
+    verb largeclimb [1]
+    verb mediumclimb [2]
+    verb normalclimb [3]
+    verb push [4]
+    verb crawl [5]
+    verb eat [6]
+    verb eat2 [7]
+    verb cancel [8]
+    verb snakefall [9]
 
+    lesson 1: Lesson {
+        \"In this lesson, the player learns that the snake is able to crawl and climb\"
+        learn to crawl
+        learn to normalclimb
+        learn to mediumclimb
+    }
+    lesson 2: Lesson {
+        \"This lesson teaches that a snake can stack its body on top of each other to reach the goal\"
+        learn to crawl
+        learn to normalclimb
+        learn to mediumclimb
+        learn to largeclimb
+    }
+    lesson 3: Lesson {
+        \"This lesson teaches that falling in a gap results in a dead−end\"
+        learn to crawl
+        learn to normalclimb
+        learn to mediumclimb
+        learn to largeclimb
+        fail if snakefall
+    }
+    lesson 4: Lesson {
+        \"This lessons teaches the player that it can use its own body multiple times to reach great heights\"
+        learn to crawl
+        learn to normalclimb
+        learn to mediumclimb
+        learn to largeclimb
+    }
+    lesson 5: Lesson {
+        \"This lesson teaches players that the player can push blocks to fill the gaps\"
+        fail if snakefall
+        learn to crawl
+        learn to normalclimb
+        learn to mediumclimb
+        learn to largeclimb
+    }
+    lesson 6: Lesson {
+        \"This lesson uses all mechanics combined\"
+        learn to crawl
+        learn to normalclimb
+        learn to mediumclimb
+        learn to largeclimb
+    }
+}";
+
+str blockfaker_dsl = "tutorial blockfaker {
     verb walk []
     verb push [0]
     verb collide [1]
@@ -155,15 +211,15 @@ alias Win = tuple[
  *  @Desc:  Message function
  */
 data Msg 
-	= left() 
-	| right() 
-	| up() 
-	| down() 
-	| action() 
-	| undo() 
-	| reload()
-	| win()
-	| direction(int i)
+    = left() 
+    | right() 
+    | up() 
+    | down() 
+    | action() 
+    | undo() 
+    | reload()
+    | win()
+    | direction(int i)
     | codeChange(map[str,value] delta)
     | dslChange(map[str,value] delta)
     | textUpdated()
@@ -171,7 +227,7 @@ data Msg
     | analyse()
     | analyse_all()
     | show(Engine engine, int win, int length)
-	;
+    ;
 
 /*****************************************************************************/
 // --- Backend Functions ------------------------------------------------------
@@ -345,20 +401,20 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
 Model update(Msg msg, Model model){
     bool execute = false;
 
-	if (model.engine.current_level is level){
-		switch(msg){
+    if (model.engine.current_level is level){
+        switch(msg){
             // ''Direction' button has been pressed: LEFT, UP, RIGHT, DOWN
-			case direction(int i): {                
+            case direction(int i): {                
                 execute = true;
-				switch(i){
-					case 37: model.input = "left";
-					case 38: model.input = "up";
-					case 39: model.input = "right";
-					case 40: model.input = "down";
-				}
-			}
+                switch(i){
+                    case 37: model.input = "left";
+                    case 38: model.input = "up";
+                    case 39: model.input = "right";
+                    case 40: model.input = "down";
+                }
+            }
             // 'Reload' button has been pressed
-			case reload(): {                            
+            case reload(): {                            
                 model.engine.current_level = model.engine.begin_level;
                 model.image = "PuzzleScript/Interface/bin/output_image0.png";
             }
@@ -442,7 +498,7 @@ Model update(Msg msg, Model model){
                 
                 // Save respective engine states
                 model.win = result_time;
-                // model.de = get_dead_ends(model.engine, model.checker, result.winning_moves);
+                // model.de = get_dead_ends(model.engine, model.checker, result.winning_moves);     // Doesn't work (???)
 
                 model.analyzed = true;
             }
@@ -451,9 +507,9 @@ Model update(Msg msg, Model model){
                 model = extract_goals(engine, win, length, model);
             }
             // Default case
-			default: return model;
-		}
-		
+            default: return model;
+        }
+        
         println("4");
         // In case we have done a manual move we update the index, check if we have won and update
         // the leve representation
@@ -474,7 +530,7 @@ Model update(Msg msg, Model model){
             execute = false;
             model.image = "PuzzleScript/Interface/bin/output_image<model.index>.png";
         }
-	}
+    }
     println("6");
     return model;
 }
@@ -524,13 +580,13 @@ Model update_code(Model model, JsonData jd, int category) {
  *  @Ret:   Default application model
  */
 Model reload(str src, int index) {
-	PSGame game = load(src);
-	Checker checker = check_game(game);
-	Engine engine = compile(checker);
+    PSGame game = load(src);
+    Checker checker = check_game(game);
+    Engine engine = compile(checker);
 
-	str title = get_prelude(engine.game.prelude, "title", "Unknown");
+    str title = get_prelude(engine.game.prelude, "title", "Unknown");
  
-	Model init() = <"none", title, engine, checker, index, index, src, "", false, <[], 0.0>, <engine,[], 0.0>, "PuzzleScript/Interface/bin/output_image<index>.png", <[],[],[]>>;
+    Model init() = <"none", title, engine, checker, index, index, src, "", false, <[], 0.0>, <engine,[], 0.0>, "PuzzleScript/Interface/bin/output_image<index>.png", <[],[],[]>>;
     return init();
 }
 
@@ -606,14 +662,14 @@ void view(Model m) {
                 button(onClick(load_design()), "Reload");
             });
             div(class("left_bottom"), () {
-                div(class("DaedaLe"), () {
-                    h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "DaedaLe");
-                    ace("DaedaLe", event=onAceChange(dslChange), code = m.dsl, width="100%", height="15%");
+                div(class("TutoMate"), () {
+                    h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "TutoMate");
                     div(class("panel"), () {
                         h3(style(("font-family": "BubbleGum")), "Get insights");
                         button(onClick(analyse()), "Analyse");
                         button(onClick(analyse_all()), "Analyse all");
                     });
+                    ace("TutoMate", event=onAceChange(dslChange), code = m.dsl, width="100%", height="15%");
                 });
             });
         });
@@ -640,21 +696,21 @@ void view(Model m) {
  *  @Ret:   Call to run the application
  */
 App[Model] main() {
-    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/limerick.PS|;
-	game = load(game_loc);
+    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
+    game = load(game_loc);
 
-	checker = check_game(game);
-	engine = compile(checker);
+    checker = check_game(game);
+    engine = compile(checker);
 
-	str title = get_prelude(engine.game.prelude, "title", "Unknown");
+    str title = get_prelude(engine.game.prelude, "title", "Unknown");
 
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
     data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
     writeFile(data_loc, json_data[0]);
     execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
 
-	Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), start_dsl, false, <[],0.0>, <engine,[],0.0>, "PuzzleScript/Interface/bin/output_image0.png", <[],[],[]>>;
-    Tutorial tutorial = tutorial_build(start_dsl);
+    Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), limerick_dsl, false, <[],0.0>, <engine,[],0.0>, "PuzzleScript/Interface/bin/output_image0.png", <[],[],[]>>;
+    Tutorial tutorial = tutorial_build(limerick_dsl);
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/css/style.css"]), update);
 
     App[Model] counterWebApp() = webApp(counterApp(), |project://DaedaLe/src/|);

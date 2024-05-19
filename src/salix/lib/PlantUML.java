@@ -14,23 +14,23 @@ import net.sourceforge.plantuml.SourceStringReader;
 
 public class PlantUML {
 
-	private IValueFactory vf;
-	
-	public PlantUML(IValueFactory factory) {
-		this.vf = factory;
-	}
-	
-	public IString uml2svg(IString src) {
-		String source = src.getValue();
-		SourceStringReader reader = new SourceStringReader(source);
+    private IValueFactory vf;
+    
+    public PlantUML(IValueFactory factory) {
+        this.vf = factory;
+    }
+    
+    public IString uml2svg(IString src) {
+        String source = src.getValue();
+        SourceStringReader reader = new SourceStringReader(source);
 
-		try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-			String img = reader.generateImage(os, new FileFormatOption(FileFormat.SVG));
-			System.out.println(img);
-			return vf.string(new String(os.toByteArray(), Charset.forName("UTF-8")));
-		} 
-		catch (IOException e) {
-			throw RuntimeExceptionFactory.io(vf.string(e.getMessage()), null, null);
-		}
-	}
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            String img = reader.generateImage(os, new FileFormatOption(FileFormat.SVG));
+            System.out.println(img);
+            return vf.string(new String(os.toByteArray(), Charset.forName("UTF-8")));
+        } 
+        catch (IOException e) {
+            throw RuntimeExceptionFactory.io(vf.string(e.getMessage()), null, null);
+        }
+    }
 }
