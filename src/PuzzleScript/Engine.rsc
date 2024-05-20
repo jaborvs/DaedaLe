@@ -248,13 +248,21 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
                 }
 
             } else {
-
-                str char = get_representation_char(name, engine.properties);
-                char = char != "" ? char : get_representation_char(name, engine.references);
+                str rep_char = get_representation_char(name, engine.properties);
+                rep_char = rep_char != "" ? rep_char : get_representation_char(name, engine.references);
 
                 list[str] references = get_properties(name, engine.properties);
-                                
-                list[str] all_references = get_all_references(char, engine.properties);
+                
+                println(engine.properties);
+                println(engine.references);
+                println();
+                println();
+                println(get_unresolved_references_and_properties(rep_char, engine.properties));
+                println(get_resolved_references(rep_char, engine.properties));
+                println(get_properties(rep_char, engine.properties));
+                println();
+
+                list[str] all_references = get_resolved_references(rep_char, engine.properties);
                 all_references = size(all_references) == 0 ? references : all_references;
                 int highest_id = max([obj.id | coord <- engine.current_level.objects<0>, obj <- engine.current_level.objects[coord]]);
 
@@ -273,7 +281,7 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
                 new_coords = new_coords == <0,0> ? found_objects[i][0].coords : new_coords;
                 if ("player" in references) engine.current_level.player = <new_coords, name>;
 
-                current += [game_object(char != "" ? char : "9", name, all_references, new_coords, 
+                current += [game_object(rep_char != "" ? rep_char : "9", name, all_references, new_coords, 
                     dir, get_layer(all_references, engine.game), highest_id + 1)];
 
             }
@@ -516,7 +524,7 @@ Engine apply_moves(Engine engine, Level current_level) {
 
 // Moves the player object based on player's input
 Engine move_player(Engine engine, Level current_level, str direction, Checker c) {
-
+    println("       5.1.1");
     list[Object] objects = [];
 
     for (Object object <- current_level.objects[current_level.player[0]]) {
@@ -534,15 +542,20 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
 
 // Applies movement, checks which rules apply, executes movement, checks which late rules apply
 Engine execute_move(Engine engine, Checker c, str direction, int allrules) {
-
+    println("   5.1");
     engine = move_player(engine, engine.current_level, direction, c);
+    println("   5.2");
     engine = apply_rules(engine, engine.current_level, direction, false, allrules);
+    println("   5.3");
     engine = apply_moves(engine, engine.current_level);
+    println("   5.4");
     engine = apply_rules(engine, engine.current_level, direction, true, allrules);
+    println("   5.5");
 
     int index = size(engine.applied_data[engine.current_level.original].applied_moves<0>);
     engine.applied_data[engine.current_level.original].applied_moves[index] = [direction];
     engine.applied_data[engine.current_level.original].travelled_coords += [engine.current_level.player[0]];
+    println("   5.6");
 
     return engine;
 }
@@ -641,15 +654,15 @@ bool check_win_condition(Level current_level, str amount, str object) {
 
 // If more objects are found in win condition
 bool check_win_condition(Level current_level, str amount, list[str] objects) {
-
     list[list[Object]] found_objects = [];
     list[Object] current = [];
 
     for (int i <- [0..size(objects)]) {
-
         for (Coords coords <- current_level.objects<0>) {
             for (Object object <- current_level.objects[coords]) {
-                if (toLowerCase(objects[i]) in object.possible_names || toLowerCase(objects[i]) == object.current_name) current += object;
+                if (toLowerCase(objects[i]) in object.possible_names || toLowerCase(objects[i]) == object.current_name) {
+                    current += object;
+                }
             }
         }  
         if (current != []) {
@@ -659,6 +672,11 @@ bool check_win_condition(Level current_level, str amount, list[str] objects) {
     }
 
     list[Object] same_pos = [];
+
+    if (size(found_objects) != 2) {
+        println("ERROR FINDING OBJECTS FOR WIN CONDITION");
+        i = 1/0;
+    }
 
     for (Object object <- found_objects[0]) {
         same_pos += [obj | obj <- found_objects[1], obj.coords == object.coords];
@@ -717,7 +735,7 @@ bool check_dead_end(Engine engine, str amount, str object) {
 
 // Checks if current state satisfies all the win conditions
 bool check_conditions(Engine engine, str condition) {
-
+    println("   6.1");
     PSGame game = engine.game;
     list[ConditionData] lcd = game.conditions;
     list[bool] satisfied = [];
@@ -725,18 +743,17 @@ bool check_conditions(Engine engine, str condition) {
     for (ConditionData cd <- lcd) {
         if (cd is condition_data) {
             if ("on" in cd.condition) {
-
                 str moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
                     cd.condition[1] : cd.condition[3];
 
                 if (condition == "win") {
+                    println("   6.2");
                     satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), [cd.condition[1], cd.condition[3]]);
                 } else if (condition == "dead_end") {
                     satisfied += check_dead_end(engine, toLowerCase(cd.condition[0]), moveable);
                 }
 
             } else {
-
                 if (condition == "win") {
                     satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), cd.condition[1]);
                 }

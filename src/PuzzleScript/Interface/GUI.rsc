@@ -284,8 +284,6 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
             if (size(objects) > 1) several = true;
 
             for (Object my_obj <- objects) {
-                // if (several) println(my_obj);
-
                 str name = my_obj.current_name;
                 ObjectData obj = engine.objects[name];
 
@@ -301,7 +299,6 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
                         else {
                             Pixel pix = obj.sprite[k][l];
                             if (pix.pixel == ".") {
-                                // println("Transparent pixel");
                                 json += "\"c\": \"......\"";
                             }
                             else if (COLORS[pix.color]?) {
@@ -312,7 +309,6 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
                                 json += "\"c\": \"<pix.color>\"";
                             }
                             else {
-                                // println("We should never get here");
                                 json += "\"c\": \"#FFFFFF\"";
                             }
                         }
@@ -364,7 +360,6 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
     Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
 
     if (!(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index))) {
-        println("Lesson <level_index> not found!");
         return model;
     }
     
@@ -379,7 +374,6 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
 
     tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
     tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["PathGenerator.py", new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
-    println(tmp);
     model.index += 1;
     model.image = "PuzzleScript/Interface/bin/path<model.index>.png";
 
@@ -477,7 +471,6 @@ Model update(Msg msg, Model model){
 
                     // all_losing_models += [losing_models];
 
-                    println("Saving results");
                     println(typeOf(win_models));
 
                     save_results(win_models, "win");
@@ -517,11 +510,14 @@ Model update(Msg msg, Model model){
             println("5");
             model.index += 1;
             model.engine = execute_move(model.engine, model.checker, model.input, 0);
+            println("6");
             if (check_conditions(model.engine, "win")) {
                 model.engine.index += 1;
                 model.engine.current_level = model.engine.converted_levels[model.engine.index];
             }
+            println("7");
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
+            println("8");
             data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
             writeFile(data_loc, json_data[0]);
             tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
@@ -529,7 +525,7 @@ Model update(Msg msg, Model model){
             model.image = "PuzzleScript/Interface/bin/output_image<model.index>.png";
         }
     }
-    println("6");
+    println("9");
     return model;
 }
 
@@ -694,7 +690,8 @@ void view(Model m) {
  *  @Ret:   Call to run the application
  */
 
- App[Model] main() {
+
+App[Model] main() {
     game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
     game = load(game_loc);
 

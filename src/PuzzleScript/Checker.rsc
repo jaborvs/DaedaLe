@@ -155,7 +155,36 @@ str get_representation_char(str name, map[str, list[str]] references) {
 }
 
 /*
- * @Name:   get_all_references
+ * @Name:   get_resolved_references
+ * @Desc:   Function to get the references of a key of the legend in a 
+ *          map of references.
+ *          Generally used with the keys of the game legend. For this purpose,
+ *          remember that keys in the legend can be a representation char
+ *          or an alias (such as Player, Obstacle...)
+ * @Param:
+ *      key         Legend key element
+ *      references  Map of references on which to search
+ * @Ret:    List of non duped references of the key
+ */
+list[str] get_resolved_references(str key, map[str, list[str]] references) {
+    if (!(key in references<0>)) return [];
+    return _get_resolved_references_rec(key, references);
+}
+
+list[str] _get_resolved_references_rec (str key, map[str, list[str]] references) {
+    if (!(key in references<0>)) return [key];
+
+    list[str] resolved_references = [];
+
+    for (str rf <- references[key]) {
+        resolved_references += _get_resolved_references_rec(rf, references);
+    }
+
+    return toList(toSet(resolved_references));
+}
+
+/*
+ * @Name:   get_unresolved_references_and_properties
  * @Desc:   Function to get the all references (resolved and unresolved) of a given 
  *          references element
  * @Param:
@@ -163,74 +192,59 @@ str get_representation_char(str name, map[str, list[str]] references) {
  *      references  Map of all game object references
  * @Ret:    References of the object
  */
-list[str] my_get_all_references(str key, map[str, list[str]] references) {
+list[str] get_unresolved_references_and_properties(str key, map[str, list[str]] references) {
     if (!(key in references<0>)) return [];
 
     list[str] all_references = [];
-    list[str] initial_references = references[key];
+    list[str] unresolved_references = references[key];
 
-    all_references += initial_references;
+    all_references += unresolved_references;
 
-    for (str rf <- initial_references) {
+    for (str rf <- unresolved_references) {
         all_references += get_properties(rf, references);
     }
 
-    return all_references;
-}
-set[str] get_all_references(str key, map[str, list[str]] references) {
-    if (!(key in references<0>)) return {};
-
-    set[str] all_references = {};
-    set[str] initial_references = toSet(references[key]);
-
-    all_references += initial_references;
-
-    for (str rf <- initial_references) {
-        all_references += toSet(get_properties(rf, references));
-    }
-
-    return all_references;
+    return toList(toSet(all_references));
 }
 
 /*
  * @Name:   get_properties
- * @Desc:   Function to get the all properties (resolved references) of a given 
- *          reference
+ * @Desc:   Function to get the all properties of a given key.
+ *          A property is the string used as key in the set of references
  * @Param:
- *      reference   Object reference from the legend 
- *      references  Map of all game object references
+ *      key         Element from the references dictionary
+ *      references  Map of all references
  * @Ret:    Properties of the reference
  */
-list[str] get_properties(str reference, map[str, list[str]] references) {
+list[str] get_properties(str key, map[str, list[str]] references) {
     list[str] all_references = [];
-    all_references += reference;
 
-    for (str key <- references) {
-        if (size(key) == 1) continue;
+    for (str rf <- references) {
+        if (size(rf) == 1) continue;
 
-        if (reference in references[key]) {
-            all_references += key;
-            all_references += get_properties(key, references);
+        if (key in references[rf]) {
+            all_references += rf;
+            all_references += get_properties(rf, references);
         }
     }
 
-    return all_references;
+    return toList(toSet(all_references));
 }
 
-list[str] my_get_properties(str reference, map[str, list[str]] references) {
+list[str] my_get_properties(str key, map[str, list[str]] references) {
     list[str] all_references = [];
-    all_references += reference;
-    
-    for (str key <- references) {
-        if (size(key) == 1) continue;
+    all_references += key;
 
-        if (reference in references[key]) {
-            all_references += key;
-            all_references += get_properties(key, references);
+    for (str rf <- references) {
+        if (size(rf) == 1) continue;
+
+        if (key in references[rf]) {
+            all_references += rf;
+            all_references += get_properties(rf, references);
         }
     }
 
-    return dup(all_references);
+    return toList(toSet(all_references));
 }
 
 /*****************************************************************************/
@@ -1356,15 +1370,12 @@ Checker check_game(PSGame g, bool debug=false) {
     iprintln(c.combinations);
     println("--- Properties ------------------------------------------");
     iprintln(c.all_properties);
-    println("---------------------------------------------------------");
-    println("--- get_representation_char -----------------------------");
-    println(get_representation_char("background", c.references));
-    println("--- get_all_references ----------------------------------");
-    println(my_get_all_references("player", c.references));
-    println("--- get_properties --------------------------------------");
-    println(my_get_properties("player", c.references));
-    println(my_get_properties("playerhead1", c.references));
-
+    println();
+    println();
+    println("--- References and properties ----------------------------------");
+    println(get_resolved_references("test", c.references));
+    println(get_unresolved_references_and_properties("test", c.references));
+    println(get_properties("test", c.references));
 
     c.all_properties = all_objects[0];
     c.all_char_refs = all_objects[1];

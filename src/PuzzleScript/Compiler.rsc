@@ -488,15 +488,15 @@ Level convert_level(LevelData level, Checker c) {
     int id = 0;
 
     // Quick fix for transparency (???)
-    str background_char = "";
-    for (str bg_char <- c.references<0>){
-        if ("background" in c.references[bg_char]) {
-            background_char = bg_char;
-        }
-    }
-    list[str] background_references = get_all_references(background_char, c.references);
-    LayerData background_ld = get_layer(background_references, c.game);
-    str background_name = c.references[background_char][0];
+    // str background_char = "";
+    // for (str bg_char <- c.references<0>){
+    //     if ("background" in c.references[bg_char]) {
+    //         background_char = bg_char;
+    //     }
+    // }
+    // list[str] background_references = get_resolved_references(background_char, c.references);
+    // LayerData background_ld = get_layer(background_references, c.game);
+    // str background_name = c.references[background_char][0];
 
 
     for (int i <- [0..size(level.level)]) {
@@ -508,23 +508,31 @@ Level convert_level(LevelData level, Checker c) {
             if (char in player_name<0>) player = <<i,j>, player_name[char]>;
 
             if (char in c.references<0>) {
-                list[str] all_references = get_all_references(char, c.references);
+                list[str] all_references = get_unresolved_references_and_properties(char, c.references);
                 LayerData ld = get_layer(all_references, c.game);
                 str name = c.references[char][0];
 
                 // Quick fix for transparency (???)
-                list[Object] background = [game_object(background_char, background_name, background_references,<i,j>, "", background_ld, id)];
+                // list[Object] background = [game_object(background_char, background_name, background_references,<i,j>, "", background_ld, id)];
+                // id += 1;
+
+                // list[Object] new_object = [];
+                // if (char != background_char) {
+                //     new_object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
+                //     id += 1;
+                // }
+
+                // list[Object] object = background + new_object;
+                // if (<i,j> in objects) objects[<i,j>] += object;
+                // else objects[<i,j>] = object;
+
+                list[Object] object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
+
+                if (<i,j> in objects) objects[<i,j>] += object;
+                else objects += (<i,j>: object);
+
                 id += 1;
 
-                list[Object] new_object = [];
-                if (char != background_char) {
-                    new_object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
-                    id += 1;
-                }
-
-                list[Object] object = background + new_object;
-                if (<i,j> in objects) objects[<i,j>] += object;
-                else objects[<i,j>] = object;
             } else if (char in c.combinations<0>) {
                 for (str objectName <- c.combinations[char]) {
 
@@ -538,8 +546,8 @@ Level convert_level(LevelData level, Checker c) {
                 }
                 
             } else {
-                list[str] all_references = get_all_references(char, c.references);
-                all_references += [ref | str ref <- get_all_references(char, c.combinations), !(ref in all_references)];
+                list[str] all_references = get_unresolved_references_and_properties(char, c.references);
+                all_references += [ref | str ref <- get_unresolved_references_and_properties(char, c.combinations), !(ref in all_references)];
                 LayerData ld = get_layer(all_references, c.game);
                 str name = "";
 
@@ -1273,10 +1281,10 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
             
             if (isDirection(dir)) {
                 if (!(name in found_objects)) found_objects += [name];
-                list[str] all_references = get_all_references(name, c.references);
-                found_objects += [name | str name <- get_all_references(name, c.references), 
+                list[str] all_references = get_resolved_references(name, c.references);
+                found_objects += [name | str name <- get_resolved_references(name, c.references), 
                     any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
-                found_objects += [name | str name <- get_all_references(name, c.combinations), 
+                found_objects += [name | str name <- get_resolved_references(name, c.combinations), 
                     any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
             }
         }
