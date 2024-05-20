@@ -536,7 +536,7 @@ Level convert_level(LevelData level, Checker c) {
             } else if (char in c.combinations<0>) {
                 for (str objectName <- c.combinations[char]) {
 
-                    list[str] all_references = get_properties(objectName, c.all_properties);
+                    list[str] all_references = get_properties(objectName, c.resolved_references);
                     LayerData ld = get_layer(all_references, c.game);
 
                     list[Object] object = [game_object(char, objectName, all_references, <i,j>, "", ld, id)];
@@ -1136,8 +1136,8 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
             RuleContent rc_l = rule.left[i].contents[j];
             RuleContent rc_r = rule.right[i].contents[j];
 
-            list[str] properties_left = [rc_l.content[k] | int k <- [0..size(rc_l.content)], rc_l.content[k] in c.all_properties<0>];
-            list[str] properties_right = [rc_r.content[k] | int k <- [0..size(rc_r.content)], rc_r.content[k] in c.all_properties<0>];
+            list[str] properties_left = [rc_l.content[k] | int k <- [0..size(rc_l.content)], rc_l.content[k] in c.resolved_references<0>];
+            list[str] properties_right = [rc_r.content[k] | int k <- [0..size(rc_r.content)], rc_r.content[k] in c.resolved_references<0>];
 
             for (str property <- properties_right) {
                 if (!(property in properties_left)) ambiguous += (property: true);
@@ -1169,7 +1169,7 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
 
                     RuleContent rc = cur_rule.left[j].contents[k];
 
-                    list[str] properties = [rc.content[l] | int l <- [0..size(rc.content)], rc.content[l] in c.all_properties<0>];
+                    list[str] properties = [rc.content[l] | int l <- [0..size(rc.content)], rc.content[l] in c.resolved_references<0>];
 
                     for (str property <- properties) {
 
@@ -1177,7 +1177,7 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
                             continue;
                         }
 
-                        list[str] aliases = c.all_properties[property];
+                        list[str] aliases = c.resolved_references[property];
 
                         shouldRemove = true;
                         modified = true;
@@ -1254,9 +1254,9 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
         str dir = rc.content[i];
         str name = rc.content[i + 1];
 
-        if (dir == "no" && name in c.all_properties<0>) {
+        if (dir == "no" && name in c.resolved_references<0>) {
 
-            for (str name <- c.all_properties[name]) {
+            for (str name <- c.resolved_references[name]) {
                 new_rc += [dir] + [name];
             }
 
@@ -1523,7 +1523,7 @@ Engine compile(Checker c) {
 	Engine engine = new_engine(c.game);
 	engine.conditions = c.conditions;
     engine.levels = c.game.levels;  
-    engine.properties = c.all_properties;
+    engine.properties = c.resolved_references;
     engine.references = c.references;
 
     for (LevelData ld <- engine.levels) {

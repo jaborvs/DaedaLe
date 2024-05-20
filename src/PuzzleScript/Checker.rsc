@@ -35,26 +35,23 @@ import PuzzleScript::Utils;
  *          PuzzleScript game to be checked (???). They are ordered in terms 
  *          of how they appear on a PuzzleScript file
  */
-alias Checker = tuple[                
-    map[str, str] prelude,               // Prelude section: Game's and author's name (???)                         
-    bool debug_flag,                     // Debug flag
-    list[str] objects,                   // List of all game objects
-    list[str] used_objects,              // List of all used game objects
-    list[str] all_moveable_objects,      // List of all moveable game objects
-    map[str, list[str]] references,      // Map of references: name and its list of references (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
-    list[str] used_references,           // List of used references
-    list[str] all_char_refs,             // (???)
-    map[str, list[str]] combinations,    // Map of combinations: name and its list of combinations (e.g., @ = Crate and Target)
-    list[str] layer_list,                // List of game layers
-    map[                                 // Map of game sounds:
-        str,                             //      Name
-        tuple[list[int] seeds, loc pos]  //      Tuple: list of seeds and their location on file (???)
+alias Checker = tuple[  
+    map[str, str] prelude,                      // Prelude section                       
+    list[str] objects,                          // List of all game objects
+    list[str] used_objects,                     // List of all used game objects
+    list[str] all_moveable_objects,             // List of all moveable game objects
+    map[str, list[str]] references,             // Map of references: name and its list of references (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
+    list[str] used_references,                  // List of used references
+    map[str, list[str]] combinations,           // Map of combinations: name and its list of combinations (e.g., @ = Crate and Target)
+    map[                                        // Map of game sounds:
+        str,                                    //      Name
+        tuple[list[int] seeds, loc pos]         //      Tuple: list of seeds and their location on file (???)
         ] sound_events,                                         
-    list[str] used_sounds,               // List of used game sounds
-    list[Condition] conditions,          // List of game win conditions
-    list[Msg] msgs,                      // List of game messages
-    map[str, list[str]] all_properties,  // Map of all properties: name and list of all properties
-    PSGame game                          // AST node of a PuzzleScript game
+    list[str] used_sounds,                      // List of used game sounds
+    list[Condition] conditions,                 // List of game win conditions
+    list[Msg] msgs,                             // List of game messages
+    map[str, list[str]] resolved_references,    // Map of all resolved references:
+    PSGame game                                 // AST node of a PuzzleScript game
 ];
 
 /*
@@ -261,9 +258,22 @@ list[str] get_properties(str key, map[str, list[str]] references) {
  *      debug_flag  Boolean indicating whether or not we are in the debug mode
  *      game        AST node of a PuzzleScript game
  */
-Checker new_checker(bool debug_flag, PSGame game){        
-    return <(), debug_flag, [], [], [], (), [], [], (), [], (), [], [], [], (), game>;
-}
+Checker new_checker(PSGame game) 
+    = <
+        (), 
+        [], 
+        [], 
+        [], 
+        (), 
+        [], 
+        (), 
+        (), 
+        [], 
+        [], 
+        [], 
+        (), 
+        game
+    >;
 
 /*
  * @Name:   check_prelude
@@ -1039,9 +1049,9 @@ bool check_valid_real(str v) {
  *      debug   Boolean indicating if we are in debug mode
  * @Ret:    Updated checker
  */
-Checker check_game(PSGame g, bool debug=false) {
+Checker check_game(PSGame g) {
 
-    Checker c = new_checker(debug, g);
+    Checker c = new_checker(g);
 
     map[Section, int] dupes = distribution(g.sections);
     for (Section s <- dupes) {
@@ -1085,7 +1095,6 @@ Checker check_game(PSGame g, bool debug=false) {
     }
     
     for (ObjectData x <- g.objects){
-        if (!(toLowerCase(x.name) in c.layer_list)) c.msgs += [unlayered_objects(x.name, error(), x.src)];
         if (!(toLowerCase(x.name) in c.used_objects)) c.msgs += [unused_object(x.name, warn(), x.src)];
     }
     
@@ -1093,14 +1102,15 @@ Checker check_game(PSGame g, bool debug=false) {
         if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x.src)];
     }
 
-    c.all_properties = ();
+    c.resolved_references = ();
     for(str key <- c.references<0>) {
         if (size(c.references[key]) == 1) continue;
-        c.all_properties += (key: get_resolved_references(key, c.references));
+        c.resolved_references += (key: get_resolved_references(key, c.references));
     }
     
     if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g.src)];
     
+    iprintln(c);
     return c;
 }
 
