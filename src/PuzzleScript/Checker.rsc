@@ -1,9 +1,8 @@
 /*
- * @Module: AST
- * @Desc:   Module to parse the AST of a PuzzleScript game. It contains all the 
- *          AST node data structure definitions and some toString methods for 
- *          them
- * @Auth:   Dennis Vet    -> code
+ * @Module: Checker
+ * @Desc:   Module to check all the parsed AST nodes. It prints warnings or 
+ *          errors accordingly
+ * @Auth:   Clement Julia -> code
  *          Borja Velasco -> comments
  */
 module PuzzleScript::Checker
@@ -1088,8 +1087,8 @@ bool check_valid_real(str v) {
  * @Desc:   Function to get the data of the prelude section lines
  * @Params:
  *      values          AST nodes of the game's Prelude section
- *      key             One of the prelude section's keys (title, author, homepage)
- *      default_str     (???)
+ *      key             One of the prelude section's keys (title, author, homepage...)
+ *      default_str     Default string to be returned (???)
  * @Ret:    String with the name of the game, author or the webpage 
  *          (depending on key)
  */
@@ -1101,26 +1100,6 @@ str get_prelude(list[PreludeData] values, str key, str default_str){
 }
 
 /*
- * @Name:   get_map_input
- * @Desc:   It performs the transitive closure for the references
- * @Param:  
- *      c       Checker
- *      name    String containing the name of the reference
- * @Ret:    List containing the resolved references
- */
-list[str] get_map_input(Checker c, str name) {
-    list[str] propertylist = [];
-
-    if (c.references[name]?) {
-        for(str name <- c.references[name]) propertylist += get_map_input(c, name);
-    } else {
-        propertylist += [name];
-    }
-
-    return propertylist;
-}
-
-/*
  * @Name:   get_char
  * @Desc:   Function to get the representation char of a given object
  * @Param:
@@ -1129,6 +1108,10 @@ list[str] get_map_input(Checker c, str name) {
  * @Ret:    Representation char of the object
  */
 str get_char(str name, map[str, list[str]] references) {
+    println("get_char name:")
+    println(name);
+    println();
+
     for (str char <- references<0>) {
         if (size(char) == 1 && name in references[char]) {  
             return toLowerCase(char);
@@ -1347,7 +1330,7 @@ tuple[map[str, list[str]], list[str]] resolve_properties(Checker c) {
         list[str] references = [];
 
         if (size(c.references[name]) > 1) {
-            for (str reference <- c.references[name]) references += get_map_input(c, reference);    // Performs the transitive closure
+            for (str reference <- c.references[name]) references += resolve_properties_rec(c, reference);    // Performs the transitive closure
             properties_dict += (name: references);
         } 
         else if (size(name) == 1) {
@@ -1360,6 +1343,26 @@ tuple[map[str, list[str]], list[str]] resolve_properties(Checker c) {
     }
 
     return <properties_dict, char_refs>;
+}
+
+/*
+ * @Name:   resolve_properties_rec
+ * @Desc:   It performs the transitive closure for the references
+ * @Param:  
+ *      c       Checker
+ *      name    String containing the name of the reference
+ * @Ret:    List containing the resolved references
+ */
+list[str] resolve_properties_rec(Checker c, str name) {
+    list[str] propertylist = [];
+
+    if (c.references[name]?) {
+        for(str name <- c.references[name]) propertylist += resolve_properties_rec(c, name);
+    } else {
+        propertylist += [name];
+    }
+
+    return propertylist;
 }
 
 /*****************************************************************************/
