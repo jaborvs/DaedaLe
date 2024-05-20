@@ -521,12 +521,10 @@ Model update(Msg msg, Model model){
                 model.engine.index += 1;
                 model.engine.current_level = model.engine.converted_levels[model.engine.index];
             }
-
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
             data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
             writeFile(data_loc, json_data[0]);
             tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
-            println(tmp);
             execute = false;
             model.image = "PuzzleScript/Interface/bin/output_image<model.index>.png";
         }
@@ -695,7 +693,8 @@ void view(Model m) {
  *  @Desc:  Runs the application
  *  @Ret:   Call to run the application
  */
-App[Model] main() {
+
+ App[Model] main() {
     game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
     game = load(game_loc);
 

@@ -276,13 +276,6 @@ Level convert_level(LevelData level, Checker c) {
 
             if (char in player_name<0>) player = <<i,j>, player_name[char]>;
 
-            // println("Char:");
-            // println(char);
-            // println("References:");
-            // println(c.references<0>);
-            // println("Combinations:");
-            // println(c.combinations<0>);
-            // println();
             if (char in c.references<0>) {
                 list[str] all_references = get_all_references(char, c.references);
                 LayerData ld = get_layer(all_references, c.game);

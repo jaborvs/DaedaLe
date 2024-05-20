@@ -1,3 +1,10 @@
+/*
+ * @Module: DynamicAnalyser
+ * @Desc:   Module to dynamically analyse PuzzleScript
+ * @Auth:   Dennis Vet    -> code
+ *          Borja Velasco -> comments
+ */
+
 module PuzzleScript::DynamicAnalyser
 
 import PuzzleScript::Report;
@@ -6,6 +13,7 @@ import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
+
 import IO;
 import util::Eval;
 import Type;

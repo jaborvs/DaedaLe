@@ -1,6 +1,7 @@
-/*
+/* 
+ * (DEPRECATED: No documentation added)
  * @Module: Analyser    
- * @Desc:   (DEPRECATED: No docs)
+ * @Desc:   Module to perform dynamic analysis 
  * @Auth:   Clement Julia -> code
  */
 
