@@ -116,9 +116,8 @@ public map[str, str] COLORS = (
 
 str default_mask = "@None@";
         
-
 /*****************************************************************************/
-// --- Public functions -------------------------------------------------------
+// --- Public Checker functions -----------------------------------------------
 
 /*
  * @Name:   new_checker
@@ -133,260 +132,77 @@ Checker new_checker(bool debug_flag, PSGame game){
 }
 
 /*
- * @Name:   get_prelude
- * @Desc:   Function to get the data of the prelude section lines
- * @Params:
- *      values          AST nodes of the game's Prelude section
- *      key             One of the prelude section's keys (title, author, homepage)
- *      default_str     (???)
- * @Ret:    String with the name of the game, author or the webpage 
- *          (depending on key)
- */
-str get_prelude(list[PreludeData] values, str key, str default_str){
-    v = [x | x <- values, toLowerCase(x.key) == toLowerCase(key)];
-
-    if (!isEmpty(v)) return v[0].string;
-    return default_str;
-}
-
-/*
- * @Name:   check_valid_name
- * @Desc:   Function to check if a name is valid using a regular expression
- *          and verifiying is not one of the used coding keywords
- * @Param:  
- *      name    String to be checked
- * @Ret:    Boolean determining if valid
- */
-bool check_valid_name(str name){
-    return /^<x:[a-z0-9_]+>$/i := name && !(toLowerCase(name) in keywords);
-}
-
-/*
- * @Name:   check_valid_name
- * @Desc:   Function to check if a legend is valid using a regular expression and
- *          checking if it is not one of the coding keywords
+ * @Name:   check_game
+ * @Desc:   Function to check a PuzzleScript game. It calls all the others
+ *          checker functions in order
  * @Param:
- *      name String containing the name of the legend element
- * @Ret:    Boolean determining if valid
+ *      g       AST node of a PuzzleScript game
+ *      debug   Boolean indicating if we are in debug mode
+ * @Ret:    Updated checker
  */
-bool check_valid_legend(str name){
-    if (size(name) > 1){
-        return check_valid_name(name);
-    } else {
-        return /^<x:[a-uw-z0-9.!@#$%&*,\-+]+>$/i := name && !(toLowerCase(name) in keywords);
-    }
-}
+Checker check_game(PSGame g, bool debug=false) {
 
-/*
- * @Name:   check_existing_legend
- * @Desc:   Function to check if a legend exists
- * @Param:  
- *      name    String containing the name of the legend element
- *      values  All values that it is associated with (using or/and)
- *      pos     Location in the PuzzleScript file
- *      c       Checker
- * @Ret:    List of messages
- */
-list[Msg] check_existing_legend(str name, list[str] values, loc pos, Checker c){
-    list[Msg] msgs = [];
+    Checker c = new_checker(debug, g);
 
-    if (toLowerCase(name) in c.references) msgs += [existing_legend(name, c.references[toLowerCase(name)], values, error(), pos)];
-    if (toLowerCase(name) in c.combinations) msgs += [existing_legend(name, c.combinations[toLowerCase(name)], values, error(), pos)];
-    
-    return msgs;
-}
-
-/*
- * @Name:   check_undefined_object
- * @Desc:   Function to check undefined objects
- * @Param:  
- *      name    String containing the name of the object
- *      pos     Location in the PuzzleScript file
- *      c       Checker
- * @Ret:    List of messages
- */
-list[Msg] check_undefined_object(str name, loc pos, Checker c){
-    list[Msg] msgs = [];
-    
-    if (!(toLowerCase(name) in c.objects)){
-        if (isEmpty(check_existing_legend(name, [], pos, c))) msgs += [undefined_object(name, error(), pos)];
-    }
-
-    return msgs;
-}
-
-/*
- * @Name:   resolve_reference
- * @Desc:   Function to resolve the references of an object or a legend character
- * @Param:  
- *      raw_name    Name of the element to be reference resolved
- *      c           Checker
- *      pos         Location in the PuzzleScript file
- *      allowed     Determines where the reference is allowed. Why objects (???)
- * @Ret:    A reference object containing the references object
- */
-Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]){
-    Reference r;
-    
-    list[str] objs = [];
-    list[str] references = [];    
-    str name = toLowerCase(raw_name);
-    
-    // Case 1: There is already a reference to the name
-    if (name in c.references && c.references[name] == [name]) return <[name], c, references>;
-    
-    references += [toLowerCase(name)];
-
-    // Case 2:  The name is inside the legend combinations
-    if (name in c.combinations) {
-        if ("combinations" in allowed) {
-            for (str n <- c.combinations[name]) {
-                r = resolve_reference(n, c, pos);
-                objs += r.objs;
-                c = r.c;
-                references += r.references;
-            }
-        } else {
-            c.msgs += [invalid_object_type("combinations", name, error(), pos)];
-        }
-    // Case 3: The name is inside the legend references 
-    } else if (name in c.references) {
-        if ("properties" in allowed) {
-            for (str n <- c.references[name]) {
-                r = resolve_reference(n, c, pos);
-                objs += r.objs;
-                references += r.references;
-                c = r.c;
-            }
-        } else {
-            c.msgs += [invalid_object_type("properties", name, error(), pos)];
-        }
-    // Case 4: Object not defined, we include an error
-    } else {
-        c.msgs += [undefined_object(raw_name, error(), pos)];
+    map[Section, int] dupes = distribution(g.sections);
+    for (Section s <- dupes) {
+        if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], warn(), s.src)];
     }
     
-    return <dup(objs), c, references>;
-}
-
-/*
- * @Name:   resolve_properties
- * @Desc:   Function to resolve the properties of a game. Properties are resolved
- *          references. We perform the transitive closure of the references
- *          (e.g., "player":["playerhead1","playerhead2","playerhead3","playerhead4"
- *                 "playerbody":["playerbodyh","playerbodyv"])
- * @Param:  
- *      c   Checker
- * @Ret:    Tuple that contains
- *              map[
- *                  str,        Name of the property
- *                  list[str]   Names of the objects associated to the property
- *              ]
- *              list[str]       Those objects that either are a 1 to 1 reference or
- *                              that are part of a combination (there are duplicates)
- *
- * @Example:
- *      For the legend of Lime Rick:
- *          Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4
- *          Obstacle = PlayerBodyH or PlayerBodyV or Wall or Crate or Player
- *          PlayerBody = PlayerBodyH or PlayerBodyV
- *          . = Background
- *          P = PlayerHead1
- *          # = Wall
- *          E = Exit
- *          A = Apple
- *          C = Crate
- *      We would return:
- *          map = (
- *              "player":["playerhead1","playerhead2","playerhead3","playerhead4"],
- *              "playerbody":["playerbodyh","playerbodyv"],
- *              "obstacle":["playerbodyh","playerbodyv","wall","crate","playerhead1","playerhead2","playerhead3","playerhead4"]       
- *          )
- *          list = ["exit","background","playerhead1","apple","wall","crate"]
- */
-tuple[map[str, list[str]], list[str]] resolve_properties(Checker c) {
-    map[str, list[str]] properties_dict = ();
-    list[str] char_refs = [];
-
-    for (str name <- c.references<0>) {
-        list[str] references = [];
-
-        if (size(c.references[name]) > 1) {
-            for (str reference <- c.references[name]) references += get_map_input(c, reference);    // Performs the transitive closure
-            properties_dict += (name: references);
-        } 
-        else if (size(name) == 1) {
-            char_refs += c.references[name];
-        }
-    }
-
-    for (str name <- c.combinations<0>) {
-        if (size(name) == 1) char_refs += [ref | ref <- c.combinations[name]];
-    }
-
-    return <properties_dict, char_refs>;
-}
-
-/*
- * @Name:   get_map_input
- * @Desc:   It performs the transitive closure for the references
- * @Param:  
- *      c       Checker
- *      name    String containing the name of the reference
- * @Ret:    List containing the resolved references
- */
-list[str] get_map_input(Checker c, str name) {
-    list[str] propertylist = [];
-
-    if (c.references[name]?) {
-        for(str name <- c.references[name]) propertylist += get_map_input(c, name);
-    } else {
-        propertylist += [name];
-    }
-
-    return propertylist;
-}
-
-/*
- * @Name:   resolve_references
- * @Desc:   Functions that resolves the references of a list of legend elements
- * @Param:
- *      names       List of legend elements to be reference resolved
- *      c           Checker
- *      pos         Location in file
- *      allowed     Determines where the reference is allowed. Why objects (???)    
- * @Ret:    Reference object with the resolved references
- */
-Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]) {
-    list[str] objs = [];
-    list[str] references = [];
-    Reference r;
-
-    for (str name <- names) {
-        r = resolve_reference(name, c, pos, allowed=allowed);
-        objs += r.objs;
-        c = r.c;
-        references += r.references;
+    for (PreludeData pr <- g.prelude){
+        c = check_prelude(pr, c);
     }
     
-    return <dup(objs), c, references>;
+    for (ObjectData obj <- g.objects){
+        c = check_object(obj, c);
+    }
+    
+    for (LegendData l <- g.legend){
+        c = check_legend(l, c);
+    }
+
+    for (SoundData s <- g.sounds) {
+        c = check_sound(s, c);
+    }
+
+    for (LayerData l <- g.layers) {
+        c = check_layer(l, c);
+    }
+
+    for (RuleData r <- g.rules) {
+        c = check_rule(r, c);
+    }
+    
+    for (str event <- c.sound_events) {
+        if (startsWith(event, "sfx") && event notin c.used_sounds) c.msgs += [unused_sound_event(warn(), c.sound_events[event].pos)];
+    }
+    
+    for (ConditionData w <- g.conditions) {
+        c = check_condition(w, c);
+    }
+    
+    for (LevelData l <- g.levels) {
+        c = check_level(l, c);
+    }
+    
+    for (ObjectData x <- g.objects){
+        if (!(toLowerCase(x.name) in c.layer_list)) c.msgs += [unlayered_objects(x.name, error(), x.src)];
+        if (!(toLowerCase(x.name) in c.used_objects)) c.msgs += [unused_object(x.name, warn(), x.src)];
+    }
+    
+    for (LegendData x <- g.legend){
+        if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x.src)];
+    }
+
+    tuple[map[str, list[str]], list[str]] all_objects = resolve_properties(c);
+
+    c.all_properties = all_objects[0];
+    c.all_char_refs = all_objects[1];
+    
+    if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g.src)];
+    
+    return c;
 }
-
-/*
- * @Name:   check_valid_real
- * @Desc:   Function that checks if a string contains a positive real number
- * @Param:
- *      v   String to be checked
- * @Ret:    Boolean determining if valid
- */
-bool check_valid_real(str v) {
-    try
-        real i = toReal(v);
-    catch IllegalArgument: return false;
-    return i > 0;
-}
-
-
 
 /*
  * @Name:   check_prelude
@@ -535,6 +351,25 @@ Checker check_object(ObjectData obj, Checker c) {
 }
 
 /*
+ * @Name:   check_undefined_object
+ * @Desc:   Function to check undefined objects
+ * @Param:  
+ *      name    String containing the name of the object
+ *      pos     Location in the PuzzleScript file
+ *      c       Checker
+ * @Ret:    List of messages
+ */
+list[Msg] check_undefined_object(str name, loc pos, Checker c){
+    list[Msg] msgs = [];
+    
+    if (!(toLowerCase(name) in c.objects)){
+        if (isEmpty(check_existing_legend(name, [], pos, c))) msgs += [undefined_object(name, error(), pos)];
+    }
+
+    return msgs;
+}
+
+/*
  * @Name:   check_legend
  * @Desc:   Function to check the legend
  * @Param:
@@ -624,6 +459,41 @@ Checker check_legend(LegendData l, Checker c) {
     // }
 
     return c;
+}
+
+/*
+ * @Name:   check_valid_legend
+ * @Desc:   Function to check if a legend element is valid using a regular expression and
+ *          checking if it is not one of the coding keywords
+ * @Param:
+ *      name String containing the name of the legend element
+ * @Ret:    Boolean determining if valid
+ */
+bool check_valid_legend(str name){
+    if (size(name) > 1){
+        return check_valid_name(name);
+    } else {
+        return /^<x:[a-uw-z0-9.!@#$%&*,\-+]+>$/i := name && !(toLowerCase(name) in keywords);
+    }
+}
+
+/*
+ * @Name:   check_existing_legend
+ * @Desc:   Function to check if a legend exists
+ * @Param:  
+ *      name    String containing the name of the legend element
+ *      values  All values that it is associated with (using or/and)
+ *      pos     Location in the PuzzleScript file
+ *      c       Checker
+ * @Ret:    List of messages
+ */
+list[Msg] check_existing_legend(str name, list[str] values, loc pos, Checker c){
+    list[Msg] msgs = [];
+
+    if (toLowerCase(name) in c.references) msgs += [existing_legend(name, c.references[toLowerCase(name)], values, error(), pos)];
+    if (toLowerCase(name) in c.combinations) msgs += [existing_legend(name, c.combinations[toLowerCase(name)], values, error(), pos)];
+    
+    return msgs;
 }
 
 /*
@@ -759,6 +629,106 @@ Checker check_layer(LayerData l, Checker c){
     }
     
     c.layer_list += r.objs;
+    
+    return c;
+}
+
+/*
+ * @Name:   check_rule
+ * @Desc:   Function to check a rule
+ * @Param:
+ *      r       AST node of a rule (loop)
+ *      c       Checker
+ * @Ret:   Checker with updated errors and warnings
+ *      Errors
+ *          invalid_rule_prefix
+ *          invalid_rule_command
+ *          undefined_sound
+ *          undefined_object
+ *          invalid_sound
+ *          invalid_ellipsis_placement
+ *          invalid_ellipsis
+ *          invalid_rule_part_size
+ *          invalid_rule_content_size
+ *          invalid_rule_ellipsis_size
+ */
+Checker check_rule(RuleData r: rule_loop(_,_), Checker c){
+    for(RuleData childRule <- r.rules){
+        check_rule(childRule, c);
+    }
+    return c;
+}
+
+/*
+ * @Name:   check_rule
+ * @Desc:   Function to check a rule
+ * @Param:
+ *      r       AST node of a rule (normal)
+ *      c       Checker
+ * @Ret:   Checker with updated errors and warnings
+ *      Errors
+ *          invalid_rule_prefix
+ *          invalid_rule_command
+ *          undefined_sound
+ *          undefined_object
+ *          invalid_sound
+ *          invalid_ellipsis_placement
+ *          invalid_ellipsis
+ *          invalid_rule_part_size
+ *          invalid_rule_content_size
+ *          invalid_rule_ellipsis_size
+ */
+Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
+
+    bool late = any(RulePart p <- r.left, p is prefix && toLowerCase(p.prefix) == "late");
+    
+    bool redundant = any(RulePart p <- r.right, p is prefix && toLowerCase(p.prefix) in ["win", "restart"]);
+    if (redundant && size(r.right) > 1) c.msgs += [redundant_keyword(warn(), r.src)];
+
+    int msgs = size([x | x <- c.msgs, x.t is error]);
+    if ([*_, part(_), prefix(_), *_] := r.left) c.msgs += [invalid_rule_direction(warn(), r.src)];
+    
+    for (RulePart p <- r.left){
+        c = check_rulepart(p, c, late, true);
+    }
+    
+    for (RulePart p <- r.right){
+        c = check_rulepart(p, c, late, false);
+    }
+    
+    // if some of the rule is invalid it gets complicated to do more checks, so we return it 
+    // for now until they fixed the rest
+    if (size([x | x <- c.msgs, x.t is error]) > msgs) return c;
+    
+    list[RulePart] part_right = [x | RulePart x <- r.right, x is part];
+    if (isEmpty(part_right)) return c;
+    
+    list[RulePart] part_left = [x | RulePart x <- r.left, x is part];
+    if (isEmpty(part_left)) return c;
+    
+    //check if there are equal amounts of parts on both sides
+    if (size(part_left) != size(part_right)) {
+        c.msgs += [invalid_rule_part_size(error(), r.src)];
+        return c;
+    }
+    
+    //check if each part, and its equivalent have the same number of sections
+    for (int i <- [0..size(part_left)]){
+        if (size(part_left[i].contents) != size(part_right[i].contents)) {
+            c.msgs += [invalid_rule_content_size(error(), r.src)];
+            continue;
+        }
+        
+        //check if the equivalent of any part with an ellipsis also has one
+        for (int j <- [0..size(part_left[i].contents)]){
+            list[str] left = part_left[i].contents[j].content;
+            list[str] right = part_right[i].contents[j].content;
+            
+            if (left == ["..."] && right != ["..."]) invalid_rule_ellipsis_size(error(), r.src);
+            if (right == ["..."] && left != ["..."]) invalid_rule_ellipsis_size(error(), r.src);
+            
+        }
+    }
     
     return c;
 }
@@ -925,129 +895,6 @@ Checker check_rulepart(RulePart p: prefix(str prefix), Checker c, bool late, boo
 }   
 
 /*
- * @Name:   check_rule
- * @Desc:   Function to check a rule
- * @Param:
- *      r       AST node of a rule (loop)
- *      c       Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          invalid_rule_prefix
- *          invalid_rule_command
- *          undefined_sound
- *          undefined_object
- *          invalid_sound
- *          invalid_ellipsis_placement
- *          invalid_ellipsis
- *          invalid_rule_part_size
- *          invalid_rule_content_size
- *          invalid_rule_ellipsis_size
- */
-Checker check_rule(RuleData r: rule_loop(_,_), Checker c){
-    for(RuleData childRule <- r.rules){
-        check_rule(childRule, c);
-    }
-    return c;
-}
-
-/*
- * @Name:   check_rule
- * @Desc:   Function to check a rule
- * @Param:
- *      r       AST node of a rule (normal)
- *      c       Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          invalid_rule_prefix
- *          invalid_rule_command
- *          undefined_sound
- *          undefined_object
- *          invalid_sound
- *          invalid_ellipsis_placement
- *          invalid_ellipsis
- *          invalid_rule_part_size
- *          invalid_rule_content_size
- *          invalid_rule_ellipsis_size
- */
-Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
-
-    bool late = any(RulePart p <- r.left, p is prefix && toLowerCase(p.prefix) == "late");
-    
-    bool redundant = any(RulePart p <- r.right, p is prefix && toLowerCase(p.prefix) in ["win", "restart"]);
-    if (redundant && size(r.right) > 1) c.msgs += [redundant_keyword(warn(), r.src)];
-
-    int msgs = size([x | x <- c.msgs, x.t is error]);
-    if ([*_, part(_), prefix(_), *_] := r.left) c.msgs += [invalid_rule_direction(warn(), r.src)];
-    
-    for (RulePart p <- r.left){
-        c = check_rulepart(p, c, late, true);
-    }
-    
-    for (RulePart p <- r.right){
-        c = check_rulepart(p, c, late, false);
-    }
-    
-    // if some of the rule is invalid it gets complicated to do more checks, so we return it 
-    // for now until they fixed the rest
-    if (size([x | x <- c.msgs, x.t is error]) > msgs) return c;
-    
-    list[RulePart] part_right = [x | RulePart x <- r.right, x is part];
-    if (isEmpty(part_right)) return c;
-    
-    list[RulePart] part_left = [x | RulePart x <- r.left, x is part];
-    if (isEmpty(part_left)) return c;
-    
-    //check if there are equal amounts of parts on both sides
-    if (size(part_left) != size(part_right)) {
-        c.msgs += [invalid_rule_part_size(error(), r.src)];
-        return c;
-    }
-    
-    //check if each part, and its equivalent have the same number of sections
-    for (int i <- [0..size(part_left)]){
-        if (size(part_left[i].contents) != size(part_right[i].contents)) {
-            c.msgs += [invalid_rule_content_size(error(), r.src)];
-            continue;
-        }
-        
-        //check if the equivalent of any part with an ellipsis also has one
-        for (int j <- [0..size(part_left[i].contents)]){
-            list[str] left = part_left[i].contents[j].content;
-            list[str] right = part_right[i].contents[j].content;
-            
-            if (left == ["..."] && right != ["..."]) invalid_rule_ellipsis_size(error(), r.src);
-            if (right == ["..."] && left != ["..."]) invalid_rule_ellipsis_size(error(), r.src);
-            
-        }
-    }
-    
-    return c;
-}
-
-/*
- * @Name:   check_stackable
- * @Desc:   Function to check if two objects are stackable
- * @Param:
- *      objs1   Names of objects 1
- *      objs2   Names of objects 2
- *      c       Checker
- *      pos     Location (???)
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          impossible_condition_unstackable
- */
-Checker check_stackable(list[str] objs1, list[str] objs2, Checker c, loc pos){
-    for (LayerData l <- c.game.layers){
-        list[str] lw = [toLowerCase(x) | x <- l.layer];        
-        if (!isEmpty(objs1 & lw) && !isEmpty(objs2 & lw)){
-            c.msgs += [impossible_condition_unstackable(error(), pos)];
-        }
-    }
-    
-    return c;
-}
-
-/*
  * @Name:   check_condition
  * @Desc:   Function to check the win conditions
  * @Param:
@@ -1184,6 +1031,94 @@ Checker check_level(LevelData l, Checker c){
     return c;
 }
 
+/*
+ * @Name:   check_stackable
+ * @Desc:   Function to check if two objects are stackable
+ * @Param:
+ *      objs1   Names of objects 1
+ *      objs2   Names of objects 2
+ *      c       Checker
+ *      pos     Location (???)
+ * @Ret:   Checker with updated errors and warnings
+ *      Errors
+ *          impossible_condition_unstackable
+ */
+Checker check_stackable(list[str] objs1, list[str] objs2, Checker c, loc pos){
+    for (LayerData l <- c.game.layers){
+        list[str] lw = [toLowerCase(x) | x <- l.layer];        
+        if (!isEmpty(objs1 & lw) && !isEmpty(objs2 & lw)){
+            c.msgs += [impossible_condition_unstackable(error(), pos)];
+        }
+    }
+    
+    return c;
+}
+
+/*
+ * @Name:   check_valid_name
+ * @Desc:   Function to check if a name is valid using a regular expression
+ *          and verifiying is not one of the used coding keywords
+ * @Param:  
+ *      name    String to be checked
+ * @Ret:    Boolean determining if valid
+ */
+bool check_valid_name(str name){
+    return /^<x:[a-z0-9_]+>$/i := name && !(toLowerCase(name) in keywords);
+}
+
+/*
+ * @Name:   check_valid_real
+ * @Desc:   Function that checks if a string contains a positive real number
+ * @Param:
+ *      v   String to be checked
+ * @Ret:    Boolean determining if valid
+ */
+bool check_valid_real(str v) {
+    try
+        real i = toReal(v);
+    catch IllegalArgument: return false;
+    return i > 0;
+}
+
+/*****************************************************************************/
+// --- Public Getter functions ------------------------------------------------
+
+/*
+ * @Name:   get_prelude
+ * @Desc:   Function to get the data of the prelude section lines
+ * @Params:
+ *      values          AST nodes of the game's Prelude section
+ *      key             One of the prelude section's keys (title, author, homepage)
+ *      default_str     (???)
+ * @Ret:    String with the name of the game, author or the webpage 
+ *          (depending on key)
+ */
+str get_prelude(list[PreludeData] values, str key, str default_str){
+    v = [x | x <- values, toLowerCase(x.key) == toLowerCase(key)];
+
+    if (!isEmpty(v)) return v[0].string;
+    return default_str;
+}
+
+/*
+ * @Name:   get_map_input
+ * @Desc:   It performs the transitive closure for the references
+ * @Param:  
+ *      c       Checker
+ *      name    String containing the name of the reference
+ * @Ret:    List containing the resolved references
+ */
+list[str] get_map_input(Checker c, str name) {
+    list[str] propertylist = [];
+
+    if (c.references[name]?) {
+        for(str name <- c.references[name]) propertylist += get_map_input(c, name);
+    } else {
+        propertylist += [name];
+    }
+
+    return propertylist;
+}
 
 /*
  * @Name:   get_char
@@ -1287,78 +1222,148 @@ list[str] get_properties(str reference, map[str, list[str]] references) {
     return dup(all_references);
 }
 
+/*****************************************************************************/
+// --- Public Resolve functions -----------------------------------------------
+
 /*
- * @Name:   check_game
- * @Desc:   Function to check a PuzzleScript game. It calls all the others
- *          checker functions in order
+ * @Name:   resolve_references
+ * @Desc:   Functions that resolves the references of a list of legend elements
  * @Param:
- *      g       AST node of a PuzzleScript game
- *      debug   Boolean indicating if we are in debug mode
- * @Ret:    Updated checker
+ *      names       List of legend elements to be reference resolved
+ *      c           Checker
+ *      pos         Location in file
+ *      allowed     Determines where the reference is allowed. Why objects (???)    
+ * @Ret:    Reference object with the resolved references
  */
-Checker check_game(PSGame g, bool debug=false) {
+Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]) {
+    list[str] objs = [];
+    list[str] references = [];
+    Reference r;
 
-    Checker c = new_checker(debug, g);
-
-    map[Section, int] dupes = distribution(g.sections);
-    for (Section s <- dupes) {
-        if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], warn(), s.src)];
+    for (str name <- names) {
+        r = resolve_reference(name, c, pos, allowed=allowed);
+        objs += r.objs;
+        c = r.c;
+        references += r.references;
     }
     
-    for (PreludeData pr <- g.prelude){
-        c = check_prelude(pr, c);
-    }
-    
-    for (ObjectData obj <- g.objects){
-        c = check_object(obj, c);
-    }
-    
-    for (LegendData l <- g.legend){
-        c = check_legend(l, c);
-    }
-
-    for (SoundData s <- g.sounds) {
-        c = check_sound(s, c);
-    }
-
-    for (LayerData l <- g.layers) {
-        c = check_layer(l, c);
-    }
-
-    for (RuleData r <- g.rules) {
-        c = check_rule(r, c);
-    }
-    
-    for (str event <- c.sound_events) {
-        if (startsWith(event, "sfx") && event notin c.used_sounds) c.msgs += [unused_sound_event(warn(), c.sound_events[event].pos)];
-    }
-    
-    for (ConditionData w <- g.conditions) {
-        c = check_condition(w, c);
-    }
-    
-    for (LevelData l <- g.levels) {
-        c = check_level(l, c);
-    }
-    
-    for (ObjectData x <- g.objects){
-        if (!(toLowerCase(x.name) in c.layer_list)) c.msgs += [unlayered_objects(x.name, error(), x.src)];
-        if (!(toLowerCase(x.name) in c.used_objects)) c.msgs += [unused_object(x.name, warn(), x.src)];
-    }
-    
-    for (LegendData x <- g.legend){
-        if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x.src)];
-    }
-
-    tuple[map[str, list[str]], list[str]] all_objects = resolve_properties(c);
-
-    c.all_properties = all_objects[0];
-    c.all_char_refs = all_objects[1];
-    
-    if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g.src)];
-    
-    return c;
+    return <dup(objs), c, references>;
 }
+
+/*
+ * @Name:   resolve_reference
+ * @Desc:   Function to resolve the references of an object or a legend character
+ * @Param:  
+ *      raw_name    Name of the element to be reference resolved
+ *      c           Checker
+ *      pos         Location in the PuzzleScript file
+ *      allowed     Determines where the reference is allowed. Why objects (???)
+ * @Ret:    A reference object containing the references object
+ */
+Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]){
+    Reference r;
+    
+    list[str] objs = [];
+    list[str] references = [];    
+    str name = toLowerCase(raw_name);
+    
+    // Case 1: There is already a reference to the name
+    if (name in c.references && c.references[name] == [name]) return <[name], c, references>;
+    
+    references += [toLowerCase(name)];
+
+    // Case 2:  The name is inside the legend combinations
+    if (name in c.combinations) {
+        if ("combinations" in allowed) {
+            for (str n <- c.combinations[name]) {
+                r = resolve_reference(n, c, pos);
+                objs += r.objs;
+                c = r.c;
+                references += r.references;
+            }
+        } else {
+            c.msgs += [invalid_object_type("combinations", name, error(), pos)];
+        }
+    // Case 3: The name is inside the legend references 
+    } else if (name in c.references) {
+        if ("properties" in allowed) {
+            for (str n <- c.references[name]) {
+                r = resolve_reference(n, c, pos);
+                objs += r.objs;
+                references += r.references;
+                c = r.c;
+            }
+        } else {
+            c.msgs += [invalid_object_type("properties", name, error(), pos)];
+        }
+    // Case 4: Object not defined, we include an error
+    } else {
+        c.msgs += [undefined_object(raw_name, error(), pos)];
+    }
+    
+    return <dup(objs), c, references>;
+}
+
+/*
+ * @Name:   resolve_properties
+ * @Desc:   Function to resolve the properties of a game. Properties are resolved
+ *          references. We perform the transitive closure of the references
+ *          (e.g., "player":["playerhead1","playerhead2","playerhead3","playerhead4"
+ *                 "playerbody":["playerbodyh","playerbodyv"])
+ * @Param:  
+ *      c   Checker
+ * @Ret:    Tuple that contains
+ *              map[
+ *                  str,        Name of the property
+ *                  list[str]   Names of the objects associated to the property
+ *              ]
+ *              list[str]       Those objects that either are a 1 to 1 reference or
+ *                              that are part of a combination (there are duplicates)
+ *
+ * @Example:
+ *      For the legend of Lime Rick:
+ *          Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4
+ *          Obstacle = PlayerBodyH or PlayerBodyV or Wall or Crate or Player
+ *          PlayerBody = PlayerBodyH or PlayerBodyV
+ *          . = Background
+ *          P = PlayerHead1
+ *          # = Wall
+ *          E = Exit
+ *          A = Apple
+ *          C = Crate
+ *      We would return:
+ *          map = (
+ *              "player":["playerhead1","playerhead2","playerhead3","playerhead4"],
+ *              "playerbody":["playerbodyh","playerbodyv"],
+ *              "obstacle":["playerbodyh","playerbodyv","wall","crate","playerhead1","playerhead2","playerhead3","playerhead4"]       
+ *          )
+ *          list = ["exit","background","playerhead1","apple","wall","crate"]
+ */
+tuple[map[str, list[str]], list[str]] resolve_properties(Checker c) {
+    map[str, list[str]] properties_dict = ();
+    list[str] char_refs = [];
+
+    for (str name <- c.references<0>) {
+        list[str] references = [];
+
+        if (size(c.references[name]) > 1) {
+            for (str reference <- c.references[name]) references += get_map_input(c, reference);    // Performs the transitive closure
+            properties_dict += (name: references);
+        } 
+        else if (size(name) == 1) {
+            char_refs += c.references[name];
+        }
+    }
+
+    for (str name <- c.combinations<0>) {
+        if (size(name) == 1) char_refs += [ref | ref <- c.combinations[name]];
+    }
+
+    return <properties_dict, char_refs>;
+}
+
+/*****************************************************************************/
+// --- Public Printing Functions ----------------------------------------------
 
 /*
  * @Name:   print_msgs
