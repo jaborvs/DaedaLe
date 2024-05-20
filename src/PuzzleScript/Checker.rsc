@@ -13,6 +13,7 @@ import util::Math;
 import String;
 import List;
 import Type;
+import Set;
 import IO;
 
 // For visualizing
@@ -35,25 +36,25 @@ import PuzzleScript::Utils;
  *          of how they appear on a PuzzleScript file
  */
 alias Checker = tuple[                
-    map[str, str] prelude,                                      // Prelude section: Game's and author's name (???)                         
-    bool debug_flag,                                            // Debug flag
-    list[str] objects,                                          // List of all game objects
-    list[str] used_objects,                                     // List of all used game objects
-    list[str] all_moveable_objects,                             // List of all moveable game objects
-    map[str, list[str]] references,        // Map of references: name and its list of references (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
-    list[str] used_references,                                  // List of used references
-    list[str] all_char_refs,                                    // (???)
+    map[str, str] prelude,               // Prelude section: Game's and author's name (???)                         
+    bool debug_flag,                     // Debug flag
+    list[str] objects,                   // List of all game objects
+    list[str] used_objects,              // List of all used game objects
+    list[str] all_moveable_objects,      // List of all moveable game objects
+    map[str, list[str]] references,      // Map of references: name and its list of references (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
+    list[str] used_references,           // List of used references
+    list[str] all_char_refs,             // (???)
     map[str, list[str]] combinations,    // Map of combinations: name and its list of combinations (e.g., @ = Crate and Target)
-    list[str] layer_list,                                       // List of game layers
-    map[                                                        // Map of game sounds:
-        str,                                               //      Name
-        tuple[list[int] seeds, loc pos]              //      Tuple: list of seeds and their location on file (???)
+    list[str] layer_list,                // List of game layers
+    map[                                 // Map of game sounds:
+        str,                             //      Name
+        tuple[list[int] seeds, loc pos]  //      Tuple: list of seeds and their location on file (???)
         ] sound_events,                                         
-    list[str] used_sounds,                                      // List of used game sounds
-    list[Condition] conditions,                                 // List of game win conditions
-    list[Msg] msgs,                                             // List of game messages
-    map[str, list[str]] all_properties,        // Map of all properties: name and list of all properties
-    PSGame game                                                 // AST node of a PuzzleScript game
+    list[str] used_sounds,               // List of used game sounds
+    list[Condition] conditions,          // List of game win conditions
+    list[Msg] msgs,                      // List of game messages
+    map[str, list[str]] all_properties,  // Map of all properties: name and list of all properties
+    PSGame game                          // AST node of a PuzzleScript game
 ];
 
 /*
@@ -136,14 +137,14 @@ str get_prelude(list[PreludeData] values, str key, str default_str){
 }
 
 /*
- * @Name:   get_char
+ * @Name:   get_representation_char
  * @Desc:   Function to get the representation char of a given object
  * @Param:
  *      name        Object name 
  *      references  Map of all game object references
  * @Ret:    Representation char of the object
  */
-str get_char(str name, map[str, list[str]] references) {
+str get_representation_char(str name, map[str, list[str]] references) {
     for (str char <- references<0>) {
         if (size(char) == 1 && name in references[char]) {  
             return toLowerCase(char);
@@ -154,61 +155,41 @@ str get_char(str name, map[str, list[str]] references) {
 }
 
 /*
- * @Name:   get_references
- * @Desc:   Function to get the references given object using its representation char
- * @Param:
- *      char        Object representation char 
- *      references  Map of all game object references
- * @Ret:    References of the object
- */
-list[str] get_references(str char, map[str, list[str]] references) {
-
-    if (!(char in references<0>)) return [];
-
-    list[str] reference_list = [];
-    list[str] new_references = references[char];
-
-    reference_list += new_references;
-
-    for (str reference <- new_references) {
-
-        reference_list += get_references(reference, references);
-
-    }
-
-    return reference_list;
-}
-
-/*
  * @Name:   get_all_references
  * @Desc:   Function to get the all references (resolved and unresolved) of a given 
- *          object using its representation char
+ *          references element
  * @Param:
- *      char        Object representation char 
+ *      key         Element of the references dictionary 
  *      references  Map of all game object references
- *      debug       Boolean indicating if we are debugging
  * @Ret:    References of the object
  */
-list[str] get_all_references(str char, map[str, list[str]] references, bool debug = false) {
+list[str] my_get_all_references(str key, map[str, list[str]] references) {
+    if (!(key in references<0>)) return [];
 
-    // if (size(char) != 1) println("Getting references for <char>");
+    list[str] all_references = [];
+    list[str] initial_references = references[key];
 
-    if (!(char in references<0>)) return [];
+    all_references += initial_references;
 
-    list[str] reference_list = [];
-    list[str] new_references = references[char];
-    if (size(char) != 1) println("Found references for <new_references>");
-
-
-    reference_list += new_references;
-
-    for (str reference <- new_references) {
-        reference_list += get_properties(reference, references);
+    for (str rf <- initial_references) {
+        all_references += get_properties(rf, references);
     }
 
-    if (size(char) != 1) println(reference_list);
+    return all_references;
+}
+set[str] get_all_references(str key, map[str, list[str]] references) {
+    if (!(key in references<0>)) return {};
 
-    return reference_list;
+    set[str] all_references = {};
+    set[str] initial_references = toSet(references[key]);
+
+    all_references += initial_references;
+
+    for (str rf <- initial_references) {
+        all_references += toSet(get_properties(rf, references));
+    }
+
+    return all_references;
 }
 
 /*
@@ -225,7 +206,22 @@ list[str] get_properties(str reference, map[str, list[str]] references) {
     all_references += reference;
 
     for (str key <- references) {
+        if (size(key) == 1) continue;
 
+        if (reference in references[key]) {
+            all_references += key;
+            all_references += get_properties(key, references);
+        }
+    }
+
+    return all_references;
+}
+
+list[str] my_get_properties(str reference, map[str, list[str]] references) {
+    list[str] all_references = [];
+    all_references += reference;
+    
+    for (str key <- references) {
         if (size(key) == 1) continue;
 
         if (reference in references[key]) {
@@ -1352,6 +1348,23 @@ Checker check_game(PSGame g, bool debug=false) {
     }
 
     tuple[map[str, list[str]], list[str]] all_objects = resolve_properties(c);
+
+    println("---------------------------------------------------------");
+    println("--- References ------------------------------------------");
+    iprintln(c.references);
+    println("--- Combinations ----------------------------------------");
+    iprintln(c.combinations);
+    println("--- Properties ------------------------------------------");
+    iprintln(c.all_properties);
+    println("---------------------------------------------------------");
+    println("--- get_representation_char -----------------------------");
+    println(get_representation_char("background", c.references));
+    println("--- get_all_references ----------------------------------");
+    println(my_get_all_references("player", c.references));
+    println("--- get_properties --------------------------------------");
+    println(my_get_properties("player", c.references));
+    println(my_get_properties("playerhead1", c.references));
+
 
     c.all_properties = all_objects[0];
     c.all_char_refs = all_objects[1];

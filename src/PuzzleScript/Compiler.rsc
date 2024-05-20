@@ -171,6 +171,33 @@ alias AppliedData = tuple[
     Level original                      // Original level AST node
 ];
 
+
+/*
+ * @Name:   RuleReference
+ * @Desc:   Data structure to model a rule reference
+ */
+alias RuleReference = tuple[
+	list[str] objects,      // Objects that are part of the reference
+	str reference,          // Reference name 
+	str force               // (???)
+];
+
+/*
+ * @Name:   RuleContent
+ * @Desc:   Data structure to model the content of a rule
+ */
+data RuleContent
+	= references(list[RuleReference] refs)      // References content
+	| ellipsis()                                // Elipsis content
+	| empty()                                   // Empty content
+	;       
+
+/*
+ * @Name:   RulePartContents
+ * @Desc:   Data structure to model the contents of a rule part
+ */
+alias RulePartContents = list[RuleContent];     // Rule contents of the RulePart
+
 /*****************************************************************************/
 // --- Public Constructor functions -------------------------------------------
 
@@ -287,18 +314,112 @@ AppliedData new_applied_data(Level level)
     >;
 
 /*****************************************************************************/
-// --- Public Getter functions -------------------------------------------
+// --- Directions structures defines ------------------------------------------
+// (Note: this was reproduced from PuzzleScript github)
+
+/* 
+ * @Name:   relativeDirections
+ * @Desc:   Relative direction modifiers
+ */
+list[str] relativeDirections = ["^", "v", "\<", "\>", "parallel", "perpendicular"];
+
+/* 
+ * @Name:   simpleRelativeDirections
+ * @Desc:   Simple relative direction modifiers
+ */
+list[str] simpleRelativeDirections = ["^", "v", "\<", "\>"];
+
+/* 
+ * @Name:   absoluteDirections
+ * @Desc:   Absolute directions
+ */
+list[str] absoluteDirections = ["up", "down", "left", "right"];
 
 /*
- * @Name:
- *
+ * @Name:   directionAggregates
+ * @Desc:   Map to translate relative direction modifiers to specif ones
+ */
+map[str, list[str]] directionAggregates = (
+    "horizontal": ["left", "right"],
+    "horizontal_par": ["left", "right"],
+    "horizontal_perp": ["left", "right"],
+    "vertical": ["up", "down"],
+    "vertical_par": ["up", "down"],
+    "vertical_perp": ["up", "down"],
+    "moving": ["up", "down", "left", "right", "action"],
+    "orthogonal": ["up", "down", "left", "right"],
+    "perpendicular": ["^", "v"],
+    "parallel": ["\<", "\>"]
+);
+
+/* 
+ * @Name:   relativeDict
+ * @Desc:   Dictionary for relative rules
+ */
+map[str, list[str]] relativeDict = (
+    "right": ["up", "down", "left", "right", "horizontal_par", "vertical_perp"],
+    "up": ["left", "right", "down", "up", "vertical_par", "horizontal_perp"],
+    "down": ["right", "left", "up", "down", "vertical_par", "horizontal_perp"],
+    "left": ["down", "up", "right", "left", "horizontal_par", "vertical_perp"]
+);
+
+/*****************************************************************************/
+// --- Public Getter functions ------------------------------------------------
+
+/*
+ * @Name:   get_object
+ * @Desc:   Getter function of object by id
+ * @Param:
+ *      id      Object id
+ *      engine  Engine
+ * @Ret:    Original object AST node
  */
 ObjectData get_object(int id, Engine engine) 
 	= [x | x <- engine.game.objects, x.id == id][0];
-	
+
+/*
+ * @Name:   get_object
+ * @Desc:   Getter function of object by name
+ * @Param:
+ *      name    Object name
+ *      engine  Engine
+ * @Ret:    Original object AST node
+ */
 ObjectData get_object(str name, Engine engine) 
 	= [x | x <- engine.game.objects, toLowerCase(x.name) == name][0];
 
+/*
+ * @Name:   get_layer
+ * @Desc:   Function to get the layer of a list of objects
+ * @Param:  
+ *      object  List of object names
+ *      game    Original game AST node 
+ * @Ret:    Layer object (empty if not found)
+ */
+LayerData get_layer(list[str] object, PSGame game) {
+    for (LayerData layer <- game.layers) {
+        if (layer is layer_data) {
+            for (str layer_item <- layer.layer) {
+                if (toLowerCase(layer_item) in object) {
+                    return layer;
+                }
+            }
+        }
+    }
+    return layer_empty("");
+}
+
+/*****************************************************************************/
+// --- Public Translating functions -------------------------------------------
+
+/*
+ * @Name:   generate_directions
+ * @Desc:   Function to translate directional modifiers to actual directions 
+ *          (UP, DOWN, LEFT, RIGHT)
+ * @Param:  
+ *      modifiers   List of modifiers to be translated
+ * @Ret:    Set of directions (all if empty directions)
+ */
 set[str] generate_directions(list[str] modifiers){
 	set[str] directions = {};
 	for (str mo <- modifiers){
@@ -311,66 +432,62 @@ set[str] generate_directions(list[str] modifiers){
 	return directions;
 }
 
-alias RuleReference = tuple[
-	list[str] objects,
-	str reference,
-	str force
-];
-
-data RuleContent
-	= references(list[RuleReference] refs)
-	| ellipsis()
-	| empty()
-	;
-
-alias RulePartContents = list[RuleContent];
-
-LayerData get_layer(list[str] object, PSGame game) {
-
-    for (LayerData layer <- game.layers) {
-        if (layer is layer_data) {
-            for (str layer_item <- layer.layer) {
-                if (toLowerCase(layer_item) in object) {
-                    return layer;
-                }
-            }
-        }
-    }
-    return layer_empty("");
-
-}
-
+/*
+ * @Name:   resolve_player_name
+ * @Desc:   Function that resolves the name and representation character of the 
+ *          current player state
+ * @Param:
+ *      c   Checker
+ * @Ret:    Map with names
+ */
 map[str, str] resolve_player_name(Checker c) {
-
     map[str, str] start_name = ();
     list[str] possible_names = ["player"];
 
+    // Search for a character that represents the player in the references
     if (any(str key <- c.references<0>, size(key) == 1, "player" in c.references[key])) return (key: "player");
     
+    // Search in combinations 
     for (str key <- c.combinations<0>) {
         if ("player" in c.combinations[key]) start_name += (key: "player");
     }
     if (start_name != ()) return start_name;
 
+    // Add the direct references of the "player" key 
     possible_names += c.references["player"];
+
+    // Search for a character that represents any of the possible player names in the references
     for (str key <- c.references<0>) {
         if(size(key) == 1, any(str name <- possible_names, name in c.references[key])) start_name += (key: name);
     }
+
+    // Search for a character that represents any of the possible player names in the references
     for (str key <- c.combinations<0>) {
         if (size(key) == 1, any(str name <- possible_names, name in c.combinations[key])) start_name += (key: name);
     }
 
     return start_name;
-
 }
 
-// Go over each character in the level and convert the character to all possible references
+
+
+/*
+ * @Name:   convert_level
+ * @Desc:   Function to convert an level AST node to an level object. 
+ *          We go over each character in the level and convert the 
+ *          character to all possible references
+ * @Param:
+ *      level   Original level AST node
+ *      c       Checker
+ * @Ret:    Level object
+ */
 Level convert_level(LevelData level, Checker c) {
     map[Coords, list[Object]] objects = ();
     tuple[Coords, str] player = <<0,0>, "">;
     map[str, str] player_name = resolve_player_name(c);
     int id = 0;
 
+    // Quick fix for transparency (???)
     str background_char = "";
     for (str bg_char <- c.references<0>){
         if ("background" in c.references[bg_char]) {
@@ -381,11 +498,11 @@ Level convert_level(LevelData level, Checker c) {
     LayerData background_ld = get_layer(background_references, c.game);
     str background_name = c.references[background_char][0];
 
+
     for (int i <- [0..size(level.level)]) {
  		list[str] char_list = split("", level.level[i]);
 
         for (int j <- [0..size(char_list)]) {
-
             str char = toLowerCase(char_list[j]);
 
             if (char in player_name<0>) player = <<i,j>, player_name[char]>;
@@ -395,7 +512,7 @@ Level convert_level(LevelData level, Checker c) {
                 LayerData ld = get_layer(all_references, c.game);
                 str name = c.references[char][0];
 
-                
+                // Quick fix for transparency (???)
                 list[Object] background = [game_object(background_char, background_name, background_references,<i,j>, "", background_ld, id)];
                 id += 1;
 
@@ -408,10 +525,7 @@ Level convert_level(LevelData level, Checker c) {
                 list[Object] object = background + new_object;
                 if (<i,j> in objects) objects[<i,j>] += object;
                 else objects[<i,j>] = object;
-
-            }
-            else if (char in c.combinations<0>) {
-                
+            } else if (char in c.combinations<0>) {
                 for (str objectName <- c.combinations[char]) {
 
                     list[str] all_references = get_properties(objectName, c.all_properties);
@@ -423,9 +537,7 @@ Level convert_level(LevelData level, Checker c) {
                     id += 1;
                 }
                 
-            }
-            else {
-
+            } else {
                 list[str] all_references = get_all_references(char, c.references);
                 all_references += [ref | str ref <- get_all_references(char, c.combinations), !(ref in all_references)];
                 LayerData ld = get_layer(all_references, c.game);
@@ -447,46 +559,30 @@ Level convert_level(LevelData level, Checker c) {
 		player,
 		level        
     );
-
 }
 
 
-// ==== DIRECTIONS AND IMPLEMENTATIONS REPRODUCED FROM PUZZLESCRIPTS GITHUB ==== \\
 
-// Directionaggregates translate to multiple other directions
-map[str, list[str]] directionaggregates = (
-    "horizontal": ["left", "right"],
-    "horizontal_par": ["left", "right"],
-    "horizontal_perp": ["left", "right"],
-    "vertical": ["up", "down"],
-    "vertical_par": ["up", "down"],
-    "vertical_perp": ["up", "down"],
-    "moving": ["up", "down", "left", "right", "action"],
-    "orthogonal": ["up", "down", "left", "right"],
-    "perpendicular": ["^", "v"],
-    "parallel": ["\<", "\>"]
-);
-
-list[str] relativeDirections = ["^", "v", "\<", "\>", "perpendicular", "parallel"];
-list[str] simpleAbsoluteDirections = ["up", "down", "left", "right"];
-list[str] simpleRelativeDirections = ["^", "v", "\<", "\>"];
-
-list[str] relativeDirs = ["^", "v", "\<", "\>", "parallel", "perpendicular"]; //used to index the following
-map[str, list[str]] relativeDict = (
-    "right": ["up", "down", "left", "right", "horizontal_par", "vertical_perp"],
-    "up": ["left", "right", "down", "up", "vertical_par", "horizontal_perp"],
-    "down": ["right", "left", "up", "down", "vertical_par", "horizontal_perp"],
-    "left": ["down", "up", "right", "left", "horizontal_par", "vertical_perp"]
-);
-
-set[value] all_directions = directionaggregates<0> + relativeDict["right"];
-
+/*
+ * @Name:   isDirection
+ * @Desc:   Function to check if a string is a valid direction
+ * @Param:  
+ *      dir     string to be checked
+ * @Ret:    Boolean indicating if valid
+ */
 bool isDirection (str dir) {
-    return (dir in relativeDict["right"] || dir in relativeDirs);
+    return (dir in relativeDict["right"] || dir in relativeDirections);
 }
 
-bool directionalRule(list[RulePart] left, list[RulePart] right) {
-
+/*
+ * @Name:   isDirection
+ * @Desc:   Function to check if a rule is directional
+ * @Param:  
+ *      left    LHS of a rule
+ *      right   RHS of a rule
+ * @Ret:    Boolean indicating if directional
+ */
+bool isDirectionalRule(list[RulePart] left, list[RulePart] right) {
     list[RulePart] left_parts = [rp | RulePart rp <- left, (rp is part)];
     list[RulePart] right_parts = [rp | RulePart rp <- right, (rp is part)];
 
@@ -494,12 +590,10 @@ bool directionalRule(list[RulePart] left, list[RulePart] right) {
     bool rightDir = any(int i <- [0..size(right_parts)], int j <- [0..size(right_parts[i].contents)], any(str content <- right_parts[i].contents[j].content, content in relativeDirections));
 
     return (leftDir || rightDir);
-
 }
 
 // Expanding rules to accompany multiple directions
 list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Checker checker) {
-
     list[Rule] new_rule_directions = [];
     list[Rule] new_rules = [];
     list[Rule] new_rules2 = [];
@@ -517,19 +611,16 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Ch
     RuleData new_rd = rule_data(new_left, new_right, x, y);
     new_rd.src = rd.src;
 
-    println("Concretizing rules...");
-
     // Step 1
     new_rule_directions += extend_directions(new_rd, direction);
     for (Rule rule <- new_rule_directions) {
-        Rule absolute_rule = convertRelativeDirsToAbsolute(rule);
+        Rule absolute_rule = convertrelativeDirectionsToAbsolute(rule);
         Rule atomized_rule = atomizeAggregates(checker, absolute_rule);
         new_rules += [atomized_rule];
     }
 
     // Step 2
     for (Rule rule <- new_rules) {
-        println("Concretizing moving rule...");
         new_rules2 += concretizeMovingRule(checker, rule);
     }
 
@@ -544,20 +635,28 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Ch
         new_rules4 += rule.late = late;
     }
 
-    return new_rules4;
+    // int i = 0;
+    // for (Rule rule <- new_rules4) {
+    //     println("Rule <i>");
+    //     println(rule.movingReplacement);
+    //     println(rule.aggregateDirReplacement);
+    //     println(rule.propertyReplacement);
+    //     println();
+    //     i += 1;
+    // }
 
+    return new_rules4;
 }
 
 list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _), str direction) {
-
     list[Rule] new_rule_directions = [];
     Rule cloned_rule = new_rule(rd);
 
     list[RuleContent] lhs = get_rulecontent(left);
     list[RuleContent] rhs = get_rulecontent(right);
 
-    if (direction in directionaggregates && directionalRule(left, right)) {
-        list[str] directions = directionaggregates[toLowerCase(direction)];
+    if (direction in directionAggregates && isDirectionalRule(left, right)) {
+        list[str] directions = directionAggregates[toLowerCase(direction)];
 
         for (str direction <- directions) {
             cloned_rule = new_rule(rd, direction, left, right);
@@ -566,8 +665,8 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _), str dir
     }
 
     // No direction prefix was registered, meaning all directions apply
-    if (cloned_rule.direction == "" && directionalRule(left, right)) {
-        list[str] directions = directionaggregates["orthogonal"];
+    if (cloned_rule.direction == "" && isDirectionalRule(left, right)) {
+        list[str] directions = directionAggregates["orthogonal"];
         for (str direction <- directions) {
             cloned_rule = new_rule(rd, direction, left, right);
             new_rule_directions += cloned_rule;
@@ -579,20 +678,16 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _), str dir
     }
 
     return new_rule_directions;
-
 }
 
 list[RuleContent] get_rulecontent(list[RulePart] ruleparts) {
-
     for (RulePart rp <- ruleparts) {
         if (rp is part) return rp.contents;
     }
     return [];
-
 }
 
-Rule convertRelativeDirsToAbsolute(Rule rule) {
-
+Rule convertrelativeDirectionsToAbsolute(Rule rule) {
     str direction = rule.direction;
 
     list[RulePart] new_rp = [];
@@ -626,13 +721,13 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
                     continue;
                 }
 
-                if (toLowerCase(rc.content[i]) in simpleAbsoluteDirections) {
+                if (toLowerCase(rc.content[i]) in absoluteDirections) {
                     new_content += [toLowerCase(rc.content[i])] + [rc.content[i + 1]];
                     skip = true;
                     continue;                    
                 }
 
-                int index = indexOf(relativeDirs, rc.content[i]);
+                int index = indexOf(relativeDirections, rc.content[i]);
                 if (index >= 0) {
                     dir = relativeDict[direction][index];
                     new_content += [dir] + [rc.content[i + 1]];
@@ -680,7 +775,7 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
                     continue;
                 }
 
-                int index = indexOf(relativeDirs, rc.content[i]);
+                int index = indexOf(relativeDirections, rc.content[i]);
                 if (index >= 0) {
                     dir = relativeDict[direction][index];
                     new_content += [dir] + [rc.content[i + 1]];
@@ -700,11 +795,9 @@ Rule convertRelativeDirsToAbsolute(Rule rule) {
     rule.right = new_rp;
 
     return rule;
-
 }
 
 Rule atomizeAggregates(Checker c, Rule rule) {
-
     list[RuleContent] new_rc = [];
     list[RulePart] new_rp = [];
 
@@ -787,7 +880,6 @@ Rule atomizeAggregates(Checker c, Rule rule) {
     rule.right = new_rp;
 
     return rule;
-
 }
 
 list[Rule] concretizeMovingRule(Checker c, Rule rule) {
@@ -805,15 +897,15 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
             shouldRemove = false;
 
             for (int j <- [0..size(rule.left)]) {
-
                 RulePart rp = rule.left[j];
 
                 if (!(rp is part)) continue;
                 for (int k <- [0..size(rp.contents)]) {
-
                     RuleContent row = rp.contents[k];
 
                     list[list[str]] movings = getMovings(row.content);
+                    // println("Movings");
+                    // println(movings);
 
                     if (size(movings) > 0) {
                         shouldRemove = true;
@@ -821,7 +913,7 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
 
                         str name = movings[0][0];
                         str ambiguous_dir = movings[0][1];
-                        list[str] concrete_directions = directionaggregates[ambiguous_dir];
+                        list[str] concrete_directions = directionAggregates[ambiguous_dir];
                         for (str concr_dir <- concrete_directions) {
 
                             newrule = new_rule(rule.original, rule.direction, rule.left, rule.right);
@@ -871,7 +963,6 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
                     }
                 }
                 if (shouldRemove) {
-
                     result = remove(result, i);
 
                     if (i >= 1) begin = i - 1;
@@ -965,7 +1056,6 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
 }
 
 RuleContent concretizeMovingInCellByAmbiguousMovementName(RuleContent rc, str ambiguousMovement, str concreteDirection) {
-    
     list[str] new_rc = [];    
 
     for (int j <- [0..size(rc.content)]) {
@@ -985,7 +1075,6 @@ RuleContent concretizeMovingInCellByAmbiguousMovementName(RuleContent rc, str am
 
 
 RuleContent concretizeMovingInCell(Rule rule, RuleContent rc, str ambiguous, str nametomove, str concr_dir) {
-
     list[str] new_rc = [];
     for (int i <- [0..size(rc.content)]) {
 
@@ -1002,7 +1091,6 @@ RuleContent concretizeMovingInCell(Rule rule, RuleContent rc, str ambiguous, str
 }
 
 list[list[str]] getMovings(list[str] cell) {
-
     list[list[str]] result = [];
     for (int i <- [0..size(cell)]) {
 
@@ -1011,16 +1099,14 @@ list[list[str]] getMovings(list[str] cell) {
         str direction = cell[i];
         str name = cell[i + 1];
 
-        if (direction in directionaggregates<0>) {
+        if (direction in directionAggregates<0>) {
             result += [[name, direction]];
         }
     }
-
     return result;
 }
 
 list[Rule] concretizePropertyRule(Checker c, Rule rule) {
-
     for (int i  <- [0..size(rule.left)]) {
 
         RulePart rp = rule.left[i];
@@ -1136,7 +1222,6 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
 }
 
 RuleContent concretizePropertyInCell(Rule rule, RuleContent rc, str property, str concreteType) {
-    
     list[str] new_rc = [];    
     for (int j <- [0..size(rc.content)]) {
 
@@ -1154,7 +1239,6 @@ RuleContent concretizePropertyInCell(Rule rule, RuleContent rc, str property, st
 }
 
 RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
-
     list[str] new_rc = [];
     for (int i <- [0..size(rc.content)]) {
 
@@ -1178,7 +1262,6 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
 }
 
 LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, list[RuleContent] rule_side) {
-
     list[str] found_objects = ["player"];
 
     for (RuleContent rc <- rule_side) {
@@ -1190,10 +1273,10 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
             
             if (isDirection(dir)) {
                 if (!(name in found_objects)) found_objects += [name];
-                list[str] all_references = get_references(name, c.references);
-                found_objects += [name | str name <- get_references(name, c.references), 
+                list[str] all_references = get_all_references(name, c.references);
+                found_objects += [name | str name <- get_all_references(name, c.references), 
                     any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
-                found_objects += [name | str name <- get_references(name, c.combinations), 
+                found_objects += [name | str name <- get_all_references(name, c.combinations), 
                     any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
             }
         }
@@ -1203,7 +1286,6 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
 }
 
 LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c, Level level) {
-
     for (list[Rule] lrule <- lc.applied_rules) {
         for (RulePart rp <- lrule[0].left) {
             if (rp is part) lc = get_moveable_objects(engine, lc, c, rp.contents);
@@ -1233,7 +1315,6 @@ LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c
 }
 
 LevelChecker applied_rules(Engine engine, LevelChecker lc) {
-
     bool new_objects = true;
     list[list[Rule]] applied_rules = [];
     list[list[Rule]] applied_late_rules = [];
@@ -1328,7 +1409,6 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
 
 LevelChecker starting_objects(Level level, LevelChecker lc) {
-
     list[Object] all_objects = [];
     list[list[str]] object_names = [];
 
@@ -1348,7 +1428,6 @@ LevelChecker starting_objects(Level level, LevelChecker lc) {
 }
 
 map[LevelData, LevelChecker] check_size_per_level(Engine engine, Checker c, bool debug=false) {
-
     map[LevelData, LevelChecker] allLevelData = ();
     PSGame g = engine.game;
 
@@ -1364,7 +1443,6 @@ map[LevelData, LevelChecker] check_size_per_level(Engine engine, Checker c, bool
 }
 
 Engine check_game_per_level(Engine engine, Checker c, bool debug=false) {
-
     for (LevelData ld <- engine.level_data<0>) {
 
         LevelChecker lc = engine.level_data[ld];
@@ -1380,7 +1458,6 @@ Engine check_game_per_level(Engine engine, Checker c, bool debug=false) {
 }
 
 map[RuleData, tuple[int, str]] index_rules(list[RuleData] rules) {
-
     map[RuleData, tuple[int, str]] indexed_rules = ();
     int index = 0;
 
@@ -1394,7 +1471,6 @@ map[RuleData, tuple[int, str]] index_rules(list[RuleData] rules) {
 }
 
 str convert_rule(list[RulePart] left, list[RulePart] right) {
-
     str rule = "";
     if (any(RulePart rp <- left, rp is prefix)) rule += rp.prefix;
 
@@ -1425,9 +1501,17 @@ str convert_rule(list[RulePart] left, list[RulePart] right) {
     }
     return rule;
 }
+/*****************************************************************************/
+// --- Compilatin functions ---------------------------------------------------
 
+/*
+ * @Name:   compile
+ * @Desc:   Function that compiles a whole game
+ * @Param:  
+ *      c   Checker
+ * @Ret:    Engine object
+ */
 Engine compile(Checker c) {
-
 	Engine engine = new_engine(c.game);
 	engine.conditions = c.conditions;
     engine.levels = c.game.levels;  
@@ -1444,7 +1528,6 @@ Engine compile(Checker c) {
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
-
         if ("late" in [toLowerCase(x.prefix) | x <- rule.left, x is prefix]) {
             list[Rule] rulegroup = convert_rule(rule, true, c);
             if (size(rulegroup) != 0) engine.late_rules += [rulegroup];
@@ -1453,7 +1536,6 @@ Engine compile(Checker c) {
             list[Rule] rulegroup = convert_rule(rule, false, c);
             if (size(rulegroup) != 0) engine.rules += [rulegroup];
         }
-
     }
 
     engine.level_data = check_size_per_level(engine, c);

@@ -249,8 +249,8 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
 
             } else {
 
-                str char = get_char(name, engine.properties);
-                char = char != "" ? char : get_char(name, engine.references);
+                str char = get_representation_char(name, engine.properties);
+                char = char != "" ? char : get_representation_char(name, engine.references);
 
                 list[str] references = get_properties(name, engine.properties);
                                 
