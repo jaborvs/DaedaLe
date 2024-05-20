@@ -6,15 +6,16 @@
  */
 module PuzzleScript::Compiler
 
-import String;
-import List;
-import Type;
-import Set;
+
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
 import PuzzleScript::Utils;
 import PuzzleScript::Engine;
 
+import String;
+import List;
+import Type;
+import Set;
 import IO;
 
 data Object = game_object(
