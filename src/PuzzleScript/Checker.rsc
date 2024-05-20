@@ -155,7 +155,29 @@ str get_representation_char(str name, map[str, list[str]] references) {
 }
 
 /*
- * @Name:   get_resolved_references
+ * @Name:   get_resolved_references (list version)
+ * @Desc:   Function to get the references of a key of the legend in a 
+ *          map of references.
+ *          Generally used with the keys of the game legend. For this purpose,
+ *          remember that keys in the legend can be a representation char
+ *          or an alias (such as Player, Obstacle...)
+ * @Param:
+ *      keys         Legend key elements
+ *      references  Map of references on which to search
+ * @Ret:    List of non duped references of the key (including the actual keys)
+ */
+list[str] get_resolved_references(list[str] keys, map[str, list[str]] references) {
+    list[str] resolved_references = [];
+
+    for(str key <- keys){
+        resolved_references += get_resolved_references(key, references);
+    }
+
+    return toList(toSet(resolved_references));
+}
+
+/*
+ * @Name:   get_resolved_references (single key version)
  * @Desc:   Function to get the references of a key of the legend in a 
  *          map of references.
  *          Generally used with the keys of the game legend. For this purpose,
@@ -164,20 +186,17 @@ str get_representation_char(str name, map[str, list[str]] references) {
  * @Param:
  *      key         Legend key element
  *      references  Map of references on which to search
- * @Ret:    List of non duped references of the key
+ * @Ret:    List of non duped references of the key (including the actual keys)
  */
 list[str] get_resolved_references(str key, map[str, list[str]] references) {
-    if (!(key in references<0>)) return [];
-    return _get_resolved_references_rec(key, references);
-}
-
-list[str] _get_resolved_references_rec (str key, map[str, list[str]] references) {
-    if (!(key in references<0>)) return [key];
-
     list[str] resolved_references = [];
 
+    if (!(key in references<0>)) return resolved_references;
+
     for (str rf <- references[key]) {
-        resolved_references += _get_resolved_references_rec(rf, references);
+        new_references = get_resolved_references(rf, references);
+        if (isEmpty(new_references)) resolved_references += [rf];
+        else resolved_references += new_references;
     }
 
     return toList(toSet(resolved_references));
@@ -229,182 +248,6 @@ list[str] get_properties(str key, map[str, list[str]] references) {
     }
 
     return toList(toSet(all_references));
-}
-
-list[str] my_get_properties(str key, map[str, list[str]] references) {
-    list[str] all_references = [];
-    all_references += key;
-
-    for (str rf <- references) {
-        if (size(rf) == 1) continue;
-
-        if (key in references[rf]) {
-            all_references += rf;
-            all_references += get_properties(rf, references);
-        }
-    }
-
-    return toList(toSet(all_references));
-}
-
-/*****************************************************************************/
-// --- Public Resolve functions -----------------------------------------------
-
-/*
- * @Name:   resolve_references
- * @Desc:   Functions that resolves the references of a list of legend elements
- * @Param:
- *      names       List of legend elements to be reference resolved
- *      c           Checker
- *      pos         Location in file
- *      allowed     Determines where the reference is allowed. Why objects (???)    
- * @Ret:    Reference object with the resolved references
- */
-Reference resolve_references(list[str] names, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]) {
-    list[str] objs = [];
-    list[str] references = [];
-    Reference r;
-
-    for (str name <- names) {
-        r = resolve_reference(name, c, pos, allowed=allowed);
-        objs += r.objs;
-        c = r.c;
-        references += r.references;
-    }
-    
-    return <dup(objs), c, references>;
-}
-
-/*
- * @Name:   resolve_reference
- * @Desc:   Function to resolve the references of an object or a legend character
- * @Param:  
- *      raw_name    Name of the element to be reference resolved
- *      c           Checker
- *      pos         Location in the PuzzleScript file
- *      allowed     Determines where the reference is allowed. Why objects (???)
- * @Ret:    A reference object containing the references object
- */
-Reference resolve_reference(str raw_name, Checker c, loc pos, list[str] allowed=["objects", "properties", "combinations"]){
-    Reference r;
-    
-    list[str] objs = [];
-    list[str] references = [];    
-    str name = toLowerCase(raw_name);
-    
-    // Case 1: There is already a reference to the name
-    if (name in c.references && c.references[name] == [name]) return <[name], c, references>;
-    
-    references += [toLowerCase(name)];
-
-    // Case 2:  The name is inside the legend combinations
-    if (name in c.combinations) {
-        if ("combinations" in allowed) {
-            for (str n <- c.combinations[name]) {
-                r = resolve_reference(n, c, pos);
-                objs += r.objs;
-                c = r.c;
-                references += r.references;
-            }
-        } else {
-            c.msgs += [invalid_object_type("combinations", name, error(), pos)];
-        }
-    // Case 3: The name is inside the legend references 
-    } else if (name in c.references) {
-        if ("properties" in allowed) {
-            for (str n <- c.references[name]) {
-                r = resolve_reference(n, c, pos);
-                objs += r.objs;
-                references += r.references;
-                c = r.c;
-            }
-        } else {
-            c.msgs += [invalid_object_type("properties", name, error(), pos)];
-        }
-    // Case 4: Object not defined, we include an error
-    } else {
-        c.msgs += [undefined_object(raw_name, error(), pos)];
-    }
-    
-    return <dup(objs), c, references>;
-}
-
-/*
- * @Name:   resolve_properties
- * @Desc:   Function to resolve the properties of a game. Properties are resolved
- *          references. We perform the transitive closure of the references
- *          (e.g., "player":["playerhead1","playerhead2","playerhead3","playerhead4"
- *                 "playerbody":["playerbodyh","playerbodyv"])
- * @Param:  
- *      c   Checker
- * @Ret:    Tuple that contains
- *              map[
- *                  str,        Name of the property
- *                  list[str]   Names of the objects associated to the property
- *              ]
- *              list[str]       Those objects that either are a 1 to 1 reference or
- *                              that are part of a combination (there are duplicates)
- *
- * @Example:
- *      For the legend of Lime Rick:
- *          Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4
- *          Obstacle = PlayerBodyH or PlayerBodyV or Wall or Crate or Player
- *          PlayerBody = PlayerBodyH or PlayerBodyV
- *          . = Background
- *          P = PlayerHead1
- *          # = Wall
- *          E = Exit
- *          A = Apple
- *          C = Crate
- *      We would return:
- *          map = (
- *              "player":["playerhead1","playerhead2","playerhead3","playerhead4"],
- *              "playerbody":["playerbodyh","playerbodyv"],
- *              "obstacle":["playerbodyh","playerbodyv","wall","crate","playerhead1","playerhead2","playerhead3","playerhead4"]       
- *          )
- *          list = ["exit","background","playerhead1","apple","wall","crate"]
- */
-tuple[map[str, list[str]], list[str]] resolve_properties(Checker c) {
-    map[str, list[str]] properties_dict = ();
-    list[str] char_refs = [];
-
-    for (str name <- c.references<0>) {
-        list[str] references = [];
-
-        if (size(c.references[name]) > 1) {
-            for (str reference <- c.references[name]) references += resolve_properties_rec(c, reference);    // Performs the transitive closure
-            properties_dict += (name: references);
-        } 
-        else if (size(name) == 1) {
-            char_refs += c.references[name];
-        }
-    }
-
-    for (str name <- c.combinations<0>) {
-        if (size(name) == 1) char_refs += [ref | ref <- c.combinations[name]];
-    }
-
-    return <properties_dict, char_refs>;
-}
-
-/*
- * @Name:   resolve_properties_rec
- * @Desc:   It performs the transitive closure for the references
- * @Param:  
- *      c       Checker
- *      name    String containing the name of the reference
- * @Ret:    List containing the resolved references
- */
-list[str] resolve_properties_rec(Checker c, str name) {
-    list[str] propertylist = [];
-
-    if (c.references[name]?) {
-        for(str name <- c.references[name]) propertylist += resolve_properties_rec(c, name);
-    } else {
-        propertylist += [name];
-    }
-
-    return propertylist;
 }
         
 /*****************************************************************************/
@@ -767,11 +610,7 @@ Checker check_sound(SoundData s, Checker c){
     for (str verb <- s.sound) {
         str v = toLowerCase(verb);
         if (v in c.objects) {
-            if (isEmpty(objects)) {
-                Reference r = resolve_reference(verb, c, s.src);
-                c = r.c;
-                objects = r.objs;
-            } else {
+            if (!isEmpty(objects)) {
                 c.msgs += [existing_sound_object(error, s.src)];
             }
         } else if (v in sound_masks) {
@@ -828,7 +667,7 @@ Checker check_sound(SoundData s, Checker c){
 
 /*
  * @Name:   check_layer
- * @Desc:   Function to check a layer
+ * @Desc:   Function to check a layer. Broken when creating TutoMate (???)
  * @Param:
  *      l   AST node with a layer
  *      c   Checker
@@ -838,16 +677,7 @@ Checker check_sound(SoundData s, Checker c){
  *      Warnings
  *          multilayered_object
  */
-Checker check_layer(LayerData l, Checker c){
-    Reference r = resolve_references(l.layer, c, l.src);
-
-    c = r.c;
-    for (str obj <- r.objs){
-        if (obj in c.layer_list) c.msgs += [multilayered_object(obj, warn(), l.src)];
-    }
-    
-    c.layer_list += r.objs;
-    
+Checker check_layer(LayerData l, Checker c){   
     return c;
 }
 
@@ -979,23 +809,10 @@ Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, 
         
         int index = 0;
         for (str verb <- verbs) {
-
             if (verb in moveable_keywords && !(objs[index] in c.all_moveable_objects)) {
-
-                // list[str] moveable_object = objs[index];
-                // for (str object <- moveable_objects) {
-                //     if (object in c.references<0>) {
-                //         for (str child_object <- c.references[object]) c.all_moveable_objects += toLowerCase(child_object);
-                //     }
-
-
-                // }
-                // println("References = <resolve_reference(objs[index], c, cont.src).references>");
-                c.all_moveable_objects += resolve_reference(objs[index], c, cont.src).references;
+                c.all_moveable_objects += get_resolved_references(objs[index], c.references);
             }
-            
             index += 1;
-
         }
 
         if (pattern){
@@ -1004,11 +821,7 @@ Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, 
         
         list[list[str]] references = [];
         for (str obj <- objs) {
-            Reference r = resolve_reference(obj, c, cont.src);
-            c = r.c;
-            c.used_references += r.references;
-            c.used_objects += r.objs;
-            references += [r.objs];
+            references += [get_resolved_references(obj, c.references)];
         }
         
         if (size(objs) > 1){
@@ -1114,7 +927,8 @@ Checker check_rulepart(RulePart p: prefix(str prefix), Checker c, bool late, boo
 
 /*
  * @Name:   check_condition
- * @Desc:   Function to check the win conditions
+ * @Desc:   Function to check the win conditions. Loss of functionality when
+ *          creating TutoMate
  * @Param:
  *      w   AST node with the win conditions  
  *      c   Checker
@@ -1131,75 +945,6 @@ Checker check_condition(ConditionData w, Checker c){
     if (!(size(w.condition) in [2, 4])){
         c.msgs += [invalid_condition_length(error(), w.src)];
         return c;
-    }
-    
-    bool has_on = size(w.condition) == 4;
-    Reference r = resolve_reference(w.condition[1], c, w.src);
-    list[str] objs = r.objs;
-    c = r.c; 
-    c.used_references += r.references;
-    
-    // only one object can defined but it can be an aggregate so we can end up with
-    // multiple objects once we're done resolving references
-    list[str] on = [];
-    if (has_on) {
-        Reference r2 = resolve_reference(w.condition[3], c, w.src);
-        on = r2.objs;
-        c = r2.c;
-        c.used_references += r2.references; 
-    }
-    
-    for (str obj <- objs + on) {
-        if (toLowerCase(obj) in c.combinations) c.msgs += [invalid_object_type("combinations", obj, error(), w.src)];
-    }
-    
-    
-    list[str] dupes = [x | str x <- objs, x in on];
-    if (!isEmpty(dupes)){
-        c.msgs += [impossible_condition_duplicates(dupes, error(), w.src)];
-    }
-    
-    c = check_stackable(objs, on, c, w.src);
-    
-    Condition cond;
-    bool valid = true;
-    switch(toLowerCase(w.condition[0])) {
-        case /all/: {
-            if (has_on) {
-                cond = all_objects_on(objs, on, w);
-            } else {
-                valid = false;
-                c.msgs += [invalid_condition(error(), w.src)];
-            }
-        }
-        case /some|any/: {
-            if (has_on) {
-                cond = some_objects_on(objs, on, w);
-            } else {
-                cond = some_objects(objs, w);
-            }
-        }
-        case /no/: {
-            if (has_on) {
-                cond = no_objects_on(objs, on, w);
-            } else {
-                cond = no_objects(objs, w);
-            }
-        }
-        
-        default: {
-            valid = false;
-            c.msgs += invalid_condition_verb(w.condition[0], error(), w.src);
-        }
-    }
-    
-    if (valid){
-        if (cond in c.conditions) {
-            loc original = c.conditions[indexOf(c.conditions, cond)].src;
-            c.msgs += [existing_condition(original, warn(), w.src)];
-        }
-        cond.src = w.src;
-        c.conditions += [cond];
     }
     
     return c;
@@ -1225,24 +970,12 @@ Checker check_level(LevelData l, Checker c){
         case message(str msg): if (size(split(" ", msg)) > 12) c.msgs += [message_too_long(warn(), l.src)];
         case level_data(_): {
             int length = size(l.level[0]);
-            bool invalid = false;
             
             for (str line <- l.level){
-                if (size(line) != length) invalid = true;
-                
-                list[str] char_list = split("", line);
-                for (str legend <- char_list) {
-                    Reference r = resolve_reference(legend, c, l.src);
-                    c = r.c;
-                    c.used_references += r.references;
-                    
-                    if (toLowerCase(legend) in c.references && size(r.objs) > 1) {
-                        c.msgs += [ambiguous_pixel(legend, r.objs, error(), l.src)];
-                    }
-                    
+                if (size(line) != length) {
+                    c.msgs += [invalid_level_row(error(), l.src)];
                 }
             }
-            if (invalid) c.msgs += [invalid_level_row(error(), l.src)];
         }
     }
 
@@ -1262,9 +995,8 @@ Checker check_level(LevelData l, Checker c){
  *          impossible_condition_unstackable
  */
 Checker check_stackable(list[str] objs1, list[str] objs2, Checker c, loc pos){
-    for (LayerData l <- c.game.layers){
-        list[str] lw = [toLowerCase(x) | x <- l.layer];        
-        if (!isEmpty(objs1 & lw) && !isEmpty(objs2 & lw)){
+    for (LayerData l <- c.game.layers){       
+        if (!isEmpty(objs1 & l.layer) && !isEmpty(objs2 & l.layer)){
             c.msgs += [impossible_condition_unstackable(error(), pos)];
         }
     }
@@ -1361,24 +1093,11 @@ Checker check_game(PSGame g, bool debug=false) {
         if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x.src)];
     }
 
-    tuple[map[str, list[str]], list[str]] all_objects = resolve_properties(c);
-
-    println("---------------------------------------------------------");
-    println("--- References ------------------------------------------");
-    iprintln(c.references);
-    println("--- Combinations ----------------------------------------");
-    iprintln(c.combinations);
-    println("--- Properties ------------------------------------------");
-    iprintln(c.all_properties);
-    println();
-    println();
-    println("--- References and properties ----------------------------------");
-    println(get_resolved_references("test", c.references));
-    println(get_unresolved_references_and_properties("test", c.references));
-    println(get_properties("test", c.references));
-
-    c.all_properties = all_objects[0];
-    c.all_char_refs = all_objects[1];
+    c.all_properties = ();
+    for(str key <- c.references<0>) {
+        if (size(c.references[key]) == 1) continue;
+        c.all_properties += (key: get_resolved_references(key, c.references));
+    }
     
     if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g.src)];
     
