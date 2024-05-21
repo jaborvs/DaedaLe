@@ -26,8 +26,7 @@ import PuzzleScript::Utils;
 /*
  * @Name:   load
  * @Desc:   Function that reads a game file and loads its contents
- * @Param:  
- *          path -> Location of the file
+ * @Param:  path -> Location of the file
  * @Ret:    PSGame object
  */
 PuzzleScript::AST::PSGame load(loc path) {
@@ -38,8 +37,7 @@ PuzzleScript::AST::PSGame load(loc path) {
 /*
  * @Name:   load
  * @Desc:   Function that reads a game file contents and implodes it
- * @Param:  
- *          src -> String with the contents of the file
+ * @Param:  src -> String with the contents of the file
  * @Ret:    PSGame object
  */
 PuzzleScript::AST::PSGame load(str src) {
@@ -67,8 +65,7 @@ start[PSGame] ps_parse(loc path){
 /*
  * @Name:   ps_parse
  * @Desc:   Function that takes the contents of a game file and parses it
- * @Param:  
- *          str -> String containing the contents of the game file
+ * @Param:  str -> String containing the contents of the game file
  * @Ret:    PSGame object
  */
 start[PSGame] ps_parse(str src){
@@ -80,8 +77,7 @@ start[PSGame] ps_parse(str src){
  * @Name:   ps_implode
  * @Desc:   Function that takes a parse tree and builds the ast for a PuzzleScript
  *          game
- * @Param:  
- *          tree -> Parse tree
+ * @Param:  tree -> Parse tree
  * @Ret:    PSGame object
  */
 PuzzleScript::AST::PSGame ps_implode(start[PSGame] parse_tree) {
@@ -99,8 +95,7 @@ PuzzleScript::AST::PSGame ps_implode(start[PSGame] parse_tree) {
  * @Desc:   Function that receives an unprocessed PuzzleScript game and processes
  *          it to use it. This is the reason why in AST.rsc two different versions
  *          of PSGame appear defined (the unprocessed and the processed)
- * @Param:  
- *          unprocessed_game -> PSGame to be processed   
+ * @Param:  unprocessed_game -> PSGame to be processed  
  * @Ret:    Processed PSGame
  */
 PSGame process_game(PSGame game) {
@@ -172,56 +167,71 @@ PSGame process_game(PSGame game) {
 }
 
 /*
- * @Name:   
- * @Desc:   
- * @Param:     
- * @Ret:    
+ * @Name:   process_object
+ * @Desc:   Function that processes an object. It transforms the sprite from an
+ *          Sprinte object to a list[list[Pixel]] which is easier for representation.
+ *          Instead of creating another definition for Sprite to hold a processed
+ *          sprite, we avoid this to improve in code reading. Creating a new 
+ *          sprite definition would be like:
+ *              sprite(list[list[Pixel]] pixels)
+ *          So to access each pixel we would need to do:
+ *              obj.sprite.pixels[i][j].color_number 
+ *          Which is less clean than:
+ *              obj.sprinte[i][j].color_number
+ * @Param:  unprocessed_object -> Object to be processed
+ * @Ret:    Processed ObjectData object
  */
-LegendData process_legend(LegendData l) {
-    str legend = l.legend;
-    list[str] values = [l.first];
-    list[str] aliases = [];
-    list[str] combined = [];
-        
-    for (LegendOperation other <- l.others) {
-        switch(other){
-            case legend_or(id): aliases += id;
-            case legend_and(id): combined += id;
-        }
-    }
-
-    LegendData new_l = legend_reference(legend, values + aliases);
-    if (size(aliases) > 0 && size(combined) > 0) {
-        new_l = legend_error(legend, values + aliases + combined);
-    } else if (size(combined) > 0) {
-        new_l = legend_combined(legend, values + combined);
-    }
-
-    return new_l;
-}
-
-/*
- * @Name:   
- * @Desc:   
- * @Param:     
- * @Ret:    
- */
-ObjectData process_object(ObjectData obj){
+ObjectData process_object(ObjectData unprocessed_object){
     list[list[Pixel]] processed_sprite = [];
 
-    if (size(obj.spr) > 0) {;
+    if (size(unprocessed_object.spr) > 0) {;
         processed_sprite += [
-            [pixel(x) | x <- split("", obj.spr[0].line0)],
-            [pixel(x) | x <- split("", obj.spr[0].line1)],
-            [pixel(x) | x <- split("", obj.spr[0].line2)],
-            [pixel(x) | x <- split("", obj.spr[0].line3)],
-            [pixel(x) | x <- split("", obj.spr[0].line4)]
+            [pixel(x) | x <- split("", unprocessed_object.spr[0].line0)],
+            [pixel(x) | x <- split("", unprocessed_object.spr[0].line1)],
+            [pixel(x) | x <- split("", unprocessed_object.spr[0].line2)],
+            [pixel(x) | x <- split("", unprocessed_object.spr[0].line3)],
+            [pixel(x) | x <- split("", unprocessed_object.spr[0].line4)]
         ];
     }    
 
-    ObjectData new_obj = object_data(obj.name, obj.colors, processed_sprite);
+    ObjectData processed_object = object_data(
+        unprocessed_object.name, 
+        unprocessed_object.colors, 
+        processed_sprite
+    );
 
-    return new_obj;
+    return processed_object;
+}
+
+/*
+ * @Name:   process_legend
+ * @Desc:   Function to process legend elements. It converts them into 
+ *          specific types that refer to when they use ANDs, ORs or both 
+ *          (We consider the last errors, but do not stop the engine)
+ * @Param:  unprocessed_legend Unprocessed legend element   
+ * @Ret:    Processed LegendData element
+ */
+LegendData process_legend(LegendData unprocessed_legend) {
+    list[str] values = [unprocessed_legend.first_name];
+    list[str] aliases = [];
+    list[str] combined = [];
+        
+    for (LegendOperation other <- unprocessed_legend.other_names) {
+        switch(other){
+            case legend_or(name): aliases += name;
+            case legend_and(name): combined += name;
+        }
+    }
+
+    LegendData processed_legend = legend_reference(unprocessed_legend.key, values + aliases);;
+    if (size(aliases) > 0 && size(combined) > 0) {
+        processed_legend = legend_error(unprocessed_legend.key, values + aliases + combined);
+    } 
+    else if (size(combined) > 0) {
+        processed_legend = legend_combined(unprocessed_legend.key, values + combined);
+    } 
+
+    return processed_legend;
 }
 
 /*
@@ -230,20 +240,20 @@ ObjectData process_object(ObjectData obj){
  * @Param:     
  * @Ret:    
  */
-LayerData process_layer(LayerData l) {
-    list[str] new_layer = [];
-    for (str obj <- l.layer){
+LayerData process_layer(LayerData unprocessed_layer) {
+    list[str] processed_names = [];
+    for (str name <- unprocessed_layer.layer){
         // flexible grammar parses the optional "," separator as a character so we remove it
         // in post processing if it exists
-        if (obj[-1] == ",") {
-            new_layer += [obj[0..-1]];
+        if (name[-1] == ",") {
+            processed_names += [name[0..-1]];
         } else {
-            new_layer += [obj];
+            processed_names += [name];
         }
     }
 
-    LayerData new_l = layer_data(new_layer);
-    return new_l;
+    LayerData processed_layer = layer_data(processed_names);
+    return processed_layer;
 }
 
 /*

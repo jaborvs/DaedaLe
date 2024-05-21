@@ -93,11 +93,11 @@ data Pixel
 
 /*
  * @Name:   LegendOperation
- * @Desc:   AST node for the game legend operations
+ * @Desc:   AST node for the rest of the elements of game legend
  */ 
 data LegendOperation
-  = legend_or(str id)   // Or identifier
-  | legend_and(str id)  // And identifier
+  = legend_or(str name)      // Or ckeyase: object name or legend element key
+  | legend_and(str name)     // And case: object name legend element key
   ;
 
 /*
@@ -105,11 +105,11 @@ data LegendOperation
  * @Desc:   AST node for the game legend
  */ 
 data LegendData
-  = legend_data(str legend, str first, list[LegendOperation] others, str)   // (???)
-  | legend_reference(str legend, list[str] values)                              // (???)
-  | legend_combined(str legend, list[str] values)                           // (???)
-  | legend_error(str legend, list[str] values)                              // (???)
-  | legend_empty(str)                                                       // Empty legend section
+  = legend_data(str key, str first_name, list[LegendOperation] other_names, str)   // Unprocessed legend element: key, first (object or legend element), rest (objects or legend elements)
+  | legend_reference(str key, list[str] values)                          // Processed legend element: comes from an element joined by ORs
+  | legend_combined(str key, list[str] values)                           // Processed legend element: comes from an element joined by ANDs
+  | legend_error(str key, list[str] values)                              // Processed legend element: comes from an element joined by ORs and ANDs
+  | legend_empty(str)                                                    // Empty legend section
   ;    
 
 /*

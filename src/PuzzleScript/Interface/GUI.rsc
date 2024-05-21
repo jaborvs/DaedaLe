@@ -691,7 +691,6 @@ void view(Model m) {
  *  @Desc:  Runs the application
  *  @Ret:   Call to run the application
  */
- 
 App[Model] main() {
     game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/empty.PS|;
     game = load(game_loc);
