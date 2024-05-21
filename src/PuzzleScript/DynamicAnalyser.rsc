@@ -7,7 +7,6 @@
 
 module PuzzleScript::DynamicAnalyser
 
-import PuzzleScript::Report;
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
 import PuzzleScript::Compiler;

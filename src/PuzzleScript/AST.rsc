@@ -74,7 +74,7 @@ data Prelude (loc src = |unknown:///|)
  * @Desc:   AST node for the data of the Prelude
  */     
 data PreludeData (loc src = |unknown:///|)
-  = prelude_data(str key, str string, str)          // Title, author and website
+  = prelude_data(str key, str val, str)          // Title, author and comment
   | prelude_empty(str);                             // Empty prelude section
     
 /*

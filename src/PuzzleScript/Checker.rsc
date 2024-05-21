@@ -23,7 +23,6 @@ import vis::Charts;
 /*****************************************************************************/
 // --- Own modules imports ------------------------------------------------
 import PuzzleScript::AST;
-import PuzzleScript::Messages;
 import PuzzleScript::Utils;
 
 /*****************************************************************************/
@@ -35,39 +34,17 @@ import PuzzleScript::Utils;
  *          PuzzleScript game to be checked (???). They are ordered in terms 
  *          of how they appear on a PuzzleScript file
  */
-alias Checker = tuple[  
-    map[str, str] prelude,                      // Prelude section                       
-    list[str] objects,                          // List of all game objects
-    list[str] used_objects,                     // List of all used game objects
-    list[str] all_moveable_objects,             // List of all moveable game objects
-    map[str, list[str]] references,             // Map of references: name and its list of references (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
-    list[str] used_references,                  // List of used references
-    map[str, list[str]] combinations,           // Map of combinations: name and its list of combinations (e.g., @ = Crate and Target)
-    map[                                        // Map of game sounds:
-        str,                                    //      Name
-        tuple[list[int] seeds, loc pos]         //      Tuple: list of seeds and their location on file (???)
-        ] sound_events,                                         
-    list[str] used_sounds,                      // List of used game sounds
-    list[Condition] conditions,                 // List of game win conditions
-    list[Msg] msgs,                             // List of game messages
-    map[str, list[str]] resolved_references,    // Map of all resolved references:
-    PSGame game                                 // AST node of a PuzzleScript game
-];
-
-/*
- * @Name:   Reference
- * @Desc:   Data structure for the references of a PuzzleScript game legend
- *          (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
- */
-alias Reference = tuple[
-    list[str] objs,         // List of objects referenced
-    Checker c,              // Checker
-    list[str] references    // List of references (???)
+alias Checker = tuple[                        
+    map[str key, list[str] values] references,              // Map of references: name and its list of references (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
+    map[str key, list[str] values] resolved_references,     // Map of all resolved references:
+    map[str key, list[str] values] combinations,            // Map of combinations: name and its list of combinations (e.g., @ = Crate and Target)                                          
+    PSGame game                                             // AST node of a PuzzleScript game
 ];
 
 /*
  * @Name:   Condition
  * @Desc:   Data structure for the win conditions of a PuzzleScript game
+ *          Will need to define it somewhere else (FIX)
  */
 data Condition (loc src = |unknown:///|)
     = some_objects(list[str] objects, ConditionData original)                       // Some type win condition
@@ -76,8 +53,6 @@ data Condition (loc src = |unknown:///|)
     | some_objects_on(list[str] objects, list[str] on, ConditionData original)      // Some on type win condition
     | no_objects_on(list[str] objects, list[str] on, ConditionData original)        // No on type win condition
     ;
-
-// anno loc Condition.src;
 
 /*
  * @Name:   COLORS
@@ -111,13 +86,66 @@ public map[str, str] COLORS = (
     "pink":         "#FFAAFF"
 );
 
-str default_mask = "@None@";
+/*****************************************************************************/
+// --- Public Checker functions -----------------------------------------------
+
+/*
+ * @Name:   new_checker
+ * @Desc:   Constructor function to create a new empty checker given an AST node
+ *          of a PuzzleScript game
+ * @Params: 
+ *      debug_flag  Boolean indicating whether or not we are in the debug mode
+ *      game        AST node of a PuzzleScript game
+ */
+Checker new_checker(PSGame game) 
+    = <
+        (),     // References map
+        (),     // Resolved references map
+        (),     // Combinations map
+        game    // Game AST node
+    >;
+
+/*
+ * @Name:   check_game
+ * @Desc:   Function to check a PuzzleScript game. It calls all the others
+ *          checker functions in order
+ * @Param:
+ *      g       Game AST node
+ * @Ret:    Updated checker
+ */
+Checker check_game(PSGame g) {
+    Checker c = new_checker(g);
+
+    for (LegendData l <- g.legend){
+        if (l is legend_reference) {
+            for (str object <- l.values) {
+                if (toLowerCase(l.legend) in c.references) c.references[toLowerCase(l.legend)] += [toLowerCase(object)];
+                else c.references += (toLowerCase(l.legend): [toLowerCase(object)]);
+            }
+        }
+
+        if (l is legend_combined) {
+            for (str object <- l.values) {
+                if (toLowerCase(l.legend) in c.combinations) c.combinations[toLowerCase(l.legend)] += [toLowerCase(object)];
+                else c.combinations += (toLowerCase(l.legend): [toLowerCase(object)]);
+            }
+        }
+    }
+
+    c.resolved_references = ();
+    for(str key <- c.references<0>) {
+        if (size(c.references[key]) == 1) continue;
+        c.resolved_references += (key: get_resolved_references(key, c.references));
+    }
+
+    return c;
+}
 
 /*****************************************************************************/
 // --- Public Getter functions ------------------------------------------------
 
 /*
- * @Name:   get_prelude
+ * @Name:   get_prelude This function needs to be deleted at some point (FIX)
  * @Desc:   Function to get the data of the prelude section lines
  * @Params:
  *      values          AST nodes of the game's Prelude section
@@ -126,10 +154,10 @@ str default_mask = "@None@";
  * @Ret:    String with the name of the game, author or the webpage 
  *          (depending on key)
  */
-str get_prelude(list[PreludeData] values, str key, str default_str){
-    v = [x | x <- values, toLowerCase(x.key) == toLowerCase(key)];
+str get_prelude(list[PreludeData] prs, str key, str default_str){
+    prs_matches = [x | x <- prs, toLowerCase(x.key) == toLowerCase(key)];
 
-    if (!isEmpty(v)) return v[0].string;
+    if (!isEmpty(prs_matches)) return prs_matches[0].val;
     return default_str;
 }
 
@@ -245,907 +273,4 @@ list[str] get_properties(str key, map[str, list[str]] references) {
     }
 
     return toList(toSet(all_references));
-}
-        
-/*****************************************************************************/
-// --- Public Checker functions -----------------------------------------------
-
-/*
- * @Name:   new_checker
- * @Desc:   Constructor function to create a new empty checker given an AST node
- *          of a PuzzleScript game
- * @Params: 
- *      debug_flag  Boolean indicating whether or not we are in the debug mode
- *      game        AST node of a PuzzleScript game
- */
-Checker new_checker(PSGame game) 
-    = <
-        (), 
-        [], 
-        [], 
-        [], 
-        (), 
-        [], 
-        (), 
-        (), 
-        [], 
-        [], 
-        [], 
-        (), 
-        game
-    >;
-
-/*
- * @Name:   check_prelude
- * @Desc:   Function to check the prelude section. The used keywords are defined 
- *          in the Utils file
- * @Param:
- *      pr  AST node with the prelude data
- *      c   Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          invalid_prelud_key
- *            existing_prelude_key
- *          missing_prelude_value
- *          invalid_prelude_value
- *      Warnings
- *          redundant_prelude_value
- */
-Checker check_prelude(PreludeData pr, Checker c){
-    str key = toLowerCase(pr.key);
-
-    // Case 1: Not a defined keyword
-    if (!(key in prelude_keywords)){
-        c.msgs += [invalid_prelude_key(pr.key, error(), pr.src)];
-        return c;
-    }
-    
-    // Case 2: Already defined keyword
-    if (key in c.prelude){
-        c.msgs += [existing_prelude_key(pr.key, error(), pr.src)];
-    // Case 3: Key in prelude_without_arguments (???)
-    } else if (key in prelude_without_arguments){
-        if (pr.string != "") c.msgs += [redundant_prelude_value(pr.key, warn(), pr.src)];
-        c.prelude[key] = "None";
-    // Case 4: Key in prelude_with_arguments
-    } else {
-        // Case 4.1: Missing argument
-        if (pr.string == ""){
-            c.msgs += [missing_prelude_value(pr.key, error(), pr.src)];
-            return c;
-        }
-        // Case 4.2: Invalid argument of type int
-        if (key in prelude_with_arguments_int) {
-            if (!(check_valid_real(pr.string))) c.msgs += [invalid_prelude_value(key, pr.string, "real", error(), pr.src)];
-            c.prelude[key] = pr.string;
-        // Case 4.3: Argument of type string
-        } else {
-            // Case 4.3.1: Invalid argument of type str_dim
-            if (key in prelude_with_arguments_str_dim) {
-                if (!(/[0-9]+x[0-9]+/i := pr.string)) c.msgs += [invalid_prelude_value(key, pr.string, "height code", error(), pr.src)];
-                c.prelude[key] = pr.string;
-            // Case 4.3.2: Invalid argument of type str_color (Complicated to validate since it can be both an hex code or a color name so for now we do nothing)
-            } else if (key in prelude_with_arguments_str_color) {
-                c.prelude[key] = pr.string;
-            // Case 4.3.3: Other cases not considered (title, author, homepage...)
-            } else {
-                c.prelude[key] = pr.string;
-            }
-        }
-    }
-
-    return c;
-}
-
-/*
- * @Name:   check_object
- * @Desc:   Function to check an object
- * @Param:
- *      ojb     AST node with the object data
- *      c       Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          invalid_name
- *          existing_object
- *          existing_legend
- *          invalid_color
- *          invalid_sprite 
- *          invalid_index
- *      Warnings
- *          unused_colors
- */
-Checker check_object(ObjectData obj, Checker c) {
-    int max_index = 0;
-    str id = toLowerCase(obj.name);    
-    
-    // Case 1: Check for a valid name
-    if (!check_valid_name(id)) c.msgs += [invalid_name(id, error(), obj.src)];
-
-    // Case 2: Check for duplicated objects
-    if (id in c.objects) {
-        c.msgs += [existing_object(obj.name, error(), obj.src)];
-    } else {
-        c.objects += [id];
-    }
-    
-    // Case 3: Check the legend
-    if (!isEmpty(obj.legend)) {
-        if (toLowerCase(obj.legend[0]) in c.references) c.references[toLowerCase(obj.legend[0])] += [toLowerCase(obj.name)];
-        else c.references += (toLowerCase(obj.legend[0]): [toLowerCase(obj.name)]);
-
-        msgs = check_existing_legend(obj.legend[0], [obj.name], obj.src, c);
-        if (!isEmpty(msgs)){
-            c.msgs += msgs;
-        } else {
-            c.used_objects += [id];
-        }
-    }
-    
-    // Case 4: Check the colors (only default mastersystem palette supported currently)
-    for (str color <- obj.colors) {
-        if (toLowerCase(color) in COLORS) continue;
-        if (/^#(?:[0-9a-fA-F]{3}){1,2}$/ := color) continue;
-        
-        c.msgs += [invalid_color(obj.name, color, error(), obj.src)];
-    }
-
-    // Case 5: Check if it has a sprite
-    if (isEmpty(obj.sprite)) return c;
-
-    bool valid_length = true;
-    if (size(obj.sprite) != 5) valid_length = false;
-
-    for(list[Pixel] line <- obj.sprite){        
-        // Check if the sprite is of valid length
-        if (size(line) != 5) valid_length = false;
-    
-        // Check if all pixels have the correct index
-        for(Pixel pix <- line){
-            str pixel = pix.pixel;
-            if (pixel == ".") continue;
-            
-            int converted = toInt(pixel);
-            if (converted + 1 > size(obj.colors)) {
-                c.msgs += [invalid_index(obj.name, converted, error(), obj.src)];
-            } else if (converted > max_index) max_index = converted;
-        }
-    }
-    
-    if (!valid_length) c.msgs += [invalid_sprite(obj.name, error(), obj.src)];
-    
-    // Case 5: Check if all sprite defined colors are used
-    if (size(obj.colors) > max_index + 1) {
-        c.msgs += [unused_colors(obj.name, intercalate(", ", obj.colors[max_index+1..size(obj.colors)]), warn(), obj.src)];
-    }
-    
-    return c;
-}
-
-/*
- * @Name:   check_undefined_object
- * @Desc:   Function to check undefined objects
- * @Param:  
- *      name    String containing the name of the object
- *      pos     Location in the PuzzleScript file
- *      c       Checker
- * @Ret:    List of messages
- */
-list[Msg] check_undefined_object(str name, loc pos, Checker c){
-    list[Msg] msgs = [];
-    
-    if (!(toLowerCase(name) in c.objects)){
-        if (isEmpty(check_existing_legend(name, [], pos, c))) msgs += [undefined_object(name, error(), pos)];
-    }
-
-    return msgs;
-}
-
-/*
- * @Name:   check_legend
- * @Desc:   Function to check the legend
- * @Param:
- *      l   AST node with the legend data
- *      c   Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          existing_legend
- *          undefined_object
- *          mixed_legend ('and' and 'or')
- *          mixed_legend (alias and cominations)
- *          invalid_name
- *      Warnings
- *          self_reference
- */
-Checker check_legend(LegendData l, Checker c) {
-    // Case 1: Invalid legend
-    if (!check_valid_legend(l.legend)) c.msgs += [invalid_name(l.legend, error(), l.src)];
-    c.msgs += check_existing_legend(l.legend, l.values, l.src, c);
-
-    // Case 2: Legend references
-    if (l is legend_reference) {
-        for (str object <- l.values) {
-            if (toLowerCase(l.legend) in c.references) c.references[toLowerCase(l.legend)] += [toLowerCase(object)];
-            else c.references += (toLowerCase(l.legend): [toLowerCase(object)]);
-        }
-    }
-
-    // Case 3: Legend object combination
-    if (l is legend_combined) {
-        for (str object <- l.values) {
-            if (toLowerCase(l.legend) in c.combinations) c.combinations[toLowerCase(l.legend)] += [toLowerCase(object)];
-            else c.combinations += (toLowerCase(l.legend): [toLowerCase(object)]);
-        }
-    }
-
-    str legend = toLowerCase(l.legend);
-
-    // Case 4: Check if object in legend is defined in objects section      Why commented(???)
-    if (check_valid_name(l.legend)) c.objects += [legend];
-    // for (str v <- values){
-    //     if (!(v in c.objects)) {
-    //         c.msgs += [undefined_object(v, error(), l.src)];
-    //     } else {
-    //         c.used_objects += [v];
-    //     }
-    // }
-    
-    // Case 5: if it's just one thing being defined with check it and return    Why commented(???)
-    // if (size(values) == 1) {
-    //     msgs = check_undefined_object(l.values[0], l.src, c);
-    //     if (!isEmpty(msgs)) {
-    //         c.msgs += msgs;
-    //     } else {
-    //         // check if it's a self definition and warn as need be
-    //         if (legend == values[0]){
-    //             c.msgs += [self_reference(l.legend, warn(), l.src)];
-    //         } else {
-    //             c.references[legend] = values;
-    //         }
-    //     }
-        
-    //     return c;
-    // }
-    
-    // Case 6: if not we do a more expensive check for invalid legend and mixed types    Why commented(???)
-    // switch(l) {
-    //     case legend_reference(_, _): {
-    //         // if our alias makes use of combinations that's a bonk
-    //         list[str] mixed = [x | x <- values, x in c.combinations];
-    //         if (!isEmpty(mixed)) {
-    //             c.msgs += [mixed_legend(l.legend, mixed, "alias", "combination", error(), l.src)];
-    //         } else {
-    //             c.references[legend] = values;
-    //         }
-    //     }
-    //     case legend_combined(_, _): {
-    //         // if our combination makes use of aliases that's a bonk (just gotta make sure it's actually an alias)
-    //         list[str] mixed = [x | x <- values, x in c.references && size(c.references[x]) > 1];
-    //         if (!isEmpty(mixed)) {
-    //             c.msgs += [mixed_legend(l.legend, mixed, "combination", "alias", error(), l.src)];
-    //         } else {
-    //             c.combinations[legend] = values;
-    //         }
-    //     }
-    //     case legend_error(_, _): c.msgs += [mixed_legend(l.legend, l.values, error(), l.src)];    
-    // }
-
-    return c;
-}
-
-/*
- * @Name:   check_valid_legend
- * @Desc:   Function to check if a legend element is valid using a regular expression and
- *          checking if it is not one of the coding keywords
- * @Param:
- *      name String containing the name of the legend element
- * @Ret:    Boolean determining if valid
- */
-bool check_valid_legend(str name){
-    if (size(name) > 1){
-        return check_valid_name(name);
-    } else {
-        return /^<x:[a-uw-z0-9.!@#$%&*,\-+]+>$/i := name && !(toLowerCase(name) in keywords);
-    }
-}
-
-/*
- * @Name:   check_existing_legend
- * @Desc:   Function to check if a legend exists
- * @Param:  
- *      name    String containing the name of the legend element
- *      values  All values that it is associated with (using or/and)
- *      pos     Location in the PuzzleScript file
- *      c       Checker
- * @Ret:    List of messages
- */
-list[Msg] check_existing_legend(str name, list[str] values, loc pos, Checker c){
-    list[Msg] msgs = [];
-
-    if (toLowerCase(name) in c.references) msgs += [existing_legend(name, c.references[toLowerCase(name)], values, error(), pos)];
-    if (toLowerCase(name) in c.combinations) msgs += [existing_legend(name, c.combinations[toLowerCase(name)], values, error(), pos)];
-    
-    return msgs;
-}
-
-/*
- * @Name:   check_sound
- * @Desc:   Function to check a sound
- * @Param:
- *      s   AST node with a sound
- *      c   Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          invalid_sound
- *          invalid_sound_length
- *          existing_sound_object
- *          existing_mask
- *          existing_sound_seed
- *          mask_not_directional
- *          invalid_sound_verb
- *          undefined_sound_object
- *          undefined_sound_mask
- *          undefined_sound_seed
- *      Warnings
- *          existing_sound
- */
-Checker check_sound(SoundData s, Checker c){
-    int seed;
-    
-    if (size(s.sound) == 2 && toLowerCase(s.sound[0]) in sound_events) {
-        if (!check_valid_sound(s.sound[1])) {
-            c.msgs += [invalid_sound_seed(s.sound[1], error(), s.src)];
-            seed = -1;
-        } else {
-            seed = toInt(s.sound[1]);
-        }
-        
-        if (toLowerCase(s.sound[0]) in c.sound_events) {
-            c.msgs += [existing_sound(s.sound[0], warn(), s.src)];
-            c.sound_events[toLowerCase(s.sound[0])].seeds += [seed];
-        } else {
-            c.sound_events[toLowerCase(s.sound[0])] = <[seed], s.src>;
-        }
-        
-        return c;
-    } else if (size(s.sound) < 3) {
-        c.msgs += [invalid_sound_length(error(), s.src)];
-        return c;
-    }
-    
-    list[str] objects = [];
-    str mask = default_mask;
-    seed = -1;
-    list[str] directions = [];
-    
-    for (str verb <- s.sound) {
-        str v = toLowerCase(verb);
-        if (v in c.objects) {
-            if (!isEmpty(objects)) {
-                c.msgs += [existing_sound_object(error, s.src)];
-            }
-        } else if (v in sound_masks) {
-            if (mask == default_mask) {
-                mask = v;
-            } else {
-                c.msgs += [existing_mask(v, mask, error(), s.src)];
-            }
-            
-        } else if (v in absolute_directions_single){
-            if (!(mask in directional_sound_masks)) {
-                c.msgs += [mask_not_directional(mask, error(), s.src)];
-            } else {
-                directions += [v];
-            }
-        } else if (check_valid_sound(v)) {
-            if (seed != -1){
-                c.msgs += [existing_sound_seed(toString(seed), v, error(), s.src)];
-            } else {
-                seed = toInt(v);
-            }
-        } else {
-            c.msgs += [invalid_sound_verb(verb, error(), s.src)];
-        }
-    }
-    
-    if (isEmpty(objects)) c.msgs += [undefined_sound_objects(error(), s.src)];
-    if (mask == default_mask) c.msgs += [undefined_sound_mask(error(), s.src)];
-    if (seed < 0) c.msgs += [undefined_sound_seed(error(), s.src)];
-    
-    //object_mask_direction
-    for (str obj <- objects){
-        list[str] events = [];
-        if (mask in directional_sound_masks && !isEmpty(directions)){
-            for (str dir <- directions){
-                events += ["<obj>_<mask>_<dir>"];
-            }
-        } else {
-            events += ["<obj>_<mask>"];
-        }
-        
-        for (str e <- events){
-            if (e in c.sound_events) {
-                c.msgs += [existing_sound(e, warn(), s.src)];
-                c.sound_events[e].seeds += [seed];
-            } else {
-                c.sound_events[e] = <[seed], s.src>;
-            }
-        }
-    }
-    
-    return c;
-}
-
-/*
- * @Name:   check_layer
- * @Desc:   Function to check a layer. Broken when creating TutoMate (???)
- * @Param:
- *      l   AST node with a layer
- *      c   Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          undefined_object
- *      Warnings
- *          multilayered_object
- */
-Checker check_layer(LayerData l, Checker c){   
-    return c;
-}
-
-/*
- * @Name:   check_rule
- * @Desc:   Function to check a rule
- * @Param:
- *      r       AST node of a rule (loop)
- *      c       Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          invalid_rule_prefix
- *          invalid_rule_command
- *          undefined_sound
- *          undefined_object
- *          invalid_sound
- *          invalid_ellipsis_placement
- *          invalid_ellipsis
- *          invalid_rule_part_size
- *          invalid_rule_content_size
- *          invalid_rule_ellipsis_size
- */
-Checker check_rule(RuleData r: rule_loop(_,_), Checker c){
-    for(RuleData childRule <- r.rules){
-        check_rule(childRule, c);
-    }
-    return c;
-}
-
-/*
- * @Name:   check_rule
- * @Desc:   Function to check a rule
- * @Param:
- *      r       AST node of a rule (normal)
- *      c       Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          invalid_rule_prefix
- *          invalid_rule_command
- *          undefined_sound
- *          undefined_object
- *          invalid_sound
- *          invalid_ellipsis_placement
- *          invalid_ellipsis
- *          invalid_rule_part_size
- *          invalid_rule_content_size
- *          invalid_rule_ellipsis_size
- */
-Checker check_rule(RuleData r: rule_data(_, _, _, _), Checker c){
-
-    bool late = any(RulePart p <- r.left, p is prefix && toLowerCase(p.prefix) == "late");
-    
-    bool redundant = any(RulePart p <- r.right, p is prefix && toLowerCase(p.prefix) in ["win", "restart"]);
-    if (redundant && size(r.right) > 1) c.msgs += [redundant_keyword(warn(), r.src)];
-
-    int msgs = size([x | x <- c.msgs, x.t is error]);
-    if ([*_, part(_), prefix(_), *_] := r.left) c.msgs += [invalid_rule_direction(warn(), r.src)];
-    
-    for (RulePart p <- r.left){
-        c = check_rulepart(p, c, late, true);
-    }
-    
-    for (RulePart p <- r.right){
-        c = check_rulepart(p, c, late, false);
-    }
-    
-    // if some of the rule is invalid it gets complicated to do more checks, so we return it 
-    // for now until they fixed the rest
-    if (size([x | x <- c.msgs, x.t is error]) > msgs) return c;
-    
-    list[RulePart] part_right = [x | RulePart x <- r.right, x is part];
-    if (isEmpty(part_right)) return c;
-    
-    list[RulePart] part_left = [x | RulePart x <- r.left, x is part];
-    if (isEmpty(part_left)) return c;
-    
-    //check if there are equal amounts of parts on both sides
-    if (size(part_left) != size(part_right)) {
-        c.msgs += [invalid_rule_part_size(error(), r.src)];
-        return c;
-    }
-    
-    //check if each part, and its equivalent have the same number of sections
-    for (int i <- [0..size(part_left)]){
-        if (size(part_left[i].contents) != size(part_right[i].contents)) {
-            c.msgs += [invalid_rule_content_size(error(), r.src)];
-            continue;
-        }
-        
-        //check if the equivalent of any part with an ellipsis also has one
-        for (int j <- [0..size(part_left[i].contents)]){
-            list[str] left = part_left[i].contents[j].content;
-            list[str] right = part_right[i].contents[j].content;
-            
-            if (left == ["..."] && right != ["..."]) invalid_rule_ellipsis_size(error(), r.src);
-            if (right == ["..."] && left != ["..."]) invalid_rule_ellipsis_size(error(), r.src);
-            
-        }
-    }
-    
-    return c;
-}
-
-/*
- * @Name:   check_rulepart
- * @Desc:   Function to check a rule part
- * @Param:
- *      p       Rule part (part)
- *      c       Checker
- *      late    Boolean indicating if its a late rule
- *      pattern Boolean indicating if its a pattern (???)
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          undefined_object
- *      Warnings
- *          multilayered_object
- */
-Checker check_rulepart(RulePart p: part(list[RuleContent] contents), Checker c, bool late, bool pattern){
-    for (RuleContent cont <- contents) {
-        if ("..." in cont.content) {
-            if (cont.content != ["..."]) c.msgs += [invalid_ellipsis(error(), cont.src)];
-            continue;
-        }
-
-        list[str] objs = [toLowerCase(x) | x <- cont.content, !(toLowerCase(x) in rulepart_keywords)];
-        list[str] verbs = [toLowerCase(x) | x <- cont.content, toLowerCase(x) in rulepart_keywords];
-
-        if(any(str x <- verbs, x notin ["no"]) && late) c.msgs += [invalid_rule_movement_late(error(), cont.src)];
-        
-        int index = 0;
-        for (str verb <- verbs) {
-            if (verb in moveable_keywords && !(objs[index] in c.all_moveable_objects)) {
-                c.all_moveable_objects += get_resolved_references(objs[index], c.references);
-            }
-            index += 1;
-        }
-
-        if (pattern){
-            if(any(str rand <- rulepart_random, rand in verbs)) c.msgs += [invalid_rule_random(error(), cont.src)];
-        }
-        
-        list[list[str]] references = [];
-        for (str obj <- objs) {
-            references += [get_resolved_references(obj, c.references)];
-        }
-        
-        if (size(objs) > 1){
-            for (int i <- [0..size(references)-1]){
-                for (int j <- [i+1..size(references)]){
-                    c = check_stackable(references[i], references[j], c, cont.src);
-                }
-            }
-        }
-        
-        // if we have a mismatch between verbs and objs we skip
-        // else we check to make sure that only one force is applied to any one object
-        if (size(verbs) > size(objs)) {
-            c.msgs += [invalid_rule_keyword_amount(error(), cont.src)];
-        } else {
-            for (int i <- [0..size(cont.content)]){
-                if (toLowerCase(cont.content[i]) in verbs && i == size(cont.content) - 1) {
-                    //leftover force on the end
-                    c.msgs += [invalid_rule_keyword_placement(false, error(), cont.src)];
-                } else if (toLowerCase(cont.content[i]) in verbs && !(toLowerCase(cont.content[i+1]) in objs)){
-                    //force not followed by object
-                    c.msgs += [invalid_rule_keyword_placement(true, error(), cont.src)];
-                }
-            }
-        }                    
-    }
-    
-    if (!isEmpty(contents)) {
-        if ("..." in contents[0].content || "..." in contents[-1].content) c.msgs += [invalid_ellipsis_placement(error(), p.src)];
-    }
-    
-    return c;
-}
-
-/*
- * @Name:   check_rulepart
- * @Desc:   Function to check a rule part
- * @Param:
- *      p       Rule part (command)
- *      c       Checker
- *      late    Boolean indicating if its a late rule
- *      pattern Boolean indicating if its a pattern (???)
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          undefined_object
- *      Warnings
- *          multilayered_object
- */
-Checker check_rulepart(RulePart p: command(str command), Checker c, bool late, bool pattern){
-    if (!(toLowerCase(command) in rule_commands)) 
-        c.msgs += [invalid_rule_command(command, error(), p.src)];
-    
-    return c;
-}
-
-/*
- * @Name:   check_rulepart
- * @Desc:   Function to check a rule part
- * @Param:
- *      p       Rule part (sound)
- *      c       Checker
- *      late    Boolean indicating if its a late rule
- *      pattern Boolean indicating if its a pattern (???)
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          undefined_object
- *      Warnings
- *          multilayered_object
- */
-Checker check_rulepart(RulePart p: sound(str snd), Checker c, bool late, bool pattern){
-    if (/sfx([0-9]|'10')/i := snd && toLowerCase(snd) in c.sound_events) {
-        c.used_sounds += [toLowerCase(snd)];
-    } else if (/sfx([0-9]|10)/i := snd) {
-        //correct format but undefined
-        c.msgs += [undefined_sound(snd, error(), p.src)];
-    } else {
-        //wrong format
-        c.msgs += [invalid_sound(snd, error(), p.src)];
-    }
-
-    return c;
-}
-
-/*
- * @Name:   check_rulepart
- * @Desc:   Function to check a rule part
- * @Param:
- *      p       Rule part (prefix)
- *      c       Checker
- *      late    Boolean indicating if its a late rule
- *      pattern Boolean indicating if its a pattern (???)
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          undefined_object
- *      Warnings
- *          multilayered_object
- */
-Checker check_rulepart(RulePart p: prefix(str prefix), Checker c, bool late, bool pattern){
-    if (!(toLowerCase(p.prefix) in rule_prefix)) c.msgs += [invalid_rule_prefix(p.prefix, error(), p.src)];
-    
-    return c;
-}   
-
-/*
- * @Name:   check_condition
- * @Desc:   Function to check the win conditions. Loss of functionality when
- *          creating TutoMate
- * @Param:
- *      w   AST node with the win conditions  
- *      c   Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          invalid_condition_length
- *          undefined_object
- *          invalid_condition
- *          invalid_condition_verb
- *          impossible_condition_unstackable
- *          impossible_condition_duplicates
- */
-Checker check_condition(ConditionData w, Checker c){
-    if (!(size(w.condition) in [2, 4])){
-        c.msgs += [invalid_condition_length(error(), w.src)];
-        return c;
-    }
-    
-    return c;
-}
-
-/*
- * @Name:   check_level
- * @Desc:   Function to check a level
- * @Param:
- *      l   AST node with the level 
- *      c   Checker
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          invalid_level_row
- *          invalid_name
- *          ambiguous pixel
- *          unefined_object
- *      Warnings
- *          message_too_long
- */
-Checker check_level(LevelData l, Checker c){
-    switch(l) {
-        case message(str msg): if (size(split(" ", msg)) > 12) c.msgs += [message_too_long(warn(), l.src)];
-        case level_data(_): {
-            int length = size(l.level[0]);
-            
-            for (str line <- l.level){
-                if (size(line) != length) {
-                    c.msgs += [invalid_level_row(error(), l.src)];
-                }
-            }
-        }
-    }
-
-    return c;
-}
-
-/*
- * @Name:   check_stackable
- * @Desc:   Function to check if two objects are stackable
- * @Param:
- *      objs1   Names of objects 1
- *      objs2   Names of objects 2
- *      c       Checker
- *      pos     Location (???)
- * @Ret:   Checker with updated errors and warnings
- *      Errors
- *          impossible_condition_unstackable
- */
-Checker check_stackable(list[str] objs1, list[str] objs2, Checker c, loc pos){
-    for (LayerData l <- c.game.layers){       
-        if (!isEmpty(objs1 & l.layer) && !isEmpty(objs2 & l.layer)){
-            c.msgs += [impossible_condition_unstackable(error(), pos)];
-        }
-    }
-    
-    return c;
-}
-
-/*
- * @Name:   check_valid_name
- * @Desc:   Function to check if a name is valid using a regular expression
- *          and verifiying is not one of the used coding keywords
- * @Param:  
- *      name    String to be checked
- * @Ret:    Boolean determining if valid
- */
-bool check_valid_name(str name){
-    return /^<x:[a-z0-9_]+>$/i := name && !(toLowerCase(name) in keywords);
-}
-
-/*
- * @Name:   check_valid_real
- * @Desc:   Function that checks if a string contains a positive real number
- * @Param:
- *      v   String to be checked
- * @Ret:    Boolean determining if valid
- */
-bool check_valid_real(str v) {
-    try
-        real i = toReal(v);
-    catch IllegalArgument: return false;
-    return i > 0;
-}
-
-/*
- * @Name:   check_game
- * @Desc:   Function to check a PuzzleScript game. It calls all the others
- *          checker functions in order
- * @Param:
- *      g       AST node of a PuzzleScript game
- *      debug   Boolean indicating if we are in debug mode
- * @Ret:    Updated checker
- */
-Checker check_game(PSGame g) {
-
-    Checker c = new_checker(g);
-
-    map[Section, int] dupes = distribution(g.sections);
-    for (Section s <- dupes) {
-        if (dupes[s] > 1) c.msgs += [existing_section(s, dupes[s], warn(), s.src)];
-    }
-    
-    for (PreludeData pr <- g.prelude){
-        c = check_prelude(pr, c);
-    }
-    
-    for (ObjectData obj <- g.objects){
-        c = check_object(obj, c);
-    }
-    
-    for (LegendData l <- g.legend){
-        c = check_legend(l, c);
-    }
-
-    for (SoundData s <- g.sounds) {
-        c = check_sound(s, c);
-    }
-
-    for (LayerData l <- g.layers) {
-        c = check_layer(l, c);
-    }
-
-    for (RuleData r <- g.rules) {
-        c = check_rule(r, c);
-    }
-    
-    for (str event <- c.sound_events) {
-        if (startsWith(event, "sfx") && event notin c.used_sounds) c.msgs += [unused_sound_event(warn(), c.sound_events[event].pos)];
-    }
-    
-    for (ConditionData w <- g.conditions) {
-        c = check_condition(w, c);
-    }
-    
-    for (LevelData l <- g.levels) {
-        c = check_level(l, c);
-    }
-    
-    for (ObjectData x <- g.objects){
-        if (!(toLowerCase(x.name) in c.used_objects)) c.msgs += [unused_object(x.name, warn(), x.src)];
-    }
-    
-    for (LegendData x <- g.legend){
-        if (!(toLowerCase(x.legend) in c.used_references)) c.msgs += [unused_legend(x.legend, warn(), x.src)];
-    }
-
-    c.resolved_references = ();
-    for(str key <- c.references<0>) {
-        if (size(c.references[key]) == 1) continue;
-        c.resolved_references += (key: get_resolved_references(key, c.references));
-    }
-    
-    if (isEmpty(g.levels)) c.msgs += [no_levels(warn(), g.src)];
-    
-    iprintln(c);
-    return c;
-}
-
-/*****************************************************************************/
-// --- Public Printing Functions ----------------------------------------------
-
-/*
- * @Name:   print_msgs
- * @Desc:   Function to print all the checker messages
- * @Param:
- *      c   Checker 
- */
-void print_msgs(Checker checker){
-    list[Msg] error_list = [x | Msg x <- checker.msgs, x.t == error()];
-    list[Msg] warn_list  = [x | Msg x <- checker.msgs, x.t == warn()];
-    list[Msg] info_list  = [x | Msg x <- checker.msgs, x.t == info()];
-    
-    if (!isEmpty(error_list)) {
-        println("ERRORS");
-        for (Msg msg <- error_list) {
-            println(toString(msg));
-        }
-    }
-    
-    if (!isEmpty(warn_list)) {
-        println("WARNINGS");
-        for (Msg msg <- warn_list) {
-            println(toString(msg));
-        }
-    }
-    
-    if (!isEmpty(info_list)) {
-        println("INFO");
-        for (Msg msg <- info_list) {
-            println(toString(msg));
-        }
-    }
 }

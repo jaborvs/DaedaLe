@@ -166,9 +166,9 @@ LayerData process_layer(LayerData l) {
     // flexible grammar parses the optional "," separator as a character so we remove it
     // in post processing if it exists
     if (obj[-1] == ",") {
-      new_layer += [toLowerCase(obj[0..-1])];
+      new_layer += [obj[0..-1]];
     } else {
-      new_layer += [toLowerCase(obj)];
+      new_layer += [obj];
     }
   }
 

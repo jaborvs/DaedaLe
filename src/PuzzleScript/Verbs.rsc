@@ -1,6 +1,5 @@
 module PuzzleScript::Verbs
 
-import PuzzleScript::Report;
 import PuzzleScript::DynamicAnalyser;
 import PuzzleScript::Load;
 import PuzzleScript::Engine;

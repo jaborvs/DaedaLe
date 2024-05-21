@@ -3,7 +3,6 @@ module PuzzleScript::Tutorials::Engine::Results
 import util::ShellExec;
 import lang::json::IO;
 
-import PuzzleScript::Report;
 import PuzzleScript::DynamicAnalyser;
 import PuzzleScript::Load;
 import PuzzleScript::Engine;

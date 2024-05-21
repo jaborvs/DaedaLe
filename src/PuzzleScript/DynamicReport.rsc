@@ -11,7 +11,6 @@ import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
 import PuzzleScript::Checker;
 import PuzzleScript::AST;
-import PuzzleScript::Report;
 import PuzzleScript::DynamicAnalyser;
 import IO;
 import util::Eval;

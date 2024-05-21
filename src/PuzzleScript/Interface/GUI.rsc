@@ -26,7 +26,6 @@ import Set;
 import IO;
 
 // --- Own modules imports ----------------------------------------------------
-import PuzzleScript::Report;
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
@@ -304,7 +303,7 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
                             else if (COLORS[pix.color]?) {
                                 json += "\"c\": \"<COLORS[pix.color]>\"";
                             }
-                            // I think this never runs (XXX)
+                            // I think this never runs (???)
                             else if (pix.pixel != ".") {
                                 json += "\"c\": \"<pix.color>\"";
                             }
@@ -578,7 +577,7 @@ Model reload(str src, int index) {
     Checker checker = check_game(game);
     Engine engine = compile(checker);
 
-    str title = get_prelude(engine.game.prelude, "title", "Unknown");
+    str title = get_prelude(engine.game.prelude, "title", "Unknown"); // To be fixed (FIX)
  
     Model init() = <"none", title, engine, checker, index, index, src, "", false, <[], 0.0>, <engine,[], 0.0>, "PuzzleScript/Interface/bin/output_image<index>.png", <[],[],[]>>;
     return init();
@@ -689,7 +688,6 @@ void view(Model m) {
  *  @Desc:  Runs the application
  *  @Ret:   Call to run the application
  */
-
 App[Model] main() {
     game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
     game = load(game_loc);
