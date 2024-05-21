@@ -212,77 +212,72 @@ ObjectData process_object(ObjectData unprocessed_object){
  * @Ret:    Processed LegendData element
  */
 LegendData process_legend(LegendData unprocessed_legend) {
-    list[str] values = [unprocessed_legend.first_name];
-    list[str] aliases = [];
-    list[str] combined = [];
+    list[str] items = [unprocessed_legend.first_item];
+    list[str] alias_items = [];
+    list[str] combined_items = [];
         
-    for (LegendOperation other <- unprocessed_legend.other_names) {
+    for (LegendOperation other <- unprocessed_legend.other_items) {
         switch(other){
-            case legend_or(name): aliases += name;
-            case legend_and(name): combined += name;
+            case legend_or(item): alias_items += item;
+            case legend_and(item): combined_items += item;
         }
     }
 
-    LegendData processed_legend = legend_reference(unprocessed_legend.key, values + aliases);;
-    if (size(aliases) > 0 && size(combined) > 0) {
-        processed_legend = legend_error(unprocessed_legend.key, values + aliases + combined);
+    LegendData processed_legend = legend_reference(unprocessed_legend.key, items + alias_items);;
+    if (size(alias_items) > 0 && size(combined_items) > 0) {
+        processed_legend = legend_error(unprocessed_legend.key, items + alias_items + combined_items);
     } 
-    else if (size(combined) > 0) {
-        processed_legend = legend_combined(unprocessed_legend.key, values + combined);
+    else if (size(combined_items) > 0) {
+        processed_legend = legend_combined(unprocessed_legend.key, items + combined_items);
     } 
 
     return processed_legend;
 }
 
 /*
- * @Name:   
- * @Desc:   
- * @Param:     
- * @Ret:    
+ * @Name:   process_layer
+ * @Desc:   Function to process a layer element. We do so to delete "," from the 
+ *          end of the layer items in case it was used to separate them
+ * @Param:  unprocessed_layer -> Unprocessed layer   
+ * @Ret:    Processed LayerData object
  */
 LayerData process_layer(LayerData unprocessed_layer) {
-    list[str] processed_names = [];
-    for (str name <- unprocessed_layer.layer){
+    list[str] processed_items = [];
+    for (str name <- unprocessed_layer.items){
         // flexible grammar parses the optional "," separator as a character so we remove it
         // in post processing if it exists
         if (name[-1] == ",") {
-            processed_names += [name[0..-1]];
+            processed_items += [name[0..-1]];
         } else {
-            processed_names += [name];
+            processed_items += [name];
         }
     }
 
-    LayerData processed_layer = layer_data(processed_names);
+    LayerData processed_layer = layer_data(processed_items);
     return processed_layer;
 }
 
 /*
- * @Name:   
- * @Desc:   
- * @Param:     
- * @Ret:    
+ * @Name:   process_level (level_data version)
+ * @Desc:   Function to process a level that is really a message. We do not care
+ *          about messages right now, so we do nothing. We only define this to 
+ *          prevent the tool from breaking when processing levels
+ * @Param:  unprocessed_level_message   Level message to be processed
+ * @Ret:    Processed LevelData with the message
  */
-LevelData process_level(LevelData l : message(_)) {
-    return l;
+LevelData process_level(LevelData unprocessed_level : level_data_raw(list[tuple[str, str]] lines, str _)) {
+    LevelData processed_level = level_data([x[0] | x <- lines]);
+    return processed_level;
 }
 
 /*
- * @Name:   
- * @Desc:   
- * @Param:     
- * @Ret:    
+ * @Name:   process_level (general version)
+ * @Desc:   Function to process a level that is not a level (message or empty). 
+ *          We only define this to prevent the tool from breaking when processing
+ *          real levels
+ * @Param:  unprocessed_level   Level to be processed
+ * @Ret:    Processed LevelData object
  */
-LevelData process_level(LevelData l : level_data_raw(list[tuple[str, str]] lines, str _)) {
-    LevelData new_l = level_data([x[0] | x <- lines]);
-    return new_l;
-}
-
-/*
- * @Name:   
- * @Desc:   
- * @Param:     
- * @Ret:    
- */
-default LevelData process_level(LevelData l) {
-    return l;
+LevelData process_level(LevelData unprocessed_level) {
+    return unprocessed_level;
 }

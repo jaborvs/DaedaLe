@@ -116,8 +116,8 @@ Checker check_game(PSGame g) {
 
     for (LegendData l <- g.legend){
         if (l is legend_reference) {
-            for (str object <- l.values) {
-                if (toLowerCase(l.key) in c.references) c.references[toLowerCase(l.legend)] += [toLowerCase(object)];
+            for (str object <- l.items) {
+                if (toLowerCase(l.key) in c.references) c.references[toLowerCase(l.key)] += [toLowerCase(object)];
                 else c.references += (toLowerCase(l.key): [toLowerCase(object)]);
             }
         }

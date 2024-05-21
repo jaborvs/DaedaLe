@@ -692,7 +692,7 @@ void view(Model m) {
  *  @Ret:   Call to run the application
  */
 App[Model] main() {
-    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/empty.PS|;
+    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
     game = load(game_loc);
 
     checker = check_game(game);

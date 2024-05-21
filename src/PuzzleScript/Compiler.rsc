@@ -399,7 +399,7 @@ ObjectData get_object(str name, Engine engine)
 LayerData get_layer(list[str] object, PSGame game) {
     for (LayerData layer <- game.layers) {
         if (layer is layer_data) {
-            for (str layer_item <- layer.layer) {
+            for (str layer_item <- layer.items) {
                 if (toLowerCase(layer_item) in object) {
                     return layer;
                 }
@@ -617,7 +617,6 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Ch
     list[RulePart] save_right = [rp | RulePart rp <- right, !(rp is part)];
 
     RuleData new_rd = rule_data(new_left, new_right, x, y);
-    new_rd.src = rd.src;
 
     // Step 1
     new_rule_directions += extend_directions(new_rd, direction);

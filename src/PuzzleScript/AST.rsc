@@ -96,8 +96,8 @@ data Pixel
  * @Desc:   AST node for the rest of the elements of game legend
  */ 
 data LegendOperation
-  = legend_or(str name)      // Or ckeyase: object name or legend element key
-  | legend_and(str name)     // And case: object name legend element key
+  = legend_or(str item)      // Or ckeyase: object name or legend element key
+  | legend_and(str item)     // And case: object name legend element key
   ;
 
 /*
@@ -105,11 +105,11 @@ data LegendOperation
  * @Desc:   AST node for the game legend
  */ 
 data LegendData
-  = legend_data(str key, str first_name, list[LegendOperation] other_names, str)   // Unprocessed legend element: key, first (object or legend element), rest (objects or legend elements)
-  | legend_reference(str key, list[str] values)                          // Processed legend element: comes from an element joined by ORs
-  | legend_combined(str key, list[str] values)                           // Processed legend element: comes from an element joined by ANDs
-  | legend_error(str key, list[str] values)                              // Processed legend element: comes from an element joined by ORs and ANDs
-  | legend_empty(str)                                                    // Empty legend section
+  = legend_data(str key, str first_item, list[LegendOperation] other_items, str)   // Unprocessed legend element: key, first (object name or legend key), rest (objects or legend elements)
+  | legend_reference(str key, list[str] items)                          // Processed legend element: comes from an element joined by ORs
+  | legend_combined(str key, list[str] items)                           // Processed legend element: comes from an element joined by ANDs
+  | legend_error(str key, list[str] items)                              // Processed legend element: comes from an element joined by ORs and ANDs
+  | legend_empty(str)                                                    // Empty legend element
   ;    
 
 /*
@@ -118,7 +118,7 @@ data LegendData
  */ 
 data SoundData
   = sound_data(list[str] sound, str)    // List of sounds, Comment (???)
-  | sound_empty(str)                    // Empty sound section
+  | sound_empty(str)                    // Empty sound
   ;
     
 /*
@@ -126,9 +126,9 @@ data SoundData
  * @Desc:   AST node for the game layers
  */ 
 data LayerData
-  = layer_data(list[str] layer, str)    // List of layers, Comment (???)
-  | layer_data(list[str] layer)         // List of layers
-  | layer_empty(str)                    // Empty layers section
+  = layer_data(list[str] items, str)    // Unprocessed layer: items (object names or legend keys), separator (\n)
+  | layer_data(list[str] items)         // Processed layer: items (object names or legend keys)
+  | layer_empty(str)                    // Empty layer
   ;
 
 /*
@@ -173,10 +173,10 @@ data ConditionData
  * @Desc:   AST node for the game levels
  */ 
 data LevelData
-  = level_data_raw(list[tuple[str,str]] lines, str)     // (???)
-  | level_data(list[str] level)                         // (???)
+  = level_data_raw(list[tuple[str,str]] lines, str)     // Unprocessed level: list of lines (tuple of the actual object representation chars and separator \n), separator (\n)
+  | level_data(list[str] level)                         // Processed level
   | message(str message)                                // Message in between levels
-  | level_empty(str)                                    // Empty levels section
+  | level_empty(str)                                    // Empty level
   ;
 
 /*****************************************************************************/
