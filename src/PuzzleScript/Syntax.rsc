@@ -11,7 +11,7 @@ lexical Newline = [\n];
 lexical ID = [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
 lexical Pixel = [a-zA-Zぁ-㍿.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]˅\\±];
 lexical LegendKey = @category="LegendKey" Pixel+ !>> Pixel \ Keywords;
-lexical SpriteP = [0-9.];
+lexical SpriteP = [0-9.];   // To represent the color of object's sprites pixels
 lexical LevelPixel = @category="LevelPixel" Pixel;
 lexical Levelline = LevelPixel+ !>> LevelPixel \ Keywords;
 lexical String = @category="String" ![\n]+ >> [\n];
@@ -19,12 +19,16 @@ lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
 lexical KeywordID = @category="ID" [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
 lexical IDOrDirectional = @category="IDorDirectional" [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
 
-keyword SectionKeyword =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' | 'WINCONDITIONS' | 'LEVELS';
+keyword SectionKeyword 
+    =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' 
+    | 'WINCONDITIONS' | 'LEVELS';
 keyword PreludeKeyword 
-  = 'title' | 'author' | 'homepage' | 'color_palette' | 'again_interval' | 'background_color' 
-  | 'debug' | 'flickscreen' | 'key_repeat_interval' | 'noaction' | 'norepeat_action' | 'noundo'
-  | 'norestart' | 'realtime_interval' | 'require_player_movement' | 'run_rules_on_level_start' 
-  | 'scanline' | 'text_color' | 'throttle_movement' | 'verbose_logging' | 'youtube ' | 'zoomscreen';
+  = 'title' | 'author' | 'homepage' | 'color_palette' | 'again_interval' 
+  | 'background_color' | 'debug' | 'flickscreen' | 'key_repeat_interval' 
+  | 'noaction' | 'norepeat_action' | 'noundo' | 'norestart' | 'realtime_interval' 
+  | 'require_player_movement' | 'run_rules_on_level_start' | 'scanline' 
+  | 'text_color' | 'throttle_movement' | 'verbose_logging' | 'youtube ' 
+  | 'zoomscreen';
 
 keyword LegendKeyword = 'or' | 'and';
 keyword CommandKeyword = 'again' | 'cancel' | 'checkpoint' | 'restart' | 'win';
@@ -66,14 +70,11 @@ syntax ObjectName
   = @category="ObjectName" ID;
 
 syntax ObjectData
-  = @Foldable object_data: ObjectName LegendKey? Newline Colors Newline Sprite?
+  = @Foldable object_data: ObjectName Newline Color+ Newline Sprite?
   | object_empty: Newline;
     
 syntax SpritePixel
   = @category="SpritePixel" SpriteP;
-
-syntax Colors
-  = Color+;
 
 syntax Sprite 
   = @Foldable sprite: 

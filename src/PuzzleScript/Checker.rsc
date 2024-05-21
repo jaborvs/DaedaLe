@@ -1,9 +1,8 @@
 /*
  * @Module: Checker
- * @Desc:   Module to check all the parsed AST nodes. It prints warnings or 
- *          errors accordingly
- * @Auth:   Clement Julia -> code
- *          Borja Velasco -> comments
+ * @Desc:   Module to check all the parsed AST nodes. This module will probably
+ *          dissapear (FIX)
+ * @Auth:   Borja Velasco -> code, comments
  */
 module PuzzleScript::Checker
 
@@ -31,8 +30,7 @@ import PuzzleScript::Utils;
 /*
  * @Name:   Checker
  * @Desc:   Data structure that contains all relevant information of a 
- *          PuzzleScript game to be checked (???). They are ordered in terms 
- *          of how they appear on a PuzzleScript file
+ *          PuzzleScript game to be checked.
  */
 alias Checker = tuple[                        
     map[str key, list[str] values] references,              // Map of references: name and its list of references (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
@@ -63,7 +61,7 @@ public map[str, str] COLORS = (
     "white":        "#FFFFFF",
     "grey":         "#555555",
     "darkgrey":     "#555500",
-    "transparent":  "#555500",
+    "transparent":  "#------",
     "lightgrey":    "#AAAAAA",
     "gray":         "#555555",
     "darkgray":     "#555500",
@@ -143,23 +141,6 @@ Checker check_game(PSGame g) {
 
 /*****************************************************************************/
 // --- Public Getter functions ------------------------------------------------
-
-/*
- * @Name:   get_prelude This function needs to be deleted at some point (FIX)
- * @Desc:   Function to get the data of the prelude section lines
- * @Params:
- *      values          AST nodes of the game's Prelude section
- *      key             One of the prelude section's keys (title, author, homepage...)
- *      default_str     Default string to be returned (???)
- * @Ret:    String with the name of the game, author or the webpage 
- *          (depending on key)
- */
-str get_prelude(list[PreludeData] prs, str key, str default_str){
-    prs_matches = [x | x <- prs, toLowerCase(x.key) == toLowerCase(key)];
-
-    if (!isEmpty(prs_matches)) return prs_matches[0].val;
-    return default_str;
-}
 
 /*
  * @Name:   get_representation_char

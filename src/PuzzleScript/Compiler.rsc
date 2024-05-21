@@ -1521,7 +1521,6 @@ str convert_rule(list[RulePart] left, list[RulePart] right) {
  */
 Engine compile(Checker c) {
 	Engine engine = new_engine(c.game);
-	engine.conditions = []; // Will need to fix this (FIX)
     engine.levels = c.game.levels;  
     engine.properties = c.resolved_references;
     engine.references = c.references;

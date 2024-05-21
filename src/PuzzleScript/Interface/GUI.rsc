@@ -35,8 +35,8 @@ import PuzzleScript::Verbs;
 import PuzzleScript::DynamicAnalyser;
 import PuzzleScript::Tutorials::AST;
 
-/*****************************************************************************/
-// --- Global defines ---------------------------------------------------------
+/******************************************************************************/
+// --- Global defines ----------------------------------------------------------
 str limerick_dsl = "tutorial limerick {
     verb topclimb [0]
     verb largeclimb [1]
@@ -297,16 +297,19 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
                         }
                         else {
                             Pixel pix = obj.sprite[k][l];
-                            if (pix.pixel == ".") {
+                            if (pix.color_number == ".") {
                                 json += "\"c\": \"......\"";
                             }
-                            else if (COLORS[pix.color]?) {
-                                json += "\"c\": \"<COLORS[pix.color]>\"";
+                            else if (COLORS[obj.colors[toInt(pix.color_number)]]?) {
+                                json += "\"c\": \"<COLORS[obj.colors[toInt(pix.color_number)]]>\"";
                             }
-                            // I think this never runs (???)
-                            else if (pix.pixel != ".") {
-                                json += "\"c\": \"<pix.color>\"";
-                            }
+                            // else if (COLORS[pix.color]?) {
+                            //     json += "\"c\": \"<COLORS[pix.color]>\"";
+                            // }
+                            // // I think this never runs (???)
+                            // else if (pix.color_number != ".") {
+                            //     json += "\"c\": \"<pix.color>\"";
+                            // }
                             else {
                                 json += "\"c\": \"#FFFFFF\"";
                             }
@@ -688,14 +691,15 @@ void view(Model m) {
  *  @Desc:  Runs the application
  *  @Ret:   Call to run the application
  */
+ 
 App[Model] main() {
-    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
+    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/empty.PS|;
     game = load(game_loc);
 
     checker = check_game(game);
     engine = compile(checker);
 
-    str title = get_prelude(engine.game.prelude, "title", "Unknown");
+    str title = "Lime Rick";
 
     tuple[str, str, str] json_data = pixel_to_json(engine, 0);
     data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
