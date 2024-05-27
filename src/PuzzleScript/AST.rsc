@@ -158,6 +158,9 @@ data LayerData
   | layer_empty(str)                    // Empty layer
   ;
 
+/******************************************************************************/
+// --- Rule structure defines --------------------------------------------------
+
 /*
  * @Name:   RuleData
  * @Desc:   AST node for the game rules
@@ -186,6 +189,9 @@ data RulePart
 data RuleContent
   = content(list[str] content);     // Content of the rule
 
+/******************************************************************************/
+// --- Win condition structure defines -----------------------------------------
+
 /*
  * @Name:   ConditionData
  * @Desc:   AST node for the win conditions
@@ -195,61 +201,16 @@ data ConditionData
   | condition_empty(str)                        // Empty win condition section
   ;
 
+/******************************************************************************/
+// --- Level structure defines -------------------------------------------------
+
 /*
  * @Name:   LevelData
  * @Desc:   AST node for the game levels
  */ 
 data LevelData
-  = level_data_raw(list[tuple[str,str]] lines, str)     // Unprocessed level: list of lines (tuple of the actual object representation chars and separator \n), separator (\n)
-  | level_data(list[str] level)                         // Processed level
-  | message(str message)                                // Message in between levels
-  | level_empty(str)                                    // Empty level
-  ;
-
-/*****************************************************************************/
-// --- Public functions -------------------------------------------------------
-
-/*
- * @Name:   toString
- * @Desc:   converts a RuleContent into a string
- * @Ret:    string containing the RuleContent
- */ 
-str toString(RuleContent _: content(list[str] cnt)){
-  return intercalate(" ", cnt);
-}
-
-/*
- * @Name:   toString
- * @Desc:   converts a RulePart (part(list[RuleContent] contents)) into a string
- * @Ret:    string containing the RulePart
- */ 
-str toString(RulePart _: part(list[RuleContent] contents)){
-  return "[ " + intercalate(" | ", [toString(x) | x <- contents]) + " ]";
-}
-
-/*
- * @Name:   toString
- * @Desc:   converts a RulePart (command(str cmd)) into a string
- * @Ret:    string containing the RulePart
- */ 
-str toString(RulePart _: command(str cmd)){
-  return cmd;
-}
-
-/*
- * @Name:   toString
- * @Desc:   converts a RulePart (sound(str snd)) into a string
- * @Ret:    string containing the RulePart
- */ 
-str toString(RulePart _: sound(str snd)){
-  return snd;
-}
-
-/*
- * @Name:   toString
- * @Desc:   converts a RulePart (prefix(str pr)) into a string
- * @Ret:    string containing the RulePart
- */ 
-str toString(RulePart _: prefix(str pr)){
-    return pr;
-}
+    = level_data(list[tuple[str,str]] lines, str)   // Unprocessed level: list of lines (tuple of the actual object representation chars and separator \n), separator (\n)
+    | level_data(list[str] level)                       // Processed level
+    | level_message(str message)                        // Message in between levels
+    | level_empty(str)                                  // Empty level
+    ;

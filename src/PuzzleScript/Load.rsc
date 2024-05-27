@@ -141,7 +141,7 @@ PSGame process_game(PSGame game) {
     processed_layers = [process_layer(l) | LayerData l <- unprocessed_layers];
     processed_rules  = unprocessed_rules;
     processed_conditions = unprocessed_conditions;
-    processed_levels = [process_level(l) | LevelData l <- unprocessed_levels];
+    processed_levels = [process_level(unprocessed_level) | LevelData unprocessed_level <- unprocessed_levels];
         
     PSGame processed_game = game_data(
         processed_prelude, 
@@ -272,7 +272,9 @@ LayerData process_layer(LayerData unprocessed_layer) {
         }
     }
 
-    LayerData processed_layer = layer_data(processed_items);
+    LayerData processed_layer = layer_data(
+        processed_items
+    );
     return processed_layer;
 }
 
@@ -284,7 +286,7 @@ LayerData process_layer(LayerData unprocessed_layer) {
  * @Param:  unprocessed_level_message   Level message to be processed
  * @Ret:    Processed LevelData with the message
  */
-LevelData process_level(LevelData unprocessed_level : level_data_raw(list[tuple[str, str]] lines, str _)) {
+LevelData process_level(LevelData unprocessed_level : level_data(list[tuple[str, str]] lines, str _)) {
     LevelData processed_level = level_data([x[0] | x <- lines]);
     return processed_level;
 }

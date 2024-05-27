@@ -140,7 +140,7 @@ syntax LayerData
     ;
     
 /******************************************************************************/
-// --- Rule syntax ------------------------------------------------------------ 
+// --- Rule syntax ------------------------------------------------------------- 
 
 syntax RuleData
   = rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newline
@@ -164,17 +164,20 @@ syntax Command
 syntax Sound
   = sound: 'sfx' SoundIndex; 
     
-syntax ConditionID
-  = @category="ConditonID" ID;
+/******************************************************************************/
+// --- Condition syntax --------------------------------------------------------
 
 syntax ConditionData
-  = condition_data: ConditionID+ Newline
+  = condition_data: ConditionItem+ Newline
   | condition_empty: Newline;
-  
-syntax Message
-  = 'message' String*;
+
+syntax ConditionItem
+  = @category="ConditonID" ID;
+
+/******************************************************************************/
+// --- Condition syntax --------------------------------------------------------
 
 syntax LevelData
-  = level_data_raw: (Levelline Newline)+ lines Newline
-  | message: 'message' String*
-  | level_empty: Newline;
+    = level_data: (Levelline Newline)+ Newline
+    | level_message: 'message' String*
+    | level_empty: Newline;
