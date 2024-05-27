@@ -125,13 +125,13 @@ PSGame process_game(PSGame game) {
     // Assign to correct section
     visit(tmp_game){
         case PreludeData p: unprocessed_prelude += [p];
-        case Section s: s_objects(_,_,_,_): unprocessed_objects += s.objects;
-        case Section s: s_legend(_,_,_,_): unprocessed_legend += s.legend;
-        case Section s: s_sounds(_,_,_,_): unprocessed_sounds += s.sounds;
-        case Section s: s_layers(_,_,_,_): unprocessed_layers += s.layers;
-        case Section s: s_rules(_,_,_,_): unprocessed_rules += s.rules;
-        case Section s: s_conditions(_,_,_,_): unprocessed_conditions += s.conditions;
-        case Section s: s_levels(_,_,_,_): unprocessed_levels += s.levels;   
+        case Section s: section_objects(_,_,_,_): unprocessed_objects += s.objects;
+        case Section s: section_legend(_,_,_,_): unprocessed_legend += s.legend;
+        case Section s: section_sounds(_,_,_,_): unprocessed_sounds += s.sounds;
+        case Section s: section_layers(_,_,_,_): unprocessed_layers += s.layers;
+        case Section s: section_rules(_,_,_,_): unprocessed_rules += s.rules;
+        case Section s: section_conditions(_,_,_,_): unprocessed_conditions += s.conditions;
+        case Section s: section_levels(_,_,_,_): unprocessed_levels += s.levels;   
     }
         
     processed_prelude = [process_prelude_item(unprocessed_prelude_item) | PreludeData unprocessed_prelude_item <- unprocessed_prelude];

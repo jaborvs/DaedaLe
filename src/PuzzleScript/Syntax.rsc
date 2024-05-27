@@ -42,14 +42,14 @@ syntax Newlines = Newline+ !>> [\n];
 syntax SectionDelimiter = Delimiter Newline;
 
 syntax Section
-   = @Foldable s_objects: SectionDelimiter? 'OBJECTS' Newlines SectionDelimiter? ObjectData+ objects
-   | @Foldable s_legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+ legend
-   | @Foldable s_sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? SoundData+ sounds
-   | @Foldable s_layers: SectionDelimiter? 'COLLISIONLAYERS' Newlines SectionDelimiter? LayerData+ layers
-   | @Foldable s_rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+ rules
-   | @Foldable s_conditions: SectionDelimiter? 'WINCONDITIONS' Newlines SectionDelimiter? ConditionData+ conditions
-   | @Foldable s_levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? LevelData+ levels
-   | s_empty: SectionDelimiter? SectionKeyword Newlines SectionDelimiter?
+   = @Foldable section_objects: SectionDelimiter? 'OBJECTS' Newlines SectionDelimiter? ObjectData+ objects
+   | @Foldable section_legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+ legend
+   | @Foldable section_sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? SoundData+ sounds
+   | @Foldable section_layers: SectionDelimiter? 'COLLISIONLAYERS' Newlines SectionDelimiter? LayerData+ layers
+   | @Foldable section_rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+ rules
+   | @Foldable section_conditions: SectionDelimiter? 'WINCONDITIONS' Newlines SectionDelimiter? ConditionData+ conditions
+   | @Foldable section_levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? LevelData+ levels
+   | section_empty: SectionDelimiter? SectionKeyword Newlines SectionDelimiter?
    ;
      
 syntax Prelude

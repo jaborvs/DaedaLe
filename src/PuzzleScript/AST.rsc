@@ -65,14 +65,14 @@ data PreludeData
  *          Prelude cannot be included here since it does not have a separator
  */ 
 data Section
-    = s_objects(str sep1, str name, str sep2, list[ObjectData] objects)             // Objects section
-    | s_legend(str sep1, str name, str sep2, list[LegendData] legend)               // Legend section
-    | s_sounds(str sep1 , str name, str sep2, list[SoundData] sounds)               // Sounds section
-    | s_layers(str sep1, str name, str sep2, list[LayerData] layers)                // Layers section
-    | s_rules(str sep1, str name, str sep2, list[RuleData] rules)                   // Rules section
-    | s_conditions(str sep1, str name, str sep2, list[ConditionData] conditions)    // Win Conditions section
-    | s_levels(str sep1, str name, str sep2, list[LevelData] levels)                // Levels section 
-    | s_empty(str sep1, str name, str sep2, str linebreaks)                         // Empty section
+    = section_objects(str sep1, str name, str sep2, list[ObjectData] objects)             // Objects section
+    | section_legend(str sep1, str name, str sep2, list[LegendData] legend)               // Legend section
+    | section_sounds(str sep1 , str name, str sep2, list[SoundData] sounds)               // Sounds section
+    | section_layers(str sep1, str name, str sep2, list[LayerData] layers)                // Layers section
+    | section_rules(str sep1, str name, str sep2, list[RuleData] rules)                   // Rules section
+    | section_conditions(str sep1, str name, str sep2, list[ConditionData] conditions)    // Win Conditions section
+    | section_levels(str sep1, str name, str sep2, list[LevelData] levels)                // Levels section 
+    | section_empty(str sep1, str name, str sep2, str linebreaks)                         // Empty section
     ;
 
 /*
