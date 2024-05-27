@@ -20,8 +20,8 @@ import List;
  * @Desc:   AST of a PuzzleScript game
  */
 data PSGame
-    = game(list[Prelude] pr, list[Section] sections)   // Unprocessed version: Game composed of a prelude, a list of sections and its file location
-    | game(                                                     // Processed version:
+    = game_data(list[Prelude] pr, list[Section] sections)   // Unprocessed version: Game composed of a prelude, a list of sections and its file location
+    | game_data(                                                     // Processed version:
         list[PreludeData] prelude,                              //      Prelude list
         list[ObjectData] objects,                               //      Objects list
         list[LegendData] legend,                                //      Legend list

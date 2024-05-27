@@ -143,7 +143,7 @@ PSGame process_game(PSGame game) {
     processed_conditions = unprocessed_conditions;
     processed_levels = [process_level(l) | LevelData l <- unprocessed_levels];
         
-    PSGame processed_game = PSGame::game(
+    PSGame processed_game = game_data(
         processed_prelude, 
         processed_objects, 
         processed_legend, 

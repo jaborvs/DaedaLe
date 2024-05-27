@@ -35,7 +35,7 @@ keyword CommandKeyword = 'again' | 'cancel' | 'checkpoint' | 'restart' | 'win';
 keyword Keywords = SectionKeyword | PreludeKeyword | LegendKeyword | CommandKeyword;
 
 start syntax PSGame
-   = @Foldable game: Prelude? Section+
+   = @Foldable game_data: Prelude? Section+
    | game_empty: Newlines;
 
 syntax Newlines = Newline+ !>> [\n];
