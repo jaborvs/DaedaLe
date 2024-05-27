@@ -124,6 +124,7 @@ PSGame process_game(PSGame game) {
         
     // Assign to correct section
     visit(tmp_game){
+        case PreludeData p: unprocessed_prelude += [p];
         case Section s: s_objects(_,_,_,_): unprocessed_objects += s.objects;
         case Section s: s_legend(_,_,_,_): unprocessed_legend += s.legend;
         case Section s: s_sounds(_,_,_,_): unprocessed_sounds += s.sounds;
@@ -131,10 +132,9 @@ PSGame process_game(PSGame game) {
         case Section s: s_rules(_,_,_,_): unprocessed_rules += s.rules;
         case Section s: s_conditions(_,_,_,_): unprocessed_conditions += s.conditions;
         case Section s: s_levels(_,_,_,_): unprocessed_levels += s.levels;   
-        case PreludeData p: unprocessed_prelude += [p];
     }
         
-    processed_prelude = unprocessed_prelude;
+    processed_prelude = [process_prelude_item(unprocessed_prelude_item) | PreludeData unprocessed_prelude_item <- unprocessed_prelude];
     processed_objects = [process_object(unprocessed_object) | ObjectData unprocessed_object <- unprocessed_objects];
     processed_legend = [process_legend(l) | LegendData l <- unprocessed_legend];        
     processed_sounds = unprocessed_sounds;
@@ -155,6 +155,21 @@ PSGame process_game(PSGame game) {
     );
 
     return processed_game;
+}
+
+/*
+ * @Name:   process_prelude_item
+ * @Desc:   Function to process a prelude item. We delete the separator at the 
+ *          end of the object
+ * @Param:  unprocessed_prelude_item -> Prelude item to be processed
+ * @Ret:    Processed prelude item
+ */
+PreludeData process_prelude_item(PreludeData unprocessed_prelude_item) {
+    PreludeData processed_prelude_item = prelude_data(
+        unprocessed_prelude_item.keywrd,
+        unprocessed_prelude_item.params
+    );
+    return processed_prelude_item;
 }
 
 /*

@@ -8,12 +8,15 @@
  */
 module PuzzleScript::AST
 
-/*****************************************************************************/
-// --- General modules imports ------------------------------------------------
+/******************************************************************************/
+// --- General modules imports -------------------------------------------------
 import List;
 
-/*****************************************************************************/
-// --- Data structure defines -------------------------------------------------
+/******************************************************************************/
+// --- Data structure defines --------------------------------------------------
+
+/******************************************************************************/
+// --- Game structure defines --------------------------------------------------
 
 /*
  * @Name:   PSGame
@@ -21,18 +24,21 @@ import List;
  */
 data PSGame
     = game_data(list[Prelude] pr, list[Section] sections)   // Unprocessed version: Game composed of a prelude, a list of sections and its file location
-    | game_data(                                                     // Processed version:
-        list[PreludeData] prelude,                              //      Prelude list
-        list[ObjectData] objects,                               //      Objects list
-        list[LegendData] legend,                                //      Legend list
-        list[SoundData] sounds,                                 //      Sounds list
-        list[LayerData] layers,                                 //      Layers list
-        list[RuleData] rules,                                   //      Rules list
-        list[ConditionData] conditions,                         //      Conditions list
-        list[LevelData] levels                                  //      Levels list
+    | game_data(                                            // Processed version:
+        list[PreludeData] prelude,                          //      Prelude list
+        list[ObjectData] objects,                           //      Objects list
+        list[LegendData] legend,                            //      Legend list
+        list[SoundData] sounds,                             //      Sounds list
+        list[LayerData] layers,                             //      Layers list
+        list[RuleData] rules,                               //      Rules list
+        list[ConditionData] conditions,                     //      Conditions list
+        list[LevelData] levels                              //      Levels list
     )
     | game_empty(str)                                       // Empty game
     ;
+
+/******************************************************************************/
+// --- Prelude structure defines -----------------------------------------------
 
 /*
  * @Name:   Prelude
@@ -43,13 +49,16 @@ data Prelude
 
 /*
  * @Name:   PreludeData
- * @Desc:   AST node for the data of the Prelude. The last not name str refers
- *          to the separator (a \n in this case)
+ * @Desc:   AST node for the data of the Prelude.
  */     
 data PreludeData
-    = prelude_data(str key, str val, str)       // Key, value
+    = prelude_data(str keywrd, str params, str) // Unprocessed prelude item: keyword, params separator (\n)
+    | prelude_data(str keywrd, str params)      // Processed prelude item: keyword, params
     | prelude_empty(str);                       // Empty prelude section
-    
+
+/******************************************************************************/
+// --- Section structure defines -----------------------------------------------
+
 /*
  * @Name:   Section
  * @Desc:   AST node for the remaining PuzzleScript sections. Note that the 

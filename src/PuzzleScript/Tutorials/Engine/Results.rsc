@@ -42,7 +42,7 @@ void main() {
 
     str title = "";
     for(PreludeData p <- engine.game.prelude){
-        if(p.key == "title") {
+        if(p.keywrd == "title") {
             title = toLowerCase(replaceAll(p.string, ",", " "));
             title = toLowerCase(replaceAll(title, " ", ""));
             break;
