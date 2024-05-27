@@ -99,15 +99,14 @@ PuzzleScript::AST::PSGame ps_implode(start[PSGame] parse_tree) {
  * @Ret:    Processed PSGame
  */
 PSGame process_game(PSGame game) {
-    // do post processing here
-    list[ObjectData] objects = [];
-    list[LegendData] legend = [];
-    list[SoundData] sounds = [];
-    list[LayerData] layers = [];
-    list[RuleData] rules = [];
-    list[ConditionData] conditions = [];
-    list[LevelData] levels = [];
-    list[PreludeData] prelude = [];
+    list[PreludeData] unprocessed_prelude = [];
+    list[ObjectData] unprocessed_objects = [];
+    list[LegendData] unprocessed_legend = [];
+    list[SoundData] unprocessed_sounds = [];
+    list[LayerData] unprocessed_layers = [];
+    list[RuleData] unprocessed_rules = [];
+    list[ConditionData] unprocessed_conditions = [];
+    list[LevelData] unprocessed_levels = [];
     
     // We transverse our AST and only leave non-empty nodes 
     // (=> replaces with the result of the right expression)
@@ -125,41 +124,33 @@ PSGame process_game(PSGame game) {
         
     // Assign to correct section
     visit(tmp_game){
-        case Section s: s_objects(_,_,_,_): objects += s.objects;
-        case Section s: s_legend(_,_,_,_): legend += s.legend;
-        case Section s: s_sounds(_,_,_,_): sounds += s.sounds;
-        case Section s: s_layers(_,_,_,_): layers += s.layers;
-        case Section s: s_rules(_,_,_,_): rules += s.rules;
-        case Section s: s_conditions(_,_,_,_): conditions += s.conditions;
-        case Section s: s_levels(_,_,_,_): levels += s.levels;   
-        case PreludeData p: prelude += [p];
+        case Section s: s_objects(_,_,_,_): unprocessed_objects += s.objects;
+        case Section s: s_legend(_,_,_,_): unprocessed_legend += s.legend;
+        case Section s: s_sounds(_,_,_,_): unprocessed_sounds += s.sounds;
+        case Section s: s_layers(_,_,_,_): unprocessed_layers += s.layers;
+        case Section s: s_rules(_,_,_,_): unprocessed_rules += s.rules;
+        case Section s: s_conditions(_,_,_,_): unprocessed_conditions += s.conditions;
+        case Section s: s_levels(_,_,_,_): unprocessed_levels += s.levels;   
+        case PreludeData p: unprocessed_prelude += [p];
     }
         
-    // Fix sprites
-    processed_objects = [];
-    for (ObjectData obj <- objects){
-        if (obj is object_data){
-            processed_objects += process_object(obj);
-        }
-    }
-        
-    // Validate legends and process
-    processed_legend = [process_legend(l) | LegendData l <- legend];
-            
-    // Unnest layers
-    processed_layers = [process_layer(l) | LayerData l <- layers];
-        
-    // Unnest levels
-    processed_levels = [process_level(l) | LevelData l <- levels];
+    processed_prelude = unprocessed_prelude;
+    processed_objects = [process_object(unprocessed_object) | ObjectData unprocessed_object <- unprocessed_objects];
+    processed_legend = [process_legend(l) | LegendData l <- unprocessed_legend];        
+    processed_sounds = unprocessed_sounds;
+    processed_layers = [process_layer(l) | LayerData l <- unprocessed_layers];
+    processed_rules  = unprocessed_rules;
+    processed_conditions = unprocessed_conditions;
+    processed_levels = [process_level(l) | LevelData l <- unprocessed_levels];
         
     PSGame processed_game = PSGame::game(
-        prelude, 
+        processed_prelude, 
         processed_objects, 
         processed_legend, 
-        sounds, 
+        processed_sounds, 
         processed_layers, 
-        rules, 
-        conditions, 
+        processed_rules, 
+        processed_conditions, 
         processed_levels
     );
 
