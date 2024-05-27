@@ -34,64 +34,87 @@ keyword LegendKeyword = 'or' | 'and';
 keyword CommandKeyword = 'again' | 'cancel' | 'checkpoint' | 'restart' | 'win';
 keyword Keywords = SectionKeyword | PreludeKeyword | LegendKeyword | CommandKeyword;
 
+/******************************************************************************/
+// --- Game syntax -------------------------------------------------------------
+
 start syntax PSGame
-   = @Foldable game_data: Prelude? Section+
-   | game_empty: Newlines;
+    = @Foldable game_data: Prelude? Section+
+    | game_empty: Newlines
+    ;
 
 syntax Newlines = Newline+ !>> [\n];
 syntax SectionDelimiter = Delimiter Newline;
 
-syntax Section
-   = @Foldable section_objects: SectionDelimiter? 'OBJECTS' Newlines SectionDelimiter? ObjectData+ objects
-   | @Foldable section_legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+ legend
-   | @Foldable section_sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? SoundData+ sounds
-   | @Foldable section_layers: SectionDelimiter? 'COLLISIONLAYERS' Newlines SectionDelimiter? LayerData+ layers
-   | @Foldable section_rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+ rules
-   | @Foldable section_conditions: SectionDelimiter? 'WINCONDITIONS' Newlines SectionDelimiter? ConditionData+ conditions
-   | @Foldable section_levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? LevelData+ levels
-   | section_empty: SectionDelimiter? SectionKeyword Newlines SectionDelimiter?
-   ;
-     
+/******************************************************************************/
+// --- Prelude syntax ----------------------------------------------------------
+
 syntax Prelude
-  = prelude: PreludeData+
-  ;
+    = prelude: PreludeData+
+    ;
     
 syntax PreludeData
-  = prelude_data: KeywordID key String* string Newline
-  | prelude_empty: Newline;
-  
-syntax Sound
-  = sound: 'sfx' SoundIndex;    
-        
-syntax Color
-  = @category="Color" ID;
-    
-syntax ObjectName
-  = @category="ObjectName" ID;
+    = prelude_data: KeywordID String* Newline
+    | prelude_empty: Newline
+    ;
+
+/******************************************************************************/
+// --- Sections syntax ---------------------------------------------------------
+
+syntax Section
+    = @Foldable section_objects: SectionDelimiter? 'OBJECTS' Newlines SectionDelimiter? ObjectData+ objects
+    | @Foldable section_legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+ legend
+    | @Foldable section_sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? SoundData+ sounds
+    | @Foldable section_layers: SectionDelimiter? 'COLLISIONLAYERS' Newlines SectionDelimiter? LayerData+ layers
+    | @Foldable section_rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+ rules
+    | @Foldable section_conditions: SectionDelimiter? 'WINCONDITIONS' Newlines SectionDelimiter? ConditionData+ conditions
+    | @Foldable section_levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? LevelData+ levels
+    | section_empty: SectionDelimiter? SectionKeyword Newlines SectionDelimiter?
+    ;
+
+/******************************************************************************/
+// --- Objects syntax ----------------------------------------------------------
 
 syntax ObjectData
-  = @Foldable object_data: ObjectName Newline Color+ Newline Sprite?
-  | object_empty: Newline;
-    
+    = @Foldable object_data: ObjectName Newline Color+ Newline Sprite?
+    | object_empty: Newline
+    ;
+
+syntax ObjectName
+    = @category="ObjectName" ID;
+
+syntax Color
+    = @category="Color" ID;
+
 syntax SpritePixel
-  = @category="SpritePixel" SpriteP;
+    = @category="SpritePixel" SpriteP;
 
 syntax Sprite 
-  = @Foldable sprite: 
-    SpritePixel+ Newline
-    SpritePixel+ Newline
-    SpritePixel+ Newline 
-    SpritePixel+ Newline
-    SpritePixel+ Newline;
-    
-syntax LegendOperation
-  = legend_or: 'or' ObjectName
-  | legend_and: 'and' ObjectName;
+    = @Foldable sprite: 
+        SpritePixel+ Newline
+        SpritePixel+ Newline
+        SpritePixel+ Newline 
+        SpritePixel+ Newline
+        SpritePixel+ Newline
+    ;
+
+/******************************************************************************/
+// --- Legends syntax ----------------------------------------------------------  
 
 syntax LegendData
-  = legend_data: LegendKey '=' ObjectName LegendOperation*  Newline
-  | legend_empty: Newline;
+    = legend_data: LegendKey '=' ObjectName LegendOperation*  Newline
+    | legend_empty: Newline
+    ; 
     
+syntax LegendOperation
+    = legend_or: 'or' ObjectName
+    | legend_and: 'and' ObjectName
+    ;
+
+    
+
+syntax Sound
+  = sound: 'sfx' SoundIndex; 
+
 syntax SoundID
   = @category="SoundID" ID;
     

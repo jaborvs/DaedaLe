@@ -75,6 +75,9 @@ data Section
     | section_empty(str sep1, str name, str sep2, str linebreaks)                         // Empty section
     ;
 
+/******************************************************************************/
+// --- Object structure defines ------------------------------------------------
+
 /*
  * @Name:   ObjectData
  * @Desc:   AST node for game objects
@@ -90,8 +93,8 @@ data ObjectData
  * @Desc:   AST node for object's sprite. Defined as a 5x5 matrix.
  */     
 data Sprite 
-  = sprite(str line0, str, str line1, str, str line2, str, str line3, str, str line4, str   // Line i, separator (\n) 
-  );
+    = sprite(str line0, str, str line1, str, str line2, str, str line3, str, str line4, str   // Line i, separator (\n) 
+    );
       
 /*
  * @Name:   Pixel
@@ -99,6 +102,9 @@ data Sprite
  */ 
 data Pixel
   = pixel(str color_number);   // Color number
+
+/******************************************************************************/
+// --- Legend structure defines ------------------------------------------------
 
 /*
  * @Name:   LegendOperation
