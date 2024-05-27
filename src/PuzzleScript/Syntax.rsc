@@ -8,10 +8,12 @@ lexical LAYOUT
 lexical Comment = @lineComment @category="Comment" "(" (![()]|Comment)* ")";
 lexical Delimiter = [=]+;
 lexical Newline = [\n];
+
 lexical ID = [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
+lexical SpritePixel = [0-9.];
+
 lexical Pixel = [a-zA-Zぁ-㍿.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]˅\\±];
 lexical LegendKey = @category="LegendKey" Pixel+ !>> Pixel \ Keywords;
-lexical SpriteP = [0-9.];   // To represent the color of object's sprites pixels
 lexical LevelPixel = @category="LevelPixel" Pixel;
 lexical Levelline = LevelPixel+ !>> LevelPixel \ Keywords;
 lexical String = @category="String" ![\n]+ >> [\n];
@@ -19,26 +21,36 @@ lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
 lexical KeywordID = @category="ID" [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
 lexical IDOrDirectional = @category="IDorDirectional" [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
 
+/******************************************************************************/
+// --- Reserved Keywords -------------------------------------------------------
+
+keyword Keywords 
+    = SectionKeyword | PreludeKeyword | LegendKeyword | CommandKeyword
+    ;
 keyword SectionKeyword 
     =  'RULES' | 'OBJECTS' | 'LEGEND' | 'COLLISIONLAYERS' | 'SOUNDS' 
-    | 'WINCONDITIONS' | 'LEVELS';
+    | 'WINCONDITIONS' | 'LEVELS'
+    ;
 keyword PreludeKeyword 
-  = 'title' | 'author' | 'homepage' | 'color_palette' | 'again_interval' 
-  | 'background_color' | 'debug' | 'flickscreen' | 'key_repeat_interval' 
-  | 'noaction' | 'norepeat_action' | 'noundo' | 'norestart' | 'realtime_interval' 
-  | 'require_player_movement' | 'run_rules_on_level_start' | 'scanline' 
-  | 'text_color' | 'throttle_movement' | 'verbose_logging' | 'youtube ' 
-  | 'zoomscreen';
-
-keyword LegendKeyword = 'or' | 'and';
-keyword CommandKeyword = 'again' | 'cancel' | 'checkpoint' | 'restart' | 'win';
-keyword Keywords = SectionKeyword | PreludeKeyword | LegendKeyword | CommandKeyword;
+    = 'title' | 'author' | 'homepage' | 'color_palette' | 'again_interval' 
+    | 'background_color' | 'debug' | 'flickscreen' | 'key_repeat_interval' 
+    | 'noaction' | 'norepeat_action' | 'noundo' | 'norestart' | 'realtime_interval' 
+    | 'require_player_movement' | 'run_rules_on_level_start' | 'scanline' 
+    | 'text_color' | 'throttle_movement' | 'verbose_logging' | 'youtube ' 
+    | 'zoomscreen'
+    ;
+keyword LegendKeyword 
+    = 'or' | 'and'
+    ;
+keyword CommandKeyword 
+    = 'again' | 'cancel' | 'checkpoint' | 'restart' | 'win'
+    ;
 
 /******************************************************************************/
 // --- Game syntax -------------------------------------------------------------
 
 start syntax PSGame
-    = @Foldable game_data: Prelude? Section+
+    = game_data: Prelude? Section+
     | game_empty: Newlines
     ;
 
@@ -61,13 +73,13 @@ syntax PreludeData
 // --- Sections syntax ---------------------------------------------------------
 
 syntax Section
-    = @Foldable section_objects: SectionDelimiter? 'OBJECTS' Newlines SectionDelimiter? ObjectData+ objects
-    | @Foldable section_legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+ legend
-    | @Foldable section_sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? SoundData+ sounds
-    | @Foldable section_layers: SectionDelimiter? 'COLLISIONLAYERS' Newlines SectionDelimiter? LayerData+ layers
-    | @Foldable section_rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+ rules
-    | @Foldable section_conditions: SectionDelimiter? 'WINCONDITIONS' Newlines SectionDelimiter? ConditionData+ conditions
-    | @Foldable section_levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? LevelData+ levels
+    = section_objects: SectionDelimiter? 'OBJECTS' Newlines SectionDelimiter? ObjectData+ objects
+    | section_legend: SectionDelimiter? 'LEGEND' Newlines SectionDelimiter? LegendData+ legend
+    | section_sounds: SectionDelimiter? 'SOUNDS' Newlines SectionDelimiter? SoundData+ sounds
+    | section_layers: SectionDelimiter? 'COLLISIONLAYERS' Newlines SectionDelimiter? LayerData+ layers
+    | section_rules: SectionDelimiter? 'RULES' Newlines SectionDelimiter? RuleData+ rules
+    | section_conditions: SectionDelimiter? 'WINCONDITIONS' Newlines SectionDelimiter? ConditionData+ conditions
+    | section_levels: SectionDelimiter? 'LEVELS' Newlines SectionDelimiter? LevelData+ levels
     | section_empty: SectionDelimiter? SectionKeyword Newlines SectionDelimiter?
     ;
 
@@ -75,7 +87,7 @@ syntax Section
 // --- Objects syntax ----------------------------------------------------------
 
 syntax ObjectData
-    = @Foldable object_data: ObjectName Newline Color+ Newline Sprite?
+    = object_data: ObjectName Newline Color+ Newline Sprite?
     | object_empty: Newline
     ;
 
@@ -85,11 +97,8 @@ syntax ObjectName
 syntax Color
     = @category="Color" ID;
 
-syntax SpritePixel
-    = @category="SpritePixel" SpriteP;
-
 syntax Sprite 
-    = @Foldable sprite: 
+    = sprite: 
         SpritePixel+ Newline
         SpritePixel+ Newline
         SpritePixel+ Newline 
@@ -110,26 +119,34 @@ syntax LegendOperation
     | legend_and: 'and' ObjectName
     ;
 
-    
+/******************************************************************************/
+// --- Sound syntax ------------------------------------------------------------
 
-syntax Sound
-  = sound: 'sfx' SoundIndex; 
-
-syntax SoundID
-  = @category="SoundID" ID;
-    
 syntax SoundData
-  = sound_data: SoundID+ Newline
-  | sound_empty: Newline;
+    = sound_data: SoundItem+ Newline
+    | sound_empty: Newline
+    ;
+
+syntax SoundItem
+    = @category="SoundItem" ID
+    ;
+
+/******************************************************************************/
+// --- Layer syntax ------------------------------------------------------------ 
 
 syntax LayerData
-  = layer_data: (ObjectName ','?)+ Newline
-  | layer_empty: Newline;
+    = layer_data: (ObjectName ','?)+ Newline
+    | layer_empty: Newline
+    ;
     
+/******************************************************************************/
+// --- Rule syntax ------------------------------------------------------------ 
+
 syntax RuleData
   = rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newline
-  | @Foldable rule_loop: 'startloop' RuleData+ 'endloop' Newline
-  | rule_empty: Newline;
+  | rule_loop: 'startloop' RuleData+ 'endloop' Newline
+  | rule_empty: Newline
+  ;
 
 syntax RuleContent
   = content: IDOrDirectional*;
@@ -143,6 +160,9 @@ syntax Prefix
 syntax Command
   = @category="Keyword" command: CommandKeyword
   | @category="Keyword" sound: Sound;
+
+syntax Sound
+  = sound: 'sfx' SoundIndex; 
     
 syntax ConditionID
   = @category="ConditonID" ID;
@@ -155,6 +175,6 @@ syntax Message
   = 'message' String*;
 
 syntax LevelData
-  = @Foldable level_data_raw: (Levelline Newline)+ lines Newline
+  = level_data_raw: (Levelline Newline)+ lines Newline
   | message: 'message' String*
   | level_empty: Newline;

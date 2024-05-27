@@ -136,8 +136,8 @@ PSGame process_game(PSGame game) {
         
     processed_prelude = [process_prelude_item(unprocessed_prelude_item) | PreludeData unprocessed_prelude_item <- unprocessed_prelude];
     processed_objects = [process_object(unprocessed_object) | ObjectData unprocessed_object <- unprocessed_objects];
-    processed_legend = [process_legend(l) | LegendData l <- unprocessed_legend];        
-    processed_sounds = unprocessed_sounds;
+    processed_legend = [process_legend(unprocessed_legend_item) | LegendData unprocessed_legend_item <- unprocessed_legend];        
+    processed_sounds = [process_sound(unprocessed_sound) | SoundData unprocessed_sound <- unprocessed_sounds];
     processed_layers = [process_layer(l) | LayerData l <- unprocessed_layers];
     processed_rules  = unprocessed_rules;
     processed_conditions = unprocessed_conditions;
@@ -238,6 +238,19 @@ LegendData process_legend(LegendData unprocessed_legend) {
     } 
 
     return processed_legend;
+}
+
+/*
+ * @Data:   process_sound
+ * @Desc:   Function to process a sound. We just delete the separator at the end
+ * @Param:  unprocessed_sound -> Sound to be processed
+ * @Ret:    Processed sound
+ */
+SoundData process_sound(SoundData unprocessed_sound) {
+    SoundData processed_sound = sound_data(
+        unprocessed_sound.sound
+    );
+    return processed_sound;
 }
 
 /*

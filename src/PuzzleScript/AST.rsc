@@ -93,7 +93,12 @@ data ObjectData
  * @Desc:   AST node for object's sprite. Defined as a 5x5 matrix.
  */     
 data Sprite 
-    = sprite(str line0, str, str line1, str, str line2, str, str line3, str, str line4, str   // Line i, separator (\n) 
+    = sprite(
+        str line0, str, // Line 1, separator (\n) 
+        str line1, str, // Line 2, separator (\n)
+        str line2, str, // Line 3, separator (\n)
+        str line3, str, // Line 4, separator (\n)
+        str line4, str  // Line 5, separator (\n) 
     );
       
 /*
@@ -101,40 +106,47 @@ data Sprite
  * @Desc:   AST node for pixels (numbers and .s in object's sprites)
  */ 
 data Pixel
-  = pixel(str color_number);   // Color number
+    = pixel(str color_number);  // Color number
 
 /******************************************************************************/
 // --- Legend structure defines ------------------------------------------------
-
-/*
- * @Name:   LegendOperation
- * @Desc:   AST node for the rest of the elements of game legend
- */ 
-data LegendOperation
-  = legend_or(str item)      // Or ckeyase: object name or legend element key
-  | legend_and(str item)     // And case: object name legend element key
-  ;
 
 /*
  * @Name:   LegendData
  * @Desc:   AST node for the game legend
  */ 
 data LegendData
-  = legend_data(str key, str first_item, list[LegendOperation] other_items, str)   // Unprocessed legend element: key, first (object name or legend key), rest (objects or legend elements)
-  | legend_reference(str key, list[str] items)                          // Processed legend element: comes from an element joined by ORs
-  | legend_combined(str key, list[str] items)                           // Processed legend element: comes from an element joined by ANDs
-  | legend_error(str key, list[str] items)                              // Processed legend element: comes from an element joined by ORs and ANDs
-  | legend_empty(str)                                                    // Empty legend element
+  = legend_data(str key, str first_item, list[LegendOperation] other_items, str)    // Unprocessed legend element: key, first (object name or legend key), rest (objects or legend elements)
+  | legend_reference(str key, list[str] items)                                      // Processed legend element: comes from an element joined by ORs
+  | legend_combined(str key, list[str] items)                                       // Processed legend element: comes from an element joined by ANDs
+  | legend_error(str key, list[str] items)                                          // Processed legend element: comes from an element joined by ORs and ANDs
+  | legend_empty(str)                                                               // Empty legend element
   ;    
+
+/*
+ * @Name:   LegendOperation
+ * @Desc:   AST node for the rest of the elements of game legend
+ */ 
+data LegendOperation
+    = legend_or(str item)      // OR ckeyase: object name or legend element key
+    | legend_and(str item)     // AND case: object name legend element key
+    ;
+
+/******************************************************************************/
+// --- Sound structure defines ------------------------------------------------
 
 /*
  * @Name:   SoundData
  * @Desc:   AST node for the game sounds
  */ 
 data SoundData
-  = sound_data(list[str] sound, str)    // List of sounds, Comment (???)
-  | sound_empty(str)                    // Empty sound
-  ;
+    = sound_data(list[str] sound, str)  // Unprocessed sound: list of items, separator (\n)
+    | sound_data(list[str] sound)       // Processed sound: list of items   
+    | sound_empty(str)                  // Empty sound
+    ;
+
+/******************************************************************************/
+// --- Layer structure defines -------------------------------------------------
     
 /*
  * @Name:   LayerData
