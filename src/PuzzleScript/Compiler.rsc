@@ -60,13 +60,13 @@ alias Layer = list[Line];
  * @Desc:   Data structure to model a level. Not to be mistaken by LevelData, 
  *          which represents an AST node of a level
  */
-data Level (loc src = |unknown:///|)
+data Level 
     = level(
-        map[Coords, list[Object]] objects,  // Coordinate and the list of objects (for different layers)
-        tuple[Coords, str] player,          // Tuple: Coordinate of the player and the state (???)
-        LevelData original                  // Original AST node
-    )
-	| message(str msg, LevelData original)  // In between level messages are considered levels
+            map[Coords, list[Object]] objects,  // Coordinate and the list of objects (for different layers)
+            tuple[Coords, str] player,          // Tuple: Coordinate of the player and the state (???)
+            LevelData original                  // Original AST node
+        )
+	| message(str msg, LevelData original)      // In between level messages are considered levels
 	;
 
 /*
@@ -76,7 +76,7 @@ data Level (loc src = |unknown:///|)
 alias Coords = tuple[
     int x,      // x-coordinate
     int y       // y-coordinate
-    ];
+];
 
 /*
  * @Name:   Command
@@ -116,7 +116,6 @@ alias Rule = tuple[
  * @Desc:   Data structure modelling the engine for PuzzleScript games
  */
 alias Engine = tuple[
-    list[LevelData] levels,                             // Original level AST nodes
 	list[Level] converted_levels,                       // Converted levels
     int all_objects,                                    // Number of total objects
     Level begin_level,                                  // First level
@@ -260,7 +259,6 @@ Rule new_rule(RuleData r, str direction, list[RulePart] left, list[RulePart] rig
  */
 Engine new_engine(PSGame game)		
 	= < 
-		[],                             // Original level AST nodes
         [],                             // Converted levels
         0,                              // Number of total objects
 		message("", level_data([])),    // First level
@@ -435,58 +433,8 @@ set[str] generate_directions(list[str] modifiers){
 	return directions;
 }
 
-/*
- * @Name:   resolve_player_rep_char_and_name
- * @Desc:   Function that resolves the name and representation character of the 
- *          player
- * @Param:  c -> Checker
- * @Ret:    Map with representation char as key and name as value
- */
-map[str, str] resolve_player_rep_char_and_name(Checker c) {
-    map[str, str] start_name = ();
-    list[str] possible_names = ["player"];
-
-    // Add the direct references of the "player" key 
-    if ("player" in c.references.key) possible_names += c.references["player"];
-
-    // Search for a character that represents any of the possible player names in the references
-    for (str key <- c.references<0>) {
-        if(size(key) == 1, any(str name <- possible_names, name in c.references[key])) start_name += (key: name);
-    }
-
-    // Search for a character that represents any of the possible player names in the references
-    for (str key <- c.combinations<0>) {
-        if (size(key) == 1, any(str name <- possible_names, name in c.combinations[key])) start_name += (key: name);
-    }
-
-    return start_name;
-}
-
-/*
- * @Name:   resolve_background_rep_char_and_name
- * @Desc:   Function that resolves the representation char and name of the
- *          background
- * @Param:  c -> Checker
- * @Ret:    Map with representation char as key and name as value
- */
-tuple[str,str] resolve_background_rep_char_and_name(Checker c) {
-    list[str] possible_names = ["background"];
-
-    // Add the direct references of the "background" key 
-    if ("background" in c.references.key) possible_names += c.references["background"];
-
-    // Search for a character that represents any of the possible player names in the references
-    for (str key <- c.references.key) {
-        if(size(key) == 1, any(str name <- possible_names, name in c.references[key])) return <key, name>;
-    }
-
-    // Search for a character that represents any of the possible player names in the combinations
-    for (str key <- c.combinations.key) {
-        if (size(key) == 1, any(str name <- possible_names, name in c.combinations[key])) return <key, name>;
-    }
-
-    return <"","">;
-}
+/******************************************************************************/
+// --- Convert level functions -------------------------------------------------
 
 /*
  * @Name:   convert_level
@@ -497,36 +445,37 @@ tuple[str,str] resolve_background_rep_char_and_name(Checker c) {
  *          c     -> Checker
  * @Ret:    Level object
  */
-Level convert_level(LevelData level, Checker c) {
+Level convert_level(LevelData lvl, Checker c) {
     map[Coords, list[Object]] objects = ();
     tuple[Coords, str] player = <<0,0>, "">;
     int id = 0;
 
     // We resolve all the needed player object information
-    map[str rep_char, str name] player_resolved = resolve_player_rep_char_and_name(c);
+    tuple[str rep_char, str name] player_resolved = _convert_level_resolve_player(c);
+    println(player_resolved);
 
     // We resolve all the needed background object information
-    tuple[str rep_char, str name] background_resolved = resolve_background_rep_char_and_name(c);
-    list[str] background_references = get_resolved_references(background_resolved.rep_char, c.references);
-    LayerData background_layer = get_layer(background_references, c.game);
+    tuple[str rep_char, str name] background_resolved = _convert_level_resolve_background(c);
+    list[str] background_properties = get_properties_rep_char(background_resolved.rep_char, c.references);
+    LayerData background_layer = get_layer(background_properties, c.game);
 
-    for (int i <- [0..size(level.level)]) {
-        for (int j <- [0..size(level.level[i])]) {
+    for (int i <- [0..size(lvl.level)]) {
+        for (int j <- [0..size(lvl.level[i])]) {
             // We create a background object and add it
-            Object new_background_object = game_object(background_resolved.rep_char, background_resolved.name, background_references, <i,j>, "", background_layer, id);
+            Object new_background_object = game_object(background_resolved.rep_char, background_resolved.name, background_properties, <i,j>, "", background_layer, id);
             objects = _convert_level_add_object(objects, <i,j>, new_background_object);
             id += 1;
 
             // Now we add our new object. We have different steps:
-            str rep_char = toLowerCase(level.level[i][j]);
+            str rep_char = toLowerCase(lvl.level[i][j]);
 
             // Step 1: if it is a background object, we skip it since we have
             //         already added one
             if(rep_char == background_resolved.rep_char) continue;
 
-            // Step 2: if its a player object we store
-            if (rep_char in player_resolved.rep_char) {
-                player = <<i,j>, player_resolved[rep_char]>;
+            // Step 2: if its a player object we store 
+            if (rep_char == player_resolved.rep_char) {
+                player = <<i,j>, player_resolved.name>;
             }
 
             // Step 3.1: the object to represent is a key in the references, that
@@ -554,31 +503,82 @@ Level convert_level(LevelData level, Checker c) {
             }
             // Step 3.3: Representation char included in the object definition 
             //           (FIX: need to loop over the objects to find it)
-            else {
-                list[str] all_references = get_unresolved_references_and_properties(rep_char, c.references);
-                all_references += [ref | str ref <- get_unresolved_references_and_properties(rep_char, c.combinations), !(ref in all_references)];
-                LayerData ld = get_layer(all_references, c.game);
-                str name = "Unknown";
-
-                Object new_object = game_object(rep_char, name, all_references, <i,j>, "", ld, id);
-                objects = _convert_level_add_object(objects, <i,j>, new_object);
-                id += 1;
-            }
         }
     }
 
-    return Level::level(
+    new_level = level(
         objects,
 		player,
-		level        
+		lvl        
     );
+
+    return new_level;
 }
 
+/*
+ * @Name:   _convert_level_resolve_player
+ * @Desc:   Function that resolves the name and representation character of the 
+ *          given object 
+ * @Param:  c           -> Checker
+ *          object_name -> Name of the object to resolve
+ * @Ret:    Map with representation char as key and name as value
+ */
+tuple[str, str] _convert_level_resolve_object(Checker c, str object_name) {
+    list[str] possible_names = [object_name];
+
+    // Add the direct references of the "object_name" key 
+    if (object_name in c.references.key) possible_names += c.references[object_name];
+
+    // Search for a character that represents any of the possible player names in the references
+    for (str key <- c.references<0>) {
+        if(size(key) == 1, any(str name <- possible_names, name in c.references[key])) return <key, name>;
+    }
+
+    // Search for a character that represents any of the possible player names in the references
+    for (str key <- c.combinations<0>) {
+        if (size(key) == 1, any(str name <- possible_names, name in c.combinations[key])) return <key, name>;
+    }
+
+    return <"","">;
+}
+
+/*
+ * @Name:   _convert_level_resolve_player
+ * @Desc:   Function that resolves the name and representation character of the 
+ *          player
+ * @Param:  c -> Checker
+ * @Ret:    Map with representation char as key and name as value
+ */
+tuple[str, str] _convert_level_resolve_player(Checker c) {
+    return _convert_level_resolve_object(c, "player");
+}
+
+/*
+ * @Name:   _convert_level_resolve_background
+ * @Desc:   Function that resolves the representation char and name of the
+ *          background
+ * @Param:  c -> Checker
+ * @Ret:    Map with representation char as key and name as value
+ */
+tuple[str,str] _convert_level_resolve_background (Checker c) {
+    return _convert_level_resolve_object(c, "background");
+}
+
+/*
+ * @Name:   _convert_level_add_object
+ * @Desc:   Function that adds an object to the given object coord map
+ * @Param:  objects    -> Current map of coordinates and objects
+ *          coords     -> Coordinates of the new object
+ *          new_object -> New object to add
+ * @Ret:    Updated map with the new object
+ */
 map[Coords, list[Object]] _convert_level_add_object(map[Coords, list[Object]] objects, tuple[int x, int y] coords, Object new_object) {
     if (coords in objects) objects[coords] += [new_object];
     else objects[coords] = [new_object];
     return objects;
 }
+
+
 
 
 
@@ -1531,24 +1531,22 @@ str convert_rule(list[RulePart] left, list[RulePart] right) {
  * @Ret:    Engine object
  */
 Engine compile(Checker c) {
-	Engine engine = new_engine(c.game);
-    engine.levels = c.game.levels;  
+	Engine engine = new_engine(c.game); 
     engine.properties = c.resolved_references;
     engine.references = c.references;
 
     // Step 1: We convert all the levels to our new data structure. Note that we
     //         skip the messages in between levels
-    for (LevelData ld <- engine.levels) {
-        if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
+    for (LevelData lvl <- c.game.levels) {
+        if (lvl is level_data) engine.converted_levels += [convert_level(lvl, c)];
     }
 
+    // Step 2: We start on the first level
     engine.current_level = engine.converted_levels[0];
-    Level begin_level = engine.current_level;
-    engine.begin_level = begin_level;
+    engine.begin_level = engine.current_level;
 
-    list[RuleData] rules = c.game.rules;
-    for (RuleData rule <- rules) {
-        if ("late" in [toLowerCase(x.prefix) | x <- rule.left, x is rule_prefix]) {
+    for (RuleData rule <- c.game.rules) {
+        if ("late" in [toLowerCase(lhs.prefix) | lhs <- rule.left, lhs is rule_prefix]) {
             list[Rule] rulegroup = convert_rule(rule, true, c);
             if (size(rulegroup) != 0) engine.late_rules += [rulegroup];
         }

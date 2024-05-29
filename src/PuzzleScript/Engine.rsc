@@ -527,10 +527,13 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
     list[Object] objects = [];
 
     for (Object object <- current_level.objects[current_level.player[0]]) {
+        println(object);
+        println(current_level.player[1]);
         if (object.current_name == current_level.player[1]) {
             // println("Setting <object.current_name>at <object.coords>\'s direction to <direction>");
             object.direction = direction;
         }
+        println(object);
         objects += object;
     }
     current_level.objects[current_level.player[0]] = objects;
