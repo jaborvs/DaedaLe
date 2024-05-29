@@ -89,7 +89,7 @@ syntax Section
 // --- Objects syntax ----------------------------------------------------------
 
 syntax ObjectData
-    = object_data: ObjectName Newline Color+ Newline Sprite?
+    = object_data: ObjectName LegendKey? Newline Color+ Newline Sprite?
     | object_empty: Newline
     ;
 

@@ -202,7 +202,8 @@ ObjectData process_object(ObjectData unprocessed_object){
     }    
 
     ObjectData processed_object = object_data(
-        unprocessed_object.name, 
+        unprocessed_object.name,
+        unprocessed_object.rep_char, 
         unprocessed_object.colors, 
         processed_sprite
     );

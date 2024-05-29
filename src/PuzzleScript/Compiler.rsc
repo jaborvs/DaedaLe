@@ -552,7 +552,8 @@ Level convert_level(LevelData level, Checker c) {
                     id += 1;
                 }
             }
-            // Step 3.3: Unknown case (FIX: I think we can delete this)
+            // Step 3.3: Representation char included in the object definition 
+            //           (FIX: need to loop over the objects to find it)
             else {
                 list[str] all_references = get_unresolved_references_and_properties(rep_char, c.references);
                 all_references += [ref | str ref <- get_unresolved_references_and_properties(rep_char, c.combinations), !(ref in all_references)];
@@ -560,7 +561,7 @@ Level convert_level(LevelData level, Checker c) {
                 str name = "Unknown";
 
                 Object new_object = game_object(rep_char, name, all_references, <i,j>, "", ld, id);
-                objects = _convert_level_add_object(objects, new_object);
+                objects = _convert_level_add_object(objects, <i,j>, new_object);
                 id += 1;
             }
         }

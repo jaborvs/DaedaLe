@@ -83,9 +83,9 @@ data Section
  * @Desc:   AST node for game objects
  */ 
 data ObjectData
-    = object_data(str name, str, list[str] colors, str, list[Sprite] spr)   // Unprocessed object: Name, separator (\n), colors, separator (\n), sprite
-    | object_data(str name, list[str] colors, list[list[Pixel]] sprite)     // Processed object:   Name, colors, sprite 
-    | object_empty(str)                                                     // Empty object
+    = object_data(str name, str rep_char, str, list[str] colors, str, list[Sprite] spr)    // Unprocessed object: Name, separator (\n), colors, separator (\n), sprite
+    | object_data(str name, str rep_char, list[str] colors, list[list[Pixel]] sprite)           // Processed object:   Name, colors, sprite 
+    | object_empty(str)                                                                         // Empty object
     ;
 
 /*

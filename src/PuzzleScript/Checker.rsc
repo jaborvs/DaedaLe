@@ -293,7 +293,7 @@ list[str] get_properties_name(str name, map[str, list[str]] references) {
     for (str rf <- references) {
         if (size(rf) == 1) continue;
 
-        if (key in references[rf]) {
+        if (name in references[rf]) {
             all_properties += rf;
             all_properties += get_properties(rf, references);
         }
