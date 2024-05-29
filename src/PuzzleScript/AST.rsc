@@ -197,9 +197,10 @@ data RuleContent
  * @Desc:   AST node for the win conditions
  */ 
 data ConditionData
-  = condition_data(list[str] condition, str)    // Win condition, Comment (???)
-  | condition_empty(str)                        // Empty win condition section
-  ;
+    = condition_data(list[str] items, str)  // Unprocessed win condition: items, separator (\n)
+    | condition_data(list[str] items)       // Processed win condition: items
+    | condition_empty(str)                  // Empty win condition
+    ;
 
 /******************************************************************************/
 // --- Level structure defines -------------------------------------------------

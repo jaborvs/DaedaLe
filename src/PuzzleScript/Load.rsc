@@ -138,9 +138,10 @@ PSGame process_game(PSGame game) {
     processed_objects = [process_object(unprocessed_object) | ObjectData unprocessed_object <- unprocessed_objects];
     processed_legend = [process_legend(unprocessed_legend_item) | LegendData unprocessed_legend_item <- unprocessed_legend];        
     processed_sounds = [process_sound(unprocessed_sound) | SoundData unprocessed_sound <- unprocessed_sounds];
-    processed_layers = [process_layer(l) | LayerData l <- unprocessed_layers];
+    processed_layers = [process_layer(unprocessed_layer) | LayerData unprocessed_layer <- unprocessed_layers];
     processed_rules  = unprocessed_rules;
     processed_conditions = unprocessed_conditions;
+    // processed_conditions = [process_condition(unprocessed_condition) | ConditionData unprocessed_condition <- unprocessed_conditions];
     processed_levels = [process_level(unprocessed_level) | LevelData unprocessed_level <- unprocessed_levels];
         
     PSGame processed_game = game_data(
@@ -276,6 +277,20 @@ LayerData process_layer(LayerData unprocessed_layer) {
         processed_items
     );
     return processed_layer;
+}
+
+/*
+ * @Data:   process_sound
+ * @Desc:   Function to process a condition. We just delete the separator at the 
+ *          end
+ * @Param:  unprocessed_condition -> Condition to be processed
+ * @Ret:    Processed condition
+ */
+ConditionData process_condition(ConditionData unprocessed_condition) {
+    ConditionData processed_condition = condition_data(
+        unprocessed_condition.items
+    );
+    return processed_condition;
 }
 
 /*

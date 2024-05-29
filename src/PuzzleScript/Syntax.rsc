@@ -10,19 +10,21 @@ lexical Delimiter = [=]+;
 lexical Newline = [\n];
 
 lexical ID = [a-z0-9.A-Z#_+]+ !>> [a-z0-9.A-Z#_+] \ Keywords;
-lexical SpritePixel = [0-9.];
+lexical String = @category="String" ![\n]+ >> [\n];
 
+lexical SpritePixel = [0-9.];
 lexical Pixel = [a-zA-Zぁ-㍿.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]˅\\±];
 lexical LegendKey = @category="LegendKey" Pixel+ !>> Pixel \ Keywords;
 lexical LevelPixel = @category="LevelPixel" Pixel;
-lexical Levelline = LevelPixel+ !>> LevelPixel \ Keywords;
-lexical String = @category="String" ![\n]+ >> [\n];
+lexical LevelLine = LevelPixel+ !>> LevelPixel \ Keywords;
+
 lexical SoundIndex = [0-9]|'10' !>> [0-9]|'10';
-lexical KeywordID = @category="ID" [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ 'message';
 lexical IDOrDirectional = @category="IDorDirectional" [\>\<^va-z0-9.A-Z#_+]+ !>> [\>\<^va-z0-9.A-Z#_+] \ Keywords;
 
 /******************************************************************************/
 // --- Reserved Keywords -------------------------------------------------------
+// (NOTE: We have omitted the SoundKeywords, since we are being more lenient for
+//        accepting sounds)
 
 keyword Keywords 
     = SectionKeyword | PreludeKeyword | LegendKeyword | CommandKeyword
@@ -65,7 +67,7 @@ syntax Prelude
     ;
     
 syntax PreludeData
-    = prelude_data: KeywordID String* Newline
+    = prelude_data: PreludeKeyword String* Newline
     | prelude_empty: Newline
     ;
 
@@ -159,10 +161,7 @@ syntax Prefix
 
 syntax Command
   = @category="Keyword" command: CommandKeyword
-  | @category="Keyword" sound: Sound;
-
-syntax Sound
-  = sound: 'sfx' SoundIndex; 
+  | @category="Keyword" sound: 'sfx' SoundIndex;
     
 /******************************************************************************/
 // --- Condition syntax --------------------------------------------------------
@@ -178,6 +177,6 @@ syntax ConditionItem
 // --- Condition syntax --------------------------------------------------------
 
 syntax LevelData
-    = level_data: (Levelline Newline)+ Newline
+    = level_data: (LevelLine Newline)+ Newline
     | level_message: 'message' String*
     | level_empty: Newline;

@@ -575,12 +575,12 @@ real calculate_heuristic(Engine engine) {
             list[Object] moveable_win_objs = [];
             list[Object] non_moveable_win_objs = [];
 
-            if (size(cd.condition) > 2) {
-                str moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
-                    cd.condition[1] : cd.condition[3];
+            if (size(cd.items) > 2) {
+                str moveable = cd.items[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                    cd.items[1] : cd.items[3];
 
-                str non_moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
-                    cd.condition[3] : cd.condition[1];
+                str non_moveable = cd.items[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                    cd.items[3] : cd.items[1];
 
                 moveable = toLowerCase(moveable);
                 non_moveable = toLowerCase(non_moveable);
@@ -611,7 +611,7 @@ real calculate_heuristic(Engine engine) {
                 }
             } else {
 
-                str name = toLowerCase(cd.condition[1]);
+                str name = toLowerCase(cd.items[1]);
 
                 visit(engine.current_level.objects) {
                     case n: game_object(_, name, _, _, _, _, _): {
@@ -742,20 +742,20 @@ bool check_conditions(Engine engine, str condition) {
 
     for (ConditionData cd <- lcd) {
         if (cd is condition_data) {
-            if ("on" in cd.condition) {
-                str moveable = cd.condition[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
-                    cd.condition[1] : cd.condition[3];
+            if ("on" in cd.items) {
+                str moveable = cd.items[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                    cd.items[1] : cd.items[3];
 
                 if (condition == "win") {
                     println("   6.2");
-                    satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), [cd.condition[1], cd.condition[3]]);
+                    satisfied += check_win_condition(engine.current_level, toLowerCase(cd.items[0]), [cd.items[1], cd.items[3]]);
                 } else if (condition == "dead_end") {
-                    satisfied += check_dead_end(engine, toLowerCase(cd.condition[0]), moveable);
+                    satisfied += check_dead_end(engine, toLowerCase(cd.items[0]), moveable);
                 }
 
             } else {
                 if (condition == "win") {
-                    satisfied += check_win_condition(engine.current_level, toLowerCase(cd.condition[0]), cd.condition[1]);
+                    satisfied += check_win_condition(engine.current_level, toLowerCase(cd.items[0]), cd.items[1]);
                 }
             }
         }
