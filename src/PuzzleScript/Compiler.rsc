@@ -29,15 +29,18 @@ import PuzzleScript::Engine;
  * @Desc:   Data structure to model a game object. Not to be mistaken by DataObject
  *          which models an AST node for an object
  */
-data Object = game_object(
-    str char,                   // Legend representation char
-    str current_name,           // Current name of the object (for references objects)
-    list[str] possible_names,   // All objects names (for references objects)
-    Coords coords,              // Current position of the object
-    str direction,              // Direction to be moved towards
-    LayerData layer,            // Layer where it exists
-    int id                      // Identifier
-    );
+data Object 
+    = game_object (
+            str char,                   // Legend representation char
+            str current_name,           // Current name of the object (for references objects)
+            list[str] possible_names,   // All objects names (for references objects)
+            Coords coords,              // Current position of the object
+            str direction,              // Direction to be moved towards
+            LayerData layer,            // Layer where it exists
+            int id                      // Identifier
+        )
+    | object_empty()
+    ;
 
 /*
  * @Name:   Line
@@ -433,28 +436,18 @@ set[str] generate_directions(list[str] modifiers){
 }
 
 /*
- * @Name:   resolve_player_name
+ * @Name:   resolve_player_rep_char_and_name
  * @Desc:   Function that resolves the name and representation character of the 
- *          current player state
- * @Param:
- *      c   Checker
- * @Ret:    Map with names
+ *          player
+ * @Param:  c -> Checker
+ * @Ret:    Map with representation char as key and name as value
  */
-map[str, str] resolve_player_name(Checker c) {
+map[str, str] resolve_player_rep_char_and_name(Checker c) {
     map[str, str] start_name = ();
     list[str] possible_names = ["player"];
 
-    // Search for a character that represents the player in the references
-    if (any(str key <- c.references<0>, size(key) == 1, "player" in c.references[key])) return (key: "player");
-    
-    // Search in combinations 
-    for (str key <- c.combinations<0>) {
-        if ("player" in c.combinations[key]) start_name += (key: "player");
-    }
-    if (start_name != ()) return start_name;
-
     // Add the direct references of the "player" key 
-    possible_names += c.references["player"];
+    if ("player" in c.references.key) possible_names += c.references["player"];
 
     // Search for a character that represents any of the possible player names in the references
     for (str key <- c.references<0>) {
@@ -469,96 +462,107 @@ map[str, str] resolve_player_name(Checker c) {
     return start_name;
 }
 
+/*
+ * @Name:   resolve_background_rep_char_and_name
+ * @Desc:   Function that resolves the representation char and name of the
+ *          background
+ * @Param:  c -> Checker
+ * @Ret:    Map with representation char as key and name as value
+ */
+tuple[str,str] resolve_background_rep_char_and_name(Checker c) {
+    list[str] possible_names = ["background"];
 
+    // Add the direct references of the "background" key 
+    if ("background" in c.references.key) possible_names += c.references["background"];
+
+    // Search for a character that represents any of the possible player names in the references
+    for (str key <- c.references.key) {
+        if(size(key) == 1, any(str name <- possible_names, name in c.references[key])) return <key, name>;
+    }
+
+    // Search for a character that represents any of the possible player names in the combinations
+    for (str key <- c.combinations.key) {
+        if (size(key) == 1, any(str name <- possible_names, name in c.combinations[key])) return <key, name>;
+    }
+
+    return <"","">;
+}
 
 /*
  * @Name:   convert_level
- * @Desc:   Function to convert an level AST node to an level object. 
- *          We go over each character in the level and convert the 
- *          character to all possible references
- * @Param:
- *      level   Original level AST node
- *      c       Checker
+ * @Desc:   Function to convert an level AST node to an level object. We go over
+ *          each character in the level and convert the character to all 
+ *          possible references
+ * @Param:  level -> Original level AST node
+ *          c     -> Checker
  * @Ret:    Level object
  */
 Level convert_level(LevelData level, Checker c) {
     map[Coords, list[Object]] objects = ();
     tuple[Coords, str] player = <<0,0>, "">;
-    map[str, str] player_name = resolve_player_name(c);
     int id = 0;
 
-    // Quick fix for transparency (???)
-    // str background_char = "";
-    // for (str bg_char <- c.references<0>){
-    //     if ("background" in c.references[bg_char]) {
-    //         background_char = bg_char;
-    //     }
-    // }
-    // list[str] background_references = get_resolved_references(background_char, c.references);
-    // LayerData background_ld = get_layer(background_references, c.game);
-    // str background_name = c.references[background_char][0];
+    // We resolve all the needed player object information
+    map[str rep_char, str name] player_resolved = resolve_player_rep_char_and_name(c);
 
+    // We resolve all the needed background object information
+    tuple[str rep_char, str name] background_resolved = resolve_background_rep_char_and_name(c);
+    list[str] background_references = get_resolved_references(background_resolved.rep_char, c.references);
+    LayerData background_layer = get_layer(background_references, c.game);
 
     for (int i <- [0..size(level.level)]) {
- 		list[str] char_list = split("", level.level[i]);
+        for (int j <- [0..size(level.level[i])]) {
+            // We create a background object and add it
+            Object new_background_object = game_object(background_resolved.rep_char, background_resolved.name, background_references, <i,j>, "", background_layer, id);
+            objects = _convert_level_add_object(objects, <i,j>, new_background_object);
+            id += 1;
 
-        for (int j <- [0..size(char_list)]) {
-            str char = toLowerCase(char_list[j]);
+            // Now we add our new object. We have different steps:
+            str rep_char = toLowerCase(level.level[i][j]);
 
-            if (char in player_name<0>) player = <<i,j>, player_name[char]>;
+            // Step 1: if it is a background object, we skip it since we have
+            //         already added one
+            if(rep_char == background_resolved.rep_char) continue;
 
-            if (char in c.references<0>) {
-                list[str] all_references = get_unresolved_references_and_properties(char, c.references);
-                LayerData ld = get_layer(all_references, c.game);
-                str name = c.references[char][0];
-
-                // Quick fix for transparency (???)
-                // list[Object] background = [game_object(background_char, background_name, background_references,<i,j>, "", background_ld, id)];
-                // id += 1;
-
-                // list[Object] new_object = [];
-                // if (char != background_char) {
-                //     new_object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
-                //     id += 1;
-                // }
-
-                // list[Object] object = background + new_object;
-                // if (<i,j> in objects) objects[<i,j>] += object;
-                // else objects[<i,j>] = object;
-
-                list[Object] object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
-
-                if (<i,j> in objects) objects[<i,j>] += object;
-                else objects += (<i,j>: object);
-
-                id += 1;
-
-            } else if (char in c.combinations<0>) {
-                for (str objectName <- c.combinations[char]) {
-
-                    list[str] all_references = get_properties(objectName, c.resolved_references);
-                    LayerData ld = get_layer(all_references, c.game);
-
-                    list[Object] object = [game_object(char, objectName, all_references, <i,j>, "", ld, id)];
-                    if (<i,j> in objects) objects[<i,j>] += object;
-                    else objects += (<i,j>: object);
-                    id += 1;
-                }
-                
-            } else {
-                list[str] all_references = get_unresolved_references_and_properties(char, c.references);
-                all_references += [ref | str ref <- get_unresolved_references_and_properties(char, c.combinations), !(ref in all_references)];
-                LayerData ld = get_layer(all_references, c.game);
-                str name = "";
-
-                list[Object] object = [game_object(char, name, all_references, <i,j>, "", ld, id)];
-
-                if (<i,j> in objects) objects[<i,j>] += object;
-                else objects += (<i,j>: object);
-
-                id += 1;
+            // Step 2: if its a player object we store
+            if (rep_char in player_resolved.rep_char) {
+                player = <<i,j>, player_resolved[rep_char]>;
             }
 
+            // Step 3.1: the object to represent is a key in the references, that
+            //           is, it representes several objects (or several states of
+            //           the same object). We get the properties of the char
+            if (rep_char in c.references.key) {
+                list[str] all_properties = get_properties_rep_char(rep_char, c.references);
+                LayerData layer = get_layer(all_properties, c.game);
+                str name = c.references[rep_char][0];
+
+                Object new_object = game_object(rep_char, name, all_properties, <i,j>, "", layer, id);
+                objects = _convert_level_add_object(objects, <i,j>, new_object);
+                id += 1;
+            } 
+            // Step 3.2: the rep_char is represents a combination of objects.
+            else if (rep_char in c.combinations.key) {
+                for (str name <- c.combinations[rep_char]) {
+                    list[str] all_properties = get_properties_name(name, c.references);  
+                    LayerData ld = get_layer(all_properties, c.game);
+
+                    Object new_object = game_object(rep_char, name, all_properties, <i,j>, "", ld, id);
+                    objects = _convert_level_add_object(objects, <i,j>, new_object);
+                    id += 1;
+                }
+            }
+            // Step 3.3: Unknown case (FIX: I think we can delete this)
+            else {
+                list[str] all_references = get_unresolved_references_and_properties(rep_char, c.references);
+                all_references += [ref | str ref <- get_unresolved_references_and_properties(rep_char, c.combinations), !(ref in all_references)];
+                LayerData ld = get_layer(all_references, c.game);
+                str name = "Unknown";
+
+                Object new_object = game_object(rep_char, name, all_references, <i,j>, "", ld, id);
+                objects = _convert_level_add_object(objects, new_object);
+                id += 1;
+            }
         }
     }
 
@@ -568,6 +572,14 @@ Level convert_level(LevelData level, Checker c) {
 		level        
     );
 }
+
+map[Coords, list[Object]] _convert_level_add_object(map[Coords, list[Object]] objects, tuple[int x, int y] coords, Object new_object) {
+    if (coords in objects) objects[coords] += [new_object];
+    else objects[coords] = [new_object];
+    return objects;
+}
+
+
 
 
 
@@ -1508,14 +1520,13 @@ str convert_rule(list[RulePart] left, list[RulePart] right) {
     }
     return rule;
 }
-/*****************************************************************************/
-// --- Compilatin functions ---------------------------------------------------
+/******************************************************************************/
+// --- Compilation functions ---------------------------------------------------
 
 /*
  * @Name:   compile
  * @Desc:   Function that compiles a whole game
- * @Param:  
- *      c   Checker
+ * @Param:  c -> Checker
  * @Ret:    Engine object
  */
 Engine compile(Checker c) {
@@ -1524,6 +1535,8 @@ Engine compile(Checker c) {
     engine.properties = c.resolved_references;
     engine.references = c.references;
 
+    // Step 1: We convert all the levels to our new data structure. Note that we
+    //         skip the messages in between levels
     for (LevelData ld <- engine.levels) {
         if (ld is level_data) engine.converted_levels += [convert_level(ld, c)];
     }

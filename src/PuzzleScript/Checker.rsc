@@ -123,9 +123,9 @@ Checker check_game(PSGame g) {
         }
 
         if (l is legend_combined) {
-            for (str object <- l.values) {
-                if (toLowerCase(l.legend) in c.combinations) c.combinations[toLowerCase(l.legend)] += [toLowerCase(object)];
-                else c.combinations += (toLowerCase(l.legend): [toLowerCase(object)]);
+            for (str object <- l.items) {
+                if (toLowerCase(l.key) in c.combinations) c.combinations[toLowerCase(l.key)] += [toLowerCase(object)];
+                else c.combinations += (toLowerCase(l.key): [toLowerCase(object)]);
             }
         }
     }
@@ -233,6 +233,28 @@ list[str] get_unresolved_references_and_properties(str key, map[str, list[str]] 
 }
 
 /*
+ * @Name:   get_properties_rep_char
+ * @Desc:   Function to get the properties of a representatio char. This are the 
+ *          properties of each of the object names it references.
+ * @Param:  rep_char   -> Representation char of the references dictionary 
+ *          references -> Map of all game object references
+ * @Ret:    References of the representation char
+ */
+list[str] get_properties_rep_char(str rep_char, map[str, list[str]] references) {
+    if (!(rep_char in references<0>)) return [];
+
+    list[str] all_properties = [];
+    list[str] unresolved_references = references[rep_char];
+    all_properties += unresolved_references;
+
+    for (str rf <- unresolved_references) {
+        all_properties += get_properties(rf, references);
+    }
+
+    return toList(toSet(all_properties));
+}
+
+/*
  * @Name:   get_properties
  * @Desc:   Function to get the all properties of a given key.
  *          A property is the string used as key in the set of references
@@ -242,7 +264,7 @@ list[str] get_unresolved_references_and_properties(str key, map[str, list[str]] 
  * @Ret:    Properties of the reference
  */
 list[str] get_properties(str key, map[str, list[str]] references) {
-    list[str] all_references = [];
+    list[str] all_references = [key];
 
     for (str rf <- references) {
         if (size(rf) == 1) continue;
@@ -254,4 +276,28 @@ list[str] get_properties(str key, map[str, list[str]] references) {
     }
 
     return toList(toSet(all_references));
+}
+
+/*
+ * @Name:   get_properties_name
+ * @Desc:   Function to get the all properties of a given object name.
+ *          A property refers to the non-sized 1 keys of the legend that contain
+ *          the object name
+ * @Param:  name       -> Object name (or alias of object names)
+ *          references -> Map of all references
+ * @Ret:    Properties of the reference
+ */
+list[str] get_properties_name(str name, map[str, list[str]] references) {
+    list[str] all_properties = [name];
+
+    for (str rf <- references) {
+        if (size(rf) == 1) continue;
+
+        if (key in references[rf]) {
+            all_properties += rf;
+            all_properties += get_properties(rf, references);
+        }
+    }
+
+    return toList(toSet(all_properties));
 }

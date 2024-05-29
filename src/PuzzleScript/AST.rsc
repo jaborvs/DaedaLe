@@ -214,7 +214,7 @@ data ConditionData
  */ 
 data LevelData
     = level_data(list[tuple[str,str]] lines, str)   // Unprocessed level: list of lines (tuple of the actual object representation chars and separator \n), separator (\n)
-    | level_data(list[str] level)                       // Processed level
-    | level_message(str message)                        // Message in between levels
-    | level_empty(str)                                  // Empty level
+    | level_data(list[str] level)                   // Processed level
+    | level_message(str message)                    // Message in between levels
+    | level_empty(str)                              // Empty level
     ;
