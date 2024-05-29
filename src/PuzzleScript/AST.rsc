@@ -116,12 +116,12 @@ data Pixel
  * @Desc:   AST node for the game legend
  */ 
 data LegendData
-  = legend_data(str key, str first_item, list[LegendOperation] other_items, str)    // Unprocessed legend element: key, first (object name or legend key), rest (objects or legend elements)
-  | legend_reference(str key, list[str] items)                                      // Processed legend element: comes from an element joined by ORs
-  | legend_combined(str key, list[str] items)                                       // Processed legend element: comes from an element joined by ANDs
-  | legend_error(str key, list[str] items)                                          // Processed legend element: comes from an element joined by ORs and ANDs
-  | legend_empty(str)                                                               // Empty legend element
-  ;    
+    = legend_data(str key, str first_item, list[LegendOperation] other_items, str)    // Unprocessed legend element: key, first (object name or legend key), rest (objects or legend elements)
+    | legend_reference(str key, list[str] items)                                      // Processed legend element: comes from an element joined by ORs
+    | legend_combined(str key, list[str] items)                                       // Processed legend element: comes from an element joined by ANDs
+    | legend_error(str key, list[str] items)                                          // Processed legend element: comes from an element joined by ORs and ANDs
+    | legend_empty(str)                                                               // Empty legend element
+    ;    
 
 /*
  * @Name:   LegendOperation
@@ -153,10 +153,10 @@ data SoundData
  * @Desc:   AST node for the game layers
  */ 
 data LayerData
-  = layer_data(list[str] items, str)    // Unprocessed layer: items (object names or legend keys), separator (\n)
-  | layer_data(list[str] items)         // Processed layer: items (object names or legend keys)
-  | layer_empty(str)                    // Empty layer
-  ;
+    = layer_data(list[str] items, str)    // Unprocessed layer: items (object names or legend keys), separator (\n)
+    | layer_data(list[str] items)         // Processed layer: items (object names or legend keys)
+    | layer_empty(str)                    // Empty layer
+    ;
 
 /******************************************************************************/
 // --- Rule structure defines --------------------------------------------------
@@ -166,28 +166,31 @@ data LayerData
  * @Desc:   AST node for the game rules
  */ 
 data RuleData
-  = rule_data(list[RulePart] left, list[RulePart] right, list[str] message, str)    // Single rule:   LHS, RHS, Message, Comment (???)
-  | rule_loop(list[RuleData] rules, str)                                            // Looped rules: Rules List, Comment 
-  | rule_empty(str)                                                                 // Empty rules section
-  ;
+    = rule_data(list[RulePart] left, list[RulePart] right, list[str] message, str)  // Unprocessed single rule: lhs, rhs, message, separator (\n)
+    | rule_data(list[RulePart] left, list[RulePart] right, list[str] message)       // Processed single rule: lhs, rhs, message
+    | rule_loop(list[RuleData] rules, str)                                          // Unprocessed looped rules: rule list, separator (\n)
+    | rule_loop(list[RuleData] rules)                                               // Processed rules: rule list
+    | rule_empty(str)                                                               // Empty rule
+    ;
 
 /*
  * @Name:   RulePart
  * @Desc:   AST node for the rule parts
  */ 
 data RulePart
-  = part(list[RuleContent] contents)    // Rule part
-  | command(str command)                // Rule command
-  | sound(str sound)                    // Rule sound
-  | prefix(str prefix)                  // Rule prefix
-  ;
+    = rule_part(list[RuleContent] contents)    // Rule part: contents list
+    | rule_command(str command)                // Rule command: command
+    | rule_sound(str sound)                    // Rule sound: sound
+    | rule_prefix(str prefix)                  // Rule prefix: prefix
+    ;
 
 /*
  * @Name:   RuleContent
  * @Desc:   AST node for the rule parts
  */ 
 data RuleContent
-  = content(list[str] content);     // Content of the rule
+    = rule_content(list[str] content)     // Content of the rule
+    ;
 
 /******************************************************************************/
 // --- Win condition structure defines -----------------------------------------

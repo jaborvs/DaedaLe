@@ -591,8 +591,8 @@ bool isDirection (str dir) {
  * @Ret:    Boolean indicating if directional
  */
 bool isDirectionalRule(list[RulePart] left, list[RulePart] right) {
-    list[RulePart] left_parts = [rp | RulePart rp <- left, (rp is part)];
-    list[RulePart] right_parts = [rp | RulePart rp <- right, (rp is part)];
+    list[RulePart] left_parts = [rp | RulePart rp <- left, (rp is rule_part)];
+    list[RulePart] right_parts = [rp | RulePart rp <- right, (rp is rule_part)];
 
     bool leftDir = any(int i <- [0..size(left_parts)], int j <- [0..size(left_parts[i].contents)], any(str content <- left_parts[i].contents[j].content, content in relativeDirections));
     bool rightDir = any(int i <- [0..size(right_parts)], int j <- [0..size(right_parts[i].contents)], any(str content <- right_parts[i].contents[j].content, content in relativeDirections));
@@ -601,22 +601,22 @@ bool isDirectionalRule(list[RulePart] left, list[RulePart] right) {
 }
 
 // Expanding rules to accompany multiple directions
-list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Checker checker) {
+list[Rule] convert_rule(RuleData rd: rule_data(left, right, message, separator), bool late, Checker checker) {
     list[Rule] new_rule_directions = [];
     list[Rule] new_rules = [];
     list[Rule] new_rules2 = [];
     list[Rule] new_rules3 = [];
     list[Rule] new_rules4 = [];
 
-    list[RulePart] new_left = [rp | RulePart rp <- left, rp is part];
-    list[RulePart] save_left = [rp | RulePart rp <- left, !(rp is part)];
-    list[str] directions = [toLowerCase(rp.prefix) | rp <- save_left, rp is prefix && replaceAll(toLowerCase(rp.prefix), " ", "") != "late"];
+    list[RulePart] new_left = [rp | RulePart rp <- left, rp is rule_part];
+    list[RulePart] save_left = [rp | RulePart rp <- left, !(rp is rule_part)];
+    list[str] directions = [toLowerCase(rp.prefix) | rp <- save_left, rp is rule_prefix && replaceAll(toLowerCase(rp.prefix), " ", "") != "late"];
     str direction = size(directions) > 0 ? directions[0] : "";
 
-    list[RulePart] new_right = [rp | RulePart rp <- right, rp is part];
-    list[RulePart] save_right = [rp | RulePart rp <- right, !(rp is part)];
+    list[RulePart] new_right = [rp | RulePart rp <- right, rp is rule_part];
+    list[RulePart] save_right = [rp | RulePart rp <- right, !(rp is rule_part)];
 
-    RuleData new_rd = rule_data(new_left, new_right, x, y);
+    RuleData new_rd = rule_data(new_left, new_right, message, separator);
 
     // Step 1
     new_rule_directions += extend_directions(new_rd, direction);
@@ -655,7 +655,7 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, x, y), bool late, Ch
     return new_rules4;
 }
 
-list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _), str direction) {
+list[Rule] extend_directions (RuleData rd: rule_data(left, right, message, _), str direction) {
     list[Rule] new_rule_directions = [];
     Rule cloned_rule = new_rule(rd);
 
@@ -689,7 +689,7 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, _, _), str dir
 
 list[RuleContent] get_rulecontent(list[RulePart] ruleparts) {
     for (RulePart rp <- ruleparts) {
-        if (rp is part) return rp.contents;
+        if (rp is rule_part) return rp.contents;
     }
     return [];
 }
@@ -704,7 +704,7 @@ Rule convertrelativeDirectionsToAbsolute(Rule rule) {
         
         new_rc = [];
 
-        if (!(rp is part)) {
+        if (!(rp is rule_part)) {
             new_rp += rp; 
             continue;
         }
@@ -758,7 +758,7 @@ Rule convertrelativeDirectionsToAbsolute(Rule rule) {
 
         new_rc = [];
 
-        if (!(rp is part)) {
+        if (!(rp is rule_part)) {
             new_rp += rp; 
             continue;
         }  
@@ -812,7 +812,7 @@ Rule atomizeAggregates(Checker c, Rule rule) {
 
         new_rc = [];
 
-        if (!(rp is part)) {
+        if (!(rp is rule_part)) {
             new_rp += rp; 
             continue;
         }
@@ -850,7 +850,7 @@ Rule atomizeAggregates(Checker c, Rule rule) {
 
     for (RulePart rp <- rule.right) {
 
-        if (!(rp is part)) {
+        if (!(rp is rule_part)) {
             new_rp += rp; 
             continue;
         }
@@ -906,7 +906,7 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
             for (int j <- [0..size(rule.left)]) {
                 RulePart rp = rule.left[j];
 
-                if (!(rp is part)) continue;
+                if (!(rp is rule_part)) continue;
                 for (int k <- [0..size(rp.contents)]) {
                     RuleContent row = rp.contents[k];
 
@@ -998,7 +998,7 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
 
             if (occurrenceCount == 1) {
                 for (int l <- [0..size(cur_rule.left)]) {
-                    if (!(cur_rule.left[l] is part)) continue;
+                    if (!(cur_rule.left[l] is rule_part)) continue;
                     for (int j <- [0..size(cur_rule.left[l].contents)]) {
                         RuleContent cellRow_rhs = cur_rule.right[l].contents[j];
                         for (int k <- [0..size(cellRow_rhs.content)]) {
@@ -1117,7 +1117,7 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
     for (int i  <- [0..size(rule.left)]) {
 
         RulePart rp = rule.left[i];
-        if (!(rp is part)) continue;
+        if (!(rp is rule_part)) continue;
 
         for (int j <- [0..size(rp.contents)]) {
             rule.left[i].contents[j] = expandNoPrefixedProperties(c, rule, rule.left[i].contents[j]);
@@ -1161,7 +1161,7 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
             for (int j <- [0..size(cur_rule.left)]) {
 
                 RulePart rp = cur_rule.left[j];
-                if (!(rp is part)) continue;
+                if (!(rp is rule_part)) continue;
 
                 for (int k <- [0..size(rp.contents)]) {
                     if (shouldRemove) break;
@@ -1295,10 +1295,10 @@ LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, lis
 LevelChecker moveable_objects_in_level(Engine engine, LevelChecker lc, Checker c, Level level) {
     for (list[Rule] lrule <- lc.applied_rules) {
         for (RulePart rp <- lrule[0].left) {
-            if (rp is part) lc = get_moveable_objects(engine, lc, c, rp.contents);
+            if (rp is rule_part) lc = get_moveable_objects(engine, lc, c, rp.contents);
         }
         for (RulePart rp <- lrule[0].right) {
-            if (rp is part) lc = get_moveable_objects(engine, lc, c, rp.contents);
+            if (rp is rule_part) lc = get_moveable_objects(engine, lc, c, rp.contents);
         }
     }
 
@@ -1354,7 +1354,7 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
             for (RulePart rp <- rule.left) {
                 
-                if (!(rp is part)) continue;
+                if (!(rp is rule_part)) continue;
 
                 for (RuleContent rc <- rp.contents) {
                     if ("..." in rc.content) continue;
@@ -1376,7 +1376,7 @@ LevelChecker applied_rules(Engine engine, LevelChecker lc) {
 
             if (applied == size(required)) {
 
-                list[list[RuleContent]] list_rc = [rulepart.contents | rulepart <- rule.right, rulepart is part];
+                list[list[RuleContent]] list_rc = [rulepart.contents | rulepart <- rule.right, rulepart is rule_part];
                 list[list[str]] new_objects_list = [];
                 for (list[RuleContent] lrc <- list_rc) {
 
@@ -1479,12 +1479,12 @@ map[RuleData, tuple[int, str]] index_rules(list[RuleData] rules) {
 
 str convert_rule(list[RulePart] left, list[RulePart] right) {
     str rule = "";
-    if (any(RulePart rp <- left, rp is prefix)) rule += rp.prefix;
+    if (any(RulePart rp <- left, rp is rule_prefix)) rule += rp.prefix;
 
     for (int i <- [0..size(left)]) {
         RulePart rp = left[i];
 
-        if (!(rp is part)) continue;
+        if (!(rp is rule_part)) continue;
         rule += " [ ";
         for (RuleContent rc <- rp.contents) {
             for (str content <- rc.content) rule += "<content> ";
@@ -1498,7 +1498,7 @@ str convert_rule(list[RulePart] left, list[RulePart] right) {
     for (int i <- [0..size(right)]) {
         RulePart rp = right[i];
 
-        if (!(rp is part)) continue;
+        if (!(rp is rule_part)) continue;
         rule += " [ ";
         for (RuleContent rc <- rp.contents) {
             for (str content <- rc.content) rule += "<content> ";
@@ -1534,7 +1534,7 @@ Engine compile(Checker c) {
 
     list[RuleData] rules = c.game.rules;
     for (RuleData rule <- rules) {
-        if ("late" in [toLowerCase(x.prefix) | x <- rule.left, x is prefix]) {
+        if ("late" in [toLowerCase(x.prefix) | x <- rule.left, x is rule_prefix]) {
             list[Rule] rulegroup = convert_rule(rule, true, c);
             if (size(rulegroup) != 0) engine.late_rules += [rulegroup];
         }

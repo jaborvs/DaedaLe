@@ -145,23 +145,26 @@ syntax LayerData
 // --- Rule syntax ------------------------------------------------------------- 
 
 syntax RuleData
-  = rule_data: (Prefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newline
-  | rule_loop: 'startloop' RuleData+ 'endloop' Newline
-  | rule_empty: Newline
-  ;
+    = rule_data: (RulePrefix|RulePart)+ '-\>' (Command|RulePart)* Message? Newline
+    | rule_loop: 'startloop' RuleData+ 'endloop' Newline
+    | rule_empty: Newline
+    ;
 
-syntax RuleContent
-  = content: IDOrDirectional*;
-    
+syntax RulePrefix
+    = @category="Keyword" rule_prefix: ID
+    ;
+
 syntax RulePart
-  = part: '[' {RuleContent '|'}+ ']';
-
-syntax Prefix
-  = @category="Keyword" prefix: ID;
+    = rule_part: '[' {RuleContent '|'}+ ']'
+    ;
 
 syntax Command
-  = @category="Keyword" command: CommandKeyword
-  | @category="Keyword" sound: 'sfx' SoundIndex;
+    = @category="Keyword" rule_command: CommandKeyword
+    | @category="Keyword" rule_sound: 'sfx' SoundIndex
+    ;
+syntax RuleContent
+    = rule_content: IDOrDirectional*
+    ;
     
 /******************************************************************************/
 // --- Condition syntax --------------------------------------------------------

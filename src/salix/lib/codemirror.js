@@ -731,7 +731,7 @@ function conflictingCollapsedRange(doc, lineNo$$1, from, to, marker) {
 // A visual line is a line as drawn on the screen. Folding, for
 // example, can cause multiple logical lines to appear on the same
 // visual line. This finds the start of the visual line that the
-// given line is part of (usually that is the line itself).
+// given line is rule_part of (usually that is the line itself).
 function visualLine(line) {
   var merged
   while (merged = collapsedSpanAtStart(line))
@@ -751,7 +751,7 @@ function visualLineContinued(line) {
 }
 
 // Get the line number of the start of the visual line that the
-// given line number is part of.
+// given line number is rule_part of.
 function visualLineNo(doc, lineN) {
   var line = getLine(doc, lineN), vis = visualLine(line)
   if (line == vis) { return lineN }
@@ -5066,7 +5066,7 @@ function makeChangeSingleDoc(doc, change, selAfter, spans) {
 }
 
 // Handle the interaction of a change to a document with the editor
-// that this document is part of.
+// that this document is rule_part of.
 function makeChangeSingleDocInEditor(cm, change, spans) {
   var doc = cm.doc, display = cm.display, from = change.from, to = change.to
 

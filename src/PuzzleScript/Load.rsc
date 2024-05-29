@@ -139,9 +139,9 @@ PSGame process_game(PSGame game) {
     processed_legend = [process_legend(unprocessed_legend_item) | LegendData unprocessed_legend_item <- unprocessed_legend];        
     processed_sounds = [process_sound(unprocessed_sound) | SoundData unprocessed_sound <- unprocessed_sounds];
     processed_layers = [process_layer(unprocessed_layer) | LayerData unprocessed_layer <- unprocessed_layers];
-    processed_rules  = unprocessed_rules;
-    processed_conditions = unprocessed_conditions;
-    // processed_conditions = [process_condition(unprocessed_condition) | ConditionData unprocessed_condition <- unprocessed_conditions];
+    processed_rules = unprocessed_rules;
+    // processed_rules  = [process_rule(unprocessed_rule) | RuleData unprocessed_rule <- unprocessed_rules];
+    processed_conditions = [process_condition(unprocessed_condition) | ConditionData unprocessed_condition <- unprocessed_conditions];
     processed_levels = [process_level(unprocessed_level) | LevelData unprocessed_level <- unprocessed_levels];
         
     PSGame processed_game = game_data(
@@ -277,6 +277,34 @@ LayerData process_layer(LayerData unprocessed_layer) {
         processed_items
     );
     return processed_layer;
+}
+
+/*
+ * @Data:   process_rule (rule_data)
+ * @Desc:   Function to process a rule
+ * @Param:  unprocessed_rule-> Rule to be processed
+ * @Ret:    Processed rule
+ */
+RuleData process_rule(RuleData unprocessed_rule : rule_data(list[RulePart] left, list[RulePart] right, list[str] message, str _)) {
+    RuleData processed_rule = rule_data(
+        unprocessed_rule.left,
+        unprocessed_rule.right,
+        unprocessed_rule.message
+    );
+    return processed_rule;
+}
+
+/*
+ * @Data:   process_rule (rule_loop)
+ * @Desc:   Function to process a rule
+ * @Param:  unprocessed_rule-> Rule to be processed
+ * @Ret:    Processed rule
+ */
+RuleData process_rule(RuleData unprocessed_rule : rule_loop(list[RuleData] rules, str _)) {
+    RuleData processed_rule = rule_loop(
+        unprocessed_rule.rules
+    );
+    return processed_rule;
 }
 
 /*

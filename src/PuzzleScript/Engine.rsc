@@ -319,7 +319,6 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
 
 
 Engine apply_rules(Engine engine, Level current_level, str direction, bool late, int allrules) {
-
     list[list[Rule]] applied_rules = [];
 
     if (allrules == 0) {
@@ -336,10 +335,10 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late,
             // Get directions the rule can be applied in
             list[str] directions = [rule.direction];
             if (size(rulegroup) == 1) {
-                if (any(RulePart rp <- rule.left, rp is prefix, "horizontal" == toLowerCase(rp.prefix))) directions = ["left", "right"];
-                else if (any(RulePart rp <- rule.left, rp is prefix, "vertical" == toLowerCase(rp.prefix))) directions = ["down", "up"];
+                if (any(RulePart rp <- rule.left, rp is rule_prefix, "horizontal" == toLowerCase(rp.prefix))) directions = ["left", "right"];
+                else if (any(RulePart rp <- rule.left, rp is rule_prefix, "vertical" == toLowerCase(rp.prefix))) directions = ["down", "up"];
                 else if (late) directions = ["up", "down", "left", "right"];
-                else if (any(RulePart rp <- rule.left, rp is prefix, isDirection(toLowerCase(rp.prefix)))) directions = [toLowerCase(rp.prefix)];
+                else if (any(RulePart rp <- rule.left, rp is rule_prefix, isDirection(toLowerCase(rp.prefix)))) directions = [toLowerCase(rp.prefix)];
             }
 
             bool can_be_applied = true;
@@ -347,9 +346,9 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late,
             int max_apply = 10;
 
             // Filter out the contents from the rules to make applying easier
-            list[RulePart] rp_left = [rp | RulePart rp <- rule.left, rp is part];
-            list[RulePart] rp_right = [rp | RulePart rp <- rule.right, rp is part];
-            list[str] right_command = [rp.command | RulePart rp <- rule.right, rp is command];
+            list[RulePart] rp_left = [rp | RulePart rp <- rule.left, rp is rule_part];
+            list[RulePart] rp_right = [rp | RulePart rp <- rule.right, rp is rule_part];
+            list[str] right_command = [rp.command | RulePart rp <- rule.right, rp is rule_command];
 
             while (can_be_applied && applied < max_apply) {
 
@@ -803,7 +802,7 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
 
         for (str move <- possible_moves) {
 
-            // Don't perform a move that is part of the winning moves
+            // Don't perform a move that is rule_part of the winning moves
             if (i < size(winning_moves) - 1 && winning_moves[i + 1] == move) continue;
 
             Engine new_engine = execute_move(engine, checker, move, 0);
