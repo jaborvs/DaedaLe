@@ -319,6 +319,12 @@ AppliedData new_applied_data(Level level)
 // (Note: this was reproduced from PuzzleScript github)
 
 /* 
+ * @Name:   absoluteDirections
+ * @Desc:   Absolute directions
+ */
+list[str] absoluteDirections = ["up", "down", "left", "right"];
+
+/* 
  * @Name:   relativeDirections
  * @Desc:   Relative direction modifiers
  */
@@ -331,10 +337,15 @@ list[str] relativeDirections = ["^", "v", "\<", "\>", "parallel", "perpendicular
 list[str] simpleRelativeDirections = ["^", "v", "\<", "\>"];
 
 /* 
- * @Name:   absoluteDirections
- * @Desc:   Absolute directions
+ * @Name:   relativeDict
+ * @Desc:   Dictionary for relative rules
  */
-list[str] absoluteDirections = ["up", "down", "left", "right"];
+map[str, list[str]] relativeDict = (
+    "right": ["up", "down", "left", "right", "horizontal_par", "vertical_perp"],
+    "up": ["left", "right", "down", "up", "vertical_par", "horizontal_perp"],
+    "down": ["right", "left", "up", "down", "vertical_par", "horizontal_perp"],
+    "left": ["down", "up", "right", "left", "horizontal_par", "vertical_perp"]
+);
 
 /*
  * @Name:   directionAggregates
@@ -351,17 +362,6 @@ map[str, list[str]] directionAggregates = (
     "orthogonal": ["up", "down", "left", "right"],
     "perpendicular": ["^", "v"],
     "parallel": ["\<", "\>"]
-);
-
-/* 
- * @Name:   relativeDict
- * @Desc:   Dictionary for relative rules
- */
-map[str, list[str]] relativeDict = (
-    "right": ["up", "down", "left", "right", "horizontal_par", "vertical_perp"],
-    "up": ["left", "right", "down", "up", "vertical_par", "horizontal_perp"],
-    "down": ["right", "left", "up", "down", "vertical_par", "horizontal_perp"],
-    "left": ["down", "up", "right", "left", "horizontal_par", "vertical_perp"]
 );
 
 /*****************************************************************************/
@@ -452,7 +452,6 @@ Level convert_level(LevelData lvl, Checker c) {
 
     // We resolve all the needed player object information
     tuple[str rep_char, str name] player_resolved = _convert_level_resolve_player(c);
-    println(player_resolved);
 
     // We resolve all the needed background object information
     tuple[str rep_char, str name] background_resolved = _convert_level_resolve_background(c);
@@ -630,11 +629,10 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, message, separator),
 
     RuleData new_rd = rule_data(new_left, new_right, message, separator);
 
-    
     new_rule_directions = _convert_rule_extend_directions(new_rd, directions);
 
     for (Rule rule <- new_rule_directions) {
-        Rule absolute_rule = convertrelativeDirectionsToAbsolute(rule);
+        Rule absolute_rule = _convert_rule_relative_directions_to_absolute(rule);
         Rule atomized_rule = atomizeAggregates(checker, absolute_rule);
         new_rules += [atomized_rule];
     }
@@ -736,69 +734,36 @@ list[RuleContent] get_rulecontent(list[RulePart] ruleparts) {
     return [];
 }
 
-Rule convertrelativeDirectionsToAbsolute(Rule rule) {
-    str direction = rule.direction;
+/*
+ * @Name:   _convert_rule_relative_directions_to_absolute
+ * @Desc:   Function to convert the relative directios of a rule to absolute. 
+ *          This means that if a rule has a direction UP, the relativeDirections
+ *          get translated to their according absolute direction. It calls the 
+ *          _convert_rule_part_relative_directions_to_absolute function.
+ * @Param:  rule -> Rule to have its relative directions converted
+ * @Ret:    New rule with converted relative directions
+ */
+Rule _convert_rule_relative_directions_to_absolute(Rule rule) {
 
+    rule.left = _convert_rule_part_relative_directions_to_absolute(rule.left, rule.direction);
+    rule.right = _convert_rule_part_relative_directions_to_absolute(rule.right, rule.direction);
+
+    return rule;
+}
+
+/*
+ * @Name:   _convert_rule_part_relative_directions_to_absolute
+ * @Desc:   Function to convert the relative directions of a rule part to
+ *          absolute ones.
+ * @Param:  rule_parts -> rule parts to convert to absoute directions
+ *          direction  -> direction of the rule
+ * @Ret:    Converted rule parts to absolute directions
+ */
+list[RulePart] _convert_rule_part_relative_directions_to_absolute(list[RulePart] rule_parts, str direction) {
     list[RulePart] new_rp = [];
-    list[RuleContent] new_rc = [];
     
-    for (RulePart rp <- rule.left) {
-        
-        new_rc = [];
-
-        if (!(rp is rule_part)) {
-            new_rp += rp; 
-            continue;
-        }
-
-        for (RuleContent rc <- rp.contents) {
-
-            list[str] new_content = [];
-
-            if (size(rc.content) == 1) {
-                rc.content = [""] + [rc.content[0]];
-                new_rc += rc;
-                continue;
-            }
-
-            str dir = "";
-            bool skip = false;
-            for (int i <- [0..size(rc.content)]) {
-                
-                if (skip) {
-                    skip = false;
-                    continue;
-                }
-
-                if (toLowerCase(rc.content[i]) in absoluteDirections) {
-                    new_content += [toLowerCase(rc.content[i])] + [rc.content[i + 1]];
-                    skip = true;
-                    continue;                    
-                }
-
-                int index = indexOf(relativeDirections, rc.content[i]);
-                if (index >= 0) {
-                    dir = relativeDict[direction][index];
-                    new_content += [dir] + [rc.content[i + 1]];
-                    skip = true;
-                } else {
-                    new_content += [""] + [rc.content[i]];
-                }
-            }
-            rc.content = new_content;
-            new_rc += rc;
-        }
-
-        rp.contents = new_rc;
-        new_rp += rp;
-    }
-    rule.left = new_rp;
-
-    new_rp = [];
-    
-    for (RulePart rp <- rule.right) {
-
-        new_rc = [];
+    for (RulePart rp <- rule_parts) {
+        list[RuleContent] new_rc = [];
 
         if (!(rp is rule_part)) {
             new_rp += rp; 
@@ -806,7 +771,6 @@ Rule convertrelativeDirectionsToAbsolute(Rule rule) {
         }  
 
         for (RuleContent rc <- rp.contents) {
-
             list[str] new_content = [];
 
             if (size(rc.content) == 1) {
@@ -818,7 +782,6 @@ Rule convertrelativeDirectionsToAbsolute(Rule rule) {
             str dir = "";
             bool skip = false;
             for (int i <- [0..size(rc.content)]) {
-                
                 if (skip) {
                     skip = false;
                     continue;
@@ -841,9 +804,7 @@ Rule convertrelativeDirectionsToAbsolute(Rule rule) {
         new_rp += rp;
     }
     
-    rule.right = new_rp;
-
-    return rule;
+    return new_rp;
 }
 
 Rule atomizeAggregates(Checker c, Rule rule) {

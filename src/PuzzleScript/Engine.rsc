@@ -252,15 +252,6 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
                 rep_char = rep_char != "" ? rep_char : get_representation_char(name, engine.references);
 
                 list[str] references = get_properties(name, engine.properties);
-                
-                println(engine.properties);
-                println(engine.references);
-                println();
-                println();
-                println(get_unresolved_references_and_properties(rep_char, engine.properties));
-                println(get_resolved_references(rep_char, engine.properties));
-                println(get_properties(rep_char, engine.properties));
-                println();
 
                 list[str] all_references = get_resolved_references(rep_char, engine.properties);
                 all_references = size(all_references) == 0 ? references : all_references;
@@ -527,13 +518,10 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
     list[Object] objects = [];
 
     for (Object object <- current_level.objects[current_level.player[0]]) {
-        println(object);
-        println(current_level.player[1]);
         if (object.current_name == current_level.player[1]) {
             // println("Setting <object.current_name>at <object.coords>\'s direction to <direction>");
             object.direction = direction;
         }
-        println(object);
         objects += object;
     }
     current_level.objects[current_level.player[0]] = objects;

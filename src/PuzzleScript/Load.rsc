@@ -82,7 +82,6 @@ start[PSGame] ps_parse(str src){
  */
 PuzzleScript::AST::PSGame ps_implode(start[PSGame] parse_tree) {
     PuzzleScript::AST::PSGame game = implode(#PuzzleScript::AST::PSGame, parse_tree);   // We build the AST
-    iprintln(game);
     return process_game(game);
 }
 
