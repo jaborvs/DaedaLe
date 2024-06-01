@@ -639,7 +639,7 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, message, separator),
 
     // Step 2
     for (Rule rule <- new_rules) {
-        new_rules2 += concretizeMovingRule(checker, rule);
+        new_rules2 += _convert_rule_concretize_moving_rule(checker, rule);
     }
 
     // Step 3
@@ -754,8 +754,8 @@ Rule _convert_rule_relative_directions_to_absolute(Rule rule) {
 /*
  * @Name:   _convert_rule_part_relative_directions_to_absolute
  * @Desc:   Function to convert the relative directions of a rule part to
- *          absolute ones. I suspect this code only works for those rules 
- *          which contents are only 1 or 2 in size (???)
+ *          absolute ones. We now for a fact that the rule contents need to be 
+ *          one direction, other keyword modifiers (e.g., no) and then the name
  * @Param:  rule_parts -> rule parts to convert to absoute directions
  *          direction  -> direction of the rule
  * @Ret:    Converted rule parts to absolute directions
@@ -829,7 +829,9 @@ Rule _convert_rule_atomize_aggregates(Checker c, Rule rule) {
 
 /*
  * @Name:   _convert_rule_part_atomize_aggregates
- * @Desc:   Function to atomize the name aggregates used in a rule part.
+ * @Desc:   Function to atomize the name aggregates used in a rule part. We now 
+ *          that the rule contents have an even length, since it is always a
+ *          direction and a name (object, or another keyword)
  * @Param:  c    -> Checker
  *          rule_parts -> Rule parts to be atomized
  * @Ret:    Atomized rule
@@ -875,7 +877,15 @@ list[RulePart] _convert_rule_part_atomize_aggregates(Checker c, list[RulePart] r
     return new_rp;
 }
 
-list[Rule] concretizeMovingRule(Checker c, Rule rule) {
+/*
+ * @Name:   _convert_rule_concretize_moving_rule
+ * @Desc:   Function to concretize moving rules. I have not cleaned or checked
+ *          this code, so hopefully it works! (???)
+ * @Param:  c    -> Checker
+ *          rule -> Moving rule to be concretize
+ * @Ret:    Concretized moving rule
+ */
+list[Rule] _convert_rule_concretize_moving_rule(Checker c, Rule rule) {
     bool shouldRemove;
     bool modified = true;
     list[Rule] result = [rule];
@@ -897,8 +907,8 @@ list[Rule] concretizeMovingRule(Checker c, Rule rule) {
                     RuleContent row = rp.contents[k];
 
                     list[list[str]] movings = getMovings(row.content);
-                    // println("Movings");
-                    // println(movings);
+                    println("Movings");
+                    println(movings);
 
                     if (size(movings) > 0) {
                         shouldRemove = true;
