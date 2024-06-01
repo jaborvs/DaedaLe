@@ -624,15 +624,15 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, message, separator),
     list[RulePart] new_left = [rp | RulePart rp <- left, rp is rule_part];
     list[RulePart] save_left = [rp | RulePart rp <- left, !(rp is rule_part)];
     list[str] directions = [toLowerCase(rp.prefix) | rp <- save_left, rp is rule_prefix && replaceAll(toLowerCase(rp.prefix), " ", "") != "late"];
-    str direction = size(directions) > 0 ? directions[0] : "";
 
     list[RulePart] new_right = [rp | RulePart rp <- right, rp is rule_part];
     list[RulePart] save_right = [rp | RulePart rp <- right, !(rp is rule_part)];
 
     RuleData new_rd = rule_data(new_left, new_right, message, separator);
 
-    // Step 1
-    new_rule_directions += extend_directions(new_rd, direction);
+    
+    new_rule_directions = _convert_rule_extend_directions(new_rd, directions);
+
     for (Rule rule <- new_rule_directions) {
         Rule absolute_rule = convertrelativeDirectionsToAbsolute(rule);
         Rule atomized_rule = atomizeAggregates(checker, absolute_rule);
@@ -668,14 +668,44 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, message, separator),
     return new_rules4;
 }
 
-list[Rule] extend_directions (RuleData rd: rule_data(left, right, message, _), str direction) {
+/*
+ * @Name:   _convert_rule_extend_directions
+ * @Desc:   Function to extend the directions of a rule. It calls extend_direction
+ *          which contains the exact extension functionality
+ * @Param:  rd         -> Rule AST node to be extended
+ *          directions -> Directions to be extended
+ * @Ret:    Extended list of rules
+ */
+list[Rule] _convert_rule_extend_directions(RuleData rd: rule_data(left, right, message, _), list[str] directions) {
+    list[Rule] new_rule_directions = [];
+
+    if(directions == []) directions = [""];
+
+    for (direction <- directions) {
+        new_rule_directions += _convert_rule_extend_direction(rd, direction);
+    }
+    return new_rule_directions;
+}
+
+/*
+ * @Name:   _convert_rule_extend_direction
+ * @Desc:   Function to extend the directions of a rule. This means we extend the
+ *          directional prefixes of a rule. There are different cases:
+ *          1. If a rule has a relative direction (e.g., horizontal), we need to
+ *          extend it to right and left.
+ *          2. If a rule has an absolute direction, then we just need to stick to
+ *          that direction.
+ *          3. If a rule has no direction specified, all directions apply (i.e.,
+ *          implicit orthogonal prefix).
+ * @Param:  rd -> Rule AST node to be extended
+ *          direction -> Direction to be extended
+ * @Ret:    Extended list of rules
+ */
+list[Rule] _convert_rule_extend_direction (RuleData rd: rule_data(left, right, message, _), str direction) {
     list[Rule] new_rule_directions = [];
     Rule cloned_rule = new_rule(rd);
 
-    list[RuleContent] lhs = get_rulecontent(left);
-    list[RuleContent] rhs = get_rulecontent(right);
-
-    if (direction in directionAggregates && isDirectionalRule(left, right)) {
+    if (direction in directionAggregates) {
         list[str] directions = directionAggregates[toLowerCase(direction)];
 
         for (str direction <- directions) {
@@ -683,18 +713,17 @@ list[Rule] extend_directions (RuleData rd: rule_data(left, right, message, _), s
             new_rule_directions += cloned_rule;
         }
     }
-
-    // No direction prefix was registered, meaning all directions apply
-    if (cloned_rule.direction == "" && isDirectionalRule(left, right)) {
+    else if (direction in absoluteDirections) {
+        cloned_rule = new_rule(rd, direction, left, right);
+        new_rule_directions += cloned_rule;
+    }
+    else {
         list[str] directions = directionAggregates["orthogonal"];
+
         for (str direction <- directions) {
             cloned_rule = new_rule(rd, direction, left, right);
             new_rule_directions += cloned_rule;
-        }  
-    } else if (cloned_rule.direction == "") {
-        cloned_rule = new_rule(rd, "up", left, right);
-        new_rule_directions += cloned_rule;
-
+        }
     }
 
     return new_rule_directions;
