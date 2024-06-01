@@ -633,7 +633,7 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, message, separator),
 
     for (Rule rule <- new_rule_directions) {
         Rule absolute_rule = _convert_rule_relative_directions_to_absolute(rule);
-        Rule atomized_rule = atomizeAggregates(checker, absolute_rule);
+        Rule atomized_rule = _convert_rule_atomize_aggregates(checker, absolute_rule);
         new_rules += [atomized_rule];
     }
 
@@ -754,7 +754,8 @@ Rule _convert_rule_relative_directions_to_absolute(Rule rule) {
 /*
  * @Name:   _convert_rule_part_relative_directions_to_absolute
  * @Desc:   Function to convert the relative directions of a rule part to
- *          absolute ones.
+ *          absolute ones. I suspect this code only works for those rules 
+ *          which contents are only 1 or 2 in size (???)
  * @Param:  rule_parts -> rule parts to convert to absoute directions
  *          direction  -> direction of the rule
  * @Ret:    Converted rule parts to absolute directions
@@ -807,12 +808,37 @@ list[RulePart] _convert_rule_part_relative_directions_to_absolute(list[RulePart]
     return new_rp;
 }
 
-Rule atomizeAggregates(Checker c, Rule rule) {
+/*
+ * @Name:   _convert_rule_atomize_aggregates
+ * @Desc:   Function to atomize the name aggregates used in a rule. For instance,
+ *          this is used to change Obstacle by Wall, PlayerBodyH, PlayerBodyV...
+ *          This calls _convert_rule_part_atomize_rule_aggregates.
+ * @Param:  c    -> Checker
+ *          rule -> Rule to be atomized
+ * @Ret:    Atomized rule
+ */
+Rule _convert_rule_atomize_aggregates(Checker c, Rule rule) {
     list[RuleContent] new_rc = [];
     list[RulePart] new_rp = [];
 
-    for (RulePart rp <- rule.left) {
+    rule.left = _convert_rule_part_atomize_aggregates(c, rule.left);
+    rule.right = _convert_rule_part_atomize_aggregates(c, rule.right);
 
+    return rule;
+}
+
+/*
+ * @Name:   _convert_rule_part_atomize_aggregates
+ * @Desc:   Function to atomize the name aggregates used in a rule part.
+ * @Param:  c    -> Checker
+ *          rule_parts -> Rule parts to be atomized
+ * @Ret:    Atomized rule
+ */
+list[RulePart] _convert_rule_part_atomize_aggregates(Checker c, list[RulePart] rule_parts) {
+    list[RuleContent] new_rc = [];
+    list[RulePart] new_rp = [];
+
+    for (RulePart rp <- rule_parts) {
         new_rc = [];
 
         if (!(rp is rule_part)) {
@@ -823,14 +849,12 @@ Rule atomizeAggregates(Checker c, Rule rule) {
         for (RuleContent rc <- rp.contents) {
             list[str] new_content = [];
             for (int i <- [0..size(rc.content)]) {
-                
                 if (i mod 2 == 1) continue;
 
                 str direction = rc.content[i];
                 str object = toLowerCase(rc.content[i+1]);
 
-                if (object in c.combinations<0>) {
-
+                if (object in c.combinations.key) {
                     for (int j <- [0..size(c.combinations[object])]) {
                         str new_object = c.combinations[object][j];
                         new_content += [direction] + ["<new_object>"];
@@ -847,49 +871,8 @@ Rule atomizeAggregates(Checker c, Rule rule) {
         rp.contents = new_rc;
         new_rp += rp;       
     }
-    rule.left = new_rp;
 
-    new_rp = [];
-
-    for (RulePart rp <- rule.right) {
-
-        if (!(rp is rule_part)) {
-            new_rp += rp; 
-            continue;
-        }
-
-        new_rc = [];
-        for (RuleContent rc <- rp.contents) {
-            list[str] new_content = [];
-
-            for (int i <- [0..size(rc.content)]) {
-                if (i mod 2 == 1) continue;
-
-                str direction = rc.content[i];
-                str object = toLowerCase(rc.content[i+1]);
-
-                if (object in c.combinations<0>) {
-
-                    new_content += [direction];
-                    for (int j <- [0..size(c.combinations[object])]) {
-                        str new_object = c.combinations[object][j];
-                        new_content += ["<new_object>"];
-                    }
-                } 
-                else {
-                    new_content += [direction] + [object];
-                }
-            }
-            rc.content = new_content;
-            new_rc += rc;
-        }
-
-        rp.contents = new_rc;
-        new_rp += rp;
-    }
-    rule.right = new_rp;
-
-    return rule;
+    return new_rp;
 }
 
 list[Rule] concretizeMovingRule(Checker c, Rule rule) {
