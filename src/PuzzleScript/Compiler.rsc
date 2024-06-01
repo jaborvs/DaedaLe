@@ -105,9 +105,9 @@ alias Rule = tuple[
 	list[RulePart] left,                                                // LHS of the rule
 	list[RulePart] right,                                               // RHS of the rule
 	int used,                                                           // Amount of times it has been used (???)
-    map[str, tuple[str, int, str, str, int, int]] movingReplacement,    // Don't think we need this (DEL)
-    map[str, tuple[str, int, str]] aggregateDirReplacement,             // Don't think we need this (DEL)
-    map[str, tuple[str, int]] propertyReplacement,                      // Don't think we need this (DEL)
+    map[str, tuple[str, int, str, str, int, int]] moving_replacement,   // Don't think we need this (DEL)
+    map[str, tuple[str, int, str]] aggregate_direction_replacement,     // Don't think we need this (DEL)
+    map[str, tuple[str, int]] property_replacement,                     // Don't think we need this (DEL)
 	RuleData original                                                   // Original AST node
 ];
 
@@ -219,9 +219,9 @@ Rule new_rule(RuleData r)
 		[],     // LHS
 		[],     // RHS
 		0,      // No. times applied
-        (),     // movingReplacement
-        (),     // aggregateDirReplacement
-        (),     // propertyReplacement
+        (),     // moving_replacement
+        (),     // aggregate_direction_replacement
+        (),     // property_replacement
 		r       // Original AST node
 	>;
 
@@ -244,9 +244,9 @@ Rule new_rule(RuleData r, str direction, list[RulePart] left, list[RulePart] rig
 		left,       // LHS
 		right,      // RHS
 		0,          // No. times applied
-        (),         // movingReplacement
-        (),         // aggregateDirReplacement
-        (),         // propertyReplacement
+        (),         // moving_replacement
+        (),         // aggregate_direction_replacement
+        (),         // property_replacement
 		r           // Original AST node
 	>;
 
@@ -529,12 +529,12 @@ tuple[str, str] _convert_level_resolve_object(Checker c, str object_name) {
     if (object_name in c.references.key) possible_names += c.references[object_name];
 
     // Search for a character that represents any of the possible player names in the references
-    for (str key <- c.references<0>) {
+    for (str key <- c.references.key) {
         if(size(key) == 1, any(str name <- possible_names, name in c.references[key])) return <key, name>;
     }
 
     // Search for a character that represents any of the possible player names in the references
-    for (str key <- c.combinations<0>) {
+    for (str key <- c.combinations.key) {
         if (size(key) == 1, any(str name <- possible_names, name in c.combinations[key])) return <key, name>;
     }
 
@@ -594,25 +594,9 @@ bool isDirection (str dir) {
     return (dir in relativeDict["right"] || dir in relativeDirections);
 }
 
-/*
- * @Name:   isDirection
- * @Desc:   Function to check if a rule is directional
- * @Param:  
- *      left    LHS of a rule
- *      right   RHS of a rule
- * @Ret:    Boolean indicating if directional
- */
-bool isDirectionalRule(list[RulePart] left, list[RulePart] right) {
-    list[RulePart] left_parts = [rp | RulePart rp <- left, (rp is rule_part)];
-    list[RulePart] right_parts = [rp | RulePart rp <- right, (rp is rule_part)];
+/******************************************************************************/
+// --- Public convert rule functions -------------------------------------------
 
-    bool leftDir = any(int i <- [0..size(left_parts)], int j <- [0..size(left_parts[i].contents)], any(str content <- left_parts[i].contents[j].content, content in relativeDirections));
-    bool rightDir = any(int i <- [0..size(right_parts)], int j <- [0..size(right_parts[i].contents)], any(str content <- right_parts[i].contents[j].content, content in relativeDirections));
-
-    return (leftDir || rightDir);
-}
-
-// Expanding rules to accompany multiple directions
 list[Rule] convert_rule(RuleData rd: rule_data(left, right, message, separator), bool late, Checker checker) {
     list[Rule] new_rule_directions = [];
     list[Rule] new_rules = [];
@@ -637,34 +621,37 @@ list[Rule] convert_rule(RuleData rd: rule_data(left, right, message, separator),
         new_rules += [atomized_rule];
     }
 
-    // Step 2
+    // // Step 2
+    // for (Rule rule <- new_rules) {
+    //     new_rules2 += _convert_rule_concretize_moving_rule(checker, rule);
+    // }
+
+    // // Step 3
+    // for (Rule rule <- new_rules2) {
+    //     new_rules3 += _convert_rule_concretize_property_rule(checker, rule);
+    // }
+
     for (Rule rule <- new_rules) {
-        new_rules2 += _convert_rule_concretize_moving_rule(checker, rule);
-    }
-
-    // Step 3
-    for (Rule rule <- new_rules2) {
-        new_rules3 += concretizePropertyRule(checker, rule);
-    }
-
-    for (Rule rule <- new_rules3) {
         rule.left += save_left;
         rule.right += save_right;
         new_rules4 += rule.late = late;
     }
 
-    // int i = 0;
-    // for (Rule rule <- new_rules4) {
-    //     println("Rule <i>");
-    //     println(rule.movingReplacement);
-    //     println(rule.aggregateDirReplacement);
-    //     println(rule.propertyReplacement);
-    //     println();
-    //     i += 1;
-    // }
+    int i = 0;
+    for (Rule rule <- new_rules4) {
+        println("Rule <i>");
+        println(rule.moving_replacement);
+        println(rule.aggregate_direction_replacement);
+        println(rule.property_replacement);
+        println();
+        i += 1;
+    }
 
     return new_rules4;
 }
+
+/******************************************************************************/
+// --- Prive convert rule extend direction functions ---------------------------
 
 /*
  * @Name:   _convert_rule_extend_directions
@@ -727,12 +714,8 @@ list[Rule] _convert_rule_extend_direction (RuleData rd: rule_data(left, right, m
     return new_rule_directions;
 }
 
-list[RuleContent] get_rulecontent(list[RulePart] ruleparts) {
-    for (RulePart rp <- ruleparts) {
-        if (rp is rule_part) return rp.contents;
-    }
-    return [];
-}
+/******************************************************************************/
+// --- Private convert rule relative dirs to absolute functions ----------------
 
 /*
  * @Name:   _convert_rule_relative_directions_to_absolute
@@ -808,6 +791,9 @@ list[RulePart] _convert_rule_part_relative_directions_to_absolute(list[RulePart]
     return new_rp;
 }
 
+/******************************************************************************/
+// --- Private convert rule atomize aggregates functions -----------------------
+
 /*
  * @Name:   _convert_rule_atomize_aggregates
  * @Desc:   Function to atomize the name aggregates used in a rule. For instance,
@@ -877,6 +863,9 @@ list[RulePart] _convert_rule_part_atomize_aggregates(Checker c, list[RulePart] r
     return new_rp;
 }
 
+/******************************************************************************/
+// --- Private convert rule concretize moving rule functions -------------------
+
 /*
  * @Name:   _convert_rule_concretize_moving_rule
  * @Desc:   Function to concretize moving rules. I have not cleaned or checked
@@ -886,7 +875,7 @@ list[RulePart] _convert_rule_part_atomize_aggregates(Checker c, list[RulePart] r
  * @Ret:    Concretized moving rule
  */
 list[Rule] _convert_rule_concretize_moving_rule(Checker c, Rule rule) {
-    bool shouldRemove;
+    bool should_remove;
     bool modified = true;
     list[Rule] result = [rule];
 
@@ -897,7 +886,7 @@ list[Rule] _convert_rule_concretize_moving_rule(Checker c, Rule rule) {
         for (int i <- [begin..size(result)]) {
 
             Rule rule = result[i];
-            shouldRemove = false;
+            should_remove = false;
 
             for (int j <- [0..size(rule.left)]) {
                 RulePart rp = rule.left[j];
@@ -906,12 +895,10 @@ list[Rule] _convert_rule_concretize_moving_rule(Checker c, Rule rule) {
                 for (int k <- [0..size(rp.contents)]) {
                     RuleContent row = rp.contents[k];
 
-                    list[list[str]] movings = getMovings(row.content);
-                    println("Movings");
-                    println(movings);
+                    list[list[str]] movings = _convert_rule_get_movings(row.content);
 
                     if (size(movings) > 0) {
-                        shouldRemove = true;
+                        should_remove = true;
                         modified = true;
 
                         str name = movings[0][0];
@@ -919,53 +906,53 @@ list[Rule] _convert_rule_concretize_moving_rule(Checker c, Rule rule) {
                         list[str] concrete_directions = directionAggregates[ambiguous_dir];
                         for (str concr_dir <- concrete_directions) {
 
-                            newrule = new_rule(rule.original, rule.direction, rule.left, rule.right);
+                            new_r = new_rule(rule.original, rule.direction, rule.left, rule.right);
 
-                            map[str, tuple[str, int, str, str, int, int]] movingReplacement = ();
-                            map[str, tuple[str, int, str]] aggregateDirReplacement = ();
+                            map[str, tuple[str, int, str, str, int, int]] moving_replacement = ();
+                            map[str, tuple[str, int, str]] aggregate_direction_replacement = ();
 
-                            println("Rule movingReplacement:");
-                            ipritnln(rule.movingReplacement);
-                            println("Rule aggregateDirReplacement");
-                            iprintln(rule.aggregateDirReplacement);
+                            println("Rule moving_replacement:");
+                            ipritnln(rule.moving_replacement);
+                            println("Rule aggregate_direction_replacement");
+                            iprintln(rule.aggregate_direction_replacement);
 
-                            for (moveTerm <- rule.movingReplacement<0>) {
-                                list[int] moveDat = rule.movingReplacement[moveTerm];
-                                newrule.movingReplacement[moveTerm] = [moveDat[0], moveDat[1], moveDat[2], moveDat[3], moveDat[4], moveDat[5]];
+                            for (moveTerm <- rule.moving_replacement<0>) {
+                                list[int] moveDat = rule.moving_replacement[moveTerm];
+                                new_r.moving_replacement[moveTerm] = [moveDat[0], moveDat[1], moveDat[2], moveDat[3], moveDat[4], moveDat[5]];
                             }
 
-                            for (moveTerm <- rule.aggregateDirReplacement<0>) {
-                                list[int] moveDat = rule.aggregateDirReplacement[moveTerm];
-                                newrule.aggregateDirReplacement[moveTerm] = [moveDat[0], moveDat[1], moveDat[2]];
+                            for (moveTerm <- rule.aggregate_direction_replacement<0>) {
+                                list[int] moveDat = rule.aggregate_direction_replacement[moveTerm];
+                                new_r.aggregate_direction_replacement[moveTerm] = [moveDat[0], moveDat[1], moveDat[2]];
                             }
                             
-                            newrule.left[j].contents[k] = concretizeMovingInCell(newrule, newrule.left[j].contents[k], ambiguous_dir, name, concr_dir);
-                            if (size(newrule.right[j].contents[k].content) > 0) {
-                                newrule.right[j].contents[k] = concretizeMovingInCell(newrule, newrule.right[j].contents[k], ambiguous_dir, name, concr_dir);
+                            new_r.left[j].contents[k] = _convert_rule_concretize_moving_in_cell(new_r.left[j].contents[k], ambiguous_dir, name, concr_dir);
+                            if (size(new_r.right[j].contents[k].content) > 0) {
+                                new_r.right[j].contents[k] = _convert_rule_concretize_moving_in_cell(new_r.right[j].contents[k], ambiguous_dir, name, concr_dir);
                             }
 
                             // NOT SURE IF 0 HERE CAN BE LEFT HERE.
-                            if (!movingReplacement[name+ambiguous_dir]?) {
-                                newrule.movingReplacement[name+ambiguous_dir] = <concr_dir, 1, ambiguous_dir, name, k, 0>;
+                            if (!moving_replacement[name+ambiguous_dir]?) {
+                                new_r.moving_replacement[name+ambiguous_dir] = <concr_dir, 1, ambiguous_dir, name, k, 0>;
                             } else {
-                                list[int] mr = newrule.movingReplacement[name+ambiguous_dir];
+                                list[int] mr = new_r.moving_replacement[name+ambiguous_dir];
 
                                 if (k != mr[4] || 0 != mr[5]){
                                     mr[1] = mr[1] + 1;
                                 }
                             }
 
-                            if (!aggregateDirReplacement[ambiguous_dir]?) {
-                                newrule.aggregateDirReplacement[ambiguous_dir] = <concr_dir, 1, ambiguous_dir>;
+                            if (!aggregate_direction_replacement[ambiguous_dir]?) {
+                                new_r.aggregate_direction_replacement[ambiguous_dir] = <concr_dir, 1, ambiguous_dir>;
                             } else {
-                                newrule.aggregateDirReplacement[ambiguous_dir][1] = aggregateDirReplacement[ambiguous_dir][1] + 1;
+                                new_r.aggregate_direction_replacement[ambiguous_dir][1] = aggregate_direction_replacement[ambiguous_dir][1] + 1;
                             }
 
-                            result += [newrule];
+                            result += [new_r];
                         }
                     }
                 }
-                if (shouldRemove) {
+                if (should_remove) {
                     result = remove(result, i);
 
                     if (i >= 1) begin = i - 1;
@@ -979,27 +966,27 @@ list[Rule] _convert_rule_concretize_moving_rule(Checker c, Rule rule) {
     for (int i <- [0..size(result)]) {
 
         Rule cur_rule = result[i];
-        if (!cur_rule.movingReplacement?) {
+        if (!cur_rule.moving_replacement?) {
             continue;
         }
 
         map[str, list[value]] ambiguous_movement_dict = ();
 
-        for (str name <- cur_rule.movingReplacement<0>) {
-            tuple[str, int, str, str, int, int] replacementInfo = cur_rule.movingReplacement[name];
-            str concreteMovement = replacementInfo[0];
-            int occurrenceCount = replacementInfo[1];
-            str ambiguousMovement = replacementInfo[2];
-            str ambiguousMovement_attachedObject = replacementInfo[3];
+        for (str name <- cur_rule.moving_replacement<0>) {
+            tuple[str, int, str, str, int, int] replacementInfo = cur_rule.moving_replacement[name];
+            str concrete_movement = replacementInfo[0];
+            int occurrence_count = replacementInfo[1];
+            str ambiguous_movement = replacementInfo[2];
+            str ambiguous_movement_attachedObject = replacementInfo[3];
 
-            if (occurrenceCount == 1) {
+            if (occurrence_count == 1) {
                 for (int l <- [0..size(cur_rule.left)]) {
                     if (!(cur_rule.left[l] is rule_part)) continue;
                     for (int j <- [0..size(cur_rule.left[l].contents)]) {
                         RuleContent cellRow_rhs = cur_rule.right[l].contents[j];
                         for (int k <- [0..size(cellRow_rhs.content)]) {
                             RuleContent cell = cellRow_rhs;
-                            cur_rule.right[l].contents[j] = concretizeMovingInCell(cur_rule, cell, ambiguousMovement, ambiguousMovement_attachedObject, concreteMovement);
+                            cur_rule.right[l].contents[j] = _convert_rule_concretize_moving_in_cell(cell, ambiguous_movement, ambiguous_movement_attachedObject, concrete_movement);
                         }
                     }
                 }
@@ -1007,47 +994,47 @@ list[Rule] _convert_rule_concretize_moving_rule(Checker c, Rule rule) {
         }
 
         map[str, str] ambiguous_movement_names_dict = ();
-        for (str name <- cur_rule.aggregateDirReplacement<0>) {
-            tuple[str, int, str] replacementInfo = cur_rule.aggregateDirReplacement[name];
-            str concreteMovement = replacementInfo[0];
-            int occurrenceCount = replacementInfo[1];
-            str ambiguousMovement = replacementInfo[2];
+        for (str name <- cur_rule.aggregate_direction_replacement<0>) {
+            tuple[str, int, str] replacementInfo = cur_rule.aggregate_direction_replacement[name];
+            str concrete_movement = replacementInfo[0];
+            int occurrence_count = replacementInfo[1];
+            str ambiguous_movement = replacementInfo[2];
 
-            if ((ambiguousMovement in ambiguous_movement_names_dict) || (occurrenceCount != 1)) {
-                ambiguous_movement_names_dict[ambiguousMovement] = "INVALID";
+            if ((ambiguous_movement in ambiguous_movement_names_dict) || (occurrence_count != 1)) {
+                ambiguous_movement_names_dict[ambiguous_movement] = "INVALID";
             } else {
-                ambiguous_movement_names_dict[ambiguousMovement] = concreteMovement;
+                ambiguous_movement_names_dict[ambiguous_movement] = concrete_movement;
             }
 
         }
 
-        for (str ambiguousMovement <- ambiguous_movement_dict<0>) {
-            if (ambiguousMovement != "INVALID") {
-                concreteMovement = ambiguous_movement_dict[ambiguousMovement];
-                if (concreteMovement == "INVALID") {
+        for (str ambiguous_movement <- ambiguous_movement_dict<0>) {
+            if (ambiguous_movement != "INVALID") {
+                concrete_movement = ambiguous_movement_dict[ambiguous_movement];
+                if (concrete_movement == "INVALID") {
                     continue;
                 }
                 for (int j <- [0..size(cur_rule.right)]) {
                     RuleContent cellRow_rhs = cur_rule.rhs[j];
                     for (int k <- [0..size(cellRow_rhs.content)]) {
                         RuleContent cell = cellRow_rhs[k];
-                        cur_rule.right[j] = concretizeMovingInCellByAmbiguousMovementName(cell, ambiguousMovement, concreteMovement);
+                        cur_rule.right[j] = _convert_rule_concretize_moving_in_cell_by_ambiguous_movement_name(cell, ambiguous_movement, concrete_movement);
                     }
                 }
             }
         }  
 
-        for (str ambiguousMovement <- ambiguous_movement_dict<0>) {
-            if (ambiguousMovement != "INVALID") {
-                concreteMovement = ambiguous_movement_dict[ambiguousMovement];
-                if (concreteMovement == "INVALID") {
+        for (str ambiguous_movement <- ambiguous_movement_dict<0>) {
+            if (ambiguous_movement != "INVALID") {
+                concrete_movement = ambiguous_movement_dict[ambiguous_movement];
+                if (concrete_movement == "INVALID") {
                     continue;
                 }
                 for (int j <- [0..size(cur_rule.right)]) {
                     RuleContent cellRow_rhs = cur_rule.rhs[j];
                     for (int k <- [0..size(cellRow_rhs.content)]) {
                         RuleContent cell = cellRow_rhs[k];
-                        cur_rule.right[j] = concretizeMovingInCellByAmbiguousMovementName(cell, ambiguousMovement, concreteMovement);
+                        cur_rule.right[j] = _convert_rule_concretize_moving_in_cell_by_ambiguous_movement_name(cell, ambiguous_movement, concrete_movement);
                     }
                 }
             }
@@ -1058,14 +1045,47 @@ list[Rule] _convert_rule_concretize_moving_rule(Checker c, Rule rule) {
     return result;
 }
 
-RuleContent concretizeMovingInCellByAmbiguousMovementName(RuleContent rc, str ambiguousMovement, str concreteDirection) {
+/*
+ * @Name:   _convert_rule_concretize_moving_in_cell
+ * @Desc:   Function to concretize moving in cell. I have not cleaned or checked
+ *          this code, so hopefully it works! (???)
+ * @Param:  rc           -> Rule content to be concretized
+ *          ambiguous    -> Ambiguous direction
+ *          name_to_move -> Name to be moved by the ambiguous direction
+ *          concr_dir    -> Concrete direction to be moved
+ * @Ret:    Concretized rule content
+ */
+RuleContent _convert_rule_concretize_moving_in_cell(RuleContent rc, str ambiguous, str name_to_move, str concr_dir) {
+    list[str] new_rc = [];
+    for (int i <- [0..size(rc.content)]) {
+        if (i mod 2 == 1) continue;
+
+        if (rc.content[i] == ambiguous && rc.content[i+1] == name_to_move) {
+            new_rc += [concr_dir] + [rc.content[i + 1]];
+        } else {
+            new_rc += [rc.content[i]] + [rc.content[i + 1]];
+        }
+    }
+    rc.content = new_rc;
+    return rc;
+}
+
+/*
+ * @Name:   _convert_rule_concretize_moving_in_cell_by_ambiguous_movement_name
+ * @Desc:   Function to concretize moving in cell. I have not cleaned or checked
+ *          this code, so hopefully it works! (???)
+ * @Param:  rc                -> Rule content to be concretized
+ *          ambiguous_movement -> Ambiguous direction
+ *          concrete_direction -> Concrete direction
+ * @Ret:    Concretized rule content
+ */
+RuleContent _convert_rule_concretize_moving_in_cell_by_ambiguous_movement_name(RuleContent rc, str ambiguous_movement, str concrete_direction) {
     list[str] new_rc = [];    
 
     for (int j <- [0..size(rc.content)]) {
-
         if (j mod 2 == 1) continue;
 
-        if (cell[j] == ambiguousMovement) {
+        if (cell[j] == ambiguous_movement) {
             new_rc += [concr_dir] + [rc.content[i + 1]];
         } else {
             new_rc += [rc.content[i]] + [rc.content[i + 1]];
@@ -1076,24 +1096,14 @@ RuleContent concretizeMovingInCellByAmbiguousMovementName(RuleContent rc, str am
     return rc;    
 }
 
-
-RuleContent concretizeMovingInCell(Rule rule, RuleContent rc, str ambiguous, str nametomove, str concr_dir) {
-    list[str] new_rc = [];
-    for (int i <- [0..size(rc.content)]) {
-
-        if (i mod 2 == 1) continue;
-
-        if (rc.content[i] == ambiguous && rc.content[i+1] == nametomove) {
-            new_rc += [concr_dir] + [rc.content[i + 1]];
-        } else {
-            new_rc += [rc.content[i]] + [rc.content[i + 1]];
-        }
-    }
-    rc.content = new_rc;
-    return rc;
-}
-
-list[list[str]] getMovings(list[str] cell) {
+/*
+ * @Name:   _convert_rule_get_movings
+ * @Desc:   Function to get the movings of a cell. I have not cleaned or checked
+ *          this code, so hopefully it works! (???)
+ * @Param:  cell -> List of cells
+ * @Ret:    List of movings
+ */
+list[list[str]] _convert_rule_get_movings(list[str] cell) {
     list[list[str]] result = [];
     for (int i <- [0..size(cell)]) {
 
@@ -1109,22 +1119,31 @@ list[list[str]] getMovings(list[str] cell) {
     return result;
 }
 
-list[Rule] concretizePropertyRule(Checker c, Rule rule) {
-    for (int i  <- [0..size(rule.left)]) {
+/******************************************************************************/
+// --- Private convert rule concretize property functions ----------------------
 
+/*
+ * @Name:   _convert_rule_concretize_property_rule
+ * @Desc:   Function to concretize a property rule. I have not cleaned or checked
+ *          this code, so hopefully it works! (???)
+ * @Param:  c    -> Checker
+ *          rule -> rule
+ * @Ret:    Concretized rule content
+ */
+list[Rule] _convert_rule_concretize_property_rule(Checker c, Rule rule) {
+    for (int i  <- [0..size(rule.left)]) {
         RulePart rp = rule.left[i];
         if (!(rp is rule_part)) continue;
 
         for (int j <- [0..size(rp.contents)]) {
-            rule.left[i].contents[j] = expandNoPrefixedProperties(c, rule, rule.left[i].contents[j]);
-            if (size(rule.right) > 0) rule.right[i].contents[j] = expandNoPrefixedProperties(c, rule, rule.right[i].contents[j]);
+            rule.left[i].contents[j] = _convert_rule_expand_no_prefixed_properties(c, rule.left[i].contents[j]);
+            if (size(rule.right) > 0) rule.right[i].contents[j] = _convert_rule_expand_no_prefixed_properties(c, rule.right[i].contents[j]);
         }
     }
 
     map [str, bool] ambiguous = ();
 
     for (int i <- [0..size(rule.right)]) {
-
         RulePart rp = rule.right[i];
 
         for (int j <- [0..size(rp.contents)]) {
@@ -1140,77 +1159,73 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
         }
     }
 
-    bool shouldRemove;
+    bool should_remove;
     list[Rule] result = [rule];
     bool modified = true;
 
     int begin = 0;
 
     while(modified) {
-
         modified = false;
-        for (int i <- [begin..size(result)]) {
 
+        for (int i <- [begin..size(result)]) {
             Rule cur_rule = result[i];
-            shouldRemove = false;
+            should_remove = false;
 
             for (int j <- [0..size(cur_rule.left)]) {
-
                 RulePart rp = cur_rule.left[j];
                 if (!(rp is rule_part)) continue;
 
                 for (int k <- [0..size(rp.contents)]) {
-                    if (shouldRemove) break;
+                    if (should_remove) break;
 
                     RuleContent rc = cur_rule.left[j].contents[k];
 
                     list[str] properties = [rc.content[l] | int l <- [0..size(rc.content)], rc.content[l] in c.resolved_references<0>];
 
                     for (str property <- properties) {
-
                         if (!ambiguous[property]?) {
                             continue;
                         }
 
                         list[str] aliases = c.resolved_references[property];
 
-                        shouldRemove = true;
+                        should_remove = true;
                         modified = true;
 
-                        for (str concreteType <- aliases) {
+                        for (str concrete_type <- aliases) {
+                            new_r = new_rule(cur_rule.original, cur_rule.direction, cur_rule.left, cur_rule.right);
+                            new_r.moving_replacement = cur_rule.moving_replacement;
+                            new_r.aggregate_direction_replacement = cur_rule.aggregate_direction_replacement;
 
-                            newrule = new_rule(cur_rule.original, cur_rule.direction, cur_rule.left, cur_rule.right);
-                            newrule.movingReplacement = cur_rule.movingReplacement;
-                            newrule.aggregateDirReplacement = cur_rule.aggregateDirReplacement;
+                            map[str, tuple[str, int]] property_replacement = ();
 
-                            map[str, tuple[str, int]] propertyReplacement = ();
-
-                            for (str property <- cur_rule.propertyReplacement<0>) {
+                            for (str property <- cur_rule.property_replacement<0>) {
                                 
-                                tuple[str, int] propDat = cur_rule.propertyReplacement[property];
-                                newrule.propertyReplacement[property] = <propDat[0], propDat[1]>;
+                                tuple[str, int] propDat = cur_rule.property_replacement[property];
+                                new_r.property_replacement[property] = <propDat[0], propDat[1]>;
 
                             }
 
-                            newrule.left[j].contents[k] = concretizePropertyInCell(newrule, newrule.left[j].contents[k], property, concreteType);
-                            if (size(newrule.right) > 0) {
-                                newrule.right[j].contents[k] = concretizePropertyInCell(newrule, newrule.right[j].contents[k], property, concreteType);
+                            new_r.left[j].contents[k] = _convert_rule_concretize_property_in_cell(new_r.left[j].contents[k], property, concrete_type);
+                            if (size(new_r.right) > 0) {
+                                new_r.right[j].contents[k] = _convert_rule_concretize_property_in_cell(new_r.right[j].contents[k], property, concrete_type);
                             }
 
-                            if (!newrule.propertyReplacement[property]?) {
-                                newrule.propertyReplacement[property] = <concreteType, 1>;
+                            if (!new_r.property_replacement[property]?) {
+                                new_r.property_replacement[property] = <concrete_type, 1>;
                             } else {
-                                newrule.propertyReplacement[property][1] = newrule.propertyReplacement[property][1] + 1;
+                                new_r.property_replacement[property][1] = new_r.property_replacement[property][1] + 1;
                             }
 
-                            result += [newrule];
+                            result += [new_r];
 
                         }
                         break;
                     }
                 }
 
-                if (shouldRemove) {
+                if (should_remove) {
 
                     result = remove(result, i);
 
@@ -1224,14 +1239,23 @@ list[Rule] concretizePropertyRule(Checker c, Rule rule) {
     return result;
 }
 
-RuleContent concretizePropertyInCell(Rule rule, RuleContent rc, str property, str concreteType) {
+/*
+ * @Name:   _convert_rule_concretize_property_in_cell
+ * @Desc:   Function to concretize a property in cell. I have not cleaned or checked
+ *          this code, so hopefully it works! (???)
+ * @Param:  rc            -> Rule content to be concretized
+ *          property      -> Property to be concretized
+ *          concrete_type -> Concrete type to replace the property
+ * @Ret:    Concretized rule content
+ */
+RuleContent _convert_rule_concretize_property_in_cell(RuleContent rc, str property, str concrete_type) {
     list[str] new_rc = [];    
-    for (int j <- [0..size(rc.content)]) {
 
+    for (int j <- [0..size(rc.content)]) {
         if (j mod 2 == 1) continue;
 
         if (rc.content[j + 1] == property && rc.content[j] != "random") {
-            new_rc += [rc.content[j]] + [concreteType];
+            new_rc += [rc.content[j]] + [concrete_type];
         } else {
             new_rc += [rc.content[j]] + [rc.content[j + 1]];
         }
@@ -1241,21 +1265,29 @@ RuleContent concretizePropertyInCell(Rule rule, RuleContent rc, str property, st
     return rc;    
 }
 
-RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
+/*
+ * @Name:   _convert_rule_expand_no_prefixed_properties
+ * @Desc:   Function to expand_no_prefixed_properties. I have not cleaned or checked
+ *          this code, so hopefully it works! (???)
+ * @Param:  c  -> Checker
+ *          rc -> Rule content to be expaned
+ * @Ret:    Concretized rule content
+ */
+RuleContent _convert_rule_expand_no_prefixed_properties(Checker c, RuleContent rc) {
     list[str] new_rc = [];
-    for (int i <- [0..size(rc.content)]) {
 
+    for (int i <- [0..size(rc.content)]) {
         if (i mod 2 == 1) continue;
+
         str dir = rc.content[i];
         str name = rc.content[i + 1];
 
-        if (dir == "no" && name in c.resolved_references<0>) {
-
+        if (dir == "no" && name in c.resolved_references.key) {
             for (str name <- c.resolved_references[name]) {
                 new_rc += [dir] + [name];
             }
-
-        } else {
+        }
+        else {
             new_rc += [dir] + [name];
         }
     }
@@ -1263,6 +1295,8 @@ RuleContent expandNoPrefixedProperties(Checker c, Rule rule, RuleContent rc) {
     rc.content = new_rc;
     return rc;
 }
+
+/******************************************************************************/
 
 LevelChecker get_moveable_objects(Engine engine, LevelChecker lc, Checker c, list[RuleContent] rule_side) {
     list[str] found_objects = ["player"];
@@ -1528,6 +1562,7 @@ Engine compile(Checker c) {
     engine.current_level = engine.converted_levels[0];
     engine.begin_level = engine.current_level;
 
+    // Step 3: We convert all the rules
     for (RuleData rule <- c.game.rules) {
         if ("late" in [toLowerCase(lhs.prefix) | lhs <- rule.left, lhs is rule_prefix]) {
             list[Rule] rulegroup = convert_rule(rule, true, c);
@@ -1539,6 +1574,7 @@ Engine compile(Checker c) {
         }
     }
 
+    // Step 4: We start the checking
     engine.level_data = check_size_per_level(engine, c);
     engine = check_game_per_level(engine, c);
     for (Level level <- engine.converted_levels) {
