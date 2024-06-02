@@ -136,7 +136,6 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
         index += 1;
     }
 
-    println("Ellipsis: <has_ellipsis>");
     if (has_ellipsis) {
         int level_width = engine.level_data[engine.current_level.original].size[0];
         int level_height = engine.level_data[engine.current_level.original].size[1];
@@ -155,7 +154,6 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     }
 
     // Make sure neighbor object is within bounds
-    println(neighboring_coords);
     if (any(Coords coord <- neighboring_coords, !(engine.current_level.objects[coord]?))) return object_matches_criteria;
 
     // Check if all required objects are present at neighboring position
@@ -352,9 +350,6 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late,
 
                     RulePart rp = rule.left[i];
                     list[RuleContent] rc = rp.contents;
-                    for (tmp <- rc) {
-                        println(tmp.content);
-                    }
                     list[list[Object]] found_objects = [];
 
                     for (Coords coord <- engine.current_level.objects<0>) {
@@ -388,8 +383,6 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late,
                 if (size(applicable) == size(rp_left)) {
                     for (int i <- [0..size(all_found_objects)]) {
                         list[list[Object]] found_objects = all_found_objects[i];
-
-                        println(found_objects);
 
                         Engine engine_before = engine;
                         engine = apply(engine, found_objects, rp_left[i].contents, rp_right[i].contents, direction);
@@ -517,7 +510,7 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
 
     for (Object object <- current_level.objects[current_level.player[0]]) {
         if (object.current_name == current_level.player[1]) {
-            println("Setting <object.current_name> at <object.coords>\'s direction to <direction>");
+            // println("Setting <object.current_name> at <object.coords>\'s direction to <direction>");
             object.direction = direction;
         }
         objects += object;
