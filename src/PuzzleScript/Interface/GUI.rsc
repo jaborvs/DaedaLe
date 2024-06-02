@@ -511,6 +511,7 @@ Model update(Msg msg, Model model){
         if (execute) {
             println("5");
             model.index += 1;
+            println("Hola");
             model.engine = execute_move(model.engine, model.checker, model.input, 0);
             println("6");
             if (check_conditions(model.engine, "win")) {
@@ -691,11 +692,10 @@ void view(Model m) {
  *  @Desc:  Runs the application
  *  @Ret:   Call to run the application
  */
- 
 App[Model] main() {
     game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
     // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/sokoban_basic.PS|;
-    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/zokoban.PS|;
+    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/nekopuzzle.PS|;
 
     game = load(game_loc);
 

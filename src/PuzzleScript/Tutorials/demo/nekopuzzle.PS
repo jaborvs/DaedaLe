@@ -39,6 +39,10 @@ gray white
 LEGEND
 =======
 
+. = Background
+P = Player
+F = Fruit
+
 =========
 SOUNDS
 =========
@@ -58,10 +62,10 @@ Player, Fruit
 RULES
 ======
 
-[ > Player | ... | Fruit ] -> [ | ... | Player ] 
-
 (if you're not sure what this line does, try removing it, and see what happens)
 [ > Player ] -> [ Player ] 
+
+[ > Player | ... | Fruit ] -> [ | ... | Player ] 
 
 ==============
 WINCONDITIONS

@@ -105,9 +105,6 @@ alias Rule = tuple[
 	list[RulePart] left,                                                // LHS of the rule
 	list[RulePart] right,                                               // RHS of the rule
 	int used,                                                           // Amount of times it has been used (???)
-    map[str, tuple[str, int, str, str, int, int]] moving_replacement,   // Don't think we need this (DEL)
-    map[str, tuple[str, int, str]] aggregate_direction_replacement,     // Don't think we need this (DEL)
-    map[str, tuple[str, int]] property_replacement,                     // Don't think we need this (DEL)
 	RuleData original                                                   // Original AST node
 ];
 
@@ -219,9 +216,6 @@ Rule new_rule(RuleData r)
 		[],     // LHS
 		[],     // RHS
 		0,      // No. times applied
-        (),     // moving_replacement
-        (),     // aggregate_direction_replacement
-        (),     // property_replacement
 		r       // Original AST node
 	>;
 
@@ -244,9 +238,6 @@ Rule new_rule(RuleData r, str direction, list[RulePart] left, list[RulePart] rig
 		left,       // LHS
 		right,      // RHS
 		0,          // No. times applied
-        (),         // moving_replacement
-        (),         // aggregate_direction_replacement
-        (),         // property_replacement
 		r           // Original AST node
 	>;
 
