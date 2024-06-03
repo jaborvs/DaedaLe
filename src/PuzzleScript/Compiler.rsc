@@ -32,8 +32,7 @@ data Engine
     = game_engine(
         list[Level] levels,                                 // Converted levels
         Level first_level,                                  // First level
-        Level current_level,                                // Current level
-        list[Condition] conditions,                         // Win conditions   
+        Level current_level,                                // Current level 
         list[list[Rule]] rules,                             // Converted rules 
         list[list[Rule]] late_rules,                        // Converted late rules
         map[                                                // Map to keep the order of converted rules:
@@ -207,8 +206,7 @@ Engine compile(Checker c) {
 	Engine engine = game_engine(
         [],                             // Converted levels
 		game_level_empty(),             // First level
-        game_level_empty(),             // Current level
-        [],                             // Win conditions   
+        game_level_empty(),             // Current level  
 		[],                             // Converted rules 
 		[],                             // Converted late rules
         (),                             // Map to keep the order of converted rules

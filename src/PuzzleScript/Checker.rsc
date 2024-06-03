@@ -39,37 +39,7 @@ alias Checker = tuple[
     PSGame game                                             // AST node of a PuzzleScript game
 ];
 
-/*
- * @Name:   COLORS
- * @Desc:   Enummeration containing all the PuzzleScript colors.
- */
-public map[str, str] COLORS = (
-    "black":        "#000000",
-    "white":        "#FFFFFF",
-    "grey":         "#555555",
-    "darkgrey":     "#555500",
-    "transparent":  "#------",
-    "lightgrey":    "#AAAAAA",
-    "gray":         "#555555",
-    "darkgray":     "#555500",
-    "lightgray":    "#AAAAAA",
-    "red":          "#BE2633",
-    "darkred":      "#AA0000",
-    "lightred":     "#FF5555",
-    "brown":        "#AA5500",
-    "darkbrown":    "#550000",
-    "lightbrown":   "#FFAA00",
-    "orange":       "#FF5500",
-    "yellow":       "#FFFF55",
-    "green":        "#55AA00",
-    "darkgreen":    "#005500",
-    "lightgreen":   "#AAFF00",
-    "blue":         "#5555AA",
-    "lightblue":    "#AAFFFF",
-    "darkblue":     "#000055",
-    "purple":       "#550055",
-    "pink":         "#FFAAFF"
-);
+
 
 /*****************************************************************************/
 // --- Public Checker functions -----------------------------------------------

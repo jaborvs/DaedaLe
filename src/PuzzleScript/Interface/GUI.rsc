@@ -26,6 +26,7 @@ import Set;
 import IO;
 
 // --- Own modules imports ----------------------------------------------------
+import PuzzleScript::Utils;
 import PuzzleScript::Load;
 import PuzzleScript::Engine;
 import PuzzleScript::Compiler;
