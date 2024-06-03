@@ -194,6 +194,396 @@ map[str, list[str]] directionAggregates = (
     "parallel": ["\<", "\>"]
 );
 
+/******************************************************************************/
+// --- Compilation functions ---------------------------------------------------
+
+/*
+ * @Name:   compile
+ * @Desc:   Function that compiles a whole game
+ * @Param:  c -> Checker
+ * @Ret:    Engine object
+ */
+Engine compile(Checker c) {
+	Engine engine = game_engine(
+        [],                             // Converted levels
+		game_level_empty(),             // First level
+        game_level_empty(),             // Current level
+        [],                             // Win conditions   
+		[],                             // Converted rules 
+		[],                             // Converted late rules
+        (),                             // Map to keep the order of converted rules
+		0,                              // Current step of the game
+		(),                             // Object Name: Original object AST node
+		(),                             // Object Name: Properties of the object (resolved and unresolved references) (???)
+        (),                             // Object Name: References of the object (direct unresolved references) (???)
+        (),                             // How many moveable objects are in the game, how many rules will you be able to apply (???)
+        (),                             // What is used in the BFS (???)
+		c.game                            // Original game AST node
+    ); 
+
+    engine = compile_properties(engine, c);
+    engine = compile_references(engine, c);
+    engine = compile_levels(engine, c);
+    engine = compile_rules(engine, c);
+    engine = compile_level_checkers(engine, c);
+    engine = compile_applied_data(engine, c);
+    engine = compile_indexed_rules(engine, c);
+    engine = compile_objects(engine, c);	
+	
+	return engine;
+}
+
+/******************************************************************************/
+// --- Public compile object functions -----------------------------------------
+
+/*
+ * @Name:   compile_objects
+ * @Desc:   Function to compile the objects
+ * @Param:  engine -> Engine
+ * @Ret:    Updated engine with the compiled objects
+ */
+Engine compile_objects(Engine engine, Checker c) {
+    engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public compile indexed rules functions ----------------------------------
+
+/*
+ * @Name:   compile_indexed_rules
+ * @Desc:   Function to index the rules
+ * @Param:  engine -> Engine
+ * @Ret:    Updated engine with the indexed rules
+ */
+Engine compile_indexed_rules(Engine engine, Checker c) {
+    int index = 0;
+
+    for (RuleData rd <- engine.game.rules) {
+        str rule_string = stringify_rule(rd.left, rd.right);
+        engine.indexed_rules += (rd: <index, rule_string>);
+        index += 1;
+    }
+
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public compile applied data functions -----------------------------------
+
+/*
+ * @Name:   compile_applied_data
+ * @Desc:   Function to add the applied data 
+ * @Param:  engine -> engine
+ * @Ret:    Updated engine with the applied data 
+ */
+Engine compile_applied_data(Engine engine, Checker c) {
+    for (Level level <- engine.levels) {
+        engine.level_applied_data[level.original] = game_applied_data(
+            [],     // Travelled coordinates
+            (),     // Applied rules (without movement rules)
+            (),     // Applied movement rules
+            [],     // Dead end playtraces using verbs
+            [],     // Shortest path using verbs
+            level   // Original level AST node
+        );
+    }
+
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public compile properties functions -------------------------------------
+
+/*
+ * @Name:   compile_properties
+ * @Desc:   Function to compile all the properties from the legend of a game
+ * @Param:  engine -> Engine
+ * @Ret:    Updated engine witht the properties
+ */
+Engine compile_properties(Engine engine, Checker c) {
+    engine.properties = c.resolved_references;
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public compile references functions -------------------------------------
+
+/*
+ * @Name:   compile_references
+ * @Desc:   Function to compile all the references from the legend of a game
+ * @Param:  engine -> Engine
+ * @Ret:    Updated engine witht the references
+ */
+Engine compile_references(Engine engine, Checker c) {
+    engine.references = c.references;
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public convert levels functions -----------------------------------------
+
+/*
+ * @Name:   compile_levels
+ * @Desc:   Function to convert all the levels into a new level structure with 
+ *          more information
+ * @Param:  engine -> Engine
+ *          c      -> Checker
+ * @Ret:    Updated engine with the new converted levels
+ */
+Engine compile_levels(Engine engine, Checker c) {
+    for (LevelData lvl <- c.game.levels) {
+        if (lvl is level_data) engine.levels += [compile_level(lvl, c)];
+    }
+    engine.current_level = engine.levels[0];
+    engine.first_level = engine.current_level;
+
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public convert rules functions ------------------------------------------
+
+/*
+ * @Name:   compile_rules
+ * @Desc:   Function to convert all the rules into a new rule structure with 
+ *          more information
+ * @Param:  engine -> Engine
+ *          c      -> Checker
+ * @Ret:    Updated engine with the new converted rules
+ */
+Engine compile_rules(Engine engine, Checker c) {
+    for (RuleData rule <- c.game.rules) {
+        if ("late" in [toLowerCase(lhs.prefix) | lhs <- rule.left, lhs is rule_prefix]) {
+            list[Rule] rule_group = compile_rule(rule, true, c);
+            if (size(rule_group) != 0) engine.late_rules += [rule_group];
+        }
+        else {
+            list[Rule] rule_group = compile_rule(rule, false, c);
+            if (size(rule_group) != 0) engine.rules += [rule_group];
+        }
+    }
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public convert level checker functions ----------------------------------
+
+/*
+ * @Name:   compile_level_checkers
+ * @Desc:   Function to init and complete all the information inside the level 
+ *          checkers
+ * @Param:  engine -> Engine
+ *          c      -> Checker
+ * @Ret:    Updated engine with the level checkers
+ */
+ Engine compile_level_checkers(Engine engine, Checker c) {
+    engine.level_checkers = ();
+    for(Level level <- engine.levels) {
+        LevelChecker lc = game_level_checker(
+            <0,0>,      // Level size: width x height
+            [],         // Starting objects
+            [],         // Starting objects names
+            [],         // Moveable objects
+            [],         // Applied rules
+            [],         // Applied late rules
+            level       // Original level object
+        );
+
+        lc = _compile_level_checker_size(lc, level);
+        lc = _compile_level_checker_starting_objects(lc, level);
+        lc = _compile_level_checker_to_be_applied_rules(lc, engine.rules, engine.late_rules);
+        lc = _compile_level_checker_moveable_objects(lc, c, level);
+        
+        engine.level_checkers[level.original] = lc;
+    }
+
+    return engine;
+}
+
+/******************************************************************************/
+// --- Private convert level checker functions ---------------------------------
+
+/*
+ * @Name:   _compile_level_checker_size
+ * @Desc:   Function that completes the size of a level chekcer
+ * @Param:  engine -> Engine
+ *          level  -> Level to get the size from
+ * @Ret:    Updated map of level data and level checker
+ */
+LevelChecker _compile_level_checker_size(LevelChecker lc, Level level) {
+    lc.size = <size(level.original.level[0]), size(level.original.level)>;
+    return lc;
+}
+
+/*
+ * @Name:   _compile_level_checker_starting_objects
+ * @Desc:   Function to store the starting objects of a level on its level 
+ *          checker
+ * @Param:  lc    -> Level checker
+ *          level -> Level
+ * @Ret:    Updated level checker
+ */
+LevelChecker _compile_level_checker_starting_objects(LevelChecker lc, Level level){
+    list[Object] all_objects = [];
+    list[list[str]] object_names = [];
+
+    for (Coords coords <- level.objects.coords) {
+        for (Object obj <- level.objects[coords]) {
+            if (!(obj in all_objects)) {
+                all_objects += obj;
+                object_names += [[obj.current_name] + obj.possible_names];
+            }
+        }
+    }
+    
+    lc.starting_objects = all_objects;
+    lc.starting_objects_names = object_names;
+    return lc;
+}
+
+/*
+ * @Name:   _compile_level_checker_to_be_applied_rules
+ * @Desc:   Function to find those rules that can be applied per level
+ * @Param:  lc         -> Level checker
+ *          rules      -> Engine rules
+ *          late_rules -> Engie late rules
+ * @Ret:    Updated level checker
+ */
+LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[list[Rule]] rules, list[list[Rule]] late_rules) {
+    bool new_objects = true;
+    list[list[Rule]] applied_rules = [];
+    list[list[Rule]] applied_late_rules = [];
+
+    map[int, list[Rule]] indexed = ();
+    map[int, list[Rule]] indexed_late = ();
+
+    for (int i <- [0..size(rules)]) {
+        list[Rule] rule_group = rules[i];
+        indexed += (i: rule_group);
+    }
+    for (int i <- [0..size(late_rules)]) {
+        list[Rule] rule_group = late_rules[i];
+        indexed_late += (i: rule_group);
+    }
+
+    list[list[Rule]] current = rules + late_rules;
+
+    list[list[str]] previous_objs = [];
+
+    while(previous_objs != lc.starting_objects_names) {
+        previous_objs = lc.starting_objects_names;
+
+        for (list[Rule] lrule <- current) {
+            // Each rewritten rule in rule_group contains same objects so take one
+            Rule rule = lrule[0];
+            list[str] required = [];
+
+            for (RulePart rp <- rule.left) {
+                if (!(rp is rule_part)) continue;
+
+                for (RuleContent rc <- rp.contents) {
+                    if ("..." in rc.content) continue;
+
+                    required += [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == ""), !(name == "...")];
+                }
+            }
+
+            int applied = 0;
+            list[list[str]] placeholder = lc.starting_objects_names;
+            
+            for (int i <- [0..size(required)]) {
+                str required_rc = required[i];
+
+                if (any(int j <- [0..size(placeholder)], required_rc in placeholder[j])) {
+                    applied += 1;
+                } 
+                else break;
+            }
+
+            if (applied == size(required)) {
+                list[list[RuleContent]] list_rc = [rulepart.contents | rulepart <- rule.right, rulepart is rule_part];
+                list[list[str]] new_objects_list = [];
+
+                for (list[RuleContent] lrc <- list_rc) {
+                    list[str] new_objects = [name | rc <- lrc, name <- rc.content, !(name == "no"), 
+                        !(isDirection(name)), !(name == ""), !(name == "..."), 
+                        !(any(list[str] objects <- lc.starting_objects_names, name in objects))];
+
+                    if (size(new_objects) > 0) new_objects_list += [new_objects];
+
+                }
+                
+                lc.starting_objects_names += new_objects_list;
+
+                if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
+                if (!(rule.late) && !(lrule in applied_rules)) applied_rules += [lrule];
+            }
+        }
+    }
+
+    list[list[Rule]] applied_rules_in_order = [];
+    list[list[Rule]] applied_late_rules_in_order = [];
+
+    for (int i <- [0..size(indexed<0>)]) {
+        if (indexed[i] in applied_rules) applied_rules_in_order += [indexed[i]];
+    }
+
+    for (int i <- [0..size(indexed_late<0>)]) {
+        if (indexed_late[i] in applied_late_rules) applied_late_rules_in_order += [indexed_late[i]];
+    }
+
+    lc.can_be_applied_late_rules = applied_late_rules_in_order;
+    lc.can_be_applied_rules = applied_rules_in_order;
+
+    return lc;
+}
+
+/*
+ * @Name:   _compile_level_checker_moveable_objects
+ * @Desc:   Function to set all the moveable objects in a level checker
+ * @Param:  lc    -> Level checker
+ *          level -> Level
+ * @Ret:    Updated level checker
+ */
+LevelChecker _compile_level_checker_moveable_objects(LevelChecker lc, Checker c, Level level) {
+    for (list[Rule] lrule <- lc.can_be_applied_rules) {
+        for (RulePart rp <- lrule[0].left) {
+            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(lc, c, rp.contents);
+        }
+        for (RulePart rp <- lrule[0].right) {
+            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(lc, c, rp.contents);
+        }
+    }
+
+    lc.moveable_objects = dup(lc.moveable_objects);
+    return lc;
+}
+
+LevelChecker _compile_level_checker_get_moveable_objects(LevelChecker lc, Checker c, list[RuleContent] rule_side) {
+    list[str] found_objects = ["player"];
+
+    for (RuleContent rc <- rule_side) {
+        for (int i <- [0..(size(rc.content))]) {
+            if (i mod 2 == 1) continue;
+            
+            str dir = rc.content[i];
+            str name = rc.content[i + 1];
+            
+            if (isDirection(dir)) {
+                if (!(name in found_objects)) found_objects += [name];
+                list[str] all_references = get_resolved_references(name, c.references);
+                found_objects += [name | str name <- get_resolved_references(name, c.references), 
+                    any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
+                found_objects += [name | str name <- get_resolved_references(name, c.combinations), 
+                    any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
+            }
+        }
+    } 
+    lc.moveable_objects += dup(found_objects);
+    return lc;
+}
+
 /*****************************************************************************/
 // --- Public Getter functions ------------------------------------------------
 
@@ -720,393 +1110,4 @@ str stringify_rule(list[RulePart] left, list[RulePart] right) {
         rule += " ] ";
     }
     return rule;
-}
-/******************************************************************************/
-// --- Compilation functions ---------------------------------------------------
-
-/*
- * @Name:   compile
- * @Desc:   Function that compiles a whole game
- * @Param:  c -> Checker
- * @Ret:    Engine object
- */
-Engine compile(Checker c) {
-	Engine engine = game_engine(
-        [],                             // Converted levels
-		game_level_empty(),             // First level
-        game_level_empty(),             // Current level
-        [],                             // Win conditions   
-		[],                             // Converted rules 
-		[],                             // Converted late rules
-        (),                             // Map to keep the order of converted rules
-		0,                              // Current step of the game
-		(),                             // Object Name: Original object AST node
-		(),                             // Object Name: Properties of the object (resolved and unresolved references) (???)
-        (),                             // Object Name: References of the object (direct unresolved references) (???)
-        (),                             // How many moveable objects are in the game, how many rules will you be able to apply (???)
-        (),                             // What is used in the BFS (???)
-		c.game                            // Original game AST node
-    ); 
-
-    engine = compile_properties(engine, c);
-    engine = compile_references(engine, c);
-    engine = compile_levels(engine, c);
-    engine = compile_rules(engine, c);
-    engine = compile_level_checkers(engine, c);
-    engine = compile_applied_data(engine, c);
-    engine = compile_indexed_rules(engine, c);
-    engine = compile_objects(engine, c);	
-	
-	return engine;
-}
-
-/******************************************************************************/
-// --- Public compile object functions -----------------------------------------
-
-/*
- * @Name:   compile_objects
- * @Desc:   Function to compile the objects
- * @Param:  engine -> Engine
- * @Ret:    Updated engine with the compiled objects
- */
-Engine compile_objects(Engine engine, Checker c) {
-    engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public compile indexed rules functions ----------------------------------
-
-/*
- * @Name:   compile_indexed_rules
- * @Desc:   Function to index the rules
- * @Param:  engine -> Engine
- * @Ret:    Updated engine with the indexed rules
- */
-Engine compile_indexed_rules(Engine engine, Checker c) {
-    int index = 0;
-
-    for (RuleData rd <- engine.game.rules) {
-        str rule_string = stringify_rule(rd.left, rd.right);
-        engine.indexed_rules += (rd: <index, rule_string>);
-        index += 1;
-    }
-
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public compile applied data functions -----------------------------------
-
-/*
- * @Name:   compile_applied_data
- * @Desc:   Function to add the applied data 
- * @Param:  engine -> engine
- * @Ret:    Updated engine with the applied data 
- */
-Engine compile_applied_data(Engine engine, Checker c) {
-    for (Level level <- engine.levels) {
-        engine.level_applied_data[level.original] = game_applied_data(
-            [],     // Travelled coordinates
-            (),     // Applied rules (without movement rules)
-            (),     // Applied movement rules
-            [],     // Dead end playtraces using verbs
-            [],     // Shortest path using verbs
-            level   // Original level AST node
-        );
-    }
-
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public compile properties functions -------------------------------------
-
-/*
- * @Name:   compile_properties
- * @Desc:   Function to compile all the properties from the legend of a game
- * @Param:  engine -> Engine
- * @Ret:    Updated engine witht the properties
- */
-Engine compile_properties(Engine engine, Checker c) {
-    engine.properties = c.resolved_references;
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public compile references functions -------------------------------------
-
-/*
- * @Name:   compile_references
- * @Desc:   Function to compile all the references from the legend of a game
- * @Param:  engine -> Engine
- * @Ret:    Updated engine witht the references
- */
-Engine compile_references(Engine engine, Checker c) {
-    engine.references = c.references;
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public convert levels functions -----------------------------------------
-
-/*
- * @Name:   compile_levels
- * @Desc:   Function to convert all the levels into a new level structure with 
- *          more information
- * @Param:  engine -> Engine
- *          c      -> Checker
- * @Ret:    Updated engine with the new converted levels
- */
-Engine compile_levels(Engine engine, Checker c) {
-    for (LevelData lvl <- c.game.levels) {
-        if (lvl is level_data) engine.levels += [compile_level(lvl, c)];
-    }
-    engine.current_level = engine.levels[0];
-    engine.first_level = engine.current_level;
-
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public convert rules functions ------------------------------------------
-
-/*
- * @Name:   compile_rules
- * @Desc:   Function to convert all the rules into a new rule structure with 
- *          more information
- * @Param:  engine -> Engine
- *          c      -> Checker
- * @Ret:    Updated engine with the new converted rules
- */
-Engine compile_rules(Engine engine, Checker c) {
-    for (RuleData rule <- c.game.rules) {
-        if ("late" in [toLowerCase(lhs.prefix) | lhs <- rule.left, lhs is rule_prefix]) {
-            list[Rule] rule_group = compile_rule(rule, true, c);
-            if (size(rule_group) != 0) engine.late_rules += [rule_group];
-        }
-        else {
-            list[Rule] rule_group = compile_rule(rule, false, c);
-            if (size(rule_group) != 0) engine.rules += [rule_group];
-        }
-    }
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public convert level checker functions ----------------------------------
-
-/*
- * @Name:   compile_level_checkers
- * @Desc:   Function to init and complete all the information inside the level 
- *          checkers
- * @Param:  engine -> Engine
- *          c      -> Checker
- * @Ret:    Updated engine with the level checkers
- */
- Engine compile_level_checkers(Engine engine, Checker c) {
-    engine.level_checkers = ();
-    for(Level level <- engine.levels) {
-        LevelChecker lc = game_level_checker(
-            <0,0>,      // Level size: width x height
-            [],         // Starting objects
-            [],         // Starting objects names
-            [],         // Moveable objects
-            [],         // Applied rules
-            [],         // Applied late rules
-            level       // Original level object
-        );
-
-        lc = _compile_level_checker_size(lc, level);
-        lc = _compile_level_checker_starting_objects(lc, level);
-        lc = _compile_level_checker_to_be_applied_rules(lc, engine.rules, engine.late_rules);
-        lc = _compile_level_checker_moveable_objects(lc, c, level);
-        
-        engine.level_checkers[level.original] = lc;
-    }
-
-    return engine;
-}
-
-/******************************************************************************/
-// --- Private convert level checker functions ---------------------------------
-
-/*
- * @Name:   _compile_level_checker_size
- * @Desc:   Function that completes the size of a level chekcer
- * @Param:  engine -> Engine
- *          level  -> Level to get the size from
- * @Ret:    Updated map of level data and level checker
- */
-LevelChecker _compile_level_checker_size(LevelChecker lc, Level level) {
-    lc.size = <size(level.original.level[0]), size(level.original.level)>;
-    return lc;
-}
-
-/*
- * @Name:   _compile_level_checker_starting_objects
- * @Desc:   Function to store the starting objects of a level on its level 
- *          checker
- * @Param:  lc    -> Level checker
- *          level -> Level
- * @Ret:    Updated level checker
- */
-LevelChecker _compile_level_checker_starting_objects(LevelChecker lc, Level level){
-    list[Object] all_objects = [];
-    list[list[str]] object_names = [];
-
-    for (Coords coords <- level.objects.coords) {
-        for (Object obj <- level.objects[coords]) {
-            if (!(obj in all_objects)) {
-                all_objects += obj;
-                object_names += [[obj.current_name] + obj.possible_names];
-            }
-        }
-    }
-    
-    lc.starting_objects = all_objects;
-    lc.starting_objects_names = object_names;
-    return lc;
-}
-
-/*
- * @Name:   _compile_level_checker_to_be_applied_rules
- * @Desc:   Function to find those rules that can be applied per level
- * @Param:  lc         -> Level checker
- *          rules      -> Engine rules
- *          late_rules -> Engie late rules
- * @Ret:    Updated level checker
- */
-LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[list[Rule]] rules, list[list[Rule]] late_rules) {
-    bool new_objects = true;
-    list[list[Rule]] applied_rules = [];
-    list[list[Rule]] applied_late_rules = [];
-
-    map[int, list[Rule]] indexed = ();
-    map[int, list[Rule]] indexed_late = ();
-
-    for (int i <- [0..size(rules)]) {
-        list[Rule] rule_group = rules[i];
-        indexed += (i: rule_group);
-    }
-    for (int i <- [0..size(late_rules)]) {
-        list[Rule] rule_group = late_rules[i];
-        indexed_late += (i: rule_group);
-    }
-
-    list[list[Rule]] current = rules + late_rules;
-
-    list[list[str]] previous_objs = [];
-
-    while(previous_objs != lc.starting_objects_names) {
-        previous_objs = lc.starting_objects_names;
-
-        for (list[Rule] lrule <- current) {
-            // Each rewritten rule in rule_group contains same objects so take one
-            Rule rule = lrule[0];
-            list[str] required = [];
-
-            for (RulePart rp <- rule.left) {
-                if (!(rp is rule_part)) continue;
-
-                for (RuleContent rc <- rp.contents) {
-                    if ("..." in rc.content) continue;
-
-                    required += [name | name <- rc.content, !(name == "no"), !(isDirection(name)), !(name == ""), !(name == "...")];
-                }
-            }
-
-            int applied = 0;
-            list[list[str]] placeholder = lc.starting_objects_names;
-            
-            for (int i <- [0..size(required)]) {
-                str required_rc = required[i];
-
-                if (any(int j <- [0..size(placeholder)], required_rc in placeholder[j])) {
-                    applied += 1;
-                } 
-                else break;
-            }
-
-            if (applied == size(required)) {
-                list[list[RuleContent]] list_rc = [rulepart.contents | rulepart <- rule.right, rulepart is rule_part];
-                list[list[str]] new_objects_list = [];
-
-                for (list[RuleContent] lrc <- list_rc) {
-                    list[str] new_objects = [name | rc <- lrc, name <- rc.content, !(name == "no"), 
-                        !(isDirection(name)), !(name == ""), !(name == "..."), 
-                        !(any(list[str] objects <- lc.starting_objects_names, name in objects))];
-
-                    if (size(new_objects) > 0) new_objects_list += [new_objects];
-
-                }
-                
-                lc.starting_objects_names += new_objects_list;
-
-                if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
-                if (!(rule.late) && !(lrule in applied_rules)) applied_rules += [lrule];
-            }
-        }
-    }
-
-    list[list[Rule]] applied_rules_in_order = [];
-    list[list[Rule]] applied_late_rules_in_order = [];
-
-    for (int i <- [0..size(indexed<0>)]) {
-        if (indexed[i] in applied_rules) applied_rules_in_order += [indexed[i]];
-    }
-
-    for (int i <- [0..size(indexed_late<0>)]) {
-        if (indexed_late[i] in applied_late_rules) applied_late_rules_in_order += [indexed_late[i]];
-    }
-
-    lc.can_be_applied_late_rules = applied_late_rules_in_order;
-    lc.can_be_applied_rules = applied_rules_in_order;
-
-    return lc;
-}
-
-/*
- * @Name:   _compile_level_checker_moveable_objects
- * @Desc:   Function to set all the moveable objects in a level checker
- * @Param:  lc    -> Level checker
- *          level -> Level
- * @Ret:    Updated level checker
- */
-LevelChecker _compile_level_checker_moveable_objects(LevelChecker lc, Checker c, Level level) {
-    for (list[Rule] lrule <- lc.can_be_applied_rules) {
-        for (RulePart rp <- lrule[0].left) {
-            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(lc, c, rp.contents);
-        }
-        for (RulePart rp <- lrule[0].right) {
-            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(lc, c, rp.contents);
-        }
-    }
-
-    lc.moveable_objects = dup(lc.moveable_objects);
-    return lc;
-}
-
-LevelChecker _compile_level_checker_get_moveable_objects(LevelChecker lc, Checker c, list[RuleContent] rule_side) {
-    list[str] found_objects = ["player"];
-
-    for (RuleContent rc <- rule_side) {
-        for (int i <- [0..(size(rc.content))]) {
-            if (i mod 2 == 1) continue;
-            
-            str dir = rc.content[i];
-            str name = rc.content[i + 1];
-            
-            if (isDirection(dir)) {
-                if (!(name in found_objects)) found_objects += [name];
-                list[str] all_references = get_resolved_references(name, c.references);
-                found_objects += [name | str name <- get_resolved_references(name, c.references), 
-                    any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
-                found_objects += [name | str name <- get_resolved_references(name, c.combinations), 
-                    any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
-            }
-        }
-    } 
-    lc.moveable_objects += dup(found_objects);
-    return lc;
 }
