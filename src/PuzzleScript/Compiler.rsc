@@ -589,6 +589,15 @@ LevelChecker _compile_level_checker_moveable_objects(Engine engine, LevelChecker
     return lc;
 }
 
+/*
+ * @Name:   _compile_level_checker_get_moveable_objects
+ * @Desc:   Function to get the moveable objects of a level. We loop over the 
+ *          rule side and add those objects that have a valid direction and that
+ *          are starting objects of our level
+ * @Param:  engine    -> Engine
+ *          lc        -> Level checker to store the moveable objects
+ *          rule_side -> Side of the rule to check
+ */
 LevelChecker _compile_level_checker_get_moveable_objects(Engine engine, LevelChecker lc, list[RuleContent] rule_side) {
     list[str] found_objects = ["player"];
 
@@ -601,16 +610,12 @@ LevelChecker _compile_level_checker_get_moveable_objects(Engine engine, LevelChe
             
             if (isDirection(dir)) {
                 if (!(name in found_objects)) found_objects += [name];
-                // if (name in engine.properties) {
-                //     found_objects += [
-                //         name | str name <- engine.properties[name],
-                //         any(list[str] l_name <- lc.starting_objects_names, name in l_name)
-                //         ];
-                // }
-                found_objects += [name | str name <- get_resolved_references(name, engine.references), 
-                    any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
-                found_objects += [name | str name <- get_resolved_references(name, engine.combinations), 
-                    any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
+                if (name in engine.properties) {
+                    found_objects += [
+                        name | str name <- engine.properties[name],
+                        any(list[str] l_name <- lc.starting_objects_names, name in l_name)
+                        ];
+                }
             }
         }
     } 
