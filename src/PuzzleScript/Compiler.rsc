@@ -73,7 +73,7 @@ map[str, list[str]] directionAggregates = (
 data Engine 
     = game_engine(
         int index, 
-        map[str, ObjectData] objects,                                                                   // Map with object name as key and the object AST node as value                                                                                    // Current step of the game
+        map[str name, ObjectData od] objects,                                                                   // Map with object name as key and the object AST node as value                                                                                    // Current step of the game
         list[Level] levels,                                                                             // Levels
         Level first_level,                                                                              // First level
         Level current_level,                                                                            // Current level 
@@ -103,7 +103,7 @@ data Object
             list[str] possible_names,   // All objects names (for references objects)
             Coords coords,              // Current position of the object
             str direction,              // Direction to be moved towards
-            LayerData layer            // Layer where it exists
+            LayerData layer             // Layer where it exists
         )
     | game_object_empty()
     ;
@@ -121,7 +121,7 @@ data Rule
         list[RulePart] right,   // RHS of the rule
         RuleData original       // Original AST node
         )
-    | game_rule_empty()              // Empty rule
+    | game_rule_empty()         // Empty rule
     ;
 
 /*
@@ -131,12 +131,12 @@ data Rule
  */
 data Level 
     = game_level(
-            map[Coords coords, list[Object] list_objects] objects, // Coordinate and the list of objects (for different layers)
-            tuple[Coords coords, str current_name] player,  // Tuple: Coordinate of the player and the state (???)
-            LevelData original                              // Original AST node
+            map[Coords coords, list[Object] list_objects] objects,  // Coordinate and the list of objects (for different layers)
+            tuple[Coords coords, str current_name] player,          // Tuple: Coordinate of the player and the state (???)
+            LevelData original                                      // Original AST node
         )
-	| game_level_message(str msg, LevelData original)       // In between level messages are considered levels
-    | game_level_empty()                                    // Empty game level
+	| game_level_message(str msg, LevelData original)               // In between level messages are considered levels
+    | game_level_empty()                                            // Empty game level
 	;
 
 /*
@@ -163,18 +163,18 @@ data LevelChecker
  */
 data LevelAppliedData 
     = game_applied_data(
-        list[Coords] travelled_coords,      // Travelled coordinates
-        map[                                // Applied rules (without movement rules):
-            int,                            //      No. rule (???)
-            list[RuleData]                  //      rule AST nodes
+        list[Coords] travelled_coords,          // Travelled coordinates
+        map[                                    // Applied rules (without movement rules):
+            int index,                          //      Index (turn of the game)
+            list[RuleData] list_applied_rules   //      Applied rules AST nodes
             ] actual_applied_rules,             
-        map[                                // Applied movement rules
-            int,                            //      No. rule (???)
-            list[str]                       //      Direction (???)
+        map[                                    // Applied movement rules
+            int,                                //      Index (turn of the game)
+            list[str]                           //      Direction
             ] applied_moves,
-        list[list[str]] dead_ends,          // Dead ends: loosing playtraces using verbs
-        list[str] shortest_path,            // Shortest path using verbs (???)
-        Level original                      // Original level AST node
+        list[list[str]] dead_ends,              // Dead ends: loosing playtraces using verbs
+        list[str] shortest_path,                // Shortest path
+        Level original                          // Original level object
         )
     | game_applied_data_empty()
     ;
@@ -207,14 +207,15 @@ Engine compile(GameData game_data) {
         [],                 // Rules 
         [],                 // Late rules
         (),                 // Map to keep the order of converted rules
-        (),                 // Properties
         (),                 // References
         (),                 // Combinations
+        (),                 // Properties
         (),                 // Level checkers
         (),                 // What is used in the BFS (???)
         game_data           // Original game AST node
     ); 
 
+    engine = compile_objects(engine);	
     engine = compile_references(engine);
     engine = compile_combinations(engine);
     engine = compile_properties(engine);
@@ -223,7 +224,6 @@ Engine compile(GameData game_data) {
     engine = compile_level_checkers(engine);
     engine = compile_applied_data(engine);
     engine = compile_indexed_rules(engine);
-    engine = compile_objects(engine);	
 	
 	return engine;
 }
@@ -233,12 +233,75 @@ Engine compile(GameData game_data) {
 
 /*
  * @Name:   compile_objects
- * @Desc:   Function to compile the objects
+ * @Desc:   Function to compile the objects. Note that in this case the objects
+ *          are AST nodes, and not the new object data structure
  * @Param:  engine -> Engine
- * @Ret:    Updated engine with the compiled objects
+ * @Ret:    Updated engine with the objects AST nodes
  */
 Engine compile_objects(Engine engine) {
     engine.objects = (toLowerCase(x.name) : x | x <- engine.game.objects);
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public compile references functions -------------------------------------
+
+/*
+ * @Name:   compile_references
+ * @Desc:   Function to compile all the references from the legend of a game
+ * @Param:  engine -> Engine
+ * @Ret:    Updated engine witht the references
+ */
+Engine compile_references(Engine engine) {
+    for (LegendData l <- engine.game.legend) {
+        if (l is legend_reference) {
+            for (str object <- l.items) {
+                if (toLowerCase(l.key) in engine.references) engine.references[toLowerCase(l.key)] += [toLowerCase(object)];
+                else engine.references[toLowerCase(l.key)] = [toLowerCase(object)];
+            }
+        }
+    }
+
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public compile combinations functions -------------------------------------
+
+/*
+ * @Name:   compile_combinations
+ * @Desc:   Function to compile all the references from the legend of a game
+ * @Param:  engine -> Engine
+ * @Ret:    Updated engine witht the references
+ */
+Engine compile_combinations(Engine engine) {
+    for(LegendData l <- engine.game.legend) {
+        if (l is legend_combined) {
+            for (str object <- l.items) {
+                if (toLowerCase(l.key) in engine.combinations) engine.combinations[toLowerCase(l.key)] += [toLowerCase(object)];
+                else engine.combinations[toLowerCase(l.key)] = [toLowerCase(object)];
+            }
+        }
+    }
+
+    return engine;
+}
+
+/******************************************************************************/
+// --- Public compile properties functions -------------------------------------
+
+/*
+ * @Name:   compile_properties
+ * @Desc:   Function to compile all the properties from the legend of a game
+ * @Param:  engine -> Engine
+ * @Ret:    Updated engine witht the properties
+ */
+Engine compile_properties(Engine engine) {
+    for(str key <- engine.references.key) {
+        if (size(engine.references[key]) == 1) continue;
+        engine.properties[key] = get_resolved_references(key, engine.references);
+    }
+
     return engine;
 }
 
@@ -288,87 +351,180 @@ Engine compile_applied_data(Engine engine) {
 }
 
 /******************************************************************************/
-// --- Public compile properties functions -------------------------------------
-
-/*
- * @Name:   compile_properties
- * @Desc:   Function to compile all the properties from the legend of a game
- * @Param:  engine -> Engine
- * @Ret:    Updated engine witht the properties
- */
-Engine compile_properties(Engine engine) {
-    for(str key <- engine.references.key) {
-        if (size(engine.references[key]) == 1) continue;
-        engine.properties[key] = get_resolved_references(key, engine.references);
-    }
-
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public compile references functions -------------------------------------
-
-/*
- * @Name:   compile_references
- * @Desc:   Function to compile all the references from the legend of a game
- * @Param:  engine -> Engine
- * @Ret:    Updated engine witht the references
- */
-Engine compile_references(Engine engine) {
-    for (LegendData l <- engine.game.legend) {
-        if (l is legend_reference) {
-            for (str object <- l.items) {
-                if (toLowerCase(l.key) in engine.references) engine.references[toLowerCase(l.key)] += [toLowerCase(object)];
-                else engine.references[toLowerCase(l.key)] = [toLowerCase(object)];
-            }
-        }
-    }
-
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public compile combinations functions -------------------------------------
-
-/*
- * @Name:   compile_combinations
- * @Desc:   Function to compile all the references from the legend of a game
- * @Param:  engine -> Engine
- * @Ret:    Updated engine witht the references
- */
-Engine compile_combinations(Engine engine) {
-    for(LegendData l <- engine.game.legend) {
-        if (l is legend_combined) {
-            for (str object <- l.items) {
-                if (toLowerCase(l.key) in engine.combinations) engine.combinations[toLowerCase(l.key)] += [toLowerCase(object)];
-                else engine.combinations[toLowerCase(l.key)] = [toLowerCase(object)];
-            }
-        }
-    }
-
-    return engine;
-}
-
-
-
-/******************************************************************************/
 // --- Public convert levels functions -----------------------------------------
 
 /*
  * @Name:   compile_levels
  * @Desc:   Function to convert all the levels into a new level structure with 
- *          more information
+ *          more information. It also sets the first level and the current level
  * @Param:  engine -> Engine
  * @Ret:    Updated engine with the new converted levels
  */
 Engine compile_levels(Engine engine) {
-    for (LevelData ld <- engine.game.levels) {
-        if (ld is level_data) engine.levels += [compile_level(engine, ld)];
+    for (LevelData lvld <- engine.game.levels) {
+        if (lvld is level_data) engine.levels += [_compile_level(engine, lvld)];
     }
     engine.current_level = engine.levels[0];
     engine.first_level = engine.current_level;
 
     return engine;
+}
+
+/*
+ * @Name:   _compile_level
+ * @Desc:   Function to convert an level AST node to an level object. We go over
+ *          each character in the level and convert the character to all 
+ *          possible references
+ * @Param:  engine -> Engine
+ *          level  -> Original level AST node
+ * @Ret:    Level object
+ */
+Level _compile_level(Engine engine, LevelData lvl) {
+    map[Coords, list[Object]] objects = ();
+    tuple[Coords, str] player = <<0,0>, "">;
+    int id = 0;
+
+    // We resolve all the needed player object information
+    tuple[str rep_char, str name] player_resolved = _compile_level_resolve_player(engine);
+
+    // We resolve all the needed background object information
+    tuple[str rep_char, str name] background_resolved = _compile_level_resolve_background(engine);
+    list[str] background_properties = get_properties_rep_char(background_resolved.rep_char, engine.references);
+    LayerData background_layer = get_layer(background_properties, engine.game);
+
+    for (int i <- [0..size(lvl.level)]) {
+        for (int j <- [0..size(lvl.level[i])]) {
+            // Every object must have a background, so we create a background 
+            // object and add it
+            Object new_background_object = game_object(id, background_resolved.rep_char, background_resolved.name, background_properties, <i,j>, "", background_layer);
+            objects = _compile_level_add_object(objects, <i,j>, new_background_object);
+            id += 1;
+
+            // Now we add our actual new object. We have different steps:
+            // Step 1: if it is a background object, we skip it since we have
+            //         already added one
+            str rep_char = toLowerCase(lvl.level[i][j]);
+            if(rep_char == background_resolved.rep_char) continue;
+
+            // Step 2: if its a player object we store its coordinates and name
+            if (rep_char == player_resolved.rep_char) {
+                player = <<i,j>, player_resolved.name>;
+            }
+
+            // Step 3.1: the rep_char is in the references. We add only the first
+            //           object of its possible options
+            if (rep_char in engine.references.key) {
+                list[str] all_properties = get_properties_rep_char(rep_char, engine.references);
+                LayerData layer = get_layer(all_properties, engine.game);
+                str name = engine.references[rep_char][0]; // Out of all the possible names we give the first one
+
+                Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", layer);
+                objects = _compile_level_add_object(objects, <i,j>, new_object);
+                id += 1;
+            } 
+            // Step 3.2: the rep_char is represents a combination of objects. We
+            //           add each of the objects it refers to
+            else if (rep_char in engine.combinations.key) {
+                for (str name <- engine.combinations[rep_char]) {
+                    list[str] all_properties = get_properties_name(name, engine.references);  
+                    LayerData ld = get_layer(all_properties, engine.game);
+
+                    Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", ld);
+                    objects = _compile_level_add_object(objects, <i,j>, new_object);
+                    id += 1;
+                }
+            }
+            // Step 3.3: Representation char included in the object definition 
+            //           (FIX: need to loop over the objects to find it)
+            else {
+                for (str name <- engine.objects.name) {
+                    if(toLowerCase(engine.objects[name].rep_char) == rep_char) {
+                        list[str] all_properties = get_properties_name(name, engine.references);  
+                        LayerData ld = get_layer(all_properties, engine.game);
+
+                        Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", ld);
+                        objects = _compile_level_add_object(objects, <i,j>, new_object);
+                        id += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    new_level = game_level(
+        objects,
+		player,
+		lvl        
+    );
+
+    return new_level;
+}
+
+/*
+ * @Name:   _compile_level_resolve_object
+ * @Desc:   Function that resolves the name and representation character of the 
+ *          given object 
+ * @Param:  engine      -> Engine
+ *          object_name -> Name of the object to resolve (note it cannot be a 
+ *                         representation char in this case)
+ * @Ret:    Tuple with representation char and object property name
+ */
+tuple[str, str] _compile_level_resolve_object(Engine engine, str object_name) {
+    list[str] possible_names = [object_name];
+
+    // Case where the representation char is included in the object definition
+    if (object_name in engine.objects && engine.objects[object_name].rep_char != "") return <engine.objects[object_name].rep_char, object_name>;
+
+    // Add the direct references of the "object_name" key 
+    if (object_name in engine.references.key) possible_names += engine.references[object_name];
+
+    // Search for a character that represents any of the possible object names in the references
+    for (str key <- engine.references.key) {
+        if(size(key) == 1, any(str name <- possible_names, name in engine.references[key])) return <key, name>;
+    }
+
+    // Search for a character that represents any of the possible object names in the references
+    for (str key <- engine.combinations.key) {
+        if (size(key) == 1, any(str name <- possible_names, name in engine.combinations[key])) return <key, name>;
+    }
+
+    return <"","">;
+}
+
+/*
+ * @Name:   _compile_level_resolve_player
+ * @Desc:   Function that resolves the name and representation character of the 
+ *          player
+ * @Param:  engine -> Engine
+ * @Ret:    Map with representation char as key and name as value
+ */
+tuple[str, str] _compile_level_resolve_player(Engine engine) {
+    return _compile_level_resolve_object(engine, "player");
+}
+
+/*
+ * @Name:   _compile_level_resolve_background
+ * @Desc:   Function that resolves the representation char and name of the
+ *          background
+ * @Param:  engine -> Engine
+ * @Ret:    Map with representation char as key and name as value
+ */
+tuple[str,str] _compile_level_resolve_background (Engine engine) {
+    return _compile_level_resolve_object(engine, "background");
+}
+
+/*
+ * @Name:   _compile_level_add_object
+ * @Desc:   Function that adds an object to the given object coord map
+ * @Param:  objects    -> Current map of coordinates and objects
+ *          coords     -> Coordinates of the new object
+ *          new_object -> New object to add
+ * @Ret:    Updated map with the new object
+ */
+map[Coords, list[Object]] _compile_level_add_object(map[Coords, list[Object]] objects, Coords coords, Object new_object) {
+    if (coords in objects) objects[coords] += [new_object];
+    else objects[coords] = [new_object];
+    return objects;
 }
 
 /******************************************************************************/
@@ -624,52 +780,6 @@ LevelChecker _compile_level_checker_get_moveable_objects(Engine engine, LevelChe
 }
 
 /*****************************************************************************/
-// --- Public Getter functions ------------------------------------------------
-
-/*
- * @Name:   get_object
- * @Desc:   Getter function of object by id
- * @Param:
- *      id      Object id
- *      engine  Engine
- * @Ret:    Original object AST node
- */
-ObjectData get_object(int id, Engine engine) 
-	= [x | x <- engine.game.objects, x.id == id][0];
-
-/*
- * @Name:   get_object
- * @Desc:   Getter function of object by name
- * @Param:
- *      name    Object name
- *      engine  Engine
- * @Ret:    Original object AST node
- */
-ObjectData get_object(str name, Engine engine) 
-	= [x | x <- engine.game.objects, toLowerCase(x.name) == name][0];
-
-/*
- * @Name:   get_layer
- * @Desc:   Function to get the layer of a list of objects
- * @Param:  
- *      object  List of object names
- *      game    Original game AST node 
- * @Ret:    Layer object (empty if not found)
- */
-LayerData get_layer(list[str] object, GameData game) {
-    for (LayerData layer <- game.layers) {
-        if (layer is layer_data) {
-            for (str layer_item <- layer.items) {
-                if (toLowerCase(layer_item) in object) {
-                    return layer;
-                }
-            }
-        }
-    }
-    return layer_empty("");
-}
-
-/*****************************************************************************/
 // --- Public Translating functions -------------------------------------------
 
 /*
@@ -691,156 +801,6 @@ set[str] generate_directions(list[str] modifiers){
 	if (isEmpty(directions)) return {"left", "right", "up", "down"};
 	return directions;
 }
-
-/******************************************************************************/
-// --- Convert level functions -------------------------------------------------
-
-/*
- * @Name:   compile_level
- * @Desc:   Function to convert an level AST node to an level object. We go over
- *          each character in the level and convert the character to all 
- *          possible references
- * @Param:  engine -> Engine
- *          level  -> Original level AST node
- * @Ret:    Level object
- */
-Level compile_level(Engine engine, LevelData lvl) {
-    map[Coords, list[Object]] objects = ();
-    tuple[Coords, str] player = <<0,0>, "">;
-    int id = 0;
-
-    // We resolve all the needed player object information
-    tuple[str rep_char, str name] player_resolved = _compile_level_resolve_player(engine);
-
-    // We resolve all the needed background object information
-    tuple[str rep_char, str name] background_resolved = _compile_level_resolve_background(engine);
-    list[str] background_properties = get_properties_rep_char(background_resolved.rep_char, engine.references);
-    LayerData background_layer = get_layer(background_properties, engine.game);
-
-    for (int i <- [0..size(lvl.level)]) {
-        for (int j <- [0..size(lvl.level[i])]) {
-            // We create a background object and add it
-            Object new_background_object = game_object(id, background_resolved.rep_char, background_resolved.name, background_properties, <i,j>, "", background_layer);
-            objects = _compile_level_add_object(objects, <i,j>, new_background_object);
-            id += 1;
-
-            // Now we add our new object. We have different steps:
-            str rep_char = toLowerCase(lvl.level[i][j]);
-
-            // Step 1: if it is a background object, we skip it since we have
-            //         already added one
-            if(rep_char == background_resolved.rep_char) continue;
-
-            // Step 2: if its a player object we store 
-            if (rep_char == player_resolved.rep_char) {
-                player = <<i,j>, player_resolved.name>;
-            }
-
-            // Step 3.1: the object to represent is a key in the references, that
-            //           is, it representes several objects (or several states of
-            //           the same object). We get the properties of the char
-            if (rep_char in engine.references.key) {
-                list[str] all_properties = get_properties_rep_char(rep_char, engine.references);
-                LayerData layer = get_layer(all_properties, engine.game);
-                str name = engine.references[rep_char][0];
-
-                Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", layer);
-                objects = _compile_level_add_object(objects, <i,j>, new_object);
-                id += 1;
-            } 
-            // Step 3.2: the rep_char is represents a combination of objects.
-            else if (rep_char in engine.combinations.key) {
-                for (str name <- engine.combinations[rep_char]) {
-                    list[str] all_properties = get_properties_name(name, engine.references);  
-                    LayerData ld = get_layer(all_properties, engine.game);
-
-                    Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", ld);
-                    objects = _compile_level_add_object(objects, <i,j>, new_object);
-                    id += 1;
-                }
-            }
-            // Step 3.3: Representation char included in the object definition 
-            //           (FIX: need to loop over the objects to find it)
-        }
-    }
-
-    new_level = game_level(
-        objects,
-		player,
-		lvl        
-    );
-
-    return new_level;
-}
-
-/*
- * @Name:   _compile_level_resolve_object
- * @Desc:   Function that resolves the name and representation character of the 
- *          given object 
- * @Param:  engine      -> Engine
- *          object_name -> Name of the object to resolve
- * @Ret:    Map with representation char as key and name as value
- */
-tuple[str, str] _compile_level_resolve_object(Engine engine, str object_name) {
-    list[str] possible_names = [object_name];
-
-    // Add the direct references of the "object_name" key 
-    if (object_name in engine.references.key) possible_names += engine.references[object_name];
-
-    // Search for a character that represents any of the possible player names in the references
-    for (str key <- engine.references.key) {
-        if(size(key) == 1, any(str name <- possible_names, name in engine.references[key])) return <key, name>;
-    }
-
-    // Search for a character that represents any of the possible player names in the references
-    for (str key <- engine.combinations.key) {
-        if (size(key) == 1, any(str name <- possible_names, name in engine.combinations[key])) return <key, name>;
-    }
-
-    return <"","">;
-}
-
-/*
- * @Name:   _compile_level_resolve_player
- * @Desc:   Function that resolves the name and representation character of the 
- *          player
- * @Param:  engine -> Engine
- * @Ret:    Map with representation char as key and name as value
- */
-tuple[str, str] _compile_level_resolve_player(Engine engine) {
-    return _compile_level_resolve_object(engine, "player");
-}
-
-/*
- * @Name:   _compile_level_resolve_background
- * @Desc:   Function that resolves the representation char and name of the
- *          background
- * @Param:  engine -> Engine
- * @Ret:    Map with representation char as key and name as value
- */
-tuple[str,str] _compile_level_resolve_background (Engine engine) {
-    return _compile_level_resolve_object(engine, "background");
-}
-
-/*
- * @Name:   _compile_level_add_object
- * @Desc:   Function that adds an object to the given object coord map
- * @Param:  objects    -> Current map of coordinates and objects
- *          coords     -> Coordinates of the new object
- *          new_object -> New object to add
- * @Ret:    Updated map with the new object
- */
-map[Coords, list[Object]] _compile_level_add_object(map[Coords, list[Object]] objects, tuple[int x, int y] coords, Object new_object) {
-    if (coords in objects) objects[coords] += [new_object];
-    else objects[coords] = [new_object];
-    return objects;
-}
-
-
-
-
-
-
 
 /*
  * @Name:   isDirection
@@ -1197,13 +1157,12 @@ list[str] get_resolved_references(list[str] keys, map[str, list[str]] references
 /*
  * @Name:   get_resolved_references (single key version)
  * @Desc:   Function to get the references of a key of the legend in a 
- *          map of references.
- *          Generally used with the keys of the game legend. For this purpose,
- *          remember that keys in the legend can be a representation char
- *          or an alias (such as Player, Obstacle...)
- * @Param:
- *      key         Legend key element
- *      references  Map of references on which to search
+ *          map of references.Used with the keys of the game legend. For this,
+ *          remember that keys in the legend can be a representation char,
+ *          object name (Player) or an alias (Obstacle = Wall, Crate)
+ * @Param:  key        -> Legend key element (usuarlly a name, alias or a
+ *                        representation char)
+ *          references -> Map of references on which to search
  * @Ret:    List of non duped references of the key (including the actual keys)
  */
 list[str] get_resolved_references(str key, map[str, list[str]] references) {
@@ -1265,4 +1224,46 @@ list[str] get_properties_name(str name, map[str, list[str]] references) {
     }
 
     return toList(toSet(all_properties));
+}
+
+/*
+ * @Name:   get_object
+ * @Desc:   Getter function of object by id
+ * @Param:
+ *      id      Object id
+ *      engine  Engine
+ * @Ret:    Original object AST node
+ */
+ObjectData get_object(int id, Engine engine) 
+	= [x | x <- engine.game.objects, x.id == id][0];
+
+/*
+ * @Name:   get_object
+ * @Desc:   Getter function of object by name
+ * @Param:
+ *      name    Object name
+ *      engine  Engine
+ * @Ret:    Original object AST node
+ */
+ObjectData get_object(str name, Engine engine) 
+	= [x | x <- engine.game.objects, toLowerCase(x.name) == name][0];
+
+/*
+ * @Name:   get_layer
+ * @Desc:   Function to get the layer of a list of objects
+ * @Param:  object -> List of object names
+ *          game   -> Original game AST node 
+ * @Ret:    Layer object (empty if not found)
+ */
+LayerData get_layer(list[str] object, GameData game) {
+    for (LayerData layer <- game.layers) {
+        if (layer is layer_data) {
+            for (str layer_item <- layer.items) {
+                if (toLowerCase(layer_item) in object) {
+                    return layer;
+                }
+            }
+        }
+    }
+    return layer_empty("");
 }

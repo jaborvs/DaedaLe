@@ -117,9 +117,11 @@ GameData process_game(GameData game) {
         case list[LayerData] layers => [layer | layer <- layers, !(layer_empty(_) := layer)]
         case list[RuleData] rules => [rule | rule <- rules, !(rule_empty(_) := rule)]
         case list[ConditionData] conditions => [cond | cond <- conditions, !(condition_empty(_) := cond)]
-        case list[LevelData] levels => [level | level <- levels, !(level_empty() := level)]
+        case list[LevelData] levels => [level | level <- levels, !(level_empty(_) := level)]
     };
         
+    
+
     // Assign to correct section
     visit(tmp_game){
         case PreludeData p: unprocessed_prelude += [p];
@@ -133,6 +135,9 @@ GameData process_game(GameData game) {
     }
         
     processed_prelude = [process_prelude_item(unprocessed_prelude_item) | PreludeData unprocessed_prelude_item <- unprocessed_prelude];
+    for(item <- processed_prelude) {
+        println(item);
+    }
     processed_objects = [process_object(unprocessed_object) | ObjectData unprocessed_object <- unprocessed_objects];
     processed_legend = [process_legend(unprocessed_legend_item) | LegendData unprocessed_legend_item <- unprocessed_legend];        
     processed_sounds = [process_sound(unprocessed_sound) | SoundData unprocessed_sound <- unprocessed_sounds];
@@ -141,6 +146,9 @@ GameData process_game(GameData game) {
     // processed_rules  = [process_rule(unprocessed_rule) | RuleData unprocessed_rule <- unprocessed_rules];
     processed_conditions = [process_condition(unprocessed_condition) | ConditionData unprocessed_condition <- unprocessed_conditions];
     processed_levels = [process_level(unprocessed_level) | LevelData unprocessed_level <- unprocessed_levels];
+    // for(level <- processed_levels) {
+    //     println(level);
+    // }
         
     GameData processed_game = game_data(
         processed_prelude, 

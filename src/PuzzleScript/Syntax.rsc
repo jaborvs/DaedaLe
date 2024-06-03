@@ -76,7 +76,7 @@ syntax Prelude
     ;
     
 syntax PreludeData
-    = prelude_data: PreludeKeyword String* Newline
+    = prelude_data: PreludeKeyword String? Newline
     | prelude_empty: Newline
     ;
 
@@ -190,5 +190,5 @@ syntax ConditionItem
 
 syntax LevelData
     = level_data: (LevelLine Newline)+ Newline
-    | level_message: 'message' String*
+    | level_message: 'message' String
     | level_empty: Newline;
