@@ -19,6 +19,50 @@ import IO;
 import PuzzleScript::Utils;
 import PuzzleScript::AST;
 
+/*****************************************************************************/
+// --- Directions structures defines ------------------------------------------
+// (Note: this was reproduced from PuzzleScript github)
+
+/* 
+ * @Name:   absoluteDirections
+ * @Desc:   Absolute directions
+ */
+list[str] absoluteDirections = ["up", "down", "left", "right"];
+
+/* 
+ * @Name:   relativeDirections
+ * @Desc:   Relative direction modifiers
+ */
+list[str] relativeDirections = ["^", "v", "\<", "\>", "parallel", "perpendicular"];
+
+/* 
+ * @Name:   relativeDict
+ * @Desc:   Dictionary for relative rules
+ */
+map[str, list[str]] relativeDict = (
+    "right": ["up", "down", "left", "right", "horizontal_par", "vertical_perp"],
+    "up": ["left", "right", "down", "up", "vertical_par", "horizontal_perp"],
+    "down": ["right", "left", "up", "down", "vertical_par", "horizontal_perp"],
+    "left": ["down", "up", "right", "left", "horizontal_par", "vertical_perp"]
+);
+
+/*
+ * @Name:   directionAggregates
+ * @Desc:   Map to translate relative direction modifiers to specif ones
+ */
+map[str, list[str]] directionAggregates = (
+    "horizontal": ["left", "right"],
+    "horizontal_par": ["left", "right"],
+    "horizontal_perp": ["left", "right"],
+    "vertical": ["up", "down"],
+    "vertical_par": ["up", "down"],
+    "vertical_perp": ["up", "down"],
+    "moving": ["up", "down", "left", "right", "action"],
+    "orthogonal": ["up", "down", "left", "right"],
+    "perpendicular": ["^", "v"],
+    "parallel": ["\<", "\>"]
+);
+
 /******************************************************************************/
 // --- Data structures defines -------------------------------------------------
 
@@ -28,23 +72,20 @@ import PuzzleScript::AST;
  */
 data Engine 
     = game_engine(
-        list[Level] levels,                                 // Converted levels
-        Level first_level,                                  // First level
-        Level current_level,                                // Current level 
-        list[list[Rule]] rules,                             // Converted rules 
-        list[list[Rule]] late_rules,                        // Converted late rules
-        map[                                                // Map to keep the order of converted rules:
-            RuleData,                                       //      Original rule AST node
-            tuple[int, str]                                 //      Tuple: no. rule in code, rule string 
-            ] indexed_rules,                                
-        int index,                                          // Current step of the game
-        map[str, ObjectData] objects,                       // Object Name: Original object AST node
-        map[str key, list[str] list_properties] properties,                     
-        map[str key, list[str] list_references] references,                     
-        map[str key, list[str] list_combinations] combinations,                   
-        map[LevelData, LevelChecker] level_checkers,            // How many moveable objects are in the game, how many rules will you be able to apply (???)
-        map[LevelData, LevelAppliedData] level_applied_data,           // What is used in the BFS (???)
-        GameData game                                         // Original game AST node
+        int index, 
+        map[str, ObjectData] objects,                                                                   // Map with object name as key and the object AST node as value                                                                                    // Current step of the game
+        list[Level] levels,                                                                             // Levels
+        Level first_level,                                                                              // First level
+        Level current_level,                                                                            // Current level 
+        list[list[Rule]] rules,                                                                         // Rules
+        list[list[Rule]] late_rules,                                                                    // Late rules
+        map[RuleData original_rule, tuple[int index, str stringified_rule] indexed_rule] indexed_rules, // Map to keep rules in order (This was only needed for the verbs and is surely a quickfix) (FIX)
+        map[str key, list[str] list_references] references,                                             // References: object name/rep_char -> list of names
+        map[str key, list[str] list_combinations] combinations,                                         // Combinations: object name/rep_char -> list of names    
+        map[str key, list[str] list_properties] properties,                                             // Properties: object name (only) -> list of names   
+        map[LevelData, LevelChecker] level_checkers,                                                    // Level checkers
+        map[LevelData, LevelAppliedData] level_applied_data,                                            // What is used in the BFS (???)
+        GameData game                                                                                   // Original game AST node
         )
     | game_engine_empty()
     ;
@@ -55,14 +96,14 @@ data Engine
  *          which models an AST node for an object
  */
 data Object 
-    = game_object (
+    = game_object(
+            int id,                     // Identifier
             str char,                   // Legend representation char
             str current_name,           // Current name of the object (for references objects)
             list[str] possible_names,   // All objects names (for references objects)
             Coords coords,              // Current position of the object
             str direction,              // Direction to be moved towards
-            LayerData layer,            // Layer where it exists
-            int id                      // Identifier
+            LayerData layer            // Layer where it exists
         )
     | game_object_empty()
     ;
@@ -90,7 +131,7 @@ data Rule
  */
 data Level 
     = game_level(
-            map[Coords coords, list[Object] objects] objects, // Coordinate and the list of objects (for different layers)
+            map[Coords coords, list[Object] list_objects] objects, // Coordinate and the list of objects (for different layers)
             tuple[Coords coords, str current_name] player,  // Tuple: Coordinate of the player and the state (???)
             LevelData original                              // Original AST node
         )
@@ -147,50 +188,6 @@ alias Coords = tuple[
     int y   // y-coordinate
 ];
 
-/*****************************************************************************/
-// --- Directions structures defines ------------------------------------------
-// (Note: this was reproduced from PuzzleScript github)
-
-/* 
- * @Name:   absoluteDirections
- * @Desc:   Absolute directions
- */
-list[str] absoluteDirections = ["up", "down", "left", "right"];
-
-/* 
- * @Name:   relativeDirections
- * @Desc:   Relative direction modifiers
- */
-list[str] relativeDirections = ["^", "v", "\<", "\>", "parallel", "perpendicular"];
-
-/* 
- * @Name:   relativeDict
- * @Desc:   Dictionary for relative rules
- */
-map[str, list[str]] relativeDict = (
-    "right": ["up", "down", "left", "right", "horizontal_par", "vertical_perp"],
-    "up": ["left", "right", "down", "up", "vertical_par", "horizontal_perp"],
-    "down": ["right", "left", "up", "down", "vertical_par", "horizontal_perp"],
-    "left": ["down", "up", "right", "left", "horizontal_par", "vertical_perp"]
-);
-
-/*
- * @Name:   directionAggregates
- * @Desc:   Map to translate relative direction modifiers to specif ones
- */
-map[str, list[str]] directionAggregates = (
-    "horizontal": ["left", "right"],
-    "horizontal_par": ["left", "right"],
-    "horizontal_perp": ["left", "right"],
-    "vertical": ["up", "down"],
-    "vertical_par": ["up", "down"],
-    "vertical_perp": ["up", "down"],
-    "moving": ["up", "down", "left", "right", "action"],
-    "orthogonal": ["up", "down", "left", "right"],
-    "perpendicular": ["^", "v"],
-    "parallel": ["\<", "\>"]
-);
-
 /******************************************************************************/
 // --- Compilation functions ---------------------------------------------------
 
@@ -202,24 +199,25 @@ map[str, list[str]] directionAggregates = (
  */
 Engine compile(GameData game_data) {
 	Engine engine = game_engine(
-        [],                             // Converted levels
-		game_level_empty(),             // First level
-        game_level_empty(),             // Current level  
-		[],                             // Converted rules 
-		[],                             // Converted late rules
-        (),                             // Map to keep the order of converted rules
-		0,                              // Current step of the game
-		(),                             // Object Name: Original object AST node
-		(),                             // Object Name: Properties of the object (resolved and unresolved references) (???)
-        (),                             // Object Name: References of the object (direct unresolved references) (???)
-        (),
-        (),                             // How many moveable objects are in the game, how many rules will you be able to apply (???)
-        (),                             // What is used in the BFS (???)
-		game_data                       // Original game AST node
+        0,                  // Current step of the game
+        (),                 // Objects
+        [],                 // Levels
+        game_level_empty(), // First level
+        game_level_empty(), // Current level  
+        [],                 // Rules 
+        [],                 // Late rules
+        (),                 // Map to keep the order of converted rules
+        (),                 // Properties
+        (),                 // References
+        (),                 // Combinations
+        (),                 // Level checkers
+        (),                 // What is used in the BFS (???)
+        game_data           // Original game AST node
     ); 
 
-    engine = compile_properties(engine);
     engine = compile_references(engine);
+    engine = compile_combinations(engine);
+    engine = compile_properties(engine);
     engine = compile_levels(engine);
     engine = compile_rules(engine);
     engine = compile_level_checkers(engine);
@@ -603,7 +601,12 @@ LevelChecker _compile_level_checker_get_moveable_objects(Engine engine, LevelChe
             
             if (isDirection(dir)) {
                 if (!(name in found_objects)) found_objects += [name];
-                list[str] all_references = get_resolved_references(name, engine.references);
+                // if (name in engine.properties) {
+                //     found_objects += [
+                //         name | str name <- engine.properties[name],
+                //         any(list[str] l_name <- lc.starting_objects_names, name in l_name)
+                //         ];
+                // }
                 found_objects += [name | str name <- get_resolved_references(name, engine.references), 
                     any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
                 found_objects += [name | str name <- get_resolved_references(name, engine.combinations), 
@@ -712,7 +715,7 @@ Level compile_level(Engine engine, LevelData lvl) {
     for (int i <- [0..size(lvl.level)]) {
         for (int j <- [0..size(lvl.level[i])]) {
             // We create a background object and add it
-            Object new_background_object = game_object(background_resolved.rep_char, background_resolved.name, background_properties, <i,j>, "", background_layer, id);
+            Object new_background_object = game_object(id, background_resolved.rep_char, background_resolved.name, background_properties, <i,j>, "", background_layer);
             objects = _compile_level_add_object(objects, <i,j>, new_background_object);
             id += 1;
 
@@ -736,7 +739,7 @@ Level compile_level(Engine engine, LevelData lvl) {
                 LayerData layer = get_layer(all_properties, engine.game);
                 str name = engine.references[rep_char][0];
 
-                Object new_object = game_object(rep_char, name, all_properties, <i,j>, "", layer, id);
+                Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", layer);
                 objects = _compile_level_add_object(objects, <i,j>, new_object);
                 id += 1;
             } 
@@ -746,7 +749,7 @@ Level compile_level(Engine engine, LevelData lvl) {
                     list[str] all_properties = get_properties_name(name, engine.references);  
                     LayerData ld = get_layer(all_properties, engine.game);
 
-                    Object new_object = game_object(rep_char, name, all_properties, <i,j>, "", ld, id);
+                    Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", ld);
                     objects = _compile_level_add_object(objects, <i,j>, new_object);
                     id += 1;
                 }
@@ -1213,30 +1216,6 @@ list[str] get_resolved_references(str key, map[str, list[str]] references) {
 }
 
 /*
- * @Name:   get_unresolved_references_and_properties
- * @Desc:   Function to get the all references (resolved and unresolved) of a given 
- *          references element
- * @Param:
- *      key         Element of the references dictionary 
- *      references  Map of all game object references
- * @Ret:    References of the object
- */
-list[str] get_unresolved_references_and_properties(str key, map[str, list[str]] references) {
-    if (!(key in references<0>)) return [];
-
-    list[str] all_references = [];
-    list[str] unresolved_references = references[key];
-
-    all_references += unresolved_references;
-
-    for (str rf <- unresolved_references) {
-        all_references += get_properties(rf, references);
-    }
-
-    return toList(toSet(all_references));
-}
-
-/*
  * @Name:   get_properties_rep_char
  * @Desc:   Function to get the properties of a representatio char. This are the 
  *          properties of each of the object names it references.
@@ -1252,34 +1231,11 @@ list[str] get_properties_rep_char(str rep_char, map[str, list[str]] references) 
     all_properties += unresolved_references;
 
     for (str rf <- unresolved_references) {
-        all_properties += get_properties(rf, references);
+        if (size(rf) == 1) all_properties += get_propeties_rep_char(rf, references);
+        else all_properties += get_properties_name(rf, references);
     }
 
     return toList(toSet(all_properties));
-}
-
-/*
- * @Name:   get_properties
- * @Desc:   Function to get the all properties of a given key.
- *          A property is the string used as key in the set of references
- * @Param:
- *      key         Element from the references dictionary
- *      references  Map of all references
- * @Ret:    Properties of the reference
- */
-list[str] get_properties(str key, map[str, list[str]] references) {
-    list[str] all_references = [key];
-
-    for (str rf <- references) {
-        if (size(rf) == 1) continue;
-
-        if (key in references[rf]) {
-            all_references += rf;
-            all_references += get_properties(rf, references);
-        }
-    }
-
-    return toList(toSet(all_references));
 }
 
 /*
@@ -1299,7 +1255,7 @@ list[str] get_properties_name(str name, map[str, list[str]] references) {
 
         if (name in references[rf]) {
             all_properties += rf;
-            all_properties += get_properties(rf, references);
+            all_properties += get_properties_name(rf, references);
         }
     }
 

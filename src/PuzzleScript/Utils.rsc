@@ -5,6 +5,9 @@
  */
 module PuzzleScript::Utils
 
+/*****************************************************************************/
+// --- Colors structures defines ------------------------------------------)
+
 /*
  * @Name:   COLORS
  * @Desc:   Enummeration containing all the PuzzleScript colors.
