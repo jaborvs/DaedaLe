@@ -35,7 +35,7 @@ void main() {
     checker = check_game(game);
     engine = compile(checker);
 
-    engine.current_level = engine.converted_levels[0];
+    engine.current_level = engine.levels[0];
     Level save_level = engine.current_level;
 
     list[str] possible_moves = ["up", "right", "left", "down"];
@@ -53,8 +53,8 @@ void main() {
     
     for (int i <- [0..3]) {
 
-        engine.current_level = engine.converted_levels[i];
-        engine.applied_data[engine.current_level.original].actual_applied_rules = ();
+        engine.current_level = engine.levels[i];
+        engine.level_applied_data[engine.current_level.original].actual_applied_rules = ();
 
         list[str] moves = ["right","up","up","up", "up", "right"];
         for (str move <- moves) {
@@ -63,8 +63,8 @@ void main() {
             print_level(engine, checker);
         }
 
-        // println(engine.applied_data[engine.current_level.original].applied_moves);
-        // println(engine.applied_data[engine.current_level.original].actual_applied_rules);
+        // println(engine.level_applied_data[engine.current_level.original].applied_moves);
+        // println(engine.level_applied_data[engine.current_level.original].actual_applied_rules);
         return;
 
         // Get succesful path and corresponding skills
@@ -83,8 +83,8 @@ void main() {
 
 
         for (int i <- [0..size(result.winning_moves)]) {
-            if (i in result.engine.applied_data[engine.current_level.original].actual_applied_rules<0>) {
-                RuleData rd = result.engine.applied_data[engine.current_level.original].actual_applied_rules[i][0];
+            if (i in result.engine.level_applied_data[engine.current_level.original].actual_applied_rules<0>) {
+                RuleData rd = result.engine.level_applied_data[engine.current_level.original].actual_applied_rules[i][0];
                 resolve_verb(convert_rule(rd.left, rd.right), true, title);
             } else {
                 println("crawl");
@@ -101,8 +101,8 @@ void main() {
             Engine engine = result_dead_ends[i].engine;
             
             for (int i <- [0..size(rules)]) {
-                if (i in engine.applied_data[engine.current_level.original].actual_applied_rules<0>) {
-                    RuleData rd = engine.applied_data[engine.current_level.original].actual_applied_rules[i][0];
+                if (i in engine.level_applied_data[engine.current_level.original].actual_applied_rules<0>) {
+                    RuleData rd = engine.level_applied_data[engine.current_level.original].actual_applied_rules[i][0];
                     resolve_verb(convert_rule(rd.left, rd.right), true, title);
                 } else {
                     println("walk");
@@ -168,7 +168,7 @@ void main() {
 
     return;
     engine.current_level = save_level;
-    engine.applied_data[engine.current_level.original].actual_applied_rules = [];
+    engine.level_applied_data[engine.current_level.original].actual_applied_rules = [];
 
     old_player_pos = engine.current_level.player[0];
     engine = execute_move(engine, checker, "right");
@@ -194,14 +194,14 @@ void main() {
 
     println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");
     println("Applied rules to get there:");
-    for (RuleData rd <- engine.level_checkers[engine.current_level.original].applied_rules) {
+    for (RuleData rd <- engine.level_checkers[engine.current_level.original].can_be_applied_rules) {
 
         println(convert_rule(rd.left, rd.right));
 
     }
     
     engine.current_level = save_level;
-    engine.applied_data[engine.current_level.original].actual_applied_rules = [];
+    engine.level_applied_data[engine.current_level.original].actual_applied_rules = [];
 
 
     list[str] losing_moves = ["up", "up"];
@@ -218,7 +218,7 @@ void main() {
     println("\n=== Mutliple rule test ====");
 
     engine.current_level = save_level;
-    engine.applied_data[engine.current_level.original].actual_applied_rules = [];
+    engine.level_applied_data[engine.current_level.original].actual_applied_rules = [];
 
     old_player_pos = engine.current_level.player[0];
     engine = execute_move(engine, checker, "up");

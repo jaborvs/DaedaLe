@@ -310,7 +310,7 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late,
     list[list[Rule]] applied_rules = [];
 
     if (allrules == 0) {
-        applied_rules = late ? engine.level_checkers[current_level.original].applied_late_rules : engine.level_checkers[current_level.original].applied_rules;
+        applied_rules = late ? engine.level_checkers[current_level.original].can_be_applied_late_rules : engine.level_checkers[current_level.original].can_be_applied_rules;
     } else {
         applied_rules = late ? engine.late_rules : engine.rules;
     }
@@ -386,10 +386,10 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late,
 
                         Engine engine_before = engine;
                         engine = apply(engine, found_objects, rp_left[i].contents, rp_right[i].contents, direction);
-                        AppliedData ad = engine.applied_data[current_level.original];
+                        LevelAppliedData ad = engine.level_applied_data[current_level.original];
                         int index = size(ad.applied_moves<0>);
-                        if (index in ad.actual_applied_rules<0>) engine.applied_data[engine.current_level.original].actual_applied_rules[index] += [rule.original];
-                        else engine.applied_data[engine.current_level.original].actual_applied_rules += (index: [rule.original]);
+                        if (index in ad.actual_applied_rules<0>) engine.level_applied_data[engine.current_level.original].actual_applied_rules[index] += [rule.original];
+                        else engine.level_applied_data[engine.current_level.original].actual_applied_rules += (index: [rule.original]);
                         applied += 1;
                     }
                 }
@@ -533,9 +533,9 @@ Engine execute_move(Engine engine, Checker c, str direction, int allrules) {
     engine = apply_rules(engine, engine.current_level, direction, true, allrules);
     println("   5.5");
 
-    int index = size(engine.applied_data[engine.current_level.original].applied_moves<0>);
-    engine.applied_data[engine.current_level.original].applied_moves[index] = [direction];
-    engine.applied_data[engine.current_level.original].travelled_coords += [engine.current_level.player[0]];
+    int index = size(engine.level_applied_data[engine.current_level.original].applied_moves<0>);
+    engine.level_applied_data[engine.current_level.original].applied_moves[index] = [direction];
+    engine.level_applied_data[engine.current_level.original].travelled_coords += [engine.current_level.player[0]];
     println("   5.6");
 
     return engine;

@@ -339,7 +339,7 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
 int get_level_index(Engine engine, Level current_level) {
     int index = 0;
 
-    while (engine.converted_levels[index].original != current_level.original) {
+    while (engine.levels[index].original != current_level.original) {
         index += 1;
     }
 
@@ -367,7 +367,7 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
     
     // Get travelled coordinates and generate image that shows coordinates
     // 'win' argument determines the color of the path
-    list[Coords] coords = engine.applied_data[engine.current_level.original].travelled_coords;
+    list[Coords] coords = engine.level_applied_data[engine.current_level.original].travelled_coords;
     tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
 
     data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
@@ -379,7 +379,7 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
     model.index += 1;
     model.image = "PuzzleScript/Interface/bin/path<model.index>.png";
 
-    map[int,list[RuleData]] rules = engine.applied_data[engine.current_level.original].actual_applied_rules;
+    map[int,list[RuleData]] rules = engine.level_applied_data[engine.current_level.original].actual_applied_rules;
 
     model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, length);
 
@@ -411,7 +411,7 @@ Model update(Msg msg, Model model){
             }
             // 'Reload' button has been pressed
             case reload(): {                            
-                model.engine.current_level = model.engine.begin_level;
+                model.engine.current_level = model.engine.first_level;
                 model.image = "PuzzleScript/Interface/bin/output_image0.png";
             }
             // PuzzleScript code has been changed
@@ -437,7 +437,7 @@ Model update(Msg msg, Model model){
             // 'Analyse All' button has been pressed
             case analyse_all(): {
                 int i = 0;
-                for (Level level <- model.engine.converted_levels) {
+                for (Level level <- model.engine.levels) {
                     list[list[Model]] win_models = [];
                     list[Model] losing_models = [];
                     list[list[Model]] all_losing_models = [];
@@ -453,7 +453,7 @@ Model update(Msg msg, Model model){
                     
                     tuple[Engine engine, list[str] winning_moves, real time] result_time = <result[0], result[1], actual_time>;
                     
-                    new_model.engine.applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
+                    new_model.engine.level_applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
                     
                     // Save respective engine states
                     new_model.win = result_time;
@@ -489,7 +489,7 @@ Model update(Msg msg, Model model){
                 println("3");
                 tuple[Engine engine, list[str] winning_moves, real time] result_time = <result[0], result[1], actual_time>;
                 
-                model.engine.applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
+                model.engine.level_applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
                 
                 // Save respective engine states
                 model.win = result_time;
@@ -515,7 +515,7 @@ Model update(Msg msg, Model model){
             println("6");
             if (check_conditions(model.engine, "win")) {
                 model.engine.index += 1;
-                model.engine.current_level = model.engine.converted_levels[model.engine.index];
+                model.engine.current_level = model.engine.levels[model.engine.index];
             }
             println("7");
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
@@ -615,7 +615,7 @@ void view_panel(Model m){
 void view_results(Model m) {
     div(class("panel"), () {
         h3("Results");
-        AppliedData ad = m.engine.applied_data[m.engine.current_level.original];
+        LevelAppliedData ad = m.engine.level_applied_data[m.engine.current_level.original];
         p("-- Shortest path --");
         button(onClick(show(m.win.engine, 1, size(m.win.winning_moves))), "<size(m.win.winning_moves)> steps");
         p("-- Dead ends --");

@@ -28,26 +28,28 @@ import PuzzleScript::Engine;
  * @Name:   Engine
  * @Desc:   Data structure modelling the engine for PuzzleScript games
  */
-alias Engine = tuple[
-	list[Level] converted_levels,                       // Converted levels
-    int all_objects,                                    // Number of total objects
-    Level begin_level,                                  // First level
-	Level current_level,                                // Current level
-	list[Condition] conditions,                         // Win conditions   
-	list[list[Rule]] rules,                             // Converted rules 
-    list[list[Rule]] late_rules,                        // Converted late rules
-    map[                                                // Map to keep the order of converted rules:
-        RuleData,                                       //      Original rule AST node
-        tuple[int, str]                                 //      Tuple: no. rule in code, rule string 
-        ] indexed_rules,                                
-	int index,                                          // Current step of the game
-	map[str, ObjectData] objects,                       // Object Name: Original object AST node
-    map[str, list[str]] properties,                     // Object Name: Properties of the object (resolved and unresolved references) (???)
-    map[str, list[str]] references,                     // Object Name: References of the object (direct unresolved references) (???)
-    map[LevelData, LevelChecker] level_checkers,            // How many moveable objects are in the game, how many rules will you be able to apply (???)
-    map[LevelData, AppliedData] applied_data,           // What is used in the BFS (???)
-	PSGame game                                         // Original game AST node
-];
+data Engine 
+    = game_engine(
+        list[Level] levels,                                 // Converted levels
+        Level first_level,                                  // First level
+        Level current_level,                                // Current level
+        list[Condition] conditions,                         // Win conditions   
+        list[list[Rule]] rules,                             // Converted rules 
+        list[list[Rule]] late_rules,                        // Converted late rules
+        map[                                                // Map to keep the order of converted rules:
+            RuleData,                                       //      Original rule AST node
+            tuple[int, str]                                 //      Tuple: no. rule in code, rule string 
+            ] indexed_rules,                                
+        int index,                                          // Current step of the game
+        map[str, ObjectData] objects,                       // Object Name: Original object AST node
+        map[str, list[str]] properties,                     // Object Name: Properties of the object (resolved and unresolved references) (???)
+        map[str, list[str]] references,                     // Object Name: References of the object (direct unresolved references) (???)
+        map[LevelData, LevelChecker] level_checkers,            // How many moveable objects are in the game, how many rules will you be able to apply (???)
+        map[LevelData, LevelAppliedData] level_applied_data,           // What is used in the BFS (???)
+        PSGame game                                         // Original game AST node
+        )
+    | game_engine_empty()
+    ;
 
 /*
  * @Name:   Object
@@ -67,9 +69,6 @@ data Object
     | game_object_empty()
     ;
 
-/******************************************************************************/
-// --- Rule data structure and constructors ------------------------------------
-
 /*
  * @Name:   Rule
  * @Desc:   Data structure to model a rule. Not to be confused with RuleData,
@@ -86,10 +85,6 @@ data Rule
     | game_rule_empty()              // Empty rule
     ;
 
-
-/******************************************************************************/
-// ---
-
 /*
  * @Name:   Level
  * @Desc:   Data structure to model a level. Not to be mistaken by LevelData, 
@@ -97,13 +92,54 @@ data Rule
  */
 data Level 
     = game_level(
-            map[Coords coords, list[Object] items] objects, // Coordinate and the list of objects (for different layers)
+            map[Coords coords, list[Object] objects] objects, // Coordinate and the list of objects (for different layers)
             tuple[Coords coords, str current_name] player,  // Tuple: Coordinate of the player and the state (???)
             LevelData original                              // Original AST node
         )
 	| game_level_message(str msg, LevelData original)       // In between level messages are considered levels
     | game_level_empty()                                    // Empty game level
 	;
+
+/*
+ * @Name:   LevelChecker
+ * @Desc:   Data structure that models a level checker
+ */
+data LevelChecker 
+    = game_level_checker(
+        tuple[int width, int height] size,          // Level size: width x height
+        list[Object] starting_objects,              // Starting objects
+        list[list[str]] starting_objects_names,     // Starting objects names
+        list[str] moveable_objects,                 // Moveable objects
+        list[list[Rule]] can_be_applied_rules,      // Rules that can be applied in the level
+        list[list[Rule]] can_be_applied_late_rules, // Late rules that can be applied in the level
+        Level original                              // Original level object
+        )
+    | game_level_checker_empty()
+    ;
+
+/*
+ * @Name:   LevelAppliedData
+ * @Desc:   Data structure to model the applied data during the analysis
+ *          of a level
+ */
+data LevelAppliedData 
+    = game_applied_data(
+        list[Coords] travelled_coords,      // Travelled coordinates
+        map[                                // Applied rules (without movement rules):
+            int,                            //      No. rule (???)
+            list[RuleData]                  //      rule AST nodes
+            ] actual_applied_rules,             
+        map[                                // Applied movement rules
+            int,                            //      No. rule (???)
+            list[str]                       //      Direction (???)
+            ] applied_moves,
+        list[list[str]] dead_ends,          // Dead ends: loosing playtraces using verbs
+        list[str] shortest_path,            // Shortest path using verbs (???)
+        Level original                      // Original level AST node
+        )
+    | game_applied_data_empty()
+    ;
+
 
 /*
  * @Name:   Coords
@@ -113,155 +149,6 @@ alias Coords = tuple[
     int x,  // x-coordinate
     int y   // y-coordinate
 ];
-
-/*
- * @Name:   Command
- * @Desc:   Data structure to model a command.
- */
-data Command 
-	= message(str string)   // Message command
-	| sound(str event)      // Sound command
-	| cancel()              // Cancel command
-	| checkpoint()          // Checkpoint command
-	| restart()             // Restart command
-	| win()                 // Win command
-	| again()               // Again command
-	;
-
-
-
-
-
-/*
- * @Name:   LevelChecker
- * @Desc:   Data structure that models a level checker
- */
-alias LevelChecker = tuple[
-    list[Object] starting_objects,              // Starting objects
-    list[list[str]] starting_objects_names,     // Starting objects names
-    list[str] moveable_objects,                 // Moveable objects
-    int moveable_amount_level,                  // Amount of moveable objects
-    tuple[int width, int height] size,          // Level size: width x height
-    list[LevelData] messages,                   // Messages (errors and warnings)
-    list[list[Rule]] applied_rules,             // Applied rules
-    list[list[Rule]] applied_late_rules,        // Applied late rules
-    Level original                              // Original level object
-];
-
-/*
- * @Name:   AppliedData
- * @Desc:   Data structure to model the applied data during the analysis
- *          of a level
- */
-alias AppliedData = tuple[
-    list[Coords] travelled_coords,      // Travelled coordinates
-    map[                                // Applied rules (without movement rules):
-        int,                            //      No. rule (???)
-        list[RuleData]                  //      rule AST nodes
-        ] actual_applied_rules,             
-    map[                                // Applied movement rules
-        int,                            //      No. rule (???)
-        list[str]                       //      Direction (???)
-        ] applied_moves,
-    list[list[str]] dead_ends,          // Dead ends: loosing playtraces using verbs
-    list[str] shortest_path,            // Shortest path using verbs (???)
-    Level original                      // Original level AST node
-];
-
-
-/*
- * @Name:   RuleReference
- * @Desc:   Data structure to model a rule reference
- */
-alias RuleReference = tuple[
-	list[str] objects,      // Objects that are part of the reference
-	str reference,          // Reference name 
-	str force               // (???)
-];
-
-/*
- * @Name:   RuleContent
- * @Desc:   Data structure to model the content of a rule
- */
-data RuleContent
-	= references(list[RuleReference] refs)      // References content
-	| ellipsis()                                // Elipsis content
-	| empty()                                   // Empty content
-	;       
-
-/*
- * @Name:   RulePartContents
- * @Desc:   Data structure to model the contents of a rule part
- */
-alias RulePartContents = list[RuleContent];     // Rule contents of the RulePart
-
-/*****************************************************************************/
-// --- Public Constructor functions -------------------------------------------
-
-
-
-/*
- * @Name:   new_engine
- * @Desc:   Constructor for a new game engine
- * @Param:
- *      game    Game AST node
- * @Ret:    Engine object
- */
-Engine new_engine(PSGame game)		
-	= < 
-        [],                             // Converted levels
-        0,                              // Number of total objects
-		game_level_empty(),    // First level
-        game_level_empty(),    // Current level
-        [],                             // Win conditions   
-		[],                             // Converted rules 
-		[],                             // Converted late rules
-        (),                             // Map to keep the order of converted rules
-		0,                              // Current step of the game
-		(),                             // Object Name: Original object AST node
-		(),                             // Object Name: Properties of the object (resolved and unresolved references) (???)
-        (),                             // Object Name: References of the object (direct unresolved references) (???)
-        (),                             // How many moveable objects are in the game, how many rules will you be able to apply (???)
-        (),                             // What is used in the BFS (???)
-		game                            // Original game AST node
-	>;
-
-/*
- * @Name:   new_level_checker
- * @Desc:   Constructor for a level checker
- * @Param:  
- *      level   Level object to get a new checker
- * @Ret:    LevelChecker object
- */
-LevelChecker new_level_checker(Level level) 
-    = <
-        [],         // Starting objects
-        [],         // Starting objects names
-        [],         // Moveable objects
-        0,          // Amount of moveable objects
-        <0,0>,      // Level size: width x height
-        [],         // Messages (errors and warnings)
-        [],         // Applied rules
-        [],         // Applied late rules
-        level       // Original level object
-    >;
-
-/*
- * @Name:   new_applied_data
- * @Desc:   Constructor function for applied data
- * @Param:
- *      level   Original level AST node
- * @Red:    AppliedData object
- */
-AppliedData new_applied_data(Level level)
-    = <
-        [],     // Travelled coordinates
-        (),     // Applied rules (without movement rules)
-        (),     // Applied movement rules
-        [],     // Dead end playtraces using verbs
-        [],     // Shortest path using verbs
-        level   // Original level AST node
-    >;
 
 /*****************************************************************************/
 // --- Directions structures defines ------------------------------------------
@@ -278,12 +165,6 @@ list[str] absoluteDirections = ["up", "down", "left", "right"];
  * @Desc:   Relative direction modifiers
  */
 list[str] relativeDirections = ["^", "v", "\<", "\>", "parallel", "perpendicular"];
-
-/* 
- * @Name:   simpleRelativeDirections
- * @Desc:   Simple relative direction modifiers
- */
-list[str] simpleRelativeDirections = ["^", "v", "\<", "\>"];
 
 /* 
  * @Name:   relativeDict
@@ -850,7 +731,22 @@ str stringify_rule(list[RulePart] left, list[RulePart] right) {
  * @Ret:    Engine object
  */
 Engine compile(Checker c) {
-	Engine engine = new_engine(c.game); 
+	Engine engine = game_engine(
+        [],                             // Converted levels
+		game_level_empty(),             // First level
+        game_level_empty(),             // Current level
+        [],                             // Win conditions   
+		[],                             // Converted rules 
+		[],                             // Converted late rules
+        (),                             // Map to keep the order of converted rules
+		0,                              // Current step of the game
+		(),                             // Object Name: Original object AST node
+		(),                             // Object Name: Properties of the object (resolved and unresolved references) (???)
+        (),                             // Object Name: References of the object (direct unresolved references) (???)
+        (),                             // How many moveable objects are in the game, how many rules will you be able to apply (???)
+        (),                             // What is used in the BFS (???)
+		c.game                            // Original game AST node
+    ); 
 
     engine = compile_properties(engine, c);
     engine = compile_references(engine, c);
@@ -909,8 +805,15 @@ Engine compile_indexed_rules(Engine engine, Checker c) {
  * @Ret:    Updated engine with the applied data 
  */
 Engine compile_applied_data(Engine engine, Checker c) {
-    for (Level level <- engine.converted_levels) {
-        engine.applied_data[level.original] = new_applied_data(level);
+    for (Level level <- engine.levels) {
+        engine.level_applied_data[level.original] = game_applied_data(
+            [],     // Travelled coordinates
+            (),     // Applied rules (without movement rules)
+            (),     // Applied movement rules
+            [],     // Dead end playtraces using verbs
+            [],     // Shortest path using verbs
+            level   // Original level AST node
+        );
     }
 
     return engine;
@@ -957,10 +860,10 @@ Engine compile_references(Engine engine, Checker c) {
  */
 Engine compile_levels(Engine engine, Checker c) {
     for (LevelData lvl <- c.game.levels) {
-        if (lvl is level_data) engine.converted_levels += [compile_level(lvl, c)];
+        if (lvl is level_data) engine.levels += [compile_level(lvl, c)];
     }
-    engine.current_level = engine.converted_levels[0];
-    engine.begin_level = engine.current_level;
+    engine.current_level = engine.levels[0];
+    engine.first_level = engine.current_level;
 
     return engine;
 }
@@ -1003,8 +906,16 @@ Engine compile_rules(Engine engine, Checker c) {
  */
  Engine compile_level_checkers(Engine engine, Checker c) {
     engine.level_checkers = ();
-    for(Level level <- engine.converted_levels) {
-        LevelChecker lc = new_level_checker(level);
+    for(Level level <- engine.levels) {
+        LevelChecker lc = game_level_checker(
+            <0,0>,      // Level size: width x height
+            [],         // Starting objects
+            [],         // Starting objects names
+            [],         // Moveable objects
+            [],         // Applied rules
+            [],         // Applied late rules
+            level       // Original level object
+        );
 
         lc = _compile_level_checker_size(lc, level);
         lc = _compile_level_checker_starting_objects(lc, level);
@@ -1149,8 +1060,8 @@ LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[li
         if (indexed_late[i] in applied_late_rules) applied_late_rules_in_order += [indexed_late[i]];
     }
 
-    lc.applied_late_rules = applied_late_rules_in_order;
-    lc.applied_rules = applied_rules_in_order;
+    lc.can_be_applied_late_rules = applied_late_rules_in_order;
+    lc.can_be_applied_rules = applied_rules_in_order;
 
     return lc;
 }
@@ -1163,7 +1074,7 @@ LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[li
  * @Ret:    Updated level checker
  */
 LevelChecker _compile_level_checker_moveable_objects(LevelChecker lc, Checker c, Level level) {
-    for (list[Rule] lrule <- lc.applied_rules) {
+    for (list[Rule] lrule <- lc.can_be_applied_rules) {
         for (RulePart rp <- lrule[0].left) {
             if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(lc, c, rp.contents);
         }
@@ -1173,20 +1084,6 @@ LevelChecker _compile_level_checker_moveable_objects(LevelChecker lc, Checker c,
     }
 
     lc.moveable_objects = dup(lc.moveable_objects);
-
-    int amount_in_level = 0;
-    for (Coords coord <- level.objects.coords) {
-        for (Object obj <- level.objects[coord]) {
-            if (obj.current_name in lc.moveable_objects) {
-                amount_in_level += 1;
-            }
-            else if (any(str name <- obj.possible_names, name in lc.moveable_objects)) {
-                amount_in_level += 1;
-            }
-        }
-    }
-
-    lc.moveable_amount_level = amount_in_level;
     return lc;
 }
 

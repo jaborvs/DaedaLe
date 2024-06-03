@@ -40,13 +40,13 @@ void main() {
     checker = check_game(game);
     engine = compile(checker);
 
-    engine.current_level = engine.converted_levels[0];
+    engine.current_level = engine.levels[0];
     Level save_level = engine.current_level;
 
     list[str] possible_moves = ["right", "right", "right", "right"];
 
     LevelChecker lc = engine.level_checkers[engine.current_level.original];
-    println(size(lc.applied_rules) + size(lc.applied_late_rules));
+    println(size(lc.can_be_applied_rules) + size(lc.can_be_applied_late_rules));
     println(size(engine.rules) + size(engine.late_rules));
 
     for (int i <- [0..2]) {
@@ -141,7 +141,7 @@ void main() {
 
     println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");
     println("Applied rules to get there:");
-    for (RuleData rd <- engine.level_checkers[engine.current_level.original].applied_rules) {
+    for (RuleData rd <- engine.level_checkers[engine.current_level.original].can_be_applied_rules) {
 
         println(convert_rule(rd.left, rd.right));
 
