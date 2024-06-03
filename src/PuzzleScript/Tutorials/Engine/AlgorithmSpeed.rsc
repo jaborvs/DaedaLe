@@ -136,14 +136,14 @@ void main() {
 
     println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");
     println("Applied rules to get there:");
-    for (RuleData rd <- engine.level_data[engine.current_level.original].applied_rules) {
+    for (RuleData rd <- engine.level_checkers[engine.current_level.original].applied_rules) {
 
         println(convert_rule(rd.left, rd.right));
 
     }
     
     engine.current_level = save_level;
-    engine.level_data[engine.current_level.original].actual_applied_rules = [];
+    engine.level_checkers[engine.current_level.original].actual_applied_rules = [];
 
 
     list[str] losing_moves = ["up", "up"];
@@ -160,7 +160,7 @@ void main() {
     println("\n=== Mutliple rule test ====");
 
     engine.current_level = save_level;
-    engine.level_data[engine.current_level.original].actual_applied_rules = [];
+    engine.level_checkers[engine.current_level.original].actual_applied_rules = [];
 
     old_player_pos = engine.current_level.player[0];
     engine = execute_move(engine, checker, "up");

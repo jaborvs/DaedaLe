@@ -74,7 +74,7 @@ void main() {
         
         // list[str] winning_moves_rules = [];
 
-        // for (list[RuleData] rd <- result.engine.level_data[engine.current_level.original].actual_applied_rules<1>) {
+        // for (list[RuleData] rd <- result.engine.level_checkers[engine.current_level.original].actual_applied_rules<1>) {
         //     RuleData rd = rd[0];
         //     if (any(RuleData rd2 <- engine.game.rules, rd2.src == rd.src)) {
         //         winning_moves_rules += engine.indexed_rules[rd2][1];
@@ -194,7 +194,7 @@ void main() {
 
     println("Win conditions satisfied after correct moves: <check_conditions(engine, "win")>");
     println("Applied rules to get there:");
-    for (RuleData rd <- engine.level_data[engine.current_level.original].applied_rules) {
+    for (RuleData rd <- engine.level_checkers[engine.current_level.original].applied_rules) {
 
         println(convert_rule(rd.left, rd.right));
 

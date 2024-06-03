@@ -137,8 +137,8 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     }
 
     if (has_ellipsis) {
-        int level_width = engine.level_data[engine.current_level.original].size[0];
-        int level_height = engine.level_data[engine.current_level.original].size[1];
+        int level_width = engine.level_checkers[engine.current_level.original].size[0];
+        int level_height = engine.level_checkers[engine.current_level.original].size[1];
         int x = object.coords[0];
         int y = object.coords[1];
 
@@ -310,7 +310,7 @@ Engine apply_rules(Engine engine, Level current_level, str direction, bool late,
     list[list[Rule]] applied_rules = [];
 
     if (allrules == 0) {
-        applied_rules = late ? engine.level_data[current_level.original].applied_late_rules : engine.level_data[current_level.original].applied_rules;
+        applied_rules = late ? engine.level_checkers[current_level.original].applied_late_rules : engine.level_checkers[current_level.original].applied_rules;
     } else {
         applied_rules = late ? engine.late_rules : engine.rules;
     }
@@ -557,10 +557,10 @@ real calculate_heuristic(Engine engine) {
             list[Object] non_moveable_win_objs = [];
 
             if (size(cd.items) > 2) {
-                str moveable = cd.items[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                str moveable = cd.items[1] in engine.level_checkers[engine.current_level.original].moveable_objects ? 
                     cd.items[1] : cd.items[3];
 
-                str non_moveable = cd.items[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                str non_moveable = cd.items[1] in engine.level_checkers[engine.current_level.original].moveable_objects ? 
                     cd.items[3] : cd.items[1];
 
                 moveable = toLowerCase(moveable);
@@ -606,7 +606,7 @@ real calculate_heuristic(Engine engine) {
         }
     }
 
-    real size = engine.level_data[engine.current_level.original].size[0] * engine.level_data[engine.current_level.original].size[1] / 1.0;
+    real size = engine.level_checkers[engine.current_level.original].size[0] * engine.level_checkers[engine.current_level.original].size[1] / 1.0;
 
     if (isEmpty(distances)) return 0.0;
 
@@ -711,7 +711,7 @@ bool check_dead_end(Engine engine, str amount, str object) {
             if (toLowerCase(object) in obj.possible_names || toLowerCase(object) == obj.current_name) found += obj;
         }
     }
-    return any(Object obj <- found, in_corner(obj, engine, engine.level_data[engine.current_level.original]));
+    return any(Object obj <- found, in_corner(obj, engine, engine.level_checkers[engine.current_level.original]));
 }
 
 // Checks if current state satisfies all the win conditions
@@ -724,7 +724,7 @@ bool check_conditions(Engine engine, str condition) {
     for (ConditionData cd <- lcd) {
         if (cd is condition_data) {
             if ("on" in cd.items) {
-                str moveable = cd.items[1] in engine.level_data[engine.current_level.original].moveable_objects ? 
+                str moveable = cd.items[1] in engine.level_checkers[engine.current_level.original].moveable_objects ? 
                     cd.items[1] : cd.items[3];
 
                 if (condition == "win") {
@@ -748,7 +748,7 @@ bool check_conditions(Engine engine, str condition) {
 // Prints the current level
 void print_level(Engine engine, Checker c) {
     
-    tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
+    tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
     // println(level_size);
     for (int i <- [0..level_size.height]) {
 

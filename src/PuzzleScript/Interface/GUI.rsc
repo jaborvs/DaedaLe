@@ -241,7 +241,7 @@ data Msg
  *  @Ret:   Tuple containing the coordinates in json and the index in json
  */
 tuple[str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
-    tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
+    tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
     str json = "[";
 
     for (Coords coord <- coords) {
@@ -264,7 +264,7 @@ tuple[str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
  *          and the index in json
  */
 tuple[str,str,str] pixel_to_json(Engine engine, int index) {
-    tuple[int width, int height] level_size = engine.level_data[engine.current_level.original].size;
+    tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
     str json = "[";
     tmp = 0;
 
@@ -397,7 +397,7 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
 Model update(Msg msg, Model model){
     bool execute = false;
 
-    if (model.engine.current_level is level){
+    if (model.engine.current_level is game_level){
         switch(msg){
             // ''Direction' button has been pressed: LEFT, UP, RIGHT, DOWN
             case direction(int i): {                
@@ -511,7 +511,6 @@ Model update(Msg msg, Model model){
         if (execute) {
             println("5");
             model.index += 1;
-            println("Hola");
             model.engine = execute_move(model.engine, model.checker, model.input, 0);
             println("6");
             if (check_conditions(model.engine, "win")) {
@@ -694,8 +693,8 @@ void view(Model m) {
  */
 App[Model] main() {
     // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
-    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/sokoban_basic.PS|;
-    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/nekopuzzle.PS|;
+    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/sokoban_basic.PS|;
+    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/nekopuzzle.PS|;
 
     game = load(game_loc);
 
