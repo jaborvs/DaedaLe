@@ -40,19 +40,6 @@ alias Checker = tuple[
 ];
 
 /*
- * @Name:   Condition
- * @Desc:   Data structure for the win conditions of a PuzzleScript game
- *          Will need to define it somewhere else (FIX)
- */
-data Condition (loc src = |unknown:///|)
-    = some_objects(list[str] objects, ConditionData original)                       // Some type win condition
-    | no_objects(list[str] objects, ConditionData original)                         // No type win condition
-    | all_objects_on(list[str] objects, list[str] on, ConditionData original)       // All type win condition
-    | some_objects_on(list[str] objects, list[str] on, ConditionData original)      // Some on type win condition
-    | no_objects_on(list[str] objects, list[str] on, ConditionData original)        // No on type win condition
-    ;
-
-/*
  * @Name:   COLORS
  * @Desc:   Enummeration containing all the PuzzleScript colors.
  */
