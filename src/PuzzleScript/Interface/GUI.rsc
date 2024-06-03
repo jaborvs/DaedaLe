@@ -26,14 +26,18 @@ import Set;
 import IO;
 
 // --- Own modules imports ----------------------------------------------------
+// import PuzzleScript::Utils;
+// import PuzzleScript::AST;
+// import PuzzleScript::Load;
+// import PuzzleScript::Compiler;
+// import PuzzleScript::DynamicAnalyser;
+// import PuzzleScript::Verbs;
+
 import PuzzleScript::Utils;
-import PuzzleScript::Load;
-import PuzzleScript::Engine;
-import PuzzleScript::Compiler;
-import PuzzleScript::Checker;
 import PuzzleScript::AST;
-import PuzzleScript::Verbs;
-import PuzzleScript::DynamicAnalyser;
+import PuzzleScript::Load;
+import PuzzleScript::Compiler;
+import PuzzleScript::Engine;
 import PuzzleScript::Tutorials::AST;
 
 /******************************************************************************/
@@ -172,7 +176,6 @@ alias Model = tuple[
     str input,                                              // Input
     str title,                                              // Title
     Engine engine,                                          // Engine
-    Checker checker,                                        // Syntax checker
     int index,                                              // Index (???)
     int begin_index,                                        // Begin index (???)
     str code,                                               // PuzzleScript code
@@ -446,10 +449,10 @@ Model update(Msg msg, Model model){
                     Model new_model = model;
                     new_model.engine.current_level = level; 
 
-                    print_level(new_model.engine, new_model.checker);                  
+                    print_level(new_model.engine);                  
 
                     int before = cpuTime();
-                    tuple[Engine engine, list[str] winning_moves] result = bfs(new_model.engine, ["up","down","left","right"], new_model.checker, "win", 1);
+                    tuple[Engine engine, list[str] winning_moves] result = bfs(new_model.engine, ["up","down","left","right"], "win", 1);
                     real actual_time = (cpuTime() - before) / 1000000.00;
                     
                     tuple[Engine engine, list[str] winning_moves, real time] result_time = <result[0], result[1], actual_time>;
@@ -462,7 +465,7 @@ Model update(Msg msg, Model model){
                     win_models += [[new_model]];
 
                     // before = cpuTime();
-                    // list[tuple[Engine, list[str]]] results = get_dead_ends(new_model.engine, new_model.checker, result.winning_moves);
+                    // list[tuple[Engine, list[str]]] results = get_dead_ends(new_model.engine, result.winning_moves);
                     // actual_time = (cpuTime() - before) / 1000000.00;
 
                     // new_model.de = <results, actual_time>;
@@ -484,7 +487,7 @@ Model update(Msg msg, Model model){
             case analyse(): {
                 int before = cpuTime();
                 println("1");
-                tuple[Engine engine, list[str] winning_moves] result = bfs(model.engine, ["up","down","left","right"], model.checker, "win", 1);
+                tuple[Engine engine, list[str] winning_moves] result = bfs(model.engine, ["up","down","left","right"], "win", 1);
                 println("2");
                 real actual_time = (cpuTime() - before) / 1000000.00;
                 println("3");
@@ -494,7 +497,7 @@ Model update(Msg msg, Model model){
                 
                 // Save respective engine states
                 model.win = result_time;
-                // model.de = get_dead_ends(model.engine, model.checker, result.winning_moves);     // Doesn't work (???)
+                // model.de = get_dead_ends(model.engine, result.winning_moves);     // Doesn't work (???)
 
                 model.analyzed = true;
             }
@@ -512,7 +515,7 @@ Model update(Msg msg, Model model){
         if (execute) {
             println("5");
             model.index += 1;
-            model.engine = execute_move(model.engine, model.checker, model.input, 0);
+            model.engine = execute_move(model.engine, model.input, 0);
             println("6");
             if (check_conditions(model.engine, "win")) {
                 model.engine.index += 1;
@@ -578,12 +581,11 @@ Model update_code(Model model, JsonData jd, int category) {
  */
 Model reload(str src, int index) {
     GameData game = load(src);
-    Checker checker = check_game(game);
-    Engine engine = compile(checker);
+    Engine engine = compile(game);
 
     str title = get_prelude(engine.game.prelude, "title", "Unknown"); // To be fixed (FIX)
  
-    Model init() = <"none", title, engine, checker, index, index, src, "", false, <[], 0.0>, <engine,[], 0.0>, "PuzzleScript/Interface/bin/output_image<index>.png", <[],[],[]>>;
+    Model init() = <"none", title, engine, index, index, src, "", false, <[], 0.0>, <engine,[], 0.0>, "PuzzleScript/Interface/bin/output_image<index>.png", <[],[],[]>>;
     return init();
 }
 
@@ -692,15 +694,14 @@ void view(Model m) {
  *  @Desc:  Runs the application
  *  @Ret:   Call to run the application
  */ 
+
 App[Model] main() {
     // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
     game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/sokoban_basic.PS|;
     // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/nekopuzzle.PS|;
 
-    game = load(game_loc);
-
-    checker = check_game(game);
-    engine = compile(checker);
+    GameData game = load(game_loc);
+    Engine engine = compile(game);
 
     str title = "Lime Rick";
 
@@ -709,7 +710,7 @@ App[Model] main() {
     writeFile(data_loc, json_data[0]);
     execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
 
-    Model init() = <"none", title, engine, checker, 0, 0, readFile(game_loc), limerick_dsl, false, <[],0.0>, <engine,[],0.0>, "PuzzleScript/Interface/bin/output_image0.png", <[],[],[]>>;
+    Model init() = <"none", title, engine, 0, 0, readFile(game_loc), limerick_dsl, false, <[],0.0>, <engine,[],0.0>, "PuzzleScript/Interface/bin/output_image0.png", <[],[],[]>>;
     Tutorial tutorial = tutorial_build(limerick_dsl);
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/css/style.css"]), update);
 

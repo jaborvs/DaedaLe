@@ -1,4 +1,13 @@
+/*
+ * @Module: Syntax
+ * @Desc:   Module that defines the puzzlescript syntax
+ * @Author: Clement Julia -> code
+ *          Borja Velasco -> code, comments
+ */
 module PuzzleScript::Syntax
+
+/******************************************************************************/
+// --- Lexicals ----------------------------------------------------------------
 
 layout LAYOUTLIST = LAYOUT* !>> [\t\ \r(];
 lexical LAYOUT

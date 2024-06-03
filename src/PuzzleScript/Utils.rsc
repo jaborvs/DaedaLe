@@ -36,3 +36,4 @@ public map[str, str] COLORS = (
     "purple":       "#550055",
     "pink":         "#FFAAFF"
 );
+

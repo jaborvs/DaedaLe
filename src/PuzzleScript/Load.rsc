@@ -17,7 +17,6 @@ import IO;
 // --- Own modules import ------------------------------------------------------
 import PuzzleScript::Syntax;
 import PuzzleScript::AST;
-import PuzzleScript::Utils;
 
 
 /******************************************************************************/

@@ -5,13 +5,11 @@ import List;
 import Type;
 import Set;
 import IO;
-import PuzzleScript::DynamicAnalyser;
-import PuzzleScript::Checker;
-import PuzzleScript::AST;
-import PuzzleScript::Utils;
-import PuzzleScript::Compiler;
 import util::Eval;
 import util::Math;
+
+import PuzzleScript::AST;
+import PuzzleScript::Compiler;
 
 // Returns the differing coordinates based on the direction
 Coords get_dir_difference(str dir) {
@@ -504,7 +502,7 @@ Engine apply_moves(Engine engine, Level current_level) {
 }
 
 // Moves the player object based on player's input
-Engine move_player(Engine engine, Level current_level, str direction, Checker c) {
+Engine move_player(Engine engine, Level current_level, str direction) {
     println("       5.1.1");
     list[Object] objects = [];
 
@@ -522,9 +520,9 @@ Engine move_player(Engine engine, Level current_level, str direction, Checker c)
 }
 
 // Applies movement, checks which rules apply, executes movement, checks which late rules apply
-Engine execute_move(Engine engine, Checker c, str direction, int allrules) {
+Engine execute_move(Engine engine, str direction, int allrules) {
     println("   5.1");
-    engine = move_player(engine, engine.current_level, direction, c);
+    engine = move_player(engine, engine.current_level, direction);
     println("   5.2");
     engine = apply_rules(engine, engine.current_level, direction, false, allrules);
     println("   5.3");
@@ -746,7 +744,7 @@ bool check_conditions(Engine engine, str condition) {
 }
 
 // Prints the current level
-void print_level(Engine engine, Checker c) {
+void print_level(Engine engine) {
     
     tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
     // println(level_size);
@@ -770,7 +768,7 @@ void print_level(Engine engine, Checker c) {
 
 }
 
-list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, list[str] winning_moves) {
+list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, list[str] winning_moves) {
 
     list[str] possible_moves = ["up", "left", "down", "right"];
     list[tuple[Engine, list[str]]] dead_ends = [];
@@ -780,14 +778,14 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
 
     for (int i <- [0..size(winning_moves)]) {
 
-        engine = execute_move(engine, checker, winning_moves[i], 0);
+        engine = execute_move(engine, winning_moves[i], 0);
 
         for (str move <- possible_moves) {
 
             // Don't perform a move that is rule_part of the winning moves
             if (i < size(winning_moves) - 1 && winning_moves[i + 1] == move) continue;
 
-            Engine new_engine = execute_move(engine, checker, move, 0);
+            Engine new_engine = execute_move(engine, move, 0);
             if (convert_tuples(new_engine) == convert_tuples(engine)) continue;
 
             int total = 0;
@@ -795,7 +793,7 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
             for (str move2 <- possible_moves) {
 
 
-                Engine new_engine2 = execute_move(new_engine, checker, move2, 0);
+                Engine new_engine2 = execute_move(new_engine, move2, 0);
 
                 // OPTION 1 - Stuck keyword
                 if (convert_tuples(new_engine2) == convert_tuples(new_engine)) {
@@ -809,7 +807,7 @@ list[tuple[Engine, list[str]]] get_dead_ends(Engine engine, Checker checker, lis
 
                 int total = 0;
                 for (str move3 <- possible_moves) {
-                    Engine new_engine3 = execute_move(new_engine2, checker, move3, 0);
+                    Engine new_engine3 = execute_move(new_engine2, move3, 0);
                     if (convert_tuples(new_engine3) == convert_tuples(new_engine2)) total += 1;
                     else break;
                 }

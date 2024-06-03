@@ -14,15 +14,13 @@ import Type;
 import Set;
 import IO;
 
-/*****************************************************************************/
-// --- Own modules imports ----------------------------------------------------
-import PuzzleScript::Checker;
-import PuzzleScript::AST;
+/******************************************************************************/
+// --- Own modules imports -----------------------------------------------------
 import PuzzleScript::Utils;
-import PuzzleScript::Engine;
+import PuzzleScript::AST;
 
-/*****************************************************************************/
-// --- Data structures defines ------------------------------------------------
+/******************************************************************************/
+// --- Data structures defines -------------------------------------------------
 
 /*
  * @Name:   Engine
@@ -41,8 +39,9 @@ data Engine
             ] indexed_rules,                                
         int index,                                          // Current step of the game
         map[str, ObjectData] objects,                       // Object Name: Original object AST node
-        map[str, list[str]] properties,                     // Object Name: Properties of the object (resolved and unresolved references) (???)
-        map[str, list[str]] references,                     // Object Name: References of the object (direct unresolved references) (???)
+        map[str key, list[str] list_properties] properties,                     
+        map[str key, list[str] list_references] references,                     
+        map[str key, list[str] list_combinations] combinations,                   
         map[LevelData, LevelChecker] level_checkers,            // How many moveable objects are in the game, how many rules will you be able to apply (???)
         map[LevelData, LevelAppliedData] level_applied_data,           // What is used in the BFS (???)
         GameData game                                         // Original game AST node
@@ -139,7 +138,6 @@ data LevelAppliedData
     | game_applied_data_empty()
     ;
 
-
 /*
  * @Name:   Coords
  * @Desc:   Data structure to model coordinates
@@ -199,10 +197,10 @@ map[str, list[str]] directionAggregates = (
 /*
  * @Name:   compile
  * @Desc:   Function that compiles a whole game
- * @Param:  c -> Checker
+ * @Param:  game_data -> Parsed game
  * @Ret:    Engine object
  */
-Engine compile(Checker c) {
+Engine compile(GameData game_data) {
 	Engine engine = game_engine(
         [],                             // Converted levels
 		game_level_empty(),             // First level
@@ -214,19 +212,20 @@ Engine compile(Checker c) {
 		(),                             // Object Name: Original object AST node
 		(),                             // Object Name: Properties of the object (resolved and unresolved references) (???)
         (),                             // Object Name: References of the object (direct unresolved references) (???)
+        (),
         (),                             // How many moveable objects are in the game, how many rules will you be able to apply (???)
         (),                             // What is used in the BFS (???)
-		c.game                            // Original game AST node
+		game_data                       // Original game AST node
     ); 
 
-    engine = compile_properties(engine, c);
-    engine = compile_references(engine, c);
-    engine = compile_levels(engine, c);
-    engine = compile_rules(engine, c);
-    engine = compile_level_checkers(engine, c);
-    engine = compile_applied_data(engine, c);
-    engine = compile_indexed_rules(engine, c);
-    engine = compile_objects(engine, c);	
+    engine = compile_properties(engine);
+    engine = compile_references(engine);
+    engine = compile_levels(engine);
+    engine = compile_rules(engine);
+    engine = compile_level_checkers(engine);
+    engine = compile_applied_data(engine);
+    engine = compile_indexed_rules(engine);
+    engine = compile_objects(engine);	
 	
 	return engine;
 }
@@ -240,8 +239,8 @@ Engine compile(Checker c) {
  * @Param:  engine -> Engine
  * @Ret:    Updated engine with the compiled objects
  */
-Engine compile_objects(Engine engine, Checker c) {
-    engine.objects = (toLowerCase(x.name) : x | x <- c.game.objects);
+Engine compile_objects(Engine engine) {
+    engine.objects = (toLowerCase(x.name) : x | x <- engine.game.objects);
     return engine;
 }
 
@@ -254,7 +253,7 @@ Engine compile_objects(Engine engine, Checker c) {
  * @Param:  engine -> Engine
  * @Ret:    Updated engine with the indexed rules
  */
-Engine compile_indexed_rules(Engine engine, Checker c) {
+Engine compile_indexed_rules(Engine engine) {
     int index = 0;
 
     for (RuleData rd <- engine.game.rules) {
@@ -275,7 +274,7 @@ Engine compile_indexed_rules(Engine engine, Checker c) {
  * @Param:  engine -> engine
  * @Ret:    Updated engine with the applied data 
  */
-Engine compile_applied_data(Engine engine, Checker c) {
+Engine compile_applied_data(Engine engine) {
     for (Level level <- engine.levels) {
         engine.level_applied_data[level.original] = game_applied_data(
             [],     // Travelled coordinates
@@ -299,8 +298,12 @@ Engine compile_applied_data(Engine engine, Checker c) {
  * @Param:  engine -> Engine
  * @Ret:    Updated engine witht the properties
  */
-Engine compile_properties(Engine engine, Checker c) {
-    engine.properties = c.resolved_references;
+Engine compile_properties(Engine engine) {
+    for(str key <- engine.references.key) {
+        if (size(engine.references[key]) == 1) continue;
+        engine.properties[key] = get_resolved_references(key, engine.references);
+    }
+
     return engine;
 }
 
@@ -313,10 +316,42 @@ Engine compile_properties(Engine engine, Checker c) {
  * @Param:  engine -> Engine
  * @Ret:    Updated engine witht the references
  */
-Engine compile_references(Engine engine, Checker c) {
-    engine.references = c.references;
+Engine compile_references(Engine engine) {
+    for (LegendData l <- engine.game.legend) {
+        if (l is legend_reference) {
+            for (str object <- l.items) {
+                if (toLowerCase(l.key) in engine.references) engine.references[toLowerCase(l.key)] += [toLowerCase(object)];
+                else engine.references[toLowerCase(l.key)] = [toLowerCase(object)];
+            }
+        }
+    }
+
     return engine;
 }
+
+/******************************************************************************/
+// --- Public compile combinations functions -------------------------------------
+
+/*
+ * @Name:   compile_combinations
+ * @Desc:   Function to compile all the references from the legend of a game
+ * @Param:  engine -> Engine
+ * @Ret:    Updated engine witht the references
+ */
+Engine compile_combinations(Engine engine) {
+    for(LegendData l <- engine.game.legend) {
+        if (l is legend_combined) {
+            for (str object <- l.items) {
+                if (toLowerCase(l.key) in engine.combinations) engine.combinations[toLowerCase(l.key)] += [toLowerCase(object)];
+                else engine.combinations[toLowerCase(l.key)] = [toLowerCase(object)];
+            }
+        }
+    }
+
+    return engine;
+}
+
+
 
 /******************************************************************************/
 // --- Public convert levels functions -----------------------------------------
@@ -326,12 +361,11 @@ Engine compile_references(Engine engine, Checker c) {
  * @Desc:   Function to convert all the levels into a new level structure with 
  *          more information
  * @Param:  engine -> Engine
- *          c      -> Checker
  * @Ret:    Updated engine with the new converted levels
  */
-Engine compile_levels(Engine engine, Checker c) {
-    for (LevelData lvl <- c.game.levels) {
-        if (lvl is level_data) engine.levels += [compile_level(lvl, c)];
+Engine compile_levels(Engine engine) {
+    for (LevelData ld <- engine.game.levels) {
+        if (ld is level_data) engine.levels += [compile_level(engine, ld)];
     }
     engine.current_level = engine.levels[0];
     engine.first_level = engine.current_level;
@@ -347,20 +381,20 @@ Engine compile_levels(Engine engine, Checker c) {
  * @Desc:   Function to convert all the rules into a new rule structure with 
  *          more information
  * @Param:  engine -> Engine
- *          c      -> Checker
  * @Ret:    Updated engine with the new converted rules
  */
-Engine compile_rules(Engine engine, Checker c) {
-    for (RuleData rule <- c.game.rules) {
+Engine compile_rules(Engine engine) {
+    for (RuleData rule <- engine.game.rules) {
         if ("late" in [toLowerCase(lhs.prefix) | lhs <- rule.left, lhs is rule_prefix]) {
-            list[Rule] rule_group = compile_rule(rule, true, c);
+            list[Rule] rule_group = compile_rule(engine, rule, true);
             if (size(rule_group) != 0) engine.late_rules += [rule_group];
         }
         else {
-            list[Rule] rule_group = compile_rule(rule, false, c);
+            list[Rule] rule_group = compile_rule(engine, rule, false);
             if (size(rule_group) != 0) engine.rules += [rule_group];
         }
     }
+
     return engine;
 }
 
@@ -372,10 +406,9 @@ Engine compile_rules(Engine engine, Checker c) {
  * @Desc:   Function to init and complete all the information inside the level 
  *          checkers
  * @Param:  engine -> Engine
- *          c      -> Checker
  * @Ret:    Updated engine with the level checkers
  */
- Engine compile_level_checkers(Engine engine, Checker c) {
+ Engine compile_level_checkers(Engine engine) {
     engine.level_checkers = ();
     for(Level level <- engine.levels) {
         LevelChecker lc = game_level_checker(
@@ -391,7 +424,7 @@ Engine compile_rules(Engine engine, Checker c) {
         lc = _compile_level_checker_size(lc, level);
         lc = _compile_level_checker_starting_objects(lc, level);
         lc = _compile_level_checker_to_be_applied_rules(lc, engine.rules, engine.late_rules);
-        lc = _compile_level_checker_moveable_objects(lc, c, level);
+        lc = _compile_level_checker_moveable_objects(engine, lc, level);
         
         engine.level_checkers[level.original] = lc;
     }
@@ -544,13 +577,13 @@ LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[li
  *          level -> Level
  * @Ret:    Updated level checker
  */
-LevelChecker _compile_level_checker_moveable_objects(LevelChecker lc, Checker c, Level level) {
+LevelChecker _compile_level_checker_moveable_objects(Engine engine, LevelChecker lc, Level level) {
     for (list[Rule] lrule <- lc.can_be_applied_rules) {
         for (RulePart rp <- lrule[0].left) {
-            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(lc, c, rp.contents);
+            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(engine, lc, rp.contents);
         }
         for (RulePart rp <- lrule[0].right) {
-            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(lc, c, rp.contents);
+            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(engine, lc, rp.contents);
         }
     }
 
@@ -558,7 +591,7 @@ LevelChecker _compile_level_checker_moveable_objects(LevelChecker lc, Checker c,
     return lc;
 }
 
-LevelChecker _compile_level_checker_get_moveable_objects(LevelChecker lc, Checker c, list[RuleContent] rule_side) {
+LevelChecker _compile_level_checker_get_moveable_objects(Engine engine, LevelChecker lc, list[RuleContent] rule_side) {
     list[str] found_objects = ["player"];
 
     for (RuleContent rc <- rule_side) {
@@ -570,10 +603,10 @@ LevelChecker _compile_level_checker_get_moveable_objects(LevelChecker lc, Checke
             
             if (isDirection(dir)) {
                 if (!(name in found_objects)) found_objects += [name];
-                list[str] all_references = get_resolved_references(name, c.references);
-                found_objects += [name | str name <- get_resolved_references(name, c.references), 
+                list[str] all_references = get_resolved_references(name, engine.references);
+                found_objects += [name | str name <- get_resolved_references(name, engine.references), 
                     any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
-                found_objects += [name | str name <- get_resolved_references(name, c.combinations), 
+                found_objects += [name | str name <- get_resolved_references(name, engine.combinations), 
                     any(list[str] l_name <- lc.starting_objects_names, name in l_name)];
             }
         }
@@ -659,22 +692,22 @@ set[str] generate_directions(list[str] modifiers){
  * @Desc:   Function to convert an level AST node to an level object. We go over
  *          each character in the level and convert the character to all 
  *          possible references
- * @Param:  level -> Original level AST node
- *          c     -> Checker
+ * @Param:  engine -> Engine
+ *          level  -> Original level AST node
  * @Ret:    Level object
  */
-Level compile_level(LevelData lvl, Checker c) {
+Level compile_level(Engine engine, LevelData lvl) {
     map[Coords, list[Object]] objects = ();
     tuple[Coords, str] player = <<0,0>, "">;
     int id = 0;
 
     // We resolve all the needed player object information
-    tuple[str rep_char, str name] player_resolved = _compile_level_resolve_player(c);
+    tuple[str rep_char, str name] player_resolved = _compile_level_resolve_player(engine);
 
     // We resolve all the needed background object information
-    tuple[str rep_char, str name] background_resolved = _compile_level_resolve_background(c);
-    list[str] background_properties = get_properties_rep_char(background_resolved.rep_char, c.references);
-    LayerData background_layer = get_layer(background_properties, c.game);
+    tuple[str rep_char, str name] background_resolved = _compile_level_resolve_background(engine);
+    list[str] background_properties = get_properties_rep_char(background_resolved.rep_char, engine.references);
+    LayerData background_layer = get_layer(background_properties, engine.game);
 
     for (int i <- [0..size(lvl.level)]) {
         for (int j <- [0..size(lvl.level[i])]) {
@@ -698,20 +731,20 @@ Level compile_level(LevelData lvl, Checker c) {
             // Step 3.1: the object to represent is a key in the references, that
             //           is, it representes several objects (or several states of
             //           the same object). We get the properties of the char
-            if (rep_char in c.references.key) {
-                list[str] all_properties = get_properties_rep_char(rep_char, c.references);
-                LayerData layer = get_layer(all_properties, c.game);
-                str name = c.references[rep_char][0];
+            if (rep_char in engine.references.key) {
+                list[str] all_properties = get_properties_rep_char(rep_char, engine.references);
+                LayerData layer = get_layer(all_properties, engine.game);
+                str name = engine.references[rep_char][0];
 
                 Object new_object = game_object(rep_char, name, all_properties, <i,j>, "", layer, id);
                 objects = _compile_level_add_object(objects, <i,j>, new_object);
                 id += 1;
             } 
             // Step 3.2: the rep_char is represents a combination of objects.
-            else if (rep_char in c.combinations.key) {
-                for (str name <- c.combinations[rep_char]) {
-                    list[str] all_properties = get_properties_name(name, c.references);  
-                    LayerData ld = get_layer(all_properties, c.game);
+            else if (rep_char in engine.combinations.key) {
+                for (str name <- engine.combinations[rep_char]) {
+                    list[str] all_properties = get_properties_name(name, engine.references);  
+                    LayerData ld = get_layer(all_properties, engine.game);
 
                     Object new_object = game_object(rep_char, name, all_properties, <i,j>, "", ld, id);
                     objects = _compile_level_add_object(objects, <i,j>, new_object);
@@ -733,27 +766,27 @@ Level compile_level(LevelData lvl, Checker c) {
 }
 
 /*
- * @Name:   _compile_level_resolve_player
+ * @Name:   _compile_level_resolve_object
  * @Desc:   Function that resolves the name and representation character of the 
  *          given object 
- * @Param:  c           -> Checker
+ * @Param:  engine      -> Engine
  *          object_name -> Name of the object to resolve
  * @Ret:    Map with representation char as key and name as value
  */
-tuple[str, str] _compile_level_resolve_object(Checker c, str object_name) {
+tuple[str, str] _compile_level_resolve_object(Engine engine, str object_name) {
     list[str] possible_names = [object_name];
 
     // Add the direct references of the "object_name" key 
-    if (object_name in c.references.key) possible_names += c.references[object_name];
+    if (object_name in engine.references.key) possible_names += engine.references[object_name];
 
     // Search for a character that represents any of the possible player names in the references
-    for (str key <- c.references.key) {
-        if(size(key) == 1, any(str name <- possible_names, name in c.references[key])) return <key, name>;
+    for (str key <- engine.references.key) {
+        if(size(key) == 1, any(str name <- possible_names, name in engine.references[key])) return <key, name>;
     }
 
     // Search for a character that represents any of the possible player names in the references
-    for (str key <- c.combinations.key) {
-        if (size(key) == 1, any(str name <- possible_names, name in c.combinations[key])) return <key, name>;
+    for (str key <- engine.combinations.key) {
+        if (size(key) == 1, any(str name <- possible_names, name in engine.combinations[key])) return <key, name>;
     }
 
     return <"","">;
@@ -763,22 +796,22 @@ tuple[str, str] _compile_level_resolve_object(Checker c, str object_name) {
  * @Name:   _compile_level_resolve_player
  * @Desc:   Function that resolves the name and representation character of the 
  *          player
- * @Param:  c -> Checker
+ * @Param:  engine -> Engine
  * @Ret:    Map with representation char as key and name as value
  */
-tuple[str, str] _compile_level_resolve_player(Checker c) {
-    return _compile_level_resolve_object(c, "player");
+tuple[str, str] _compile_level_resolve_player(Engine engine) {
+    return _compile_level_resolve_object(engine, "player");
 }
 
 /*
  * @Name:   _compile_level_resolve_background
  * @Desc:   Function that resolves the representation char and name of the
  *          background
- * @Param:  c -> Checker
+ * @Param:  engine -> Engine
  * @Ret:    Map with representation char as key and name as value
  */
-tuple[str,str] _compile_level_resolve_background (Checker c) {
-    return _compile_level_resolve_object(c, "background");
+tuple[str,str] _compile_level_resolve_background (Engine engine) {
+    return _compile_level_resolve_object(engine, "background");
 }
 
 /*
@@ -815,7 +848,7 @@ bool isDirection (str dir) {
 /******************************************************************************/
 // --- Public convert rule functions -------------------------------------------
 
-list[Rule] compile_rule(RuleData rd: rule_data(left, right, message, separator), bool late, Checker checker) {
+list[Rule] compile_rule(Engine engine, RuleData rd: rule_data(left, right, message, separator), bool late) {
     list[Rule] new_rule_directions = [];
     list[Rule] new_rules = [];
     list[Rule] new_rules2 = [];
@@ -833,7 +866,7 @@ list[Rule] compile_rule(RuleData rd: rule_data(left, right, message, separator),
 
     for (Rule rule <- new_rule_directions) {
         Rule absolute_rule = _compile_rule_relative_directions_to_absolute(rule);
-        Rule atomized_rule = _compile_rule_atomize_aggregates(checker, absolute_rule);
+        Rule atomized_rule = _compile_rule_atomize_aggregates(engine, absolute_rule);
         new_rules += [atomized_rule];
     }
 
@@ -1012,16 +1045,16 @@ list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart]
  * @Desc:   Function to atomize the name aggregates used in a rule. For instance,
  *          this is used to change Obstacle by Wall, PlayerBodyH, PlayerBodyV...
  *          This calls _compile_rule_part_atomize_rule_aggregates.
- * @Param:  c    -> Checker
+ * @Param:  engine -> Engine
  *          rule -> Rule to be atomized
  * @Ret:    Atomized rule
  */
-Rule _compile_rule_atomize_aggregates(Checker c, Rule rule) {
+Rule _compile_rule_atomize_aggregates(Engine engine, Rule rule) {
     list[RuleContent] new_rc = [];
     list[RulePart] new_rp = [];
 
-    rule.left = _compile_rule_part_atomize_aggregates(c, rule.left);
-    rule.right = _compile_rule_part_atomize_aggregates(c, rule.right);
+    rule.left = _compile_rule_part_atomize_aggregates(engine, rule.left);
+    rule.right = _compile_rule_part_atomize_aggregates(engine, rule.right);
 
     return rule;
 }
@@ -1031,11 +1064,11 @@ Rule _compile_rule_atomize_aggregates(Checker c, Rule rule) {
  * @Desc:   Function to atomize the name aggregates used in a rule part. We now 
  *          that the rule contents have an even length, since it is always a
  *          direction and a name (object, or another keyword)
- * @Param:  c    -> Checker
+ * @Param:  engine -> Engine
  *          rule_parts -> Rule parts to be atomized
  * @Ret:    Atomized rule
  */
-list[RulePart] _compile_rule_part_atomize_aggregates(Checker c, list[RulePart] rule_parts) {
+list[RulePart] _compile_rule_part_atomize_aggregates(Engine engine, list[RulePart] rule_parts) {
     list[RuleContent] new_rc = [];
     list[RulePart] new_rp = [];
 
@@ -1055,9 +1088,9 @@ list[RulePart] _compile_rule_part_atomize_aggregates(Checker c, list[RulePart] r
                 str direction = rc.content[i];
                 str object = toLowerCase(rc.content[i+1]);
 
-                if (object in c.combinations.key) {
-                    for (int j <- [0..size(c.combinations[object])]) {
-                        str new_object = c.combinations[object][j];
+                if (object in engine.combinations.key) {
+                    for (int j <- [0..size(engine.combinations[object])]) {
+                        str new_object = engine.combinations[object][j];
                         new_content += [direction] + ["<new_object>"];
                     }
                 } 
@@ -1108,4 +1141,167 @@ str stringify_rule(list[RulePart] left, list[RulePart] right) {
         rule += " ] ";
     }
     return rule;
+}
+
+/*****************************************************************************/
+// --- Public Getter functions ------------------------------------------------
+
+/*
+ * @Name:   get_representation_char
+ * @Desc:   Function to get the representation char of a given object
+ * @Param:
+ *      name        Object name 
+ *      references  Map of all game object references
+ * @Ret:    Representation char of the object
+ */
+str get_representation_char(str name, map[str, list[str]] references) {
+    for (str char <- references<0>) {
+        if (size(char) == 1 && name in references[char]) {  
+            return toLowerCase(char);
+        }
+    }
+
+    return "";
+}
+
+/*
+ * @Name:   get_resolved_references (list version)
+ * @Desc:   Function to get the references of a key of the legend in a 
+ *          map of references.
+ *          Generally used with the keys of the game legend. For this purpose,
+ *          remember that keys in the legend can be a representation char
+ *          or an alias (such as Player, Obstacle...)
+ * @Param:
+ *      keys         Legend key elements
+ *      references  Map of references on which to search
+ * @Ret:    List of non duped references of the key (including the actual keys)
+ */
+list[str] get_resolved_references(list[str] keys, map[str, list[str]] references) {
+    list[str] resolved_references = [];
+
+    for(str key <- keys){
+        resolved_references += get_resolved_references(key, references);
+    }
+
+    return toList(toSet(resolved_references));
+}
+
+/*
+ * @Name:   get_resolved_references (single key version)
+ * @Desc:   Function to get the references of a key of the legend in a 
+ *          map of references.
+ *          Generally used with the keys of the game legend. For this purpose,
+ *          remember that keys in the legend can be a representation char
+ *          or an alias (such as Player, Obstacle...)
+ * @Param:
+ *      key         Legend key element
+ *      references  Map of references on which to search
+ * @Ret:    List of non duped references of the key (including the actual keys)
+ */
+list[str] get_resolved_references(str key, map[str, list[str]] references) {
+    list[str] resolved_references = [];
+
+    if (!(key in references<0>)) return resolved_references;
+
+    for (str rf <- references[key]) {
+        new_references = get_resolved_references(rf, references);
+        if (isEmpty(new_references)) resolved_references += [rf];
+        else resolved_references += new_references;
+    }
+
+    return toList(toSet(resolved_references));
+}
+
+/*
+ * @Name:   get_unresolved_references_and_properties
+ * @Desc:   Function to get the all references (resolved and unresolved) of a given 
+ *          references element
+ * @Param:
+ *      key         Element of the references dictionary 
+ *      references  Map of all game object references
+ * @Ret:    References of the object
+ */
+list[str] get_unresolved_references_and_properties(str key, map[str, list[str]] references) {
+    if (!(key in references<0>)) return [];
+
+    list[str] all_references = [];
+    list[str] unresolved_references = references[key];
+
+    all_references += unresolved_references;
+
+    for (str rf <- unresolved_references) {
+        all_references += get_properties(rf, references);
+    }
+
+    return toList(toSet(all_references));
+}
+
+/*
+ * @Name:   get_properties_rep_char
+ * @Desc:   Function to get the properties of a representatio char. This are the 
+ *          properties of each of the object names it references.
+ * @Param:  rep_char   -> Representation char of the references dictionary 
+ *          references -> Map of all game object references
+ * @Ret:    References of the representation char
+ */
+list[str] get_properties_rep_char(str rep_char, map[str, list[str]] references) {
+    if (!(rep_char in references<0>)) return [];
+
+    list[str] all_properties = [];
+    list[str] unresolved_references = references[rep_char];
+    all_properties += unresolved_references;
+
+    for (str rf <- unresolved_references) {
+        all_properties += get_properties(rf, references);
+    }
+
+    return toList(toSet(all_properties));
+}
+
+/*
+ * @Name:   get_properties
+ * @Desc:   Function to get the all properties of a given key.
+ *          A property is the string used as key in the set of references
+ * @Param:
+ *      key         Element from the references dictionary
+ *      references  Map of all references
+ * @Ret:    Properties of the reference
+ */
+list[str] get_properties(str key, map[str, list[str]] references) {
+    list[str] all_references = [key];
+
+    for (str rf <- references) {
+        if (size(rf) == 1) continue;
+
+        if (key in references[rf]) {
+            all_references += rf;
+            all_references += get_properties(rf, references);
+        }
+    }
+
+    return toList(toSet(all_references));
+}
+
+/*
+ * @Name:   get_properties_name
+ * @Desc:   Function to get the all properties of a given object name.
+ *          A property refers to the non-sized 1 keys of the legend that contain
+ *          the object name
+ * @Param:  name       -> Object name (or alias of object names)
+ *          references -> Map of all references
+ * @Ret:    Properties of the reference
+ */
+list[str] get_properties_name(str name, map[str, list[str]] references) {
+    list[str] all_properties = [name];
+
+    for (str rf <- references) {
+        if (size(rf) == 1) continue;
+
+        if (name in references[rf]) {
+            all_properties += rf;
+            all_properties += get_properties(rf, references);
+        }
+    }
+
+    return toList(toSet(all_properties));
 }

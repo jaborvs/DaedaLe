@@ -7,11 +7,10 @@
 
 module PuzzleScript::DynamicAnalyser
 
-import PuzzleScript::Load;
-import PuzzleScript::Engine;
-import PuzzleScript::Compiler;
-import PuzzleScript::Checker;
-import PuzzleScript::AST;
+// import PuzzleScript::Load;
+// import PuzzleScript::Engine;
+// import PuzzleScript::Compiler;
+// import PuzzleScript::AST;
 
 import IO;
 import util::Eval;
@@ -25,7 +24,7 @@ import util::Benchmark;
 alias TupleObjects = list[tuple[str name, Coords coords]];
 
 
-tuple[Engine, list[str]] bfs(Engine starting, list[str] moves, Checker c, str condition, int heuristics) {
+tuple[Engine, list[str]] bfs(Engine starting, list[str] moves, str condition, int heuristics) {
     
     int cycles = 0;
     set[TupleObjects] visited = {};
