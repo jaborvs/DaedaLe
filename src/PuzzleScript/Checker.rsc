@@ -36,7 +36,7 @@ alias Checker = tuple[
     map[str key, list[str] values] references,              // Map of references: name and its list of references (e.g., Player = PlayerHead1 or PlayerHead2 or PlayerHead3 or PlayerHead4)
     map[str key, list[str] values] resolved_references,     // Map of all resolved references: these are what 
     map[str key, list[str] values] combinations,            // Map of combinations: name and its list of combinations (e.g., @ = Crate and Target)                                          
-    PSGame game                                             // AST node of a PuzzleScript game
+    GameData game                                             // AST node of a PuzzleScript game
 ];
 
 
@@ -52,7 +52,7 @@ alias Checker = tuple[
  *      debug_flag  Boolean indicating whether or not we are in the debug mode
  *      game        AST node of a PuzzleScript game
  */
-Checker new_checker(PSGame game) 
+Checker new_checker(GameData game) 
     = <
         (),     // References map
         (),     // Resolved references map
@@ -68,7 +68,7 @@ Checker new_checker(PSGame game)
  *      g       Game AST node
  * @Ret:    Updated checker
  */
-Checker check_game(PSGame g) {
+Checker check_game(GameData g) {
     Checker c = new_checker(g);
 
     for (LegendData l <- g.legend){

@@ -546,7 +546,7 @@ real calculate_heuristic(Engine engine) {
     
     int score = 0;
 
-    PSGame game = engine.game;
+    GameData game = engine.game;
     list[ConditionData] lcd = game.conditions;
     list[int] distances = [];
 
@@ -717,7 +717,7 @@ bool check_dead_end(Engine engine, str amount, str object) {
 // Checks if current state satisfies all the win conditions
 bool check_conditions(Engine engine, str condition) {
     println("   6.1");
-    PSGame game = engine.game;
+    GameData game = engine.game;
     list[ConditionData] lcd = game.conditions;
     list[bool] satisfied = [];
 

@@ -45,7 +45,7 @@ data Engine
         map[str, list[str]] references,                     // Object Name: References of the object (direct unresolved references) (???)
         map[LevelData, LevelChecker] level_checkers,            // How many moveable objects are in the game, how many rules will you be able to apply (???)
         map[LevelData, LevelAppliedData] level_applied_data,           // What is used in the BFS (???)
-        PSGame game                                         // Original game AST node
+        GameData game                                         // Original game AST node
         )
     | game_engine_empty()
     ;
@@ -615,7 +615,7 @@ ObjectData get_object(str name, Engine engine)
  *      game    Original game AST node 
  * @Ret:    Layer object (empty if not found)
  */
-LayerData get_layer(list[str] object, PSGame game) {
+LayerData get_layer(list[str] object, GameData game) {
     for (LayerData layer <- game.layers) {
         if (layer is layer_data) {
             for (str layer_item <- layer.items) {

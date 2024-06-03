@@ -577,7 +577,7 @@ Model update_code(Model model, JsonData jd, int category) {
  *  @Ret:   Default application model
  */
 Model reload(str src, int index) {
-    PSGame game = load(src);
+    GameData game = load(src);
     Checker checker = check_game(game);
     Engine engine = compile(checker);
 
@@ -691,7 +691,7 @@ void view(Model m) {
  *  @Name:  main()
  *  @Desc:  Runs the application
  *  @Ret:   Call to run the application
- */
+ */ 
 App[Model] main() {
     // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
     game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/sokoban_basic.PS|;

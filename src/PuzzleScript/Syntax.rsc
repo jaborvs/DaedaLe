@@ -51,7 +51,7 @@ keyword CommandKeyword
 /******************************************************************************/
 // --- Game syntax -------------------------------------------------------------
 
-start syntax PSGame
+start syntax GameData
     = game_data: Prelude? Section+
     | game_empty: Newlines
     ;

@@ -19,10 +19,10 @@ import List;
 // --- Game structure defines --------------------------------------------------
 
 /*
- * @Name:   PSGame
+ * @Name:   GameData
  * @Desc:   AST of a PuzzleScript game
  */
-data PSGame
+data GameData
     = game_data(list[Prelude] pr, list[Section] sections)   // Unprocessed version: Game composed of a prelude, a list of sections and its file location
     | game_data(                                            // Processed version:
         list[PreludeData] prelude,                          //      Prelude list

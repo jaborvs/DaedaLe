@@ -27,9 +27,9 @@ import PuzzleScript::Utils;
  * @Name:   load
  * @Desc:   Function that reads a game file and loads its contents
  * @Param:  path -> Location of the file
- * @Ret:    PSGame object
+ * @Ret:    GameData object
  */
-PuzzleScript::AST::PSGame load(loc path) {
+PuzzleScript::AST::GameData load(loc path) {
     str src = readFile(path);
     return load(src);    
 }
@@ -38,11 +38,11 @@ PuzzleScript::AST::PSGame load(loc path) {
  * @Name:   load
  * @Desc:   Function that reads a game file contents and implodes it
  * @Param:  src -> String with the contents of the file
- * @Ret:    PSGame object
+ * @Ret:    GameData object
  */
-PuzzleScript::AST::PSGame load(str src) {
-    start[PSGame] pt = ps_parse(src);
-    PuzzleScript::AST::PSGame ast = ps_implode(pt);
+PuzzleScript::AST::GameData load(str src) {
+    start[GameData] pt = ps_parse(src);
+    PuzzleScript::AST::GameData ast = ps_implode(pt);
     return ast;
 }
 
@@ -54,11 +54,11 @@ PuzzleScript::AST::PSGame load(str src) {
  * @Desc:   Function that reads a game file and parses it
  * @Param:  
  *          path -> Location of the file
- * @Ret:    PSGame object
+ * @Ret:    GameData object
  */
-start[PSGame] ps_parse(loc path){
+start[GameData] ps_parse(loc path){
     str src = readFile(path);
-    start[PSGame] pt = ps_parse(src);
+    start[GameData] pt = ps_parse(src);
     return pt;
 }
 
@@ -66,11 +66,11 @@ start[PSGame] ps_parse(loc path){
  * @Name:   ps_parse
  * @Desc:   Function that takes the contents of a game file and parses it
  * @Param:  str -> String containing the contents of the game file
- * @Ret:    PSGame object
+ * @Ret:    GameData object
  */
-start[PSGame] ps_parse(str src){
+start[GameData] ps_parse(str src){
     str src2 = src + "\n\n\n";            // Why do we need this (???)
-    return parse(#start[PSGame], src2);   // Parse takes 2 arguments: nonterminal in grammar and string to be parsed
+    return parse(#start[GameData], src2);   // Parse takes 2 arguments: nonterminal in grammar and string to be parsed
 }
 
 /*
@@ -78,10 +78,10 @@ start[PSGame] ps_parse(str src){
  * @Desc:   Function that takes a parse tree and builds the ast for a PuzzleScript
  *          game
  * @Param:  tree -> Parse tree
- * @Ret:    PSGame object
+ * @Ret:    GameData object
  */
-PuzzleScript::AST::PSGame ps_implode(start[PSGame] parse_tree) {
-    PuzzleScript::AST::PSGame game = implode(#PuzzleScript::AST::PSGame, parse_tree);   // We build the AST
+PuzzleScript::AST::GameData ps_implode(start[GameData] parse_tree) {
+    PuzzleScript::AST::GameData game = implode(#PuzzleScript::AST::GameData, parse_tree);   // We build the AST
     return process_game(game);
 }
 
@@ -93,11 +93,11 @@ PuzzleScript::AST::PSGame ps_implode(start[PSGame] parse_tree) {
  * @Name:   process_game
  * @Desc:   Function that receives an unprocessed PuzzleScript game and processes
  *          it to use it. This is the reason why in AST.rsc two different versions
- *          of PSGame appear defined (the unprocessed and the processed)
- * @Param:  unprocessed_game -> PSGame to be processed  
- * @Ret:    Processed PSGame
+ *          of GameData appear defined (the unprocessed and the processed)
+ * @Param:  unprocessed_game -> GameData to be processed  
+ * @Ret:    Processed GameData
  */
-PSGame process_game(PSGame game) {
+GameData process_game(GameData game) {
     list[PreludeData] unprocessed_prelude = [];
     list[ObjectData] unprocessed_objects = [];
     list[LegendData] unprocessed_legend = [];
@@ -109,7 +109,7 @@ PSGame process_game(PSGame game) {
     
     // We transverse our AST and only leave non-empty nodes 
     // (=> replaces with the result of the right expression)
-    PSGame tmp_game = visit(game){
+    GameData tmp_game = visit(game){
         case list[PreludeData] prelude => [p | p <- prelude, !(prelude_empty(_) := p)]
         case list[ObjectData] objects =>  [obj | obj <- objects, !(object_empty(_) := obj)]      
         case list[Section] sections => [section | section <- sections, !(s_empty(_, _, _, _) := section)]      
@@ -143,7 +143,7 @@ PSGame process_game(PSGame game) {
     processed_conditions = [process_condition(unprocessed_condition) | ConditionData unprocessed_condition <- unprocessed_conditions];
     processed_levels = [process_level(unprocessed_level) | LevelData unprocessed_level <- unprocessed_levels];
         
-    PSGame processed_game = game_data(
+    GameData processed_game = game_data(
         processed_prelude, 
         processed_objects, 
         processed_legend, 

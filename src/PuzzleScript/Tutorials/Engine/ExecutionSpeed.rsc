@@ -30,7 +30,7 @@ void main() {
     loc DemoDir = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames|;
     loc ReportDir = |project://DaedaLe/src/PuzzleScript/Results|;
 
-    PSGame game;
+    GameData game;
     Checker checker;
     Engine engine;
     Level level;
