@@ -728,13 +728,15 @@ list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart]
                 int index = indexOf(relativeDirections, rc.content[i]);
                 // Step 2.2.1: We have a direction. 
                 if (index >= 0) {
-                    dir = relativeDict[direction][index];
+                    dir = relativeDict[direction][index];  
+                    
                     new_content += [dir] + [toLowerCase(rc.content[i + 1])];
                     skip = true;
                 // Step 2.2.2: We have a different keyword (e.g., no)
                 } else {
                     new_content += [""] + [toLowerCase(rc.content[i])];
                 }
+                println();
             }
             rc.content = new_content;
             new_rc += rc;

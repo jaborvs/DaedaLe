@@ -1,5 +1,16 @@
+/*
+ * @Module: Engine
+ * @Desc:   Module to model the engine of a PuzzleScript game    
+ * @Author: Clement Julia -> code
+ *          Denis Vet     -> code
+ *          Boja Velasco  -> code, comments
+ */
+
 module PuzzleScript::Engine
 
+
+/******************************************************************************/
+// --- General modules imports -------------------------------------------------
 import String;
 import List;
 import Type;
@@ -8,6 +19,8 @@ import IO;
 import util::Eval;
 import util::Math;
 
+/******************************************************************************/
+// --- Own modules imports -------------------------------------------------
 import PuzzleScript::AST;
 import PuzzleScript::Compiler;
 
