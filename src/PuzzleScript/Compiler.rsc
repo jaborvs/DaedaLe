@@ -368,7 +368,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
     // We resolve all the needed background object information
     tuple[str rep_char, str name] background_resolved = _compile_level_resolve_background(engine);
     list[str] background_properties = get_properties_rep_char(background_resolved.rep_char, engine.references);
-    LayerData background_layer = get_layer(background_properties, engine.game);
+    LayerData background_layer = get_layer(engine, background_properties);
 
     for (int i <- [0..size(lvl.level)]) {
         for (int j <- [0..size(lvl.level[i])]) {
@@ -393,7 +393,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
             //           object of its possible options
             if (rep_char in engine.references.key) {
                 list[str] all_properties = get_properties_rep_char(rep_char, engine.references);
-                LayerData layer = get_layer(all_properties, engine.game);
+                LayerData layer = get_layer(engine, all_properties);
                 str name = engine.references[rep_char][0]; // Out of all the possible names we give the first one
 
                 Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", layer);
@@ -405,7 +405,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
             else if (rep_char in engine.combinations.key) {
                 for (str name <- engine.combinations[rep_char]) {
                     list[str] all_properties = get_properties_name(name, engine.references);  
-                    LayerData ld = get_layer(all_properties, engine.game);
+                    LayerData ld = get_layer(engine, all_properties);
 
                     Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", ld);
                     objects = _compile_level_add_object(objects, <i,j>, new_object);
@@ -417,7 +417,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
                 for (str name <- engine.objects.name) {
                     if(toLowerCase(engine.objects[name].rep_char) == rep_char) {
                         list[str] all_properties = get_properties_name(name, engine.references);  
-                        LayerData ld = get_layer(all_properties, engine.game);
+                        LayerData ld = get_layer(engine, all_properties);
 
                         Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", ld);
                         objects = _compile_level_add_object(objects, <i,j>, new_object);
@@ -1160,12 +1160,12 @@ ObjectData get_object(str name, Engine engine)
 /*
  * @Name:   get_layer
  * @Desc:   Function to get the layer of a list of objects
- * @Param:  object -> List of object names
- *          game   -> Original game AST node 
+ * @Param:  engine -> Engine
+ *          object -> List of object names
  * @Ret:    Layer object (empty if not found)
  */
-LayerData get_layer(list[str] object, GameData game) {
-    for (LayerData layer <- game.layers) {
+LayerData get_layer(Engine engine, list[str] object) {
+    for (LayerData layer <- engine.game.layers) {
         if (layer is layer_data) {
             for (str layer_item <- layer.items) {
                 if (toLowerCase(layer_item) in object) {

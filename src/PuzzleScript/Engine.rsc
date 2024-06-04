@@ -278,7 +278,7 @@ Engine apply(Engine engine, list[list[Object]] found_objects, list[RuleContent] 
                 if ("player" in references) engine.current_level.player = <new_coords, name>;
 
                 current += [game_object(highest_id + 1, rep_char != "" ? rep_char : "9", name, all_references, new_coords, 
-                    dir, get_layer(all_references, engine.game))];
+                    dir, get_layer(engine, all_references))];
 
             }
         }
