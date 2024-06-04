@@ -393,6 +393,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
             //           object of its possible options
             if (rep_char in engine.references.key) {
                 list[str] all_properties = get_properties_rep_char(rep_char, engine.references);
+                if (rep_char == "p") println("Player: <all_properties>");
                 LayerData layer = get_layer(engine, all_properties);
                 str name = engine.references[rep_char][0]; // Out of all the possible names we give the first one
 
@@ -616,7 +617,7 @@ list[Rule] _compile_rule_extend_directions(RuleData rd: rule_data(left, right, m
  *          direction -> Direction to be extended
  * @Ret:    Extended list of rules
  */
-list[Rule] _compile_rule_extend_direction (RuleData rd: rule_data(left, right, message, _), str direction) {
+list[Rule] _compile_rule_extend_direction(RuleData rd: rule_data(left, right, message, _), str direction) {
     list[Rule] new_rule_directions = [];
     Rule cloned_rule = game_rule_empty();
 
@@ -736,7 +737,6 @@ list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart]
                 } else {
                     new_content += [""] + [toLowerCase(rc.content[i])];
                 }
-                println();
             }
             rc.content = new_content;
             new_rc += rc;
