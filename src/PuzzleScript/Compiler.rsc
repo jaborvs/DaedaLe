@@ -223,7 +223,6 @@ Engine compile(GameData game_data) {
     engine = compile_rules(engine);
     engine = compile_level_checkers(engine);
     engine = compile_applied_data(engine);
-    engine = compile_indexed_rules(engine);
 	
 	return engine;
 }
@@ -300,27 +299,6 @@ Engine compile_properties(Engine engine) {
     for(str key <- engine.references.key) {
         if (size(engine.references[key]) == 1) continue;
         engine.properties[key] = get_resolved_references(key, engine.references);
-    }
-
-    return engine;
-}
-
-/******************************************************************************/
-// --- Public compile indexed rules functions ----------------------------------
-
-/*
- * @Name:   compile_indexed_rules
- * @Desc:   Function to index the rules
- * @Param:  engine -> Engine
- * @Ret:    Updated engine with the indexed rules
- */
-Engine compile_indexed_rules(Engine engine) {
-    int index = 0;
-
-    for (RuleData rd <- engine.game.rules) {
-        str rule_string = stringify_rule(rd.left, rd.right);
-        engine.indexed_rules += (rd: <index, rule_string>);
-        index += 1;
     }
 
     return engine;
@@ -532,23 +510,241 @@ map[Coords, list[Object]] _compile_level_add_object(map[Coords, list[Object]] ob
 /*
  * @Name:   compile_rules
  * @Desc:   Function to convert all the rules into a new rule structure with 
- *          more information
+ *          more information. Additionally, we also index the rules to now their
+ *          prior order
  * @Param:  engine -> Engine
  * @Ret:    Updated engine with the new converted rules
  */
 Engine compile_rules(Engine engine) {
+    int index = 0;
     for (RuleData rule <- engine.game.rules) {
+        str rule_string = stringify_rule(rule.left, rule.right);
+        engine.indexed_rules += (rule: <index, rule_string>);
+        index += 1;
+
         if ("late" in [toLowerCase(lhs.prefix) | lhs <- rule.left, lhs is rule_prefix]) {
-            list[Rule] rule_group = compile_rule(engine, rule, true);
+            list[Rule] rule_group = _compile_rule(engine, rule, true);
             if (size(rule_group) != 0) engine.late_rules += [rule_group];
         }
         else {
-            list[Rule] rule_group = compile_rule(engine, rule, false);
+            list[Rule] rule_group = _compile_rule(engine, rule, false);
             if (size(rule_group) != 0) engine.rules += [rule_group];
         }
     }
 
     return engine;
+}
+
+/******************************************************************************/
+// --- Public compile rule functions -------------------------------------------
+
+/*
+ * @Name:   _compile_rule
+ * @Desc:   Function to compile a rule
+ * @Param:  engine -> engine
+ *          rd     -> Rule AST node to be compiled
+ *          late   -> Boolean indicating if it is a late rule
+ * @Ret:    List witht the compiled rules. Bear in mind one rule compiles into 
+ *          one or more rulescompile_rule(
+ */
+list[Rule] _compile_rule(Engine engine, RuleData rd: rule_data(left, right, message, separator), bool late) {
+    list[Rule] new_rule_directions = [];
+    list[Rule] new_rules = [];
+    list[Rule] new_rules2 = [];
+
+    // We take the left part, the left prefixes and the left directions
+    list[RulePart] new_left = [rp | RulePart rp <- left, rp is rule_part];
+    list[RulePart] save_left = [rp | RulePart rp <- left, !(rp is rule_part)];
+    list[str] directions = [toLowerCase(rp.prefix) | rp <- save_left, rp is rule_prefix && replaceAll(toLowerCase(rp.prefix), " ", "") != "late"];
+
+    // We do the same for the right part
+    list[RulePart] new_right = [rp | RulePart rp <- right, rp is rule_part];
+    list[RulePart] save_right = [rp | RulePart rp <- right, !(rp is rule_part)];
+
+    // We generate one new rule AST node with only the information we want
+    RuleData new_rd = rule_data(new_left, new_right, message, separator);
+
+    // Step 1: we extend the directions
+    new_rule_directions = _compile_rule_extend_directions(new_rd, directions);
+
+    // Step 2: we translate the object relative directions to absolute ones
+    for (Rule rule <- new_rule_directions) {
+        Rule absolute_rule = _compile_rule_relative_directions_to_absolute(rule);
+        new_rules += [absolute_rule];
+    }
+
+    // Step 3: we add the prefixes and other commands we took out initially
+    for (Rule rule <- new_rules) {
+        rule.left += save_left;
+        rule.right += save_right;
+        new_rules2 += rule.late = late;
+    }
+
+    return new_rules2;
+}
+
+/*
+ * @Name:   _compile_rule_extend_directions
+ * @Desc:   Function to extend the directions of a rule. It calls extend_direction
+ *          which contains the exact extension functionality
+ * @Param:  rd         -> Rule AST node to be extended
+ *          directions -> Directions to be extended
+ * @Ret:    Extended list of rules
+ */
+list[Rule] _compile_rule_extend_directions(RuleData rd: rule_data(left, right, message, _), list[str] directions) {
+    list[Rule] new_rule_directions = [];
+
+    if(directions == []) directions = [""];
+
+    for (direction <- directions) {
+        new_rule_directions += _compile_rule_extend_direction(rd, direction);
+    }
+    return new_rule_directions;
+}
+
+/*
+ * @Name:   _compile_rule_extend_direction
+ * @Desc:   Function to extend the directions of a rule. This means we extend the
+ *          directional prefixes of a rule. There are different cases:
+ *          1. If a rule has a relative direction (e.g., horizontal), we need to
+ *          extend it to right and left.
+ *          2. If a rule has an absolute direction, then we just need to stick to
+ *          that direction.
+ *          3. If a rule has no direction specified, all directions apply (i.e.,
+ *          implicit orthogonal prefix).
+ * @Param:  rd -> Rule AST node to be extended
+ *          direction -> Direction to be extended
+ * @Ret:    Extended list of rules
+ */
+list[Rule] _compile_rule_extend_direction (RuleData rd: rule_data(left, right, message, _), str direction) {
+    list[Rule] new_rule_directions = [];
+    Rule cloned_rule = game_rule_empty();
+
+    // This direction modifiers are only accepted for objects
+    if (direction == "perpendicular" || direction == "parallel") return [];
+
+    if (direction in directionAggregates) { 
+        list[str] directions = directionAggregates[toLowerCase(direction)];
+
+        for (str direction <- directions) {
+            cloned_rule = game_rule(
+                false,      // Late boolean
+                direction,  // Direction to be applied to
+                left,       // LHS
+                right,      // RHS
+                rd          // Original AST node
+            );
+            new_rule_directions += cloned_rule;
+        }
+    }
+    else if (direction in absoluteDirections) {
+        cloned_rule = game_rule(
+            false,      // Late boolean
+            direction,  // Direction to be applied to
+            left,       // LHS
+            right,      // RHS
+            rd          // Original AST node
+        );
+        new_rule_directions += cloned_rule;
+    }
+    else {
+        list[str] directions = directionAggregates["orthogonal"];
+
+        for (str direction <- directions) {
+            cloned_rule = game_rule(
+                false,      // Late boolean
+                direction,  // Direction to be applied to
+                left,       // LHS
+                right,      // RHS
+                rd          // Original AST node
+            );
+            new_rule_directions += cloned_rule;
+        }
+    }
+
+    return new_rule_directions;
+}
+
+/*
+ * @Name:   _compile_rule_relative_directions_to_absolute
+ * @Desc:   Function to convert the relative directios of a rule to absolute. 
+ *          This means that if a rule has a direction UP, the relativeDirections
+ *          get translated to their according absolute direction. It calls the 
+ *          _compile_rule_part_relative_directions_to_absolute function.
+ * @Param:  rule -> Rule to have its relative directions converted
+ * @Ret:    New rule with converted relative directions
+ */
+Rule _compile_rule_relative_directions_to_absolute(Rule rule) {
+    rule.left = _compile_rule_part_relative_directions_to_absolute(rule.left, rule.direction);
+    rule.right = _compile_rule_part_relative_directions_to_absolute(rule.right, rule.direction);
+
+    return rule;
+}
+
+/*
+ * @Name:   _compile_rule_part_relative_directions_to_absolute
+ * @Desc:   Function to convert the relative directions of a rule part to
+ *          absolute ones. We now for a fact that the rule contents need to be 
+ *          one direction, other keyword modifiers (e.g., no) and then the name.
+ *          Additionally it sets all the names to lowercase
+ * @Param:  rule_parts -> rule parts to convert to absoute directions
+ *          direction  -> direction of the rule
+ * @Ret:    Converted rule parts to absolute directions
+ */
+list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart] rule_parts, str direction) {
+    list[RulePart] new_rp = [];
+    
+    for (RulePart rp <- rule_parts) {
+        list[RuleContent] new_rc = [];
+
+        // Step 1: If it is not a rule part we directly add it 
+        if (!(rp is rule_part)) {
+            new_rp += rp; 
+            continue;
+        }  
+
+        // Step 2: If it is a rule part we need a bit more work
+        for (RuleContent rc <- rp.contents) {
+            list[str] new_content = [];
+
+            // Step 2.1: If its size its 1 it means there is no direction, so 
+            //           we leave the direction empty ""
+            if (size(rc.content) == 1) {
+                rc.content = [""] + [toLowerCase(rc.content[0])];
+                new_rc += rc;
+                continue;
+            }
+
+            // Step 2.2: If the size its bigger, either we have a given direction
+            //           or we have a command. We need to figure it out
+            str dir = "";
+            bool skip = false;
+            for (int i <- [0..size(rc.content)]) {
+                if (skip) {
+                    skip = false;
+                    continue;
+                }
+
+                int index = indexOf(relativeDirections, rc.content[i]);
+                // Step 2.2.1: We have a direction. 
+                if (index >= 0) {
+                    dir = relativeDict[direction][index];
+                    new_content += [dir] + [toLowerCase(rc.content[i + 1])];
+                    skip = true;
+                // Step 2.2.2: We have a different keyword (e.g., no)
+                } else {
+                    new_content += [""] + [toLowerCase(rc.content[i])];
+                }
+            }
+            rc.content = new_content;
+            new_rc += rc;
+        }
+
+        rp.contents = new_rc;
+        new_rp += rp;
+    }
+    
+    return new_rp;
 }
 
 /******************************************************************************/
@@ -635,9 +831,8 @@ LevelChecker _compile_level_checker_starting_objects(LevelChecker lc, Level leve
  * @Ret:    Updated level checker
  */
 LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[list[Rule]] rules, list[list[Rule]] late_rules) {
-    bool new_objects = true;
-    list[list[Rule]] applied_rules = [];
-    list[list[Rule]] applied_late_rules = [];
+    list[list[Rule]] can_be_applied_rules = [];
+    list[list[Rule]] can_be_applied_late_rules = [];
 
     map[int, list[Rule]] indexed = ();
     map[int, list[Rule]] indexed_late = ();
@@ -663,6 +858,7 @@ LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[li
             Rule rule = lrule[0];
             list[str] required = [];
 
+            // Step 1: We loop over the parts and get the objects from its contents
             for (RulePart rp <- rule.left) {
                 if (!(rp is rule_part)) continue;
 
@@ -676,6 +872,8 @@ LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[li
             int applied = 0;
             list[list[str]] placeholder = lc.starting_objects_names;
             
+            // Step 2: We check if each required object of the left part rule is in the 
+            //         starting objects of the level.
             for (int i <- [0..size(required)]) {
                 str required_rc = required[i];
 
@@ -685,40 +883,50 @@ LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[li
                 else break;
             }
 
+            // Step 3: If the applied is the same to size(required) it means that
+            //         all objects of the left rule part are present in the level
+            //         Therefore, this rule could be called and we need to do a 
+            //         bit of work on the right side
             if (applied == size(required)) {
                 list[list[RuleContent]] list_rc = [rulepart.contents | rulepart <- rule.right, rulepart is rule_part];
-                list[list[str]] new_objects_list = [];
 
+                // Step 3.1: We check if the right side calls an object that does 
+                //           not exist on the level and add it to the starting 
+                //           objects list
                 for (list[RuleContent] lrc <- list_rc) {
-                    list[str] new_objects = [name | rc <- lrc, name <- rc.content, !(name == "no"), 
-                        !(isDirection(name)), !(name == ""), !(name == "..."), 
-                        !(any(list[str] objects <- lc.starting_objects_names, name in objects))];
+                    list[str] new_objects = [
+                        name | 
+                        rc <- lrc, 
+                        name <- rc.content, 
+                        !(name == "no"), !(isDirection(name)), !(name == ""), !(name == "..."), 
+                        !(any(list[str] objects <- lc.starting_objects_names, name in objects))
+                        ];
 
-                    if (size(new_objects) > 0) new_objects_list += [new_objects];
-
+                    if (size(new_objects) > 0) lc.starting_objects_names += [new_objects];
                 }
                 
-                lc.starting_objects_names += new_objects_list;
-
-                if (rule.late && !(lrule in applied_late_rules)) applied_late_rules += [lrule];
-                if (!(rule.late) && !(lrule in applied_rules)) applied_rules += [lrule];
+                // Step 3.2: We now add the rule to the can be applied late rules
+                //           or can be applied rules lists
+                if (rule.late && !(lrule in can_be_applied_late_rules)) can_be_applied_late_rules += [lrule];
+                if (!(rule.late) && !(lrule in can_be_applied_rules)) can_be_applied_rules += [lrule];
             }
         }
     }
 
-    list[list[Rule]] applied_rules_in_order = [];
-    list[list[Rule]] applied_late_rules_in_order = [];
+    // Now we place them in order into the actual level checker lists
+    list[list[Rule]] can_be_applied_rules_in_order = [];
+    list[list[Rule]] can_be_applied_late_rules_in_order = [];
 
     for (int i <- [0..size(indexed<0>)]) {
-        if (indexed[i] in applied_rules) applied_rules_in_order += [indexed[i]];
+        if (indexed[i] in can_be_applied_rules) can_be_applied_rules_in_order += [indexed[i]];
     }
 
     for (int i <- [0..size(indexed_late<0>)]) {
-        if (indexed_late[i] in applied_late_rules) applied_late_rules_in_order += [indexed_late[i]];
+        if (indexed_late[i] in can_be_applied_late_rules) can_be_applied_late_rules_in_order += [indexed_late[i]];
     }
 
-    lc.can_be_applied_late_rules = applied_late_rules_in_order;
-    lc.can_be_applied_rules = applied_rules_in_order;
+    lc.can_be_applied_late_rules = can_be_applied_late_rules_in_order;
+    lc.can_be_applied_rules = can_be_applied_rules_in_order;
 
     return lc;
 }
@@ -740,7 +948,6 @@ LevelChecker _compile_level_checker_moveable_objects(Engine engine, LevelChecker
         }
     }
 
-    lc.moveable_objects = dup(lc.moveable_objects);
     return lc;
 }
 
@@ -774,309 +981,12 @@ LevelChecker _compile_level_checker_get_moveable_objects(Engine engine, LevelChe
             }
         }
     } 
-    lc.moveable_objects += dup(found_objects);
+    lc.moveable_objects += found_objects;
     return lc;
 }
 
-/*****************************************************************************/
-// --- Public Translating functions -------------------------------------------
-
-/*
- * @Name:   generate_directions
- * @Desc:   Function to translate directional modifiers to actual directions 
- *          (UP, DOWN, LEFT, RIGHT)
- * @Param:  
- *      modifiers   List of modifiers to be translated
- * @Ret:    Set of directions (all if empty directions)
- */
-set[str] generate_directions(list[str] modifiers){
-	set[str] directions = {};
-	for (str mo <- modifiers){
-		if (mo == "vertical") directions += {"up", "down"};
-		if (mo == "horizontal") directions += {"left", "right"};
-		if (mo in ["left", "right", "down", "up"]) directions += {mo};
-	}
-	
-	if (isEmpty(directions)) return {"left", "right", "up", "down"};
-	return directions;
-}
-
-/*
- * @Name:   isDirection
- * @Desc:   Function to check if a string is a valid direction
- * @Param:  
- *      dir     string to be checked
- * @Ret:    Boolean indicating if valid
- */
-bool isDirection (str dir) {
-    return (dir in relativeDict["right"] || dir in relativeDirections);
-}
-
 /******************************************************************************/
-// --- Public convert rule functions -------------------------------------------
-
-list[Rule] compile_rule(Engine engine, RuleData rd: rule_data(left, right, message, separator), bool late) {
-    list[Rule] new_rule_directions = [];
-    list[Rule] new_rules = [];
-    list[Rule] new_rules2 = [];
-
-    list[RulePart] new_left = [rp | RulePart rp <- left, rp is rule_part];
-    list[RulePart] save_left = [rp | RulePart rp <- left, !(rp is rule_part)];
-    list[str] directions = [toLowerCase(rp.prefix) | rp <- save_left, rp is rule_prefix && replaceAll(toLowerCase(rp.prefix), " ", "") != "late"];
-
-    list[RulePart] new_right = [rp | RulePart rp <- right, rp is rule_part];
-    list[RulePart] save_right = [rp | RulePart rp <- right, !(rp is rule_part)];
-
-    RuleData new_rd = rule_data(new_left, new_right, message, separator);
-
-    new_rule_directions = _compile_rule_extend_directions(new_rd, directions);
-
-    for (Rule rule <- new_rule_directions) {
-        Rule absolute_rule = _compile_rule_relative_directions_to_absolute(rule);
-        Rule atomized_rule = _compile_rule_atomize_aggregates(engine, absolute_rule);
-        new_rules += [atomized_rule];
-    }
-
-    for (Rule rule <- new_rules) {
-        rule.left += save_left;
-        rule.right += save_right;
-        new_rules2 += rule.late = late;
-    }
-
-    return new_rules2;
-}
-
-/******************************************************************************/
-// --- Prive convert rule extend direction functions ---------------------------
-
-/*
- * @Name:   _compile_rule_extend_directions
- * @Desc:   Function to extend the directions of a rule. It calls extend_direction
- *          which contains the exact extension functionality
- * @Param:  rd         -> Rule AST node to be extended
- *          directions -> Directions to be extended
- * @Ret:    Extended list of rules
- */
-list[Rule] _compile_rule_extend_directions(RuleData rd: rule_data(left, right, message, _), list[str] directions) {
-    list[Rule] new_rule_directions = [];
-
-    if(directions == []) directions = [""];
-
-    for (direction <- directions) {
-        new_rule_directions += _compile_rule_extend_direction(rd, direction);
-    }
-    return new_rule_directions;
-}
-
-/*
- * @Name:   _compile_rule_extend_direction
- * @Desc:   Function to extend the directions of a rule. This means we extend the
- *          directional prefixes of a rule. There are different cases:
- *          1. If a rule has a relative direction (e.g., horizontal), we need to
- *          extend it to right and left.
- *          2. If a rule has an absolute direction, then we just need to stick to
- *          that direction.
- *          3. If a rule has no direction specified, all directions apply (i.e.,
- *          implicit orthogonal prefix).
- * @Param:  rd -> Rule AST node to be extended
- *          direction -> Direction to be extended
- * @Ret:    Extended list of rules
- */
-list[Rule] _compile_rule_extend_direction (RuleData rd: rule_data(left, right, message, _), str direction) {
-    list[Rule] new_rule_directions = [];
-    Rule cloned_rule = game_rule_empty();
-
-    if (direction in directionAggregates) {
-        list[str] directions = directionAggregates[toLowerCase(direction)];
-
-        for (str direction <- directions) {
-            cloned_rule = game_rule(
-                false,      // Late boolean
-                direction,  // Direction to be applied to
-                left,       // LHS
-                right,      // RHS
-                rd          // Original AST node
-            );
-            new_rule_directions += cloned_rule;
-        }
-    }
-    else if (direction in absoluteDirections) {
-        cloned_rule = game_rule(
-            false,      // Late boolean
-            direction,  // Direction to be applied to
-            left,       // LHS
-            right,      // RHS
-            rd          // Original AST node
-        );
-        new_rule_directions += cloned_rule;
-    }
-    else {
-        list[str] directions = directionAggregates["orthogonal"];
-
-        for (str direction <- directions) {
-            cloned_rule = game_rule(
-                false,      // Late boolean
-                direction,  // Direction to be applied to
-                left,       // LHS
-                right,      // RHS
-                rd          // Original AST node
-            );
-            new_rule_directions += cloned_rule;
-        }
-    }
-
-    return new_rule_directions;
-}
-
-/******************************************************************************/
-// --- Private convert rule relative dirs to absolute functions ----------------
-
-/*
- * @Name:   _compile_rule_relative_directions_to_absolute
- * @Desc:   Function to convert the relative directios of a rule to absolute. 
- *          This means that if a rule has a direction UP, the relativeDirections
- *          get translated to their according absolute direction. It calls the 
- *          _compile_rule_part_relative_directions_to_absolute function.
- * @Param:  rule -> Rule to have its relative directions converted
- * @Ret:    New rule with converted relative directions
- */
-Rule _compile_rule_relative_directions_to_absolute(Rule rule) {
-    rule.left = _compile_rule_part_relative_directions_to_absolute(rule.left, rule.direction);
-    rule.right = _compile_rule_part_relative_directions_to_absolute(rule.right, rule.direction);
-
-    return rule;
-}
-
-/*
- * @Name:   _compile_rule_part_relative_directions_to_absolute
- * @Desc:   Function to convert the relative directions of a rule part to
- *          absolute ones. We now for a fact that the rule contents need to be 
- *          one direction, other keyword modifiers (e.g., no) and then the name
- * @Param:  rule_parts -> rule parts to convert to absoute directions
- *          direction  -> direction of the rule
- * @Ret:    Converted rule parts to absolute directions
- */
-list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart] rule_parts, str direction) {
-    list[RulePart] new_rp = [];
-    
-    for (RulePart rp <- rule_parts) {
-        list[RuleContent] new_rc = [];
-
-        if (!(rp is rule_part)) {
-            new_rp += rp; 
-            continue;
-        }  
-
-        for (RuleContent rc <- rp.contents) {
-            list[str] new_content = [];
-
-            if (size(rc.content) == 1) {
-                rc.content = [""] + [rc.content[0]];
-                new_rc += rc;
-                continue;
-            }
-
-            str dir = "";
-            bool skip = false;
-            for (int i <- [0..size(rc.content)]) {
-                if (skip) {
-                    skip = false;
-                    continue;
-                }
-
-                int index = indexOf(relativeDirections, rc.content[i]);
-                if (index >= 0) {
-                    dir = relativeDict[direction][index];
-                    new_content += [dir] + [rc.content[i + 1]];
-                    skip = true;
-                } else {
-                    new_content += [""] + [rc.content[i]];
-                }
-            }
-            rc.content = new_content;
-            new_rc += rc;
-        }
-
-        rp.contents = new_rc;
-        new_rp += rp;
-    }
-    
-    return new_rp;
-}
-
-/******************************************************************************/
-// --- Private convert rule atomize aggregates functions -----------------------
-
-/*
- * @Name:   _compile_rule_atomize_aggregates
- * @Desc:   Function to atomize the name aggregates used in a rule. For instance,
- *          this is used to change Obstacle by Wall, PlayerBodyH, PlayerBodyV...
- *          This calls _compile_rule_part_atomize_rule_aggregates.
- * @Param:  engine -> Engine
- *          rule -> Rule to be atomized
- * @Ret:    Atomized rule
- */
-Rule _compile_rule_atomize_aggregates(Engine engine, Rule rule) {
-    list[RuleContent] new_rc = [];
-    list[RulePart] new_rp = [];
-
-    rule.left = _compile_rule_part_atomize_aggregates(engine, rule.left);
-    rule.right = _compile_rule_part_atomize_aggregates(engine, rule.right);
-
-    return rule;
-}
-
-/*
- * @Name:   _compile_rule_part_atomize_aggregates
- * @Desc:   Function to atomize the name aggregates used in a rule part. We now 
- *          that the rule contents have an even length, since it is always a
- *          direction and a name (object, or another keyword)
- * @Param:  engine -> Engine
- *          rule_parts -> Rule parts to be atomized
- * @Ret:    Atomized rule
- */
-list[RulePart] _compile_rule_part_atomize_aggregates(Engine engine, list[RulePart] rule_parts) {
-    list[RuleContent] new_rc = [];
-    list[RulePart] new_rp = [];
-
-    for (RulePart rp <- rule_parts) {
-        new_rc = [];
-
-        if (!(rp is rule_part)) {
-            new_rp += rp; 
-            continue;
-        }
-
-        for (RuleContent rc <- rp.contents) {
-            list[str] new_content = [];
-            for (int i <- [0..size(rc.content)]) {
-                if (i mod 2 == 1) continue;
-
-                str direction = rc.content[i];
-                str object = toLowerCase(rc.content[i+1]);
-
-                if (object in engine.combinations.key) {
-                    for (int j <- [0..size(engine.combinations[object])]) {
-                        str new_object = engine.combinations[object][j];
-                        new_content += [direction] + ["<new_object>"];
-                    }
-                } 
-                else {
-                    new_content += [direction] + [object];
-                }
-            }
-            rc.content = new_content;
-            new_rc += rc;
-        }
-        
-        rp.contents = new_rc;
-        new_rp += rp;       
-    }
-
-    return new_rp;
-}
-
-/******************************************************************************/
+// --- Public stringify functions ----------------------------------------------
 
 str stringify_rule(list[RulePart] left, list[RulePart] right) {
     str rule = "";
@@ -1265,4 +1175,15 @@ LayerData get_layer(list[str] object, GameData game) {
         }
     }
     return layer_empty("");
+}
+
+/*
+ * @Name:   isDirection
+ * @Desc:   Function to check if a string is a valid direction
+ * @Param:  
+ *      dir     string to be checked
+ * @Ret:    Boolean indicating if valid
+ */
+bool isDirection (str dir) {
+    return (dir in relativeDict["right"] || dir in relativeDirections);
 }
