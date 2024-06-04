@@ -435,7 +435,6 @@ Level _compile_level(Engine engine, LevelData lvl) {
                 }
             }
             // Step 3.3: Representation char included in the object definition 
-            //           (FIX: need to loop over the objects to find it)
             else {
                 for (str name <- engine.objects.name) {
                     if(toLowerCase(engine.objects[name].rep_char) == rep_char) {
@@ -473,19 +472,19 @@ tuple[str, str] _compile_level_resolve_object(Engine engine, str object_name) {
     list[str] possible_names = [object_name];
 
     // Case where the representation char is included in the object definition
-    if (object_name in engine.objects && engine.objects[object_name].rep_char != "") return <engine.objects[object_name].rep_char, object_name>;
+    if (object_name in engine.objects && engine.objects[object_name].rep_char != "") return <toLowerCase(engine.objects[object_name].rep_char), object_name>;
 
     // Add the direct references of the "object_name" key 
     if (object_name in engine.references.key) possible_names += engine.references[object_name];
 
     // Search for a character that represents any of the possible object names in the references
     for (str key <- engine.references.key) {
-        if(size(key) == 1, any(str name <- possible_names, name in engine.references[key])) return <key, name>;
+        if(size(key) == 1, any(str name <- possible_names, name in engine.references[key])) return <toLowerCase(key), name>;
     }
 
     // Search for a character that represents any of the possible object names in the references
     for (str key <- engine.combinations.key) {
-        if (size(key) == 1, any(str name <- possible_names, name in engine.combinations[key])) return <key, name>;
+        if (size(key) == 1, any(str name <- possible_names, name in engine.combinations[key])) return <toLowerCase(key), name>;
     }
 
     return <"","">;
