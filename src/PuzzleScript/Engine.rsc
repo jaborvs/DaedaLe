@@ -24,6 +24,67 @@ import util::Math;
 import PuzzleScript::AST;
 import PuzzleScript::Compiler;
 
+/******************************************************************************/
+// --- Public execute move functions -------------------------------------------
+// Applies movement, checks which rules apply, executes movement, checks which late rules apply
+
+/*
+ * @Name:   execute_move
+ * @Desc:   Function to execute a move in the engine. It first moves the player,
+ *          then applies rules, then apply the moves and lastly it applies the 
+ *          late rules
+ * @Param:  engine    -> Engine
+ *          direction -> Direction of the move to be applied
+ *          allrules  -> Integer (boolean) that indicates if we need to look at
+ *                       all rules or only the level specific ones
+ * @Ret:    Updated engine with the move executed
+ */
+Engine execute_move(Engine engine, str direction, int allrules) {
+    println("   5.1");
+    engine = prepare_move_player(engine, direction);
+    println("   5.2");
+    engine = apply_rules(engine, engine.current_level, direction, false, allrules);
+    println("   5.3");
+    engine = apply_moves(engine, engine.current_level);
+    println("   5.4");
+    engine = apply_rules(engine, engine.current_level, direction, true, allrules);
+    println("   5.5");
+
+    int index = size(engine.level_applied_data[engine.current_level.original].applied_moves<0>);
+    engine.level_applied_data[engine.current_level.original].applied_moves[index] = [direction];
+    engine.level_applied_data[engine.current_level.original].travelled_coords += [engine.current_level.player[0]];
+    println("   5.6");
+
+    return engine;
+}
+
+/*
+ * @Name:   prepare_move_player
+ * @Desc:   Function that prepares the player object to execute a move in a given
+ *          direction.
+ * @Param:  engine -> Engine
+ *          direction -> Direction to be moved
+ * @Ret:    Updated engine with 
+ *
+ */
+Engine prepare_move_player(Engine engine, str direction) {
+    list[Object] objects = [];
+
+    // We loop over the objects and when we find the player object we update its
+    // position
+    for (Object object <- engine.current_level.objects[engine.current_level.player.coords]) {
+        if (object.current_name == engine.current_level.player.current_name) {
+            object.direction = direction;
+        }
+        objects += object;
+    }
+
+    engine.current_level.objects[engine.current_level.player.coords] = objects;
+
+    return engine;
+}
+
+
 // Returns the differing coordinates based on the direction
 Coords get_dir_difference(str dir) {
 
@@ -533,46 +594,8 @@ Engine apply_moves(Engine engine, Level current_level) {
     return engine;
 }
 
-// Moves the player object based on player's input
-Engine move_player(Engine engine, Level current_level, str direction) {
-    println("       5.1.1");
-    list[Object] objects = [];
 
-    for (Object object <- current_level.objects[current_level.player[0]]) {
-        println(object.current_name);
-        println(current_level.player[1]);
-        println();
-        if (object.current_name == current_level.player[1]) {
-            println("Setting <object.current_name> at <object.coords>\'s direction to <direction>");
-            object.direction = direction;
-        }
-        objects += object;
-    }
-    current_level.objects[current_level.player[0]] = objects;
-    
-    engine.current_level = current_level;
-    return engine;
-}
 
-// Applies movement, checks which rules apply, executes movement, checks which late rules apply
-Engine execute_move(Engine engine, str direction, int allrules) {
-    println("   5.1");
-    engine = move_player(engine, engine.current_level, direction);
-    println("   5.2");
-    engine = apply_rules(engine, engine.current_level, direction, false, allrules);
-    println("   5.3");
-    engine = apply_moves(engine, engine.current_level);
-    println("   5.4");
-    engine = apply_rules(engine, engine.current_level, direction, true, allrules);
-    println("   5.5");
-
-    int index = size(engine.level_applied_data[engine.current_level.original].applied_moves<0>);
-    engine.level_applied_data[engine.current_level.original].applied_moves[index] = [direction];
-    engine.level_applied_data[engine.current_level.original].travelled_coords += [engine.current_level.player[0]];
-    println("   5.6");
-
-    return engine;
-}
 
 
 real calculate_heuristic(Engine engine) {
