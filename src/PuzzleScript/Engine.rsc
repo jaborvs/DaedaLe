@@ -198,7 +198,7 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     // Step 1: Check if (multiple) object(s) can be found on layer for the rule 
     //         to be valid to apply
     object_matches_criteria += matches_criteria_rule_content_size(engine, object, rc.content, direction);
-    
+
     index += 1;
     if (size(lhs) <= index) {
         return object_matches_criteria;
@@ -207,7 +207,7 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     // Second part: Now that objects in current cell meet the criteria, check if required neighbors exist
     list[Coords] neighboring_coords = matches_criteria_neighboring_coords(engine, object, lhs[index].content, direction);
     if ("..." in lhs[index].content) {
-        object_matches_criteria += [[game_object("","...",[],<0,0>,"",layer_empty(""),0)]];
+        object_matches_criteria += [[game_object(0,"","...",[],<0,0>,"",layer_empty(""))]];
         index += 1;
     }
 
@@ -290,6 +290,7 @@ list[Coords] matches_criteria_neighboring_coords(Engine engine, Object object, l
         int x = object.coords.x;
         int y = object.coords.y;
 
+        
         switch(direction) {
             case /left/: neighboring_coords = [<x, y + width> | width <- [-1..-level_width] , engine.current_level.objects[<x, y + width>]? && size(engine.current_level.objects[<x, y + width>]) > 1];
             case /right/: neighboring_coords = [<x, y + width> | width <- [1..level_width]  , engine.current_level.objects[<x, y + width>]? && size(engine.current_level.objects[<x, y + width>]) > 1];
