@@ -393,7 +393,6 @@ Level _compile_level(Engine engine, LevelData lvl) {
             //           object of its possible options
             if (rep_char in engine.references.key) {
                 list[str] all_properties = get_properties_rep_char(rep_char, engine.references);
-                if (rep_char == "p") println("Player: <all_properties>");
                 LayerData layer = get_layer(engine, all_properties);
                 str name = engine.references[rep_char][0]; // Out of all the possible names we give the first one
 
