@@ -15,12 +15,7 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'Silkscreen', monospace; /* Usar la fuente personalizada en los títulos */
     padding: 0;
     margin: 0;
-    background-color: #1a1c16; /* Un tono de gris oscuro para el fondo */
     color: #fff; /* Texto blanco para resaltar */
-    padding: 10px; /* Ajuste el relleno según sea necesario */
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    border-top: 1px solid #ddd; /* Borde gris claro arriba */
-    border-bottom: 1px solid #ddd; /* Borde gris claro abajo */
 }
 
 .container {
@@ -100,18 +95,50 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .button {
-    background-color: #000;
-    color: #fff;
-    border: 2px solid #fff;
-    border-radius: 5px;
-    font-size: 12px;
-    padding: 10px;
-    margin: 1px;
+    align-items: center;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: .25rem;
+    box-shadow: rgba(0, 0, 0, 0.02) 0 1px 3px 0;
+    box-sizing: border-box;
+    color: rgba(0, 0, 0, 0.85);
     cursor: pointer;
+    display: inline-flex;
+    font-weight: 600;
+    justify-content: center;
+    line-height: 1.25;
+    margin: 0;
+    position: relative;
+    text-decoration: none;
+    transition: all 250ms;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    vertical-align: baseline;
+    width: auto;
+}
+  
+.button:hover, .button:focus {
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: rgba(0, 0, 0, 0.1) 0 4px 12px;
+    color: rgba(0, 0, 0, 0.65);
+}
+  
+.button:hover {
+    transform: translateY(-1px);
 }
 
 .button:active {
     background-color: #333;
+}
+
+.button-pad {
+    width: 35px;
+    height: 35px;
+    font-size: 12px;
+    padding: 10px;
+    margin: 2px;
+    cursor: pointer;
 }
 
 .code {
@@ -123,36 +150,41 @@ h1, h2, h3, h4, h5, h6 {
     padding-inline: 8px;
 }
 
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px; /* Ajuste el relleno según sea necesario */
+    background-color: #1a1c16; /* Un tono de gris oscuro para el fondo */
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    border-top: 1px solid #ddd; /* Borde gris claro arriba */
+    border-bottom: 1px solid #ddd; /* Borde gris claro abajo */
+}
+  
+.header button {
+    margin-left: auto;
+}
 
+/* Estilos para la barra de desplazamiento en WebKit (Safari y Chrome) */
+::-webkit-scrollbar {
+    width: 10px; /* Ancho de la barra de desplazamiento */
+    height: 10px;
+    background-color: #22222200; /* Fondo de la barra de desplazamiento */
+}
 
+/* Estilos para la barra de desplazamiento en WebKit (Safari y Chrome) */
+::-webkit-scrollbar-thumb {
+    background-color: #444; /* Color del "thumb" (la parte móvil de la barra) */
+}
 
+/* Estilos para la barra de desplazamiento en Mozilla (Firefox) */
+/* NOTA: Los estilos de la barra de desplazamiento en Firefox son más limitados */
+/* y es posible que no puedas cambiar el color del fondo */
+/* solo el color del thumb */
+::-moz-scrollbar {
+    width: 10px; /* Ancho de la barra de desplazamiento */
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/* Estilos para el thumb de la barra de desplazamiento en Firefox */
+::-moz-scrollbar-thumb {
+    background-color: #444; /* Color del "thumb" (la parte móvil de la barra) */
+}

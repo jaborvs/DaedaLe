@@ -217,21 +217,12 @@ alias Win = tuple[
  *  @Desc:  Message function
  */
 data Msg 
-    = left() 
-    | right() 
-    | up() 
-    | down() 
-    | action() 
-    | undo() 
-    | restart()
-    | win()
+    = restart()
     | direction(int i)
-    | codeChange(map[str,value] delta)
-    | dslChange(map[str,value] delta)
-    | textUpdated()
-    | load_design()
-    | analyse()
-    | analyse_all()
+    | reload()
+    | puzzlescript_code_change(map[str,value] delta)
+    | generate()
+    | papyrvs_code_change(map[str,value] delta)
     | show(Engine engine, int win, int length)
     ;
 
@@ -301,19 +292,19 @@ Model update(Msg msg, Model model){
                 model.image = "PuzzleScript/Interface/bin/output_image0.png";
             }
             // PuzzleScript code has been changed
-            case codeChange(map[str,value] delta): {    
+            case puzzlescript_code_change(map[str,value] delta): {    
                 JsonData json_change = parseJSON(#JsonData, asJSON(delta["payload"]));
                 model = update_code(model, json_change, 0);
             }
             // DSL code has been changed
-            case dslChange(map[str,value] delta): {
+            case papyrvs_code_change(map[str,value] delta): {
                 JsonData json_change = parseJSON(#JsonData, asJSON(delta["payload"]));
                 model = update_code(model, json_change, 1);
             }
-            // Design has been loaded
-            case load_design(): {
+            // Reload PuzzleScript code
+            case reload(): {
                 model.index += 1;
-                model = restart(model.code, model.index);
+                model = reload(model.code, model.index);
                 tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
 
                 data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
@@ -447,18 +438,18 @@ Model update_code(Model model, JsonData jd, int category) {
 }
 
 /*
- *  @Name:  restart
- *  @Desc:  Re the current PuzzleScript code
+ *  @Name:  reload
+ *  @Desc:  Reload the current PuzzleScript code
  *  @Param:
  *      src     Location of the game file
  *      index   Index (???)
  *  @Ret:   Default application model
  */
-Model restart(str src, int index) {
+Model reload(str src, int index) {
     GameData game = load(src);
     Engine engine = compile(game);
 
-    str title = get_prelude(engine.game.prelude, "title", "Unknown"); // To be fixed (FIX)
+    str title = "Unknown"; 
  
     Model init() = <"none", title, engine, index, index, src, "", false, <[], 0.0>, <engine,[], 0.0>, "PuzzleScript/Interface/bin/output_image<index>.png", <[],[],[]>>;
     return init();
@@ -514,22 +505,25 @@ Model extract_goals(Engine engine, int win, int length, Model model) {
  *      model   Application model
  */
 void view(Model m) {
-    // div(class("header"), () {
-    //     h1(style(("text-shadow": "1px 1px 2px black", "font-family": "Pixel", "font-size": "50px")), "PuzzleScript");
-    // });
-
     div(class("container"), () {
         div(class("left"), () {
             div(class("top-left"),() {
-                h3("PuzzleScript Editor");
+                div(class("header"), () {
+                    h3("PuzzleScript Editor");
+                    button(class("button"), onClick(reload()), "⟳");
+                });
                 div(class("code"), () {
-                    ace("tmp", event=onAceChange(codeChange), code = m.code, height = "100%");
+                    ace("puzzlescript", event=onAceChange(puzzlescript_code_change), code = m.code, height = "100%");
                 });
             });
             div(class("bottom-left"),() {
-                h3("Papyrvs Editor");
+                div(class("header"), () {
+                    h3("Papyrvs Editor");
+                    button(class("button"), onClick(generate()), "Generate");
+                });
+
                 div(class("code"), () {
-                    ace("tmp2", event=onAceChange(dslChange), code = m.dsl, height = "100%");
+                    ace("papyrus", event=onAceChange(papyrvs_code_change), code = m.dsl, height = "100%");
                 });
             });
         });
@@ -543,7 +537,9 @@ void view(Model m) {
                 });
             });
             div(class("bottom-right"),() {
-                h3("DaedaLe Console");
+                div(class("header"), () {
+                    h3("DaedaLe Console");
+                });
                 div(class("code terminal"), () {
                     p("Placeholder");
                 });
@@ -560,13 +556,13 @@ void view(Model m) {
  */
 void view_pad(Model m){
     div(class("pad"), () {
-        button(class("button up"), onClick(direction(38)), "▲");
+        button(class("button button-pad"), onClick(direction(38)), "▲");
         div(class("middle-buttons"), (){
-            button(class("button left"), onClick(direction(37)), "◄");
-            button(class("button restart"), onClick(restart()), "⟳");
-            button(class("button right"), onClick(direction(39)), "►");
+            button(class("button button-pad"), onClick(direction(37)), "◄");
+            button(class("button button-pad"), onClick(restart()), "⟳");
+            button(class("button button-pad"), onClick(direction(39)), "►");
         });
-        button(class("button down"), onClick(direction(40)), "▼");
+        button(class("button button-pad"), onClick(direction(40)), "▼");
     });
 }
 
