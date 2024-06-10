@@ -244,9 +244,9 @@ data Msg
  *  @Ret:   Call to run the application
  */ 
 App[Model] main() {
-    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
+    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
     // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/sokoban_basic.PS|;
-    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/nekopuzzle.PS|;
+    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/nekopuzzle.PS|;
 
     GameData game = load(game_loc);
     Engine engine = compile(game);
@@ -296,8 +296,8 @@ Model update(Msg msg, Model model){
                 }
             }
             // 'Restart' button has been pressed
-            case restart(): {                            
-                model.engine.current_level = model.engine.first_level;
+            case restart(): {
+                model.engine.current_level = model.engine.levels[model.engine.index];
                 model.image = "PuzzleScript/Interface/bin/output_image0.png";
             }
             // PuzzleScript code has been changed
@@ -392,6 +392,7 @@ Model update(Msg msg, Model model){
             model.index += 1;
             model.engine = execute_move(model.engine, model.input, 0);
             if (check_conditions(model.engine)) {
+                model.index = 0;
                 model.engine.index += 1;
                 model.engine.current_level = model.engine.levels[model.engine.index];
             }
