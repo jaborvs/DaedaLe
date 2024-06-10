@@ -119,6 +119,7 @@ data Rule
         str direction,          // Direction to be applied: LEFT, RIGHT, UP, DOWN
         list[RulePart] left,    // LHS of the rule
         list[RulePart] right,   // RHS of the rule
+        bool movement,          // Boolean indicating if the rule is a movement rule
         RuleData original       // Original AST node
         )
     | game_rule_empty()         // Empty rule
@@ -169,8 +170,8 @@ data LevelAppliedData
             list[RuleData] list_applied_rules   //      Applied rules AST nodes
             ] actual_applied_rules,             
         map[                                    // Applied movement rules
-            int,                                //      Index (turn of the game)
-            list[str]                           //      Direction
+            int index,                          //      Index (turn of the game)
+            list[str] list_moves                //      Direction
             ] applied_moves,
         list[list[str]] dead_ends,              // Dead ends: loosing playtraces using verbs
         list[str] shortest_path,                // Shortest path
@@ -632,6 +633,7 @@ list[Rule] _compile_rule_extend_direction(RuleData rd: rule_data(left, right, me
                 direction,  // Direction to be applied to
                 left,       // LHS
                 right,      // RHS
+                false,      // Movement boolan
                 rd          // Original AST node
             );
             new_rule_directions += cloned_rule;
@@ -643,6 +645,7 @@ list[Rule] _compile_rule_extend_direction(RuleData rd: rule_data(left, right, me
             direction,  // Direction to be applied to
             left,       // LHS
             right,      // RHS
+            false,      // Movement boolean
             rd          // Original AST node
         );
         new_rule_directions += cloned_rule;
@@ -656,6 +659,7 @@ list[Rule] _compile_rule_extend_direction(RuleData rd: rule_data(left, right, me
                 direction,  // Direction to be applied to
                 left,       // LHS
                 right,      // RHS
+                false,      // Movement boolean
                 rd          // Original AST node
             );
             new_rule_directions += cloned_rule;
@@ -675,10 +679,16 @@ list[Rule] _compile_rule_extend_direction(RuleData rd: rule_data(left, right, me
  * @Ret:    New rule with converted relative directions
  */
 Rule _compile_rule_relative_directions_to_absolute(Rule rule) {
+    rule.movement = _compile_rule_part_movement(rule.left);
     rule.left = _compile_rule_part_relative_directions_to_absolute(rule.left, rule.direction);
     rule.right = _compile_rule_part_relative_directions_to_absolute(rule.right, rule.direction);
 
     return rule;
+}
+
+bool _compile_rule_part_movement(list[RulePart] rule_parts) {
+    if (rule_parts == [] || rule_parts[0].contents == [] || rule_parts[0].contents[0].content == []) return false;
+    return isDirection(rule_parts[0].contents[0].content[0]);
 }
 
 /*
@@ -714,6 +724,8 @@ list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart]
                 new_rc += rc;
                 continue;
             }
+            
+
 
             // Step 2.2: If the size its bigger, either we have a given direction
             //           or we have a command. We need to figure it out
