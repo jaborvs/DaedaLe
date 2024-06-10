@@ -160,12 +160,13 @@ data CurrentLine = currentline(
  *  @Name:  JsonData (???)
  *  @Desc:  JSON data structure
  */
-data JsonData = alldata(
-    CurrentLine \start,                                     // Start position 
-    str action,                                             // Action 
-    list[str] lines,                                        // Lines
-    CurrentLine end,                                        // End position
-    int id                                                  // Identifier
+data JsonData 
+    = alldata(
+        CurrentLine \start,                                     // Start position 
+        str action,                                             // Action 
+        list[str] lines,                                        // Lines
+        CurrentLine end,                                        // End position
+        int id                                                  // Identifier
     );
 
 /*
@@ -192,11 +193,13 @@ alias Model = tuple[
  *  @Desc:  Dead ends data structure
  */
 alias Dead_Ends = tuple[ 
-    list[
-        tuple[Engine engine,                                // Engine
-        list[str] loosing_moves]                            // Loosing moves
-        ] loosing_moves_list,                               // Loosing moves list
-    real time                                               // Execution time (???)
+    list[                               // Loosing moves list:
+        tuple[
+            Engine engine,              //      Engine
+            list[str] loosing_moves     //      Loosing moves
+        ]                            
+    ] loosing_moves_list,                               
+    real time                           // Execution time (???)
     ];
 
 /*
@@ -204,9 +207,9 @@ alias Dead_Ends = tuple[
  *  @Desc:  Win data structure
  */
 alias Win = tuple[
-    Engine engine,                                          // Engine (???)
-    list[str] winning_moves,                                // Winning moves
-    real time                                               // Execution time (???)
+    Engine engine,              // Engine (???)
+    list[str] winning_moves,    // Winning moves
+    real time                   // Execution time (???)
     ];
 
 /*
@@ -259,7 +262,7 @@ App[Model] main() {
     // We start our GUI model
     Model init() = <"none", title, engine, 0, 0, readFile(game_loc), limerick_dsl, false, <[],0.0>, <engine,[],0.0>, "PuzzleScript/Interface/bin/output_image0.png", <[],[],[]>>;
     Tutorial tutorial = tutorial_build(limerick_dsl);
-    SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/css/style.css"]), update);
+    SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("DaedaLe", id, view, css = ["PuzzleScript/Interface/css/styles.css"]), update);
 
     App[Model] counterWebApp() = webApp(counterApp(), |project://DaedaLe/src/|);
 
@@ -268,46 +271,6 @@ App[Model] main() {
 
 /******************************************************************************/
 // --- Public GUI Functions ----------------------------------------------------
-
-/*
- *  @Name:  extract_goals
- *  @Desc:  Gets the goals of the current level after it has been solved
- *  @Param:
- *      engine          Engine of the application
- *      win             Boolean that determines the color of the path (1: victory green, 0: defeat red)
- *      length          (???)
- *      model           Application model
- *  @Ret:   Updated model of the application (???)
- */
-Model extract_goals(Engine engine, int win, int length, Model model) {
-    int level_index = get_level_index(engine, engine.current_level);
-    Tutorial tutorial = tutorial_build(model.dsl);
-    Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
-
-    if (!(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index))) {
-        return model;
-    }
-    
-    // Get travelled coordinates and generate image that shows coordinates
-    // 'win' argument determines the color of the path
-    list[Coords] coords = engine.level_applied_data[engine.current_level.original].travelled_coords;
-    tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
-
-    data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
-    writeFile(data_loc, json_data[0]);
-    exec("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
-
-    tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
-    tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["PathGenerator.py", new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
-    model.index += 1;
-    model.image = "PuzzleScript/Interface/bin/path<model.index>.png";
-
-    map[int,list[RuleData]] rules = engine.level_applied_data[engine.current_level.original].actual_applied_rules;
-
-    model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, length);
-
-    return model;
-}
 
 /*
  *  @Name:  update
@@ -432,17 +395,17 @@ Model update(Msg msg, Model model){
                 model.engine.index += 1;
                 model.engine.current_level = model.engine.levels[model.engine.index];
             }
-            println("7");
+
             tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
-            println("8");
             data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
             writeFile(data_loc, json_data[0]);
             tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
-            execute = false;
             model.image = "PuzzleScript/Interface/bin/output_image<model.index>.png";
+
+            execute = false;
         }
     }
-    println("9");
+
     return model;
 }
 
@@ -500,6 +463,46 @@ Model restart(str src, int index) {
     return init();
 }
 
+/*
+ *  @Name:  extract_goals
+ *  @Desc:  Gets the goals of the current level after it has been solved
+ *  @Param:
+ *      engine          Engine of the application
+ *      win             Boolean that determines the color of the path (1: victory green, 0: defeat red)
+ *      length          (???)
+ *      model           Application model
+ *  @Ret:   Updated model of the application (???)
+ */
+Model extract_goals(Engine engine, int win, int length, Model model) {
+    int level_index = get_level_index(engine, engine.current_level);
+    Tutorial tutorial = tutorial_build(model.dsl);
+    Lesson lesson = any(Lesson lesson <- tutorial.lessons, lesson.number == level_index) ? lesson : tutorial.lessons[level_index];
+
+    if (!(any(Lesson lesson <- tutorial.lessons, lesson.number == level_index))) {
+        return model;
+    }
+    
+    // Get travelled coordinates and generate image that shows coordinates
+    // 'win' argument determines the color of the path
+    list[Coords] coords = engine.level_applied_data[engine.current_level.original].travelled_coords;
+    tuple[str, str, str] json_data = pixel_to_json(engine, model.index + 1);
+
+    data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
+    writeFile(data_loc, json_data[0]);
+    exec("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+
+    tuple[str, str] new_json_data = coords_to_json(engine, coords, model.index + 1);
+    tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["PathGenerator.py", new_json_data[0], win == 0 ? "0" : "1", new_json_data[1]]);
+    model.index += 1;
+    model.image = "PuzzleScript/Interface/bin/path<model.index>.png";
+
+    map[int,list[RuleData]] rules = engine.level_applied_data[engine.current_level.original].actual_applied_rules;
+
+    model.learning_goals = resolve_verbs(engine, rules, tutorial.verbs, lesson.elems, length);
+
+    return model;
+}
+
 /*****************************************************************************/
 // --- View Functions ---------------------------------------------------------
 
@@ -510,58 +513,91 @@ Model restart(str src, int index) {
  *      model   Application model
  */
 void view(Model m) {
-    div(class("header"), () {
-        h1(style(("text-shadow": "1px 1px 2px black", "font-family": "Pixel", "font-size": "50px")), "PuzzleScript");
-    });
+    // div(class("header"), () {
+    //     h1(style(("text-shadow": "1px 1px 2px black", "font-family": "Pixel", "font-size": "50px")), "PuzzleScript");
+    // });
 
-    div(class("main"), () {
-
+    div(class("container"), () {
         div(class("left"), () {
-            div(class("left_top"), () {
-                h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Editor"); 
-                ace("myAce", event=onAceChange(codeChange), code = m.code);
-                button(onClick(load_design()), "Reload");
+            div(class("top-left"),() {
+                h3("PuzzleScript Editor");
+                div(class("code"), () {
+                    ace("tmp", event=onAceChange(codeChange), code = m.code, height = "100%");
+                });
             });
-            div(class("left_bottom"), () {
-                div(class("TutoMate"), () {
-                    h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "TutoMate");
-                    div(class("panel"), () {
-                        h3(style(("font-family": "BubbleGum")), "Get insights");
-                        button(onClick(analyse()), "Analyse");
-                        button(onClick(analyse_all()), "Analyse all");
-                    });
-                    ace("TutoMate", event=onAceChange(dslChange), code = m.dsl, width="100%", height="15%");
+            div(class("bottom-left"),() {
+                h3("Papyrvs Editor");
+                div(class("code"), () {
+                    ace("tmp2", event=onAceChange(dslChange), code = m.dsl, height = "100%");
                 });
             });
         });
         div(class("right"), onKeyDown(direction), () {
-            div(style(("width": "40vw", "height": "40vh")), onKeyDown(direction), () {
-                int index = 0;
-                index = (m.index == m.begin_index) ? m.begin_index : m.index;
-                img(style(("width": "40vw", "height": "40vh", "image-rendering": "pixelated")), (src("<m.image>")), () {});
+            div(class("top-right"), onKeyDown(direction), () {
+                div(class("top-right-left"), () {
+                    img(class("puzzlescript-game"), src("<m.image>"), () {});
+                });
+                div(class("top-right-right"), () {
+                    view_pad(m);
+                });
             });
-            div(class("data"), () {
-                div(class(""), () {view_panel(m);});
-                if (m.analyzed) view_results(m);
+            div(class("bottom-right"),() {
+                h3("DaedaLe Console");
+                div(class("code terminal"), () {
+                    p("Placeholder");
+                });
             });
         });
     });
+
+    // div(class("main"), () {
+    //     div(class("left"), () {
+    //         div(class("left_top"), () {
+    //             h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Editor"); 
+    //             ace("myAce", event=onAceChange(codeChange), code = m.code);
+    //             button(onClick(load_design()), "Reload");
+    //         });
+    //         // div(class("left_bottom"), () {
+    //         //     div(class("TutoMate"), () {
+    //         //         h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "TutoMate");
+    //         //         div(class("panel"), () {
+    //         //             h3(style(("font-family": "BubbleGum")), "Get insights");
+    //         //             button(onClick(analyse()), "Analyse");
+    //         //             button(onClick(analyse_all()), "Analyse all");
+    //         //         });
+    //         //         ace("TutoMate", event=onAceChange(dslChange), code = m.dsl, width="100%", height="15%");
+    //         //     });
+    //         // });
+    //     });
+    //     div(class("right"), onKeyDown(direction), () {
+    //         div(style(("width": "200px", "height": "200px")), onKeyDown(direction), () {
+    //             int index = 0;
+    //             index = (m.index == m.begin_index) ? m.begin_index : m.index;
+    //             img(style(("width": "40vw", "height": "40vh","image-rendering": "pixelated")), (src("<m.image>")), () {});
+    //         });
+    //         div(class("data"), () {
+    //             div(class(""), () {view_pad(m);});
+    //             if (m.analyzed) view_results(m);
+    //         });
+    //     });
+    // });
 }
 
 /*
- *  @Name:  view_panel
+ *  @Name:  view_pad
  *  @Desc:  Loads the HTML of the movement buttons in the GUI
  *  @Param:
  *      model   Application model
  */
-void view_panel(Model m){
-    div(class("panel"), () {
-        h3(style(("font-family": "BubbleGum")), "Buttons");
-        button(onClick(direction(37)), "Left");
-        button(onClick(direction(39)), "Right");
-        button(onClick(direction(38)), "Up");
-        button(onClick(direction(40)), "Down");
-        button(onClick(restart()), "Restart");
+void view_pad(Model m){
+    div(class("pad"), () {
+        button(class("button up"), onClick(direction(38)), "▲");
+        div(class("middle-buttons"), (){
+            button(class("button left"), onClick(direction(37)), "◄");
+            button(class("button restart"), onClick(restart()), "⟳");
+            button(class("button right"), onClick(direction(39)), "►");
+        });
+        button(class("button down"), onClick(direction(40)), "▼");
     });
 }
 

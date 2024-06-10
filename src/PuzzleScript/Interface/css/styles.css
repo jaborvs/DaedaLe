@@ -1,0 +1,158 @@
+@font-face {
+    font-family: 'Silkscreen';
+    src: url('../fonts/slkscre.ttf') format('truetype');
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    color: white;
+    font-family: 'Courier New', Courier, monospace
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Silkscreen', monospace; /* Usar la fuente personalizada en los títulos */
+    padding: 0;
+    margin: 0;
+    background-color: #1a1c16; /* Un tono de gris oscuro para el fondo */
+    color: #fff; /* Texto blanco para resaltar */
+    padding: 10px; /* Ajuste el relleno según sea necesario */
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    border-top: 1px solid #ddd; /* Borde gris claro arriba */
+    border-bottom: 1px solid #ddd; /* Borde gris claro abajo */
+}
+
+.container {
+    display: flex;
+    height: 100vh; /* Ocupa toda la altura de la ventana */
+}
+
+.left, .right {
+    flex: 1; /* Cada div ocupará un 50% del ancho */
+}
+
+.left {
+    display: flex;
+    flex-direction: column; /* Divide la sección izquierda en una columna */
+    background-color: #f0f0f0;
+}
+
+.top-left, .bottom-left {
+    flex: 1; /* Cada div ocupará un 50% del alto de la sección izquierda */
+    width: 100%; /* Cada div ocupará el 100% del ancho del contenedor padre */
+    display: flex;
+    flex-direction: column;
+}
+
+.right {
+    display: flex;
+    flex-direction: column; /* Divide la sección derecha en una columna */
+}
+
+.top-right {
+    flex: 3; /* Ocupa 1 parte de 3 */
+    width: 100%; /* Ocupa todo el ancho del contenedor padre */
+    display: flex;
+    justify-content: center; /* Centra el contenido horizontalmente */
+    align-items: center; /* Centra el contenido verticalmente */
+    background-color: #000000;
+}
+
+.top-right-left {
+    flex: 1;
+    display: flex;
+    height: 100%; /* La altura se ajusta al 100% del contenedor */
+    justify-content: center; /* Esto centra el contenido horizontalmente dentro del elemento izquierdo */
+    align-items: center; /* Esto centra el contenido verticalmente dentro del elemento izquierdo */
+}
+
+.top-right-right {
+    width: auto;
+}
+
+.bottom-right {
+    flex: 4; /* Ocupa 2 partes de 3 */
+    width: 100%; /* Ocupa todo el ancho del contenedor padre */
+    display: flex;
+    flex-direction: column;
+    background-color: #282c24;
+}
+
+.puzzlescript-game {
+    width: auto; /* La anchura se ajustará automáticamente */
+    height: 100%; /* La altura se ajusta al 100% del contenedor */
+    object-fit: cover; /* La imagen se recorta para llenar el contenedor sin distorsionarse */
+    image-rendering: pixelated
+}
+
+.pad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    margin-right: 5vw;
+}
+
+.middle-buttons {
+    display: flex;
+}
+
+.button {
+    background-color: #000;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 5px;
+    font-size: 12px;
+    padding: 10px;
+    margin: 1px;
+    cursor: pointer;
+}
+
+.button:active {
+    background-color: #333;
+}
+
+.code {
+    flex: 1;
+}
+
+.terminal {
+    font-size: x-small;
+    padding-inline: 8px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
