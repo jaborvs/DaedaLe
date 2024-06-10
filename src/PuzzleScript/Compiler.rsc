@@ -72,8 +72,8 @@ map[str, list[str]] directionAggregates = (
  */
 data Engine 
     = game_engine(
-        int index, 
-        map[str name, ObjectData od] objects,                                                                   // Map with object name as key and the object AST node as value                                                                                    // Current step of the game
+        int index,                                                                                      // Index indicating in which level we are
+        map[str name, ObjectData od] objects,                                                           // Map with object name as key and the object AST node as value                                                                                    // Current step of the game
         list[Level] levels,                                                                             // Levels
         Level first_level,                                                                              // First level
         Level current_level,                                                                            // Current level 

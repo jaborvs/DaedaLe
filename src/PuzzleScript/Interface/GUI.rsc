@@ -220,7 +220,7 @@ data Msg
     | down() 
     | action() 
     | undo() 
-    | reload()
+    | restart()
     | win()
     | direction(int i)
     | codeChange(map[str,value] delta)
@@ -233,122 +233,41 @@ data Msg
     ;
 
 /*****************************************************************************/
-// --- Backend Functions ------------------------------------------------------
+// --- Main Function ----------------------------------------------------------
 
 /*
- *  @Name:  coords_to_json
- *  @Desc:  Converts the coordinates to JSON format for the level GUI representation
- *  @Param:
- *      engine  Engine of the application
- *      coords  Coordinates to converted
- *      index   Index (???)
- *  @Ret:   Tuple containing the coordinates in json and the index in json
- */
-tuple[str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
-    tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
-    str json = "[";
+ *  @Name:  main()
+ *  @Desc:  Runs the application
+ *  @Ret:   Call to run the application
+ */ 
+App[Model] main() {
+    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
+    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/sokoban_basic.PS|;
+    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/nekopuzzle.PS|;
 
-    for (Coords coord <- coords) {
-        json += "{\"x\":<coord[1]>, \"y\":<coord[0]>},";
-    }
-    json = json[0..size(json) - 1];
-    json += "]";
+    GameData game = load(game_loc);
+    Engine engine = compile(game);
 
-    return <json, "{\"index\": <index>}">;
+    str title = "Lime Rick";
 
+    // We represent the level on its initial state
+    tuple[str, str, str] json_data = pixel_to_json(engine, 0);
+    data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
+    writeFile(data_loc, json_data[0]);
+    execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+
+    // We start our GUI model
+    Model init() = <"none", title, engine, 0, 0, readFile(game_loc), limerick_dsl, false, <[],0.0>, <engine,[],0.0>, "PuzzleScript/Interface/bin/output_image0.png", <[],[],[]>>;
+    Tutorial tutorial = tutorial_build(limerick_dsl);
+    SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/css/style.css"]), update);
+
+    App[Model] counterWebApp() = webApp(counterApp(), |project://DaedaLe/src/|);
+
+    return counterWebApp();
 }
 
-/*
- *  @Name:  pixel_to_json
- *  @Desc:  Converts a pixel to JSON format for the level GUI representation
- *  @Param:
- *      engine  Engine of the application
- *      index   Index (???)
- *  @Ret:   Tuple containing the coordinates in json, the level size in json 
- *          and the index in json
- */
-tuple[str,str,str] pixel_to_json(Engine engine, int index) {
-    tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
-    str json = "[";
-    tmp = 0;
-
-    for (int i <- [0..level_size.height]) {
-        for (int j <- [0..level_size.width]) {
-            if (!(engine.current_level.objects[<i,j>])? || isEmpty(engine.current_level.objects[<i,j>])) {
-                continue;
-            }
-
-            list[Object] objects = engine.current_level.objects[<i,j>];
-
-            // str name = objects[size(objects) - 1].current_name;
-            // ObjectData obj = engine.objects[name];
-
-            several = false;
-            if (size(objects) > 1) several = true;
-
-            for (Object my_obj <- objects) {
-                str name = my_obj.current_name;
-                ObjectData obj = engine.objects[name];
-
-                for (int k <- [0..5]) {
-                    for (int l <- [0..5]) {
-                        json += "{";
-                        json += "\"x\": <j * 5 + l>,";
-                        json += "\"y\": <i * 5 + k>,";
-
-                        if(isEmpty(obj.sprite)) {
-                            json += "\"c\": \"<COLORS[toLowerCase(obj.colors[0])]>\"";
-                        }
-                        else {
-                            Pixel pix = obj.sprite[k][l];
-                            if (pix.color_number == ".") {
-                                json += "\"c\": \"......\"";
-                            }
-                            else if (COLORS[obj.colors[toInt(pix.color_number)]]?) {
-                                json += "\"c\": \"<COLORS[obj.colors[toInt(pix.color_number)]]>\"";
-                            }
-                            // else if (COLORS[pix.color]?) {
-                            //     json += "\"c\": \"<COLORS[pix.color]>\"";
-                            // }
-                            // // I think this never runs (???)
-                            // else if (pix.color_number != ".") {
-                            //     json += "\"c\": \"<pix.color>\"";
-                            // }
-                            else {
-                                json += "\"c\": \"#FFFFFF\"";
-                            }
-                        }
-                        json += "},";
-                    }
-                }
-            }
-        }
-    }
-
-    json = json[0..size(json) - 1];
-    json += "]";
-
-    return <json, "{\"width\": <level_size.width>, \"height\": <level_size.height>}", "{\"index\": <index>}">;
-
-}
-
-/*
- *  @Name:  get_level_index
- *  @Desc:  Gets the index of the current represented level
- *  @Param:
- *      engine          Engine of the application
- *      current_level   Current represented level
- *  @Ret:   Index of the level (???)
- */
-int get_level_index(Engine engine, Level current_level) {
-    int index = 0;
-
-    while (engine.levels[index].original != current_level.original) {
-        index += 1;
-    }
-
-    return index + 1;
-}
+/******************************************************************************/
+// --- Public GUI Functions ----------------------------------------------------
 
 /*
  *  @Name:  extract_goals
@@ -413,8 +332,8 @@ Model update(Msg msg, Model model){
                     case 40: model.input = "down";
                 }
             }
-            // 'Reload' button has been pressed
-            case reload(): {                            
+            // 'Restart' button has been pressed
+            case restart(): {                            
                 model.engine.current_level = model.engine.first_level;
                 model.image = "PuzzleScript/Interface/bin/output_image0.png";
             }
@@ -431,7 +350,7 @@ Model update(Msg msg, Model model){
             // Design has been loaded
             case load_design(): {
                 model.index += 1;
-                model = reload(model.code, model.index);
+                model = restart(model.code, model.index);
                 tuple[str, str, str] json_data = pixel_to_json(model.engine, model.index);
 
                 data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
@@ -484,11 +403,8 @@ Model update(Msg msg, Model model){
             // 'Analyse' button has been pressed
             case analyse(): {
                 int before = cpuTime();
-                println("1");
                 tuple[Engine engine, list[str] winning_moves] result = bfs(model.engine, ["up","down","left","right"], "win", 1);
-                println("2");
                 real actual_time = (cpuTime() - before) / 1000000.00;
-                println("3");
                 tuple[Engine engine, list[str] winning_moves, real time] result_time = <result[0], result[1], actual_time>;
                 
                 model.engine.level_applied_data[model.engine.current_level.original].shortest_path = result.winning_moves;
@@ -507,15 +423,12 @@ Model update(Msg msg, Model model){
             default: return model;
         }
         
-        println("4");
         // In case we have done a manual move we update the index, check if we have won and update
         // the leve representation
         if (execute) {
-            println("5");
             model.index += 1;
             model.engine = execute_move(model.engine, model.input, 0);
-            println("6");
-            if (check_conditions(model.engine, "win")) {
+            if (check_conditions(model.engine)) {
                 model.engine.index += 1;
                 model.engine.current_level = model.engine.levels[model.engine.index];
             }
@@ -570,14 +483,14 @@ Model update_code(Model model, JsonData jd, int category) {
 }
 
 /*
- *  @Name:  reload
- *  @Desc:  Reloads the current PuzzleScript code
+ *  @Name:  restart
+ *  @Desc:  Re the current PuzzleScript code
  *  @Param:
  *      src     Location of the game file
  *      index   Index (???)
  *  @Ret:   Default application model
  */
-Model reload(str src, int index) {
+Model restart(str src, int index) {
     GameData game = load(src);
     Engine engine = compile(game);
 
@@ -589,55 +502,6 @@ Model reload(str src, int index) {
 
 /*****************************************************************************/
 // --- View Functions ---------------------------------------------------------
-
-/*
- *  @Name:  view_panel
- *  @Desc:  Loads the HTML of the movement buttons in the GUI
- *  @Param:
- *      model   Application model
- */
-void view_panel(Model m){
-    div(class("panel"), () {
-        h3(style(("font-family": "BubbleGum")), "Buttons");
-        button(onClick(direction(37)), "Left");
-        button(onClick(direction(39)), "Right");
-        button(onClick(direction(38)), "Up");
-        button(onClick(direction(40)), "Down");
-        button(onClick(reload()), "Restart");
-    });
-}
-
-/*
- *  @Name:  view_results
- *  @Desc:  Loads the HTML of the analysis' results in the GUI
- *  @Param:
- *      model   Application model
- */
-void view_results(Model m) {
-    div(class("panel"), () {
-        h3("Results");
-        LevelAppliedData ad = m.engine.level_applied_data[m.engine.current_level.original];
-        p("-- Shortest path --");
-        button(onClick(show(m.win.engine, 1, size(m.win.winning_moves))), "<size(m.win.winning_moves)> steps");
-        p("-- Dead ends --");
-        for (int i <- [0..size(m.de[0])]) {
-            button(onClick(show(m.de[i][0], 0, size(m.de[i][1]))), "<i + 1>");
-        }
-
-        if (m.learning_goals != <[],[],[]>) {
-
-            p("-- The following verbs have been used --");
-            p("<intercalate(", ", m.learning_goals[2])>");
-
-            p("-- The following learning goals are realised --");
-            p("<intercalate(", ", m.learning_goals[0])>");
-
-            p("-- The following learning goals are not realised --");
-            p("<intercalate(", ", m.learning_goals[1])>");
-
-        }
-    });
-}
 
 /*
  *  @Name:  view
@@ -684,34 +548,139 @@ void view(Model m) {
     });
 }
 
-/*****************************************************************************/
-// --- Main Function ----------------------------------------------------------
+/*
+ *  @Name:  view_panel
+ *  @Desc:  Loads the HTML of the movement buttons in the GUI
+ *  @Param:
+ *      model   Application model
+ */
+void view_panel(Model m){
+    div(class("panel"), () {
+        h3(style(("font-family": "BubbleGum")), "Buttons");
+        button(onClick(direction(37)), "Left");
+        button(onClick(direction(39)), "Right");
+        button(onClick(direction(38)), "Up");
+        button(onClick(direction(40)), "Down");
+        button(onClick(restart()), "Restart");
+    });
+}
 
 /*
- *  @Name:  main()
- *  @Desc:  Runs the application
- *  @Ret:   Call to run the application
- */ 
-App[Model] main() {
-    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
-    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/sokoban_basic.PS|;
-    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/nekopuzzle.PS|;
+ *  @Name:  view_results
+ *  @Desc:  Loads the HTML of the analysis' results in the GUI
+ *  @Param:
+ *      model   Application model
+ */
+void view_results(Model m) {
+    div(class("panel"), () {
+        h3("Results");
+        LevelAppliedData ad = m.engine.level_applied_data[m.engine.current_level.original];
+        p("-- Shortest path --");
+        button(onClick(show(m.win.engine, 1, size(m.win.winning_moves))), "<size(m.win.winning_moves)> steps");
+        p("-- Dead ends --");
+        for (int i <- [0..size(m.de[0])]) {
+            button(onClick(show(m.de[i][0], 0, size(m.de[i][1]))), "<i + 1>");
+        }
 
-    GameData game = load(game_loc);
-    Engine engine = compile(game);
+        if (m.learning_goals != <[],[],[]>) {
+            p("-- The following verbs have been used --");
+            p("<intercalate(", ", m.learning_goals[2])>");
 
-    str title = "Lime Rick";
+            p("-- The following learning goals are realised --");
+            p("<intercalate(", ", m.learning_goals[0])>");
 
-    tuple[str, str, str] json_data = pixel_to_json(engine, 0);
-    data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
-    writeFile(data_loc, json_data[0]);
-    execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+            p("-- The following learning goals are not realised --");
+            p("<intercalate(", ", m.learning_goals[1])>");
+        }
+    });
+}
 
-    Model init() = <"none", title, engine, 0, 0, readFile(game_loc), limerick_dsl, false, <[],0.0>, <engine,[],0.0>, "PuzzleScript/Interface/bin/output_image0.png", <[],[],[]>>;
-    Tutorial tutorial = tutorial_build(limerick_dsl);
-    SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("Test", id, view, css = ["PuzzleScript/Interface/css/style.css"]), update);
+/******************************************************************************/
+// --- Public Json Conversion Functions ----------------------------------------
 
-    App[Model] counterWebApp() = webApp(counterApp(), |project://DaedaLe/src/|);
+/*
+ *  @Name:  coords_to_json
+ *  @Desc:  Converts the coordinates to JSON format for the level GUI representation
+ *  @Param:
+ *      engine  Engine of the application
+ *      coords  Coordinates to converted
+ *      index   Index (???)
+ *  @Ret:   Tuple containing the coordinates in json and the index in json
+ */
+tuple[str, str] coords_to_json(Engine engine, list[Coords] coords, int index) {
+    tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
+    str json = "[";
 
-    return counterWebApp();
+    for (Coords coord <- coords) {
+        json += "{\"x\":<coord[1]>, \"y\":<coord[0]>},";
+    }
+    json = json[0..size(json) - 1];
+    json += "]";
+
+    return <json, "{\"index\": <index>}">;
+
+}
+
+/*
+ *  @Name:  pixel_to_json
+ *  @Desc:  Converts a pixel to JSON format for the level GUI representation
+ *  @Param:
+ *      engine  Engine of the application
+ *      index   Index (???)
+ *  @Ret:   Tuple containing the coordinates in json, the level size in json 
+ *          and the index in json
+ */
+tuple[str,str,str] pixel_to_json(Engine engine, int index) {
+    tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
+    str json = "[";
+    tmp = 0;
+
+    for (int i <- [0..level_size.height]) {
+        for (int j <- [0..level_size.width]) {
+            if (!(engine.current_level.objects[<i,j>])? || isEmpty(engine.current_level.objects[<i,j>])) {
+                continue;
+            }
+
+            list[Object] objects = engine.current_level.objects[<i,j>];
+
+            several = false;
+            if (size(objects) > 1) several = true;
+
+            for (Object my_obj <- objects) {
+                str name = my_obj.current_name;
+                ObjectData obj = engine.objects[name];
+
+                for (int k <- [0..5]) {
+                    for (int l <- [0..5]) {
+                        json += "{";
+                        json += "\"x\": <j * 5 + l>,";
+                        json += "\"y\": <i * 5 + k>,";
+
+                        if(isEmpty(obj.sprite)) {
+                            json += "\"c\": \"<COLORS[toLowerCase(obj.colors[0])]>\"";
+                        }
+                        else {
+                            Pixel pix = obj.sprite[k][l];
+                            if (pix.color_number == ".") {
+                                json += "\"c\": \"......\"";
+                            }
+                            else if (COLORS[obj.colors[toInt(pix.color_number)]]?) {
+                                json += "\"c\": \"<COLORS[obj.colors[toInt(pix.color_number)]]>\"";
+                            }
+                            else {
+                                json += "\"c\": \"#FFFFFF\"";
+                            }
+                        }
+                        json += "},";
+                    }
+                }
+            }
+        }
+    }
+
+    json = json[0..size(json) - 1];
+    json += "]";
+
+    return <json, "{\"width\": <level_size.width>, \"height\": <level_size.height>}", "{\"index\": <index>}">;
+
 }
