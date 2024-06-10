@@ -1,5 +1,5 @@
-title Simple Block Pushing Game
-author David Skinner
+title Multiple Patterns
+author increpare
 homepage www.puzzlescript.net
 
 ========
@@ -13,14 +13,6 @@ lightgreen green
 11101
 11111
 10111
-
-Target
-darkblue
-.....
-.000.
-.0.0.
-.000.
-.....
 
 Wall
 brown darkbrown
@@ -38,13 +30,13 @@ black orange white blue
 .333.
 .3.3.
 
-Crate
-orange
+Sumo
+pink white
+..0..
 00000
-0...0
-0...0
-0...0
-00000
+.000.
+.111.
+.0.0.
 
 =======
 LEGEND
@@ -53,55 +45,39 @@ LEGEND
 . = Background
 # = Wall
 P = Player
-* = Crate
-@ = Crate and Target
-O = Target
-
-obstacle = Wall or Crate
+S = Sumo
 
 =======
 SOUNDS
 =======
 
-Crate move 36772507
+Sumo MOVE 48878907
 
 ================
 COLLISIONLAYERS
 ================
 
 Background
-Target
-Player, Wall, Crate
+Player, Wall, Sumo
 
 ======
 RULES
 ======
 
-[ > Player | Crate ] -> [ > Player | > Crate ] 
-
+[ > Player ] [ Sumo ] -> [ > Player ] [ > Sumo ] 
 
 ==============
 WINCONDITIONS
 ==============
 
-all Target on Crate
-
 =======
 LEVELS
 =======
 
-######
-#.O..#
-#....#
-#....#
-#.*..#
-#.P..#
-######
-
-######
-#....#
-#.#P.#
-#.*@.#
-#.O@.#
-#....#
-######
+########
+#......#
+#......#
+#.P..S.#
+#......#
+#......#
+########

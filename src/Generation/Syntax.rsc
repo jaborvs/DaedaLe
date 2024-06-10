@@ -27,7 +27,7 @@ keyword GeneralKeyword
     = "tutorial" | "level" | "lesson"; 
 
 keyword ModifierKeyword
-    = "+" | "*";
+    = "+" | "*" ;
 
 /******************************************************************************/
 // --- Lexicals ----------------------------------------------------------------
@@ -46,17 +46,17 @@ lexical ID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ Keywords;
 /******************************************************************************/
 // --- Syntax ------------------------------------------------------------------
 
-start syntax Tutorial
-    = tutorial_data: 'tutorial' ID "{" Level+ "}";
+start syntax Papyrus
+    = papyrus_data: 'tutorial' ID "{" LevelDraft+ "}";
 
-syntax Level
-    = level_description_data: 'level' INT "{" Lesson+ "}";
+syntax LevelDraft
+    = level_draft_data: 'level' INT "{" Lesson+ "}";
 
 syntax Lesson
-    = lesson_data: 'lesson' INT ":" ID "{" Description Goal+ "}";
+    = lesson_data: 'lesson' INT ":" ID "{" Description? Goal+ "}";
 
 syntax Description
-    = description_data: "\"" STRING "\"";
+    = "\"" STRING "\"";
 
-syntax LessonGoal
-    = legoal_data: ID ModifierKeywords ";";
+syntax Goal
+    = goal_data: ID ModifierKeywords ";";

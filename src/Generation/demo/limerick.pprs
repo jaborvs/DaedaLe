@@ -1,0 +1,10 @@
+tutorial Lime Rick {
+    level 1 {
+        lesson 1: crawl_and_climb {
+            "Lesson that teaches a player to crawl and climb"
+            crawl +;
+            climb +;
+            crawl +;
+        }
+    }
+}

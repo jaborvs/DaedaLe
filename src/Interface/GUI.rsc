@@ -204,9 +204,13 @@ data CurrentLine = currentline(
  *  @Ret:   Call to run the application
  */ 
 App[Model] main() {
-    game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/TutorialGames/limerick.PS|;
-    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/sokoban_basic.PS|;
-    // game_loc = |project://DaedaLe/src/PuzzleScript/Tutorials/demo/nekopuzzle.PS|;
+    game_loc = |project://DaedaLe/src/PuzzleScript/demo/limerick.ps|;
+    // game_loc = |project://DaedaLe/src/PuzzleScript/demo/sokoban_basic.ps|;
+    // game_loc = |project://DaedaLe/src/PuzzleScript/demo/nekopuzzle.ps|;
+
+    pprs_loc = |project://DaedaLe/src/Generation/demo/limerick.pprs|;
+    // pprs_loc = |project://DaedaLe/src/Generation/demo/sokoban_basic.pprs|;
+    // pprs_loc = |project://DaedaLe/src/Generation/demo/nekopuzzle.pprs|;
 
     GameData game = load(game_loc);
     Engine engine = compile(game);

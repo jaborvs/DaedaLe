@@ -28,7 +28,7 @@ import PuzzleScript::AST;
  * @Param:  path -> Location of the file
  * @Ret:    GameData object
  */
-PuzzleScript::AST::GameData load(loc path) {
+GameData load(loc path) {
     str src = readFile(path);
     return load(src);    
 }
@@ -39,9 +39,9 @@ PuzzleScript::AST::GameData load(loc path) {
  * @Param:  src -> String with the contents of the file
  * @Ret:    GameData object
  */
-PuzzleScript::AST::GameData load(str src) {
+GameData load(str src) {
     start[GameData] pt = ps_parse(src);
-    PuzzleScript::AST::GameData ast = ps_implode(pt);
+    GameData ast = ps_implode(pt);
     return ast;
 }
 
@@ -79,8 +79,8 @@ start[GameData] ps_parse(str src){
  * @Param:  tree -> Parse tree
  * @Ret:    GameData object
  */
-PuzzleScript::AST::GameData ps_implode(start[GameData] parse_tree) {
-    PuzzleScript::AST::GameData game = implode(#PuzzleScript::AST::GameData, parse_tree);   // We build the AST
+GameData ps_implode(start[GameData] parse_tree) {
+    GameData game = implode(#GameData, parse_tree);   // We build the AST
     return process_game(game);
 }
 
