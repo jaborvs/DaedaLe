@@ -75,10 +75,8 @@ Engine prepare_move_player(Engine engine, str move_direction) {
 
     // We loop over the objects and when we find the player object we update its
     // position
-    println(engine.current_level.player.coords);
     for (Object object <- engine.current_level.objects[engine.current_level.player.coords]) {
         if (object.current_name == engine.current_level.player.current_name) {
-            println("WE ARE SETTING THE PLAYER POSITION");
             object.direction = move_direction;
         }
         objects += object;
@@ -143,17 +141,8 @@ Engine apply_rules(Engine engine, str move_direction, bool late) {
                             // We check if the current object matches criteria
                             int r = 0;
                             r += 1;
-                            println("Move direction: <move_direction>");
-                            print("Rule: ");
-                            for (RulePart rp <- rp_left) {
-                                println(rp.contents);
-                            }
-                            println("    Object: <object>");
 
                             found_objects = matches_criteria(engine, object, rc, rule.movement, rule.direction, 0, size(rc));
-
-                            println("    Found objects (<r>, <size(found_objects) == size(rc)>): <found_objects>");
-                            println("");
 
                             if (found_objects != [] && size(found_objects) == size(rc) && size(cmd_right) == 0) {
                                 if (!(found_objects in all_found_objects)) {
@@ -195,8 +184,6 @@ Engine apply_rules(Engine engine, str move_direction, bool late) {
         }
     }
 
-    println("-----------------------------------------------------------------");
-
     return engine; 
 }
 
@@ -215,17 +202,9 @@ list[list[Object]] matches_criteria(Engine engine, Object object, list[RuleConte
     list[list[Object]] object_matches_criteria = [];
     RuleContent rc = lhs[index];
 
-    // bool tmp_is_1 = index == 0 && rc.content != [] && isDirection(rc.content[0]) && rc.content[0] != direction;
-    // bool tmp_is_2 = rc.content != [];
-    // bool tmp_is_3 = isDirection(rc.content[0]);
-    // str tmp_str = rc.content[0];
-    // bool tmp_is_4 = rc.content[0] != direction;
-    // if (index == 0 && rc.content != [] && isDirection(rc.content[0]) && rc.content[0] != direction) return [];
-
     // Step 1: Check if (multiple) object(s) can be found on layer for the rule 
     //         to be valid to apply
     object_matches_criteria += matches_criteria_rule_content_size(engine, object, rc.content, direction);
-    println("        Obj after rule content size: <object_matches_criteria>");
 
     index += 1;
     if (size(lhs) <= index) {
