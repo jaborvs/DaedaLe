@@ -4,7 +4,7 @@
  * @Auth:   Dennis Vet    -> code
  *          Borja Velasco -> code, comments
  */
-module PuzzleScript::Interface::GUI
+module Interface::GUI
 
 /*****************************************************************************/
 // --- General modules imports ------------------------------------------------
@@ -218,8 +218,8 @@ App[Model] main() {
     Tutorial tutorial = tutorial_build(limerick_dsl);
 
     // We start our GUI model
-    Model init() = <0, engine, readFile(game_loc), limerick_dsl, "PuzzleScript/Interface/bin/output_image0.png", "">;
-    SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("DaedaLe", id, view, css = ["PuzzleScript/Interface/css/styles.css"]), update);
+    Model init() = <0, engine, readFile(game_loc), limerick_dsl, "Interface/bin/output_image0.png", "">;
+    SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("DaedaLe", id, view, css = ["Interface/css/styles.css"]), update);
     App[Model] counterWebApp() = webApp(counterApp(), |project://DaedaLe/src/|);
 
     return counterWebApp();
@@ -254,7 +254,7 @@ Model update(Msg msg, Model model){
             // 'Restart' button has been pressed
             case restart(): {
                 model.engine.current_level = model.engine.levels[model.engine.index];
-                model.image = "PuzzleScript/Interface/bin/output_image0.png";
+                model.image = "Interface/bin/output_image0.png";
             }
             // PuzzleScript code has been changed
             case puzzlescript_code_change(map[str,value] delta): {    
@@ -289,7 +289,7 @@ Model update(Msg msg, Model model){
             }
 
             draw(model.engine, model.index);
-            model.image = "PuzzleScript/Interface/bin/output_image<model.index>.png";
+            model.image = "Interface/bin/output_image<model.index>.png";
 
             execute = false;
         }
@@ -478,7 +478,7 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
                         else {
                             Pixel pix = obj.sprite[k][l];
                             if (pix.color_number == ".") {
-                                json += "\"c\": \"......\"";
+                                json += "\"c\": \"<COLORS["transparent"]>\"";
                             }
                             else if (COLORS[obj.colors[toInt(pix.color_number)]]?) {
                                 json += "\"c\": \"<COLORS[obj.colors[toInt(pix.color_number)]]>\"";
@@ -512,9 +512,9 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
  * @Ret:    void
  */
 void draw(Engine engine, int index) {
-    data_loc = |project://DaedaLe/src/PuzzleScript/Interface/bin/data.dat|;
+    data_loc = |project://DaedaLe/src/Interface/bin/data.dat|;
 
     tuple[str, str, str] json_data = pixel_to_json(engine, index);
     writeFile(data_loc, json_data[0]);
-    execWithCode("python3", workingDir=|project://DaedaLe/src/PuzzleScript/Interface/py|, args = ["ImageGenerator.py", json_data[0], json_data[1], json_data[2], "1"]);
+    tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
 }
