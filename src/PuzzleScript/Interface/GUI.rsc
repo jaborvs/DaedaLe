@@ -549,38 +549,6 @@ void view(Model m) {
             });
         });
     });
-
-    // div(class("main"), () {
-    //     div(class("left"), () {
-    //         div(class("left_top"), () {
-    //             h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "Editor"); 
-    //             ace("myAce", event=onAceChange(codeChange), code = m.code);
-    //             button(onClick(load_design()), "Reload");
-    //         });
-    //         // div(class("left_bottom"), () {
-    //         //     div(class("TutoMate"), () {
-    //         //         h1(style(("text-shadow": "1px 1px 2px black", "padding-left": "1%", "text-align": "center", "font-family": "BubbleGum")), "TutoMate");
-    //         //         div(class("panel"), () {
-    //         //             h3(style(("font-family": "BubbleGum")), "Get insights");
-    //         //             button(onClick(analyse()), "Analyse");
-    //         //             button(onClick(analyse_all()), "Analyse all");
-    //         //         });
-    //         //         ace("TutoMate", event=onAceChange(dslChange), code = m.dsl, width="100%", height="15%");
-    //         //     });
-    //         // });
-    //     });
-    //     div(class("right"), onKeyDown(direction), () {
-    //         div(style(("width": "200px", "height": "200px")), onKeyDown(direction), () {
-    //             int index = 0;
-    //             index = (m.index == m.begin_index) ? m.begin_index : m.index;
-    //             img(style(("width": "40vw", "height": "40vh","image-rendering": "pixelated")), (src("<m.image>")), () {});
-    //         });
-    //         div(class("data"), () {
-    //             div(class(""), () {view_pad(m);});
-    //             if (m.analyzed) view_results(m);
-    //         });
-    //     });
-    // });
 }
 
 /*
@@ -598,36 +566,6 @@ void view_pad(Model m){
             button(class("button right"), onClick(direction(39)), "►");
         });
         button(class("button down"), onClick(direction(40)), "▼");
-    });
-}
-
-/*
- *  @Name:  view_results
- *  @Desc:  Loads the HTML of the analysis' results in the GUI
- *  @Param:
- *      model   Application model
- */
-void view_results(Model m) {
-    div(class("panel"), () {
-        h3("Results");
-        LevelAppliedData ad = m.engine.level_applied_data[m.engine.current_level.original];
-        p("-- Shortest path --");
-        button(onClick(show(m.win.engine, 1, size(m.win.winning_moves))), "<size(m.win.winning_moves)> steps");
-        p("-- Dead ends --");
-        for (int i <- [0..size(m.de[0])]) {
-            button(onClick(show(m.de[i][0], 0, size(m.de[i][1]))), "<i + 1>");
-        }
-
-        if (m.learning_goals != <[],[],[]>) {
-            p("-- The following verbs have been used --");
-            p("<intercalate(", ", m.learning_goals[2])>");
-
-            p("-- The following learning goals are realised --");
-            p("<intercalate(", ", m.learning_goals[0])>");
-
-            p("-- The following learning goals are not realised --");
-            p("<intercalate(", ", m.learning_goals[1])>");
-        }
     });
 }
 
