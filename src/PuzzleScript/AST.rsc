@@ -159,7 +159,7 @@ data LayerData
  * @Desc:   AST node for the game rules
  */ 
 data RuleData
-    = rule_data(list[RulePart] left, list[RulePart] right, list[str] message, str)  // Unprocessed single rule: lhs, rhs, message, separator (\n)
+    = rule_data(list[RulePart] left, list[RulePart] right, list[str] message, str, loc src =  |unknown:///|, map[int,list[str]] comments = ())  // Unprocessed single rule: lhs, rhs, message, separator (\n)
     | rule_data(list[RulePart] left, list[RulePart] right, list[str] message)       // Processed single rule: lhs, rhs, message
     | rule_loop(list[RuleData] rules, str)                                          // Unprocessed looped rules: rule list, separator (\n)
     | rule_loop(list[RuleData] rules)                                               // Processed rules: rule list

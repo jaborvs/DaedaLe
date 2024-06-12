@@ -26,123 +26,13 @@ import Set;
 import IO;
 
 // --- Own modules imports ----------------------------------------------------
-// import PuzzleScript::Utils;
-// import PuzzleScript::AST;
-// import PuzzleScript::Load;
-// import PuzzleScript::Compiler;
-// import PuzzleScript::DynamicAnalyser;
-// import PuzzleScript::Verbs;
-
 import PuzzleScript::Utils;
 import PuzzleScript::AST;
 import PuzzleScript::Load;
 import PuzzleScript::Compiler;
 import PuzzleScript::Engine;
-import PuzzleScript::Tutorials::AST;
-
-/******************************************************************************/
-// --- Global defines ----------------------------------------------------------
-str limerick_dsl = "tutorial limerick {
-    verb topclimb [0]
-    verb largeclimb [1]
-    verb mediumclimb [2]
-    verb normalclimb [3]
-    verb push [4]
-    verb crawl [5]
-    verb eat [6]
-    verb eat2 [7]
-    verb cancel [8]
-    verb snakefall [9]
-
-    lesson 1: Lesson {
-        \"In this lesson, the player learns that the snake is able to crawl and climb\"
-        learn to crawl
-        learn to normalclimb
-        learn to mediumclimb
-    }
-    lesson 2: Lesson {
-        \"This lesson teaches that a snake can stack its body on top of each other to reach the goal\"
-        learn to crawl
-        learn to normalclimb
-        learn to mediumclimb
-        learn to largeclimb
-    }
-    lesson 3: Lesson {
-        \"This lesson teaches that falling in a gap results in a dead−end\"
-        learn to crawl
-        learn to normalclimb
-        learn to mediumclimb
-        learn to largeclimb
-        fail if snakefall
-    }
-    lesson 4: Lesson {
-        \"This lessons teaches the player that it can use its own body multiple times to reach great heights\"
-        learn to crawl
-        learn to normalclimb
-        learn to mediumclimb
-        learn to largeclimb
-    }
-    lesson 5: Lesson {
-        \"This lesson teaches players that the player can push blocks to fill the gaps\"
-        fail if snakefall
-        learn to crawl
-        learn to normalclimb
-        learn to mediumclimb
-        learn to largeclimb
-    }
-    lesson 6: Lesson {
-        \"This lesson uses all mechanics combined\"
-        learn to crawl
-        learn to normalclimb
-        learn to mediumclimb
-        learn to largeclimb
-    }
-}";
-
-str blockfaker_dsl = "tutorial blockfaker {
-    verb walk []
-    verb push [0]
-    verb collide [1]
-    verb vanishpink [2]
-    verb vanishblue [3]
-    verb vanishpurple [4]
-    verb vanishorange [5]
-    verb vanishgreen [6]
-
-    lesson 1: Push {
-        \"First, the player is taught how to push a block\"
-        learn to push
-    }
-    
-    lesson 2: Vanish {
-        \"By using the push mechanic, the player moves blocks to make other blocks vanish\"
-        learn to push
-        learn to vanishpurple
-        learn to vanishorange
-    }
-    
-    lesson 3: Obstacle {
-        \"Here a dead end is introduced. If the player vanishes the purple blocks too early, the level can not be completed\"
-        learn to push
-        learn to vanishpurple
-        fail if vanishpink
-    }
-    lesson 4: Combinations {
-        \"Different techniques should be applied to complete the level\"
-        learn to push
-        learn to vanishgreen
-        learn to vanishorange
-    }
-    lesson 5: Moveables {
-        \"This level uses all the moveable objects\"
-        learn to push
-        learn to vanishpink
-        learn to vanishpurple
-        learn to vanishorange
-        learn to vanishblue
-        learn to vanishgreen
-    }        
-}";
+import Generation::Load;
+import Generation::AST;
 
 /*****************************************************************************/
 // --- Data Structures defines ------------------------------------------------
@@ -212,17 +102,17 @@ App[Model] main() {
     // pprs_loc = |project://DaedaLe/src/Generation/demo/sokoban_basic.pprs|;
     // pprs_loc = |project://DaedaLe/src/Generation/demo/nekopuzzle.pprs|;
 
-    GameData game = load(game_loc);
+    GameData game = ps_load(game_loc);
     Engine engine = compile(game);
 
     // We represent the level on its initial state
     draw(engine, 0);
 
     // We build our tutorial
-    Tutorial tutorial = tutorial_build(limerick_dsl);
+    PapyrusData pprs = papyrus_load(pprs_loc);
 
     // We start our GUI model
-    Model init() = <0, engine, readFile(game_loc), limerick_dsl, "Interface/bin/output_image0.png", "">;
+    Model init() = <0, engine, readFile(game_loc), readFile(pprs_loc), "Interface/bin/output_image0.png", "">;
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("DaedaLe", id, view, css = ["Interface/css/styles.css"]), update);
     App[Model] counterWebApp() = webApp(counterApp(), |project://DaedaLe/src/|);
 

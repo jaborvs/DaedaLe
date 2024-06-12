@@ -14,7 +14,7 @@ lexical LAYOUT
   = [\t\ \r]
   | Comment;
 
-lexical Comment = @lineComment @category="Comment" "(" (![()]|Comment)* ")";
+lexical Comment = @category="Comment" "(" (![()]|Comment)* ")";
 lexical Delimiter = [=]+;
 lexical Newline = [\n];
 

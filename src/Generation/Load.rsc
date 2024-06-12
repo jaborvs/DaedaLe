@@ -10,6 +10,12 @@ module Generation::Load
 /******************************************************************************/
 // --- General modules imports -------------------------------------------------
 import ParseTree;
+import IO;
+
+/******************************************************************************/
+// --- Own modules imports -----------------------------------------------------
+import Generation::Syntax;
+import Generation::AST;
 
 /******************************************************************************/
 // --- Public load functions ---------------------------------------------------
@@ -20,9 +26,9 @@ import ParseTree;
  * @Param:  path -> Location of the file
  * @Ret:    PapyrusData object
  */
-PapyrusData load(loc path) {
+PapyrusData papyrus_load(loc path) {
     str src = readFile(path);
-    return load(src);    
+    return papyrus_load(src);    
 }
 
 /*
@@ -31,9 +37,9 @@ PapyrusData load(loc path) {
  * @Param:  src -> String with the contents of the file
  * @Ret:    PapyrusData object
  */
-PapyrusData load(str src) {
-    start[PapyrusData] pt = papyrus_parse(src);
-    PapyrusData ast = papyrus_implode(pt);
+PapyrusData papyrus_load(str src) {
+    start[PapyrusData] pd = papyrus_parse(src);
+    PapyrusData ast = papyrus_implode(pd);
     return ast;
 }
 
@@ -48,8 +54,8 @@ PapyrusData load(str src) {
  */
 start[PapyrusData] papyrus_parse(loc path) {
     str src = readFile(path);
-    start[PapyrusData] td = papyrus_parse(src);
-    return pt;
+    start[PapyrusData] pd = papyrus_parse(src);
+    return pd;
 }
 
 /*
@@ -61,7 +67,7 @@ start[PapyrusData] papyrus_parse(loc path) {
 start[PapyrusData] papyrus_parse(loc path) {
     str src = readFile(path);
     start[PapyrusData] td = papyrus_parse(src);
-    return pt;
+    return pd;
 }
 
 /*
@@ -71,7 +77,7 @@ start[PapyrusData] papyrus_parse(loc path) {
  * @Ret:    
  */
 start[PapyrusData] papyrus_parse(str src) {
-    return parse(#start[Tutorial], src);
+    return parse(#start[PapyrusData], src + "\n\n\n");
 }
 
 /*

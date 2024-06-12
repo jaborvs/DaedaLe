@@ -12,6 +12,7 @@ import ParseTree;
 import List;
 import String;
 import IO;
+import Type;
 
 /******************************************************************************/
 // --- Own modules import ------------------------------------------------------
@@ -28,9 +29,9 @@ import PuzzleScript::AST;
  * @Param:  path -> Location of the file
  * @Ret:    GameData object
  */
-GameData load(loc path) {
+GameData ps_load(loc path) {
     str src = readFile(path);
-    return load(src);    
+    return ps_load(src);    
 }
 
 /*
@@ -39,7 +40,7 @@ GameData load(loc path) {
  * @Param:  src -> String with the contents of the file
  * @Ret:    GameData object
  */
-GameData load(str src) {
+GameData ps_load(str src) {
     start[GameData] pt = ps_parse(src);
     GameData ast = ps_implode(pt);
     return ast;
@@ -58,6 +59,7 @@ GameData load(str src) {
 start[GameData] ps_parse(loc path){
     str src = readFile(path);
     start[GameData] pt = ps_parse(src);
+    
     return pt;
 }
 
@@ -81,6 +83,16 @@ start[GameData] ps_parse(str src){
  */
 GameData ps_implode(start[GameData] parse_tree) {
     GameData game = implode(#GameData, parse_tree);   // We build the AST
+
+    // Code on how to get the comments out for validation!
+    // list[tuple[loc,str]] comments =  [];
+    // visit(game) {
+    //     case a:rule_data(_,_,_,_): comments += [<a.src,a.comments[2][0]>];
+    // }
+
+    // println(comments);
+    // println(game.sections[4].rules[3].src);
+    // println(typeOf(game.sections[4].rules[3].comments));
     return process_game(game);
 }
 
