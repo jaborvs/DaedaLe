@@ -135,22 +135,22 @@ RULES
 
 (this game handles all the movement stuff itself - it removes all movements before the movement phase has a chance to tick at all)
 
-UP [ UP PlayerHead4 ] -> [ PlayerHead4 ] 
-UP [ UP PlayerHead3 | No Obstacle ] -> [ PlayerBodyV | PlayerHead4 ] sfx1
-UP [ UP PlayerHead2 | No Obstacle ] -> [ PlayerBodyV | PlayerHead3 ] sfx0
-UP [ UP PlayerHead1 | No Obstacle ] -> [ PlayerBodyV | PlayerHead2 ] sfx0
+UP [ UP PlayerHead4 ] -> [ PlayerHead4 ]                                                        (verb ClimbMax      // Max climb heigh reached)
+UP [ UP PlayerHead3 | No Obstacle ] -> [ PlayerBodyV | PlayerHead4 ] sfx1                       (verb ClimbLarge    // Third climb: red head)
+UP [ UP PlayerHead2 | No Obstacle ] -> [ PlayerBodyV | PlayerHead3 ] sfx0                       (verb ClimbMedium   // Second climb: orange head)
+UP [ UP PlayerHead1 | No Obstacle ] -> [ PlayerBodyV | PlayerHead2 ] sfx0                       (verb ClimbNormal   // First climb: yellow head)
 
-horizontal [ > Player | Crate | No Obstacle ] -> [ PlayerBodyH | PlayerHead1 | Crate ] sfx2
+horizontal [ > Player | Crate | No Obstacle ] -> [ PlayerBodyH | PlayerHead1 | Crate ] sfx2     (verb Push          // push crates horizontally)
 
-horizontal [ > Player | No Obstacle ] -> [ PlayerBodyH | PlayerHead1 ] sfx2
+horizontal [ > Player | No Obstacle ] -> [ PlayerBodyH | PlayerHead1 ] sfx2                     (verb Crawl         // snake grows horizontally)
 
-[ Player Apple ] [ PlayerBody ] -> [ Player Apple ] [ ] 
-[ Player Apple ] -> [ Player ] 
+[ Player Apple ] [ PlayerBody ] -> [ Player Apple ] [ ]                                         (verb Clear         // clear the player body)
+[ Player Apple ] -> [ Player ]                                                                  (verb Eat           // eat the apple)
 
-[ > Player ] -> [ Player ] 
+[ > Player ] -> [ Player ]                                                                      (verb Cancel        // prevent default movement)
 
-DOWN [ Player | No Obstacle ] -> [ PlayerBodyV | PlayerHead1 ] 
-DOWN [ Crate | No Obstacle ] -> [ | Crate ] 
+DOWN [ Player | No Obstacle ] -> [ PlayerBodyV | PlayerHead1 ]                                  (verb Fall          // the head falls down)
+DOWN [ Crate | No Obstacle ] -> [ | Crate ]                                                     (verb FallCrate     // crates fall down)
 
 ==============
 WINCONDITIONS

@@ -28,7 +28,7 @@ public map[str, str] COLORS = (
     "brown":        "#AA5500",
     "darkbrown":    "#550000",
     "lightbrown":   "#FFAA00",
-    "orange":       "#FF5500",
+    "orange":       "#EB8931",
     "yellow":       "#FFFF55",
     "green":        "#55AA00",
     "darkgreen":    "#005500",

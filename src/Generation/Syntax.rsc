@@ -1,7 +1,8 @@
 /*
  * @Module: Syntax
- * @Desc:   Module that defined the syntax of Papyrus, my DSL for tutorial 
- *          generation
+ * @Desc:   Module that defined the syntax of Papyrus, a DSL to enable tutorial 
+ *          generation for PuzzleScript. We tried to stay as loyal to PuzzleScript's
+ *          original syntax as possible
  * @Author: Borja Velasco -> code, comments
  */
 module Generation::Syntax
