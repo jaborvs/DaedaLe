@@ -53,8 +53,8 @@ data ConfigurationData
  * @Desc:   Data structure that models each of the patterns used for generation
  */
 data PatternData
-    = pattern_data(str name, str, TilemapData tilemap)  // Name, separator (\n), tilemap
-    | pattern_empty(str)                                // Empty line with only a separator (\n)
+    = pattern_data(str name, str, TilemapData tilemap)          // Name, separator (\n), tilemap
+    | pattern_empty(str)                                        // Empty line with only a separator (\n)
     ;
 
 /*
@@ -62,7 +62,7 @@ data PatternData
  * @Desc:   Data structure that models a tilemap for patterns
  */
 data TilemapData
-    = tilemap_data(list[TilemapLineData] lines)         // Tilemap lines
+    = tilemap_data(list[TilemapLineData] lines)                 // Tilemap lines
     ;
 
 /*
@@ -70,7 +70,7 @@ data TilemapData
  * @Desc:   Data structure that models a tilemap line for patterns
  */
 data TilemapLineData
-    = tilemap_line_data(str characters, str)            // Tilemap line characters, separator (\)
+    = tilemap_line_data(list[str] objects, str)   // Tilemap line characters, separator (\)
     ;
 
 /******************************************************************************/

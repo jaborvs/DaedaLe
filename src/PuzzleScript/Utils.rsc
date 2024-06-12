@@ -5,8 +5,18 @@
  */
 module PuzzleScript::Utils
 
-/*****************************************************************************/
-// --- Colors structures defines ------------------------------------------)
+
+/*
+ * @Name:   Coords
+ * @Desc:   Data structure to model coordinates
+ */
+alias Coords = tuple[
+    int x,  // x-coordinate
+    int y   // y-coordinate
+];
+
+/******************************************************************************/
+// --- Colors structures defines -----------------------------------------------
 
 /*
  * @Name:   COLORS

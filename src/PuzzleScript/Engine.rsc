@@ -22,6 +22,7 @@ import util::Math;
 // --- Own modules imports -------------------------------------------------
 import PuzzleScript::AST;
 import PuzzleScript::Compiler;
+import PuzzleScript::Utils;
 
 /******************************************************************************/
 // --- Public macro definitions ------------------------------------------------

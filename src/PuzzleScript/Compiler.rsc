@@ -180,15 +180,6 @@ data LevelAppliedData
     | game_applied_data_empty()
     ;
 
-/*
- * @Name:   Coords
- * @Desc:   Data structure to model coordinates
- */
-alias Coords = tuple[
-    int x,  // x-coordinate
-    int y   // y-coordinate
-];
-
 /******************************************************************************/
 // --- Compilation functions ---------------------------------------------------
 

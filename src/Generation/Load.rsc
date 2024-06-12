@@ -89,5 +89,6 @@ start[PapyrusData] papyrus_parse(str src) {
  */
 PapyrusData papyrus_implode(start[PapyrusData] parse_tree) {
     PapyrusData papyrus = implode(#PapyrusData, parse_tree);
+    // iprintln(papyrus);
     return papyrus;
 }

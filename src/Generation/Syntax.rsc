@@ -38,14 +38,15 @@ keyword ModifierKeyword
 /******************************************************************************/
 // --- Lexicals ----------------------------------------------------------------
 
+lexical SPACE = [\ ];
 lexical DELIMITER = [=]+;
 lexical NEWLINE = [\n];
-lexical COMMENT = "(" (![()]|COMMENT)* ")";
+lexical COMMENT = @category="Comment" "(" (![()]|COMMENT)* ")";
 
 lexical STRING = ![\n]+ >> [\n];
 lexical INT = [0-9]+ val;
 lexical ID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ Keywords;
-lexical PIXEL = [a-zA-Zぁ-㍿.!@#$%&*0-9\-,`\'~_\"§è!çàé;?:/+°£^{}|\>\<^v¬\[\]˅\\±←→↑↓];
+lexical REP = [a-zA-Zぁ-㍿.!@#$%&0-9\-,`\'~_\"§è!çàé;?:/°£^{}|\>\<^v¬\[\]˅\\±←→↑↓]+ !>> [a-zA-Zぁ-㍿.!@#$%&0-9\-,`\'~_\"§è!çàé;?:/°£^{}|\>\<^v¬\[\]˅\\±←→↑↓] \ Keywords;
 
 /******************************************************************************/
 // --- Syntax ------------------------------------------------------------------
@@ -56,6 +57,7 @@ start syntax PapyrusData
     ;
 
 syntax NEWLINES = NEWLINE+ !>> [\n];
+syntax SPACES = SPACE+ !>> [\ ];
 syntax SECTION_DELIMITER = DELIMITER NEWLINE;
 
 /******************************************************************************/
@@ -90,8 +92,9 @@ syntax TilemapData
     ;
 
 syntax TilemapLineData
-    = tilemap_line_data: PIXEL+ NEWLINE
+    = tilemap_line_data: REP+ NEWLINE
     ;
+
 
 /******************************************************************************/
 // --- Module Syntax -----------------------------------------------------------
