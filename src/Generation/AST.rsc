@@ -62,15 +62,15 @@ data PatternData
  * @Desc:   Data structure that models a tilemap for patterns
  */
 data TilemapData
-    = tilemap_data(list[TilemapLineData] lines)                 // Tilemap lines
+    = tilemap_data(list[TilemapRowData] row_dts)                 // Tilemap lines
     ;
 
 /*
- * @Name:   PatternData
- * @Desc:   Data structure that models a tilemap line for patterns
+ * @Name:   TilemapRowData
+ * @Desc:   Data structure that models a tilemap row for patterns
  */
-data TilemapLineData
-    = tilemap_line_data(list[str] objects, str)   // Tilemap line characters, separator (\)
+data TilemapRowData
+    = tilemap_row_data(list[str] objects, str)                  // Tilemap line characters, separator (\)
     ;
 
 /******************************************************************************/
@@ -81,7 +81,7 @@ data TilemapLineData
  * @Desc:   Data structure that models a module for generation
  */
 data ModuleData
-    = module_data(str name, str, list[RuleData] rules)  // Name, separator (\n), list of generation rules
+    = module_data(str name, str, list[RuleData] rule_dts)  // Name, separator (\n), list of generation rules
     | module_empty(str)                                 // Empty line with only a separator (\n)
     ;
 
@@ -102,7 +102,7 @@ data RuleData
  *          generation
  */
 data LevelDraftData
-    = level_draft_data(str name, str, list[ChunkData] chunks)   // Name, separator (\n), list of chunks
+    = level_draft_data(str name, str, list[ChunkData] chunk_dts)   // Name, separator (\n), list of chunks
     | level_draft_empty(str)                                    // Empty line with only a separator (\n)
     ;
 
@@ -111,7 +111,7 @@ data LevelDraftData
  * @Desc:   Data structure that models a level's chunk
  */
 data ChunkData
-    = chunk_data(list[VerbData] verbs, str)                 // List of verbs to be used, separator (\n)
+    = chunk_data(list[VerbData] verb_dts, str)                 // List of verbs to be used, separator (\n)
     ;
 
 /*

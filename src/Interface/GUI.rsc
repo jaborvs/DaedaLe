@@ -33,6 +33,7 @@ import PuzzleScript::Compiler;
 import PuzzleScript::Engine;
 import Generation::Load;
 import Generation::AST;
+import Generation::Engine;
 
 /*****************************************************************************/
 // --- Data Structures defines ------------------------------------------------
@@ -102,6 +103,7 @@ App[Model] main() {
     // pprs_loc = |project://DaedaLe/src/Generation/demo/sokoban_basic.pprs|;
     // pprs_loc = |project://DaedaLe/src/Generation/demo/nekopuzzle.pprs|;
 
+    // We load and compile the game
     GameData game = ps_load(game_loc);
     Engine engine = compile(game);
 
@@ -110,6 +112,11 @@ App[Model] main() {
 
     // We build our tutorial
     PapyrusData pprs = papyrus_load(pprs_loc);
+
+    // Test code
+    list[str] verbs = _chunk_concretize(["crawl", "climb", "crawl"], <0,5>, 10, 10);
+    println(verbs);
+
 
     // We start our GUI model
     Model init() = <0, engine, readFile(game_loc), readFile(pprs_loc), "Interface/bin/output_image0.png", "">;

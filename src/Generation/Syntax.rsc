@@ -88,13 +88,12 @@ syntax PatternData
     ;
 
 syntax TilemapData
-    = tilemap_data: TilemapLineData+
+    = tilemap_data: TilemapRowData+
     ;
 
-syntax TilemapLineData
-    = tilemap_line_data: REP+ NEWLINE
+syntax TilemapRowData
+    = tilemap_row_data: REP+ NEWLINE
     ;
-
 
 /******************************************************************************/
 // --- Module Syntax -----------------------------------------------------------

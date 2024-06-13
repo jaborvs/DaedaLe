@@ -9,24 +9,61 @@ PATTERNS
 ========
 
 Player_Idle_R
-.   .
 PH1 .
 #   .
 
-Player_Crawled_R
-.   .
+Player_Crawl_R
 PBH PH1
 #   #
 
 Player_Fall_Start_R
+PBH PBV 
+#   PH1
+
+Player_Fall_Ind_Start_R
+#   PH1
 .   .
-PBH PH1
-#   ↓
+
+Player_Fall_Ind_End_R
+#   PBV
+#   PH1
+
+Player_Fall_End_R
+#   PH1
+#   #
 
 Player_Climb_Start_R
+.   .
+PH1 .
+#   #
+
+Player_Climb_Normal_Start_R
+.   .
+PH1 .
+
+Player_Climb_Normal_End_R
 PH2 .
 PBV #
-#   #
+
+Player_Climb_Medium_Start_R
+.   .
+PH2 .
+
+Player_Climb_Medium_End_R
+PH3 .
+PBV #
+
+Player_Climb_Large_Start_R
+.   .
+PH3 .
+
+Player_Climb_Large_End_R
+PH4 .
+PBV #
+
+Player_Climb_End
+PBH PH1
+PBV #
 
 =======
 MODULES
@@ -45,6 +82,6 @@ LEVEL DRAFTS
 ============
 
 Level_1
-[crawl+, climb +]                          (module Module_1    // verb definitions taken from Module_1)
+[crawl +, climb +, crawl +]                 (module Module_1    // verb definitions taken from Module_1)
 [crawl +, fall +, crawl +]                  (module Module_2    // verb definitions taken from Module_2)
 
