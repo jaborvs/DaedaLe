@@ -93,7 +93,7 @@ data CurrentLine = currentline(
 /*
  *  @Name:  main()
  *  @Desc:  Runs the application
- *  @Ret:   Call to run the application
+ *  @Ret:   Application run
  */ 
 App[Model] main() {
     game_loc = |project://DaedaLe/src/PuzzleScript/demo/limerick.ps|;

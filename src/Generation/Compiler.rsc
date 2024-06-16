@@ -49,7 +49,7 @@ data GenerationConfig
  * @Desc:   Data structure that models a generation pattern
  */
 data GenerationPattern
-    = generation_pattern(int tmp)
+    = generation_pattern(list[GenerationRow] rows)
     | generation_pattern_empty()
     ;
 
@@ -185,7 +185,41 @@ GenerationConfig _papyrus_compile_config_chunk_size(str params) {
  * @Ret:    Map of pattern name and generation pattern object
  */
 map[str, GenerationPattern] _papyrus_compile_patterns(list[PatternData] patterns) {
-    return ();
+    map[str names, GenerationPattern pattern] patterns_compiled = ();
+
+    for (PatternData p <- patterns) {
+        tuple[str name, GenerationPattern pattern] p_c = _papyrus_compile_pattern(p);
+        if (p_c in patterns_compiled.names) exception_patterns_duplicated_pattern(p_c.name);
+        else patterns_compiled[p_c.name] = p_c.pattern;
+    }
+    
+    return patterns_compiled;
+}
+
+/*
+ * @Name:   _papyrus_compile_pattern
+ * @Desc:   Function to compile a pattern 
+ * @Param:  pattern -> PatternData object fromm the ast
+ * @Ret:    Tuple with name and generation pattern object
+ */
+tuple[str, GenerationPattern] _papyrus_compile_pattern(PatternData pattern) {
+    tuple[str, GenerationPattern] pattern_compiled = <"", generation_pattern_empty()>;
+
+    list[GenerationRow] rows_compiled = [];
+    for (TilemapRowData r <- pattern.tilemap.row_dts) {
+        list[GenerationCell] cells_compiled = [];
+        for (str c <- r.objects) {
+            cells_compiled += [generation_cell(c)];
+        }
+        rows_compiled += [generation_row(cells_compiled)];
+    }
+
+    pattern_compiled = <
+        pattern.name,
+        generation_pattern(rows_compiled)
+        >;
+
+    return pattern_compiled;
 }
 
 /******************************************************************************/
