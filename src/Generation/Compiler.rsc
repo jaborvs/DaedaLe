@@ -16,8 +16,8 @@ import IO;
 // --- Own modules imports -----------------------------------------------------
 import Generation::Exception;
 import Generation::AST;
-import Verbs::Load;
-import Verbs::AST;
+import Extension::Load;
+import Extension::AST;
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -32,7 +32,8 @@ data GenerationEngine
         map[str name, GenerationPattern generation_pattern] patterns,
         map[str name, GenerationModule generation_module] modules,
         map[str name, GenerationLevel generation_level] generated_levels
-    );
+        )
+    ;
 
 /*
  * @Name:   GenerationConfig
@@ -75,37 +76,34 @@ data GenerationRule
  * @Desc:   Data structure that models a generation level draft
  */
 data GenerationLevel
-    = generation_level(
-        list[GenerationChunk] chunks
-    );
+    = generation_level(list[GenerationChunk] chunks)
+    | generation_level_empty()
+    ;
 
 /*
  * @Name:   GenerationChunk
  * @Desc:   Data structure that models a generation chunk
  */
 data GenerationChunk
-    = generation_chunk(
-        str \module,
-        list[GenerationRow] rows
-    );
+    = generation_chunk(str \module, list[GenerationRow] rows)
+    | generation_chunk_empty()
+    ;
 
 /*
  * @Name:   GenerationRow
  * @Desc:   Data structure that models a generation row
  */
 data GenerationRow
-    = generation_row(
-        list[GenerationCell] cells
-    );
+    = generation_row(list[GenerationCell] cells)
+    ;
 
 /*
  * @Name:   GenerationCell
  * @Desc:   Data structure that models a generation cell
  */
 data GenerationCell
-    = generation_cell(
-        str object
-    );
+    = generation_cell(str object)
+    ;
 
 
 /******************************************************************************/
@@ -123,7 +121,7 @@ GenerationEngine papyrus_compile(PapyrusData pprs) {
     engine.config = _papyrus_compile_config(pprs.configs);
     engine.patterns = _papyrus_compile_patterns(pprs.patterns);
     engine.modules = _papyrus_compile_modules(pprs.modules);
-    // engine.levels = _papyrus_compile_levels(pprs.level_drafts);
+    engine.generated_levels = _papyrus_compile_levels(pprs.level_drafts, engine.config.width, engine.config.height);
 
     return engine;
 }
@@ -143,6 +141,7 @@ GenerationConfig _papyrus_compile_config(list[ConfigurationData] configs) {
     GenerationConfig config_compiled = generation_config_empty();
 
     if (size(configs) > 1) exception_config_args_len();
+    if (configs == []) return generation_config(15,15);
 
     str command = toLowerCase(configs[0].command);
     str params = configs[0].params;
@@ -217,7 +216,7 @@ map[str, GenerationModule] _papyrus_compile_modules(list[ModuleData] modules) {
  * @Ret:    GenerationModule object
  */
 tuple[str, GenerationModule] _papyrus_compile_module(ModuleData \module) {
-    tuple[str, GenerationModule] compiled_module = <"", generation_module_empty()>;
+    tuple[str, GenerationModule] module_compiled = <"", generation_module_empty()>;
 
     map[str verbs, GenerationRule generation_rules] compiled_rules = ();
     for (RuleData r <- \module.rule_dts) {
@@ -226,12 +225,12 @@ tuple[str, GenerationModule] _papyrus_compile_module(ModuleData \module) {
         else compiled_rules[c_r.verb] = c_r.rule;
     }
 
-    compiled_module = <
+    module_compiled = <
         \module.name,
         generation_module(compiled_rules)
     >;
 
-    return compiled_module;
+    return module_compiled;
 }
 
 tuple[str,GenerationRule] _papyrus_compile_rule(RuleData rule) {
@@ -239,8 +238,7 @@ tuple[str,GenerationRule] _papyrus_compile_rule(RuleData rule) {
 
     map[int key, list[str] content] comments = rule.comments;
     if (comments == ()) exception_rules_no_verb();
-    str comments_processed = comments[toList(comments.key)[0]][0];
-    Verb verb = verb_load(comments_processed);
+    Extension verb = extension_load(comments);
 
     rule_compiled = <
         verb.name,
@@ -250,7 +248,71 @@ tuple[str,GenerationRule] _papyrus_compile_rule(RuleData rule) {
     return rule_compiled;
 }
 
+/******************************************************************************/
+// --- Private compile levels functions ----------------------------------------
 
+/*
+ * @Name:   _papyrus_compile_levels
+ * @Desc:   Function that compiles all levels of a PapyrusData object
+ * @Param:  levels -> List of LevelDraftData objects form the ast
+ *          width  -> Chunk width
+ *          height -> Chunk height
+ * @Ret:    Map of level name and generation level object
+ */
+map[str, GenerationLevel] _papyrus_compile_levels(list[LevelDraftData] levels, int width, int height) {
+    map[str names, GenerationLevel levels] levels_compiled = ();
+
+    for (LevelDraftData ld <- levels) {
+        tuple[str name, GenerationLevel level] ld_c = _papyrus_compile_level(ld, width, height);
+        if (ld_c.name in levels_compiled.names) exception_levels_duplicated_level(ld_c);
+        else levels_compiled[ld_c.name] = ld_c.level;
+    }
+
+    return levels_compiled;
+}
+
+/*
+ * @Name:   _papyrus_compile_level
+ * @Desc:   Function that compiles a level of a PapyrusData object
+ * @Param:  level -> LevelDraftData object from the ast
+ *          width  -> Chunk width
+ *          height -> Chunk height
+ * @Ret:    Level name and GenerationLevel object
+ */
+tuple[str, GenerationLevel] _papyrus_compile_level(LevelDraftData level, int width, int height) {
+    tuple[str, GenerationLevel] level_compiled = <"", generation_level_empty()>;
+
+    list[GenerationChunk] chunks_compiled = [_papyrus_compile_chunk(c, width, height) | ChunkData c <- level.chunk_dts];
+
+    level_compiled = <
+        level.name,
+        generation_level(chunks_compiled)
+        >;
+    return level_compiled;
+}
+
+/*
+ * @Name:   _papyrus_compile_chunk
+ * @Desc:   Function that compiles a chunk
+ * @Params: chunk  -> Chunk object from the ast
+ *          width  -> Chunk width
+ *          height -> Chunk height
+ * @Ret:    GenerationChunk object
+ */
+GenerationChunk _papyrus_compile_chunk(ChunkData chunk, int width, int height) {
+    GenerationChunk chunk_compiled = generation_chunk_empty();
+
+    map[int key, list[str] content] comments = chunk.comments;
+    if (comments == ()) exception_chunk_no_module();
+    Extension \module = extension_load(comments);
+
+    chunk_compiled = generation_chunk(
+        \module.name,
+        [generation_row_init(width) | _ <- [0..height]]
+    );
+    
+    return chunk_compiled;
+}
 
 /******************************************************************************/
 // --- Engine functions --------------------------------------------------------
@@ -270,4 +332,27 @@ GenerationEngine generation_engine_init() {
     );
 
     return engine;
+}
+
+/******************************************************************************/
+// --- Level functions ---------------------------------------------------------
+
+/*
+ * @Name:   generation_row_init
+ * @Desc:   Function to create a blank row filled only with background objects
+ * @Params:
+ * @Ret:    A blank row
+ */
+GenerationRow generation_row_init(int length) {
+    return generation_row([generation_cell_init() | _ <- [0..length]]);
+}
+
+/*
+ * @Name:   generation_cell_init
+ * @Desc:   Function to create a blan cell filled with a background object
+ * @Params:
+ * @Ret:    A blank cell
+ */
+GenerationCell generation_cell_init() {
+    return generation_cell(".");
 }

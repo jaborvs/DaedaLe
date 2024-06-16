@@ -1,32 +1,40 @@
 /*
  * @Name:   Load
- * @Desc:   Module to parse and implode the verb syntax
+ * @Desc:   Module to parse and implode the extension syntax
  * @Auth:   Borja Velasco -> code, comments
  */
-module Verbs::Load
+module Extension::Load
 
 /******************************************************************************/
 // --- General modules imports -------------------------------------------------
 import ParseTree;
+import String;
+import List;
+import Set;
 import IO;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
-import Verbs::Syntax;
-import Verbs::AST;
+import Extension::Syntax;
+import Extension::AST;
 
 /******************************************************************************/
 // --- Public load functions ---------------------------------------------------
 
+Extension extension_load(map[int key, list[str] content] comments) {
+    str comments_processed = comments[toList(comments.key)[0]][0];
+    return extension_load(comments_processed);
+}
+
 /*
  * @Name:   load
- * @Desc:   Function that reads a comment and parses the verb
+ * @Desc:   Function that reads a comment and parses the extension
  * @Param:  src -> String with the comment
- * @Ret:    Verb object
+ * @Ret:    Extension object
  */
-Verb verb_load(str src) {
-    start[Verb] v = verb_parse(src);
-    Verb ast = verb_implode(v);
+Extension extension_load(str src) {
+    start[Extension] v = extension_parse(src);
+    Extension ast = extension_implode(v);
     return ast;
 }
 
@@ -34,22 +42,22 @@ Verb verb_load(str src) {
 // --- Public parsing functions ------------------------------------------------
 
 /*
- * @Name:   verb_parse
+ * @Name:   extension_parse
  * @Desc:   Function that reads a papyrus file and parses it
  * @Param:  path -> Location of the file
  * @Ret:    
  */
-start[Verb] verb_parse(str src) {
-    return parse(#start[Verb], src);
+start[Extension] extension_parse(str src) {
+    return parse(#start[Extension], src);
 }
 
 /*
- * @Name:   verb_implode
+ * @Name:   extension_implode
  * @Desc:   Function that takes a parse tree and builds the ast
  * @Param:  tree -> Parse tree
- * @Ret:    Verb object
+ * @Ret:    Extension object
  */
-Verb verb_implode(start[Verb] parse_tree) {
-    Verb v = implode(#Verb, parse_tree);
+Extension extension_implode(start[Extension] parse_tree) {
+    Extension v = implode(#Extension, parse_tree);
     return v;
 }

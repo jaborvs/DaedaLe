@@ -34,3 +34,14 @@ void exception_modules_duplicated_verb(str verb) {
 void exception_rules_no_verb() {
     throw "Exception Rules: All rules must have an assigned verb";
 }
+
+/******************************************************************************/
+// --- Public modules functions ------------------------------------------------
+
+void exception_levels_duplicated_level(str name) {
+    throw "Exception Modules: Duplicated level <name>";
+}
+
+void exception_chunk_no_verb() {
+    throw "Exception Chunks: All chunks must have an assigned module";
+}

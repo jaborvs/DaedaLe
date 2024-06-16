@@ -3,7 +3,7 @@
  * @Desc:   Module that models the ast of the verbs
  * @Auth:   Borja Velasco -> code, comments
  */
-module Verbs::Syntax
+module Extension::Syntax
 
 /******************************************************************************/
 // --- Layout ------------------------------------------------------------------
@@ -17,20 +17,20 @@ lexical LAYOUT
 /******************************************************************************/
 // --- Keywords ----------------------------------------------------------------
 
-keyword Keywords 
-    = "verb"
+keyword ExtensionKeyword 
+    = "verb" | "module"
     ;
 
 /******************************************************************************/
 // --- Lexicals ----------------------------------------------------------------
 
-lexical COMMENT = @category="Comment" "//" (![\n] | COMMENT)* [\n];
+lexical COMMENT = @category="Comment" "//" (![\n)] | COMMENT)*;
 
 lexical ID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ Keywords;
 
 /******************************************************************************/
 // --- Syntax ------------------------------------------------------------------
 
-start syntax Verb 
-    = verb: '(' "verb" ID ')'
+start syntax Extension 
+    = extension: '(' ExtensionKeyword ID ')'
     ;
