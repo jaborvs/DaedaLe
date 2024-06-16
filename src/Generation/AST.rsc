@@ -91,7 +91,7 @@ data ModuleData
  * @Desc:   Data structure that models a rule for generation
  */
 data RuleData
-    = rule_data(str pattern1, str pattern2, str)        // Pattern 1, pattern 2, separator (\n)
+    = rule_data(str left, str right, str, loc src = |unkown:///|, map[int,list[str]] comments = ()) // Pattern 1, pattern 2, separator (\n)
     ;
 
 /******************************************************************************/
@@ -103,8 +103,8 @@ data RuleData
  *          generation
  */
 data LevelDraftData
-    = level_draft_data(str name, str, list[ChunkData] chunk_dts)   // Name, separator (\n), list of chunks
-    | level_draft_empty(str)                                    // Empty line with only a separator (\n)
+    = level_draft_data(str name, str, list[ChunkData] chunk_dts)    // Name, separator (\n), list of chunks
+    | level_draft_empty(str)                                        // Empty line with only a separator (\n)
     ;
 
 /*
@@ -112,7 +112,7 @@ data LevelDraftData
  * @Desc:   Data structure that models a level's chunk
  */
 data ChunkData
-    = chunk_data(list[VerbData] verb_dts, str)                 // List of verbs to be used, separator (\n)
+    = chunk_data(list[VerbData] verb_dts, str, loc src = |unknown:///|, map[int,list[str]] comments = ())   // List of verbs to be used, separator (\n)
     ;
 
 /*

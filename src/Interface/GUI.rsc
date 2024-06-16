@@ -33,6 +33,7 @@ import PuzzleScript::Compiler;
 import PuzzleScript::Engine;
 import Generation::Load;
 import Generation::AST;
+import Generation::Compiler;
 import Generation::Engine;
 
 /*****************************************************************************/
@@ -105,17 +106,18 @@ App[Model] main() {
 
     // We load and compile the game
     GameData game = ps_load(game_loc);
-    Engine engine = compile(game);
+    Engine engine = ps_compile(game);
 
     // We represent the level on its initial state
     draw(engine, 0);
 
     // We build our tutorial
     PapyrusData pprs = papyrus_load(pprs_loc);
+    GenerationEngine generation_engine = papyrus_compile(pprs);
 
     // Test code
-    list[str] verbs = _chunk_concretize(["crawl", "climb", "crawl"], <0,5>, 10, 10);
-    println(verbs);
+    // list[str] verbs = _chunk_concretize(["crawl", "climb", "crawl"], <0,5>, 10, 10);
+    // println(verbs);
 
 
     // We start our GUI model

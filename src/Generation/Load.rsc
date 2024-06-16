@@ -117,10 +117,10 @@ PapyrusData papyrus_process(PapyrusData pprs) {
     };
 
     visit(pprs_no_empty) {
-        case SectionData s:section_configurations_data(): unprocessed_configs += [s.configs];
-        case SectionData s:section_patterns_data(): unprocessed_patterns += [s.patterns];
-        case SectionData s:section_modules_data(): unprocessed_modules += [s.modules];
-        case SectionData s:section_level_drafts_data(): unprocessed_level_drafts += [s.level_drafts];
+        case SectionData s:section_configurations_data(_,_,_,_): unprocessed_configs += s.configs;
+        case SectionData s:section_patterns_data(_,_,_,_): unprocessed_patterns += s.patterns;
+        case SectionData s:section_modules_data(_,_,_,_): unprocessed_modules += s.modules;
+        case SectionData s:section_level_drafts_data(_,_,_,_): unprocessed_level_drafts += s.level_drafts;
     };
 
     PapyrusData pprs_processed = papyrus_data(

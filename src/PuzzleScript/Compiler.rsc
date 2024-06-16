@@ -184,12 +184,12 @@ data LevelAppliedData
 // --- Compilation functions ---------------------------------------------------
 
 /*
- * @Name:   compile
+ * @Name:   ps_compile
  * @Desc:   Function that compiles a whole game
  * @Param:  game_data -> Parsed game
  * @Ret:    Engine object
  */
-Engine compile(GameData game_data) {
+Engine ps_compile(GameData game_data) {
 	Engine engine = game_engine(
         0,                  // Current step of the game
         (),                 // Objects
@@ -207,14 +207,14 @@ Engine compile(GameData game_data) {
         game_data           // Original game AST node
     ); 
 
-    engine = compile_objects(engine);	
-    engine = compile_references(engine);
-    engine = compile_combinations(engine);
-    engine = compile_properties(engine);
-    engine = compile_levels(engine);
-    engine = compile_rules(engine);
-    engine = compile_level_checkers(engine);
-    engine = compile_applied_data(engine);
+    engine = _ps_compile_objects(engine);	
+    engine = _ps_compile_references(engine);
+    engine = _ps_compile_combinations(engine);
+    engine = _ps_compile_properties(engine);
+    engine = _ps_compile_levels(engine);
+    engine = _ps_compile_rules(engine);
+    engine = _ps_compile_level_checkers(engine);
+    engine = _ps_compile_applied_data(engine);
 	
 	return engine;
 }
@@ -223,13 +223,13 @@ Engine compile(GameData game_data) {
 // --- Public compile object functions -----------------------------------------
 
 /*
- * @Name:   compile_objects
+ * @Name:   _ps_compile_objects
  * @Desc:   Function to compile the objects. Note that in this case the objects
  *          are AST nodes, and not the new object data structure
  * @Param:  engine -> Engine
  * @Ret:    Updated engine with the objects AST nodes
  */
-Engine compile_objects(Engine engine) {
+Engine _ps_compile_objects(Engine engine) {
     engine.objects = (toLowerCase(x.name) : x | x <- engine.game.objects);
     return engine;
 }
@@ -238,12 +238,12 @@ Engine compile_objects(Engine engine) {
 // --- Public compile references functions -------------------------------------
 
 /*
- * @Name:   compile_references
+ * @Name:   _ps_compile_references
  * @Desc:   Function to compile all the references from the legend of a game
  * @Param:  engine -> Engine
  * @Ret:    Updated engine witht the references
  */
-Engine compile_references(Engine engine) {
+Engine _ps_compile_references(Engine engine) {
     for (LegendData l <- engine.game.legend) {
         if (l is legend_reference) {
             for (str object <- l.items) {
@@ -260,12 +260,12 @@ Engine compile_references(Engine engine) {
 // --- Public compile combinations functions -------------------------------------
 
 /*
- * @Name:   compile_combinations
+ * @Name:   _ps_compile_combinations
  * @Desc:   Function to compile all the references from the legend of a game
  * @Param:  engine -> Engine
  * @Ret:    Updated engine witht the references
  */
-Engine compile_combinations(Engine engine) {
+Engine _ps_compile_combinations(Engine engine) {
     for(LegendData l <- engine.game.legend) {
         if (l is legend_combined) {
             for (str object <- l.items) {
@@ -282,12 +282,12 @@ Engine compile_combinations(Engine engine) {
 // --- Public compile properties functions -------------------------------------
 
 /*
- * @Name:   compile_properties
+ * @Name:   _ps_compile_properties
  * @Desc:   Function to compile all the properties from the legend of a game
  * @Param:  engine -> Engine
  * @Ret:    Updated engine witht the properties
  */
-Engine compile_properties(Engine engine) {
+Engine _ps_compile_properties(Engine engine) {
     for(str key <- engine.references.key) {
         if (size(engine.references[key]) == 1) continue;
         engine.properties[key] = get_resolved_references(key, engine.references);
@@ -300,12 +300,12 @@ Engine compile_properties(Engine engine) {
 // --- Public compile applied data functions -----------------------------------
 
 /*
- * @Name:   compile_applied_data
+ * @Name:   _ps_compile_applied_data
  * @Desc:   Function to add the applied data 
  * @Param:  engine -> engine
  * @Ret:    Updated engine with the applied data 
  */
-Engine compile_applied_data(Engine engine) {
+Engine _ps_compile_applied_data(Engine engine) {
     for (Level level <- engine.levels) {
         engine.level_applied_data[level.original] = game_applied_data(
             [],     // Travelled coordinates
@@ -324,15 +324,15 @@ Engine compile_applied_data(Engine engine) {
 // --- Public convert levels functions -----------------------------------------
 
 /*
- * @Name:   compile_levels
+ * @Name:   _ps_compile_levels
  * @Desc:   Function to convert all the levels into a new level structure with 
  *          more information. It also sets the first level and the current level
  * @Param:  engine -> Engine
  * @Ret:    Updated engine with the new converted levels
  */
-Engine compile_levels(Engine engine) {
+Engine _ps_compile_levels(Engine engine) {
     for (LevelData lvld <- engine.game.levels) {
-        if (lvld is level_data) engine.levels += [_compile_level(engine, lvld)];
+        if (lvld is level_data) engine.levels += [_ps_compile_level(engine, lvld)];
     }
     engine.current_level = engine.levels[0];
     engine.first_level = engine.current_level;
@@ -341,7 +341,7 @@ Engine compile_levels(Engine engine) {
 }
 
 /*
- * @Name:   _compile_level
+ * @Name:   _ps_compile_level
  * @Desc:   Function to convert an level AST node to an level object. We go over
  *          each character in the level and convert the character to all 
  *          possible references
@@ -349,16 +349,16 @@ Engine compile_levels(Engine engine) {
  *          level  -> Original level AST node
  * @Ret:    Level object
  */
-Level _compile_level(Engine engine, LevelData lvl) {
+Level _ps_compile_level(Engine engine, LevelData lvl) {
     map[Coords, list[Object]] objects = ();
     tuple[Coords, str] player = <<0,0>, "">;
     int id = 0;
 
     // We resolve all the needed player object information
-    tuple[str rep_char, str name] player_resolved = _compile_level_resolve_player(engine);
+    tuple[str rep_char, str name] player_resolved = _ps_compile_level_resolve_player(engine);
 
     // We resolve all the needed background object information
-    tuple[str rep_char, str name] background_resolved = _compile_level_resolve_background(engine);
+    tuple[str rep_char, str name] background_resolved = _ps_compile_level_resolve_background(engine);
     list[str] background_properties = get_properties_rep_char(background_resolved.rep_char, engine.references);
     LayerData background_layer = get_layer(engine, background_properties);
 
@@ -367,7 +367,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
             // Every object must have a background, so we create a background 
             // object and add it
             Object new_background_object = game_object(id, background_resolved.rep_char, background_resolved.name, background_properties, <i,j>, "", background_layer);
-            objects = _compile_level_add_object(objects, <i,j>, new_background_object);
+            objects = _ps_compile_level_add_object(objects, <i,j>, new_background_object);
             id += 1;
 
             // Now we add our actual new object. We have different steps:
@@ -389,7 +389,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
                 str name = engine.references[rep_char][0]; // Out of all the possible names we give the first one
 
                 Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", layer);
-                objects = _compile_level_add_object(objects, <i,j>, new_object);
+                objects = _ps_compile_level_add_object(objects, <i,j>, new_object);
                 id += 1;
             } 
             // Step 3.2: the rep_char is represents a combination of objects. We
@@ -400,7 +400,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
                     LayerData ld = get_layer(engine, all_properties);
 
                     Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", ld);
-                    objects = _compile_level_add_object(objects, <i,j>, new_object);
+                    objects = _ps_compile_level_add_object(objects, <i,j>, new_object);
                     id += 1;
                 }
             }
@@ -412,7 +412,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
                         LayerData ld = get_layer(engine, all_properties);
 
                         Object new_object = game_object(id, rep_char, name, all_properties, <i,j>, "", ld);
-                        objects = _compile_level_add_object(objects, <i,j>, new_object);
+                        objects = _ps_compile_level_add_object(objects, <i,j>, new_object);
                         id += 1;
                     }
                 }
@@ -430,7 +430,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
 }
 
 /*
- * @Name:   _compile_level_resolve_object
+ * @Name:   _ps_compile_level_resolve_object
  * @Desc:   Function that resolves the name and representation character of the 
  *          given object 
  * @Param:  engine      -> Engine
@@ -438,7 +438,7 @@ Level _compile_level(Engine engine, LevelData lvl) {
  *                         representation char in this case)
  * @Ret:    Tuple with representation char and object property name
  */
-tuple[str, str] _compile_level_resolve_object(Engine engine, str object_name) {
+tuple[str, str] _ps_compile_level_resolve_object(Engine engine, str object_name) {
     list[str] possible_names = [object_name];
 
     // Case where the representation char is included in the object definition
@@ -461,36 +461,36 @@ tuple[str, str] _compile_level_resolve_object(Engine engine, str object_name) {
 }
 
 /*
- * @Name:   _compile_level_resolve_player
+ * @Name:   _ps_compile_level_resolve_player
  * @Desc:   Function that resolves the name and representation character of the 
  *          player
  * @Param:  engine -> Engine
  * @Ret:    Map with representation char as key and name as value
  */
-tuple[str, str] _compile_level_resolve_player(Engine engine) {
-    return _compile_level_resolve_object(engine, "player");
+tuple[str, str] _ps_compile_level_resolve_player(Engine engine) {
+    return _ps_compile_level_resolve_object(engine, "player");
 }
 
 /*
- * @Name:   _compile_level_resolve_background
+ * @Name:   _ps_compile_level_resolve_background
  * @Desc:   Function that resolves the representation char and name of the
  *          background
  * @Param:  engine -> Engine
  * @Ret:    Map with representation char as key and name as value
  */
-tuple[str,str] _compile_level_resolve_background (Engine engine) {
-    return _compile_level_resolve_object(engine, "background");
+tuple[str,str] _ps_compile_level_resolve_background (Engine engine) {
+    return _ps_compile_level_resolve_object(engine, "background");
 }
 
 /*
- * @Name:   _compile_level_add_object
+ * @Name:   _ps_compile_level_add_object
  * @Desc:   Function that adds an object to the given object coord map
  * @Param:  objects    -> Current map of coordinates and objects
  *          coords     -> Coordinates of the new object
  *          new_object -> New object to add
  * @Ret:    Updated map with the new object
  */
-map[Coords, list[Object]] _compile_level_add_object(map[Coords, list[Object]] objects, Coords coords, Object new_object) {
+map[Coords, list[Object]] _ps_compile_level_add_object(map[Coords, list[Object]] objects, Coords coords, Object new_object) {
     if (coords in objects) objects[coords] += [new_object];
     else objects[coords] = [new_object];
     return objects;
@@ -500,14 +500,14 @@ map[Coords, list[Object]] _compile_level_add_object(map[Coords, list[Object]] ob
 // --- Public convert rules functions ------------------------------------------
 
 /*
- * @Name:   compile_rules
+ * @Name:   _ps_compile_rules
  * @Desc:   Function to convert all the rules into a new rule structure with 
  *          more information. Additionally, we also index the rules to now their
  *          prior order
  * @Param:  engine -> Engine
  * @Ret:    Updated engine with the new converted rules
  */
-Engine compile_rules(Engine engine) {
+Engine _ps_compile_rules(Engine engine) {
     int index = 0;
     for (RuleData rule <- engine.game.rules) {
         str rule_string = stringify_rule(rule.left, rule.right);
@@ -515,11 +515,11 @@ Engine compile_rules(Engine engine) {
         index += 1;
 
         if ("late" in [toLowerCase(lhs.prefix) | lhs <- rule.left, lhs is rule_prefix]) {
-            list[Rule] rule_group = _compile_rule(engine, rule, true);
+            list[Rule] rule_group = _ps_compile_rule(engine, rule, true);
             if (size(rule_group) != 0) engine.late_rules += [rule_group];
         }
         else {
-            list[Rule] rule_group = _compile_rule(engine, rule, false);
+            list[Rule] rule_group = _ps_compile_rule(engine, rule, false);
             if (size(rule_group) != 0) engine.rules += [rule_group];
         }
     }
@@ -531,15 +531,15 @@ Engine compile_rules(Engine engine) {
 // --- Public compile rule functions -------------------------------------------
 
 /*
- * @Name:   _compile_rule
+ * @Name:   _ps_compile_rule
  * @Desc:   Function to compile a rule
  * @Param:  engine -> engine
  *          rd     -> Rule AST node to be compiled
  *          late   -> Boolean indicating if it is a late rule
  * @Ret:    List witht the compiled rules. Bear in mind one rule compiles into 
- *          one or more rulescompile_rule(
+ *          one or more rulesps_compile_rule(
  */
-list[Rule] _compile_rule(Engine engine, RuleData rd: rule_data(left, right, message, separator), bool late) {
+list[Rule] _ps_compile_rule(Engine engine, RuleData rd: rule_data(left, right, message, separator), bool late) {
     list[Rule] new_rule_directions = [];
     list[Rule] new_rules = [];
     list[Rule] new_rules2 = [];
@@ -557,11 +557,11 @@ list[Rule] _compile_rule(Engine engine, RuleData rd: rule_data(left, right, mess
     RuleData new_rd = rule_data(new_left, new_right, message, separator);
 
     // Step 1: we extend the directions
-    new_rule_directions = _compile_rule_extend_directions(new_rd, directions);
+    new_rule_directions = _ps_compile_rule_extend_directions(new_rd, directions);
 
     // Step 2: we translate the object relative directions to absolute ones
     for (Rule rule <- new_rule_directions) {
-        Rule absolute_rule = _compile_rule_relative_directions_to_absolute(rule);
+        Rule absolute_rule = _ps_compile_rule_relative_directions_to_absolute(rule);
         new_rules += [absolute_rule];
     }
 
@@ -576,26 +576,26 @@ list[Rule] _compile_rule(Engine engine, RuleData rd: rule_data(left, right, mess
 }
 
 /*
- * @Name:   _compile_rule_extend_directions
+ * @Name:   _ps_compile_rule_extend_directions
  * @Desc:   Function to extend the directions of a rule. It calls extend_direction
  *          which contains the exact extension functionality
  * @Param:  rd         -> Rule AST node to be extended
  *          directions -> Directions to be extended
  * @Ret:    Extended list of rules
  */
-list[Rule] _compile_rule_extend_directions(RuleData rd: rule_data(left, right, message, _), list[str] directions) {
+list[Rule] _ps_compile_rule_extend_directions(RuleData rd: rule_data(left, right, message, _), list[str] directions) {
     list[Rule] new_rule_directions = [];
 
     if(directions == []) directions = [""];
 
     for (direction <- directions) {
-        new_rule_directions += _compile_rule_extend_direction(rd, direction);
+        new_rule_directions += _ps_compile_rule_extend_direction(rd, direction);
     }
     return new_rule_directions;
 }
 
 /*
- * @Name:   _compile_rule_extend_direction
+ * @Name:   _ps_compile_rule_extend_direction
  * @Desc:   Function to extend the directions of a rule. This means we extend the
  *          directional prefixes of a rule. There are different cases:
  *          1. If a rule has a relative direction (e.g., horizontal), we need to
@@ -608,7 +608,7 @@ list[Rule] _compile_rule_extend_directions(RuleData rd: rule_data(left, right, m
  *          direction -> Direction to be extended
  * @Ret:    Extended list of rules
  */
-list[Rule] _compile_rule_extend_direction(RuleData rd: rule_data(left, right, message, _), str direction) {
+list[Rule] _ps_compile_rule_extend_direction(RuleData rd: rule_data(left, right, message, _), str direction) {
     list[Rule] new_rule_directions = [];
     Rule cloned_rule = game_rule_empty();
 
@@ -661,29 +661,29 @@ list[Rule] _compile_rule_extend_direction(RuleData rd: rule_data(left, right, me
 }
 
 /*
- * @Name:   _compile_rule_relative_directions_to_absolute
+ * @Name:   _ps_compile_rule_relative_directions_to_absolute
  * @Desc:   Function to convert the relative directios of a rule to absolute. 
  *          This means that if a rule has a direction UP, the relativeDirections
  *          get translated to their according absolute direction. It calls the 
- *          _compile_rule_part_relative_directions_to_absolute function.
+ *          _ps_compile_rule_part_relative_directions_to_absolute function.
  * @Param:  rule -> Rule to have its relative directions converted
  * @Ret:    New rule with converted relative directions
  */
-Rule _compile_rule_relative_directions_to_absolute(Rule rule) {
-    rule.movement = _compile_rule_part_movement(rule.left);
-    rule.left = _compile_rule_part_relative_directions_to_absolute(rule.left, rule.direction);
-    rule.right = _compile_rule_part_relative_directions_to_absolute(rule.right, rule.direction);
+Rule _ps_compile_rule_relative_directions_to_absolute(Rule rule) {
+    rule.movement = _ps_compile_rule_part_movement(rule.left);
+    rule.left = _ps_compile_rule_part_relative_directions_to_absolute(rule.left, rule.direction);
+    rule.right = _ps_compile_rule_part_relative_directions_to_absolute(rule.right, rule.direction);
 
     return rule;
 }
 
-bool _compile_rule_part_movement(list[RulePart] rule_parts) {
+bool _ps_compile_rule_part_movement(list[RulePart] rule_parts) {
     if (rule_parts == [] || rule_parts[0].contents == [] || rule_parts[0].contents[0].content == []) return false;
     return isDirection(rule_parts[0].contents[0].content[0]);
 }
 
 /*
- * @Name:   _compile_rule_part_relative_directions_to_absolute
+ * @Name:   _ps_compile_rule_part_relative_directions_to_absolute
  * @Desc:   Function to convert the relative directions of a rule part to
  *          absolute ones. We now for a fact that the rule contents need to be 
  *          one direction, other keyword modifiers (e.g., no) and then the name.
@@ -692,7 +692,7 @@ bool _compile_rule_part_movement(list[RulePart] rule_parts) {
  *          direction  -> direction of the rule
  * @Ret:    Converted rule parts to absolute directions
  */
-list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart] rule_parts, str direction) {
+list[RulePart] _ps_compile_rule_part_relative_directions_to_absolute(list[RulePart] rule_parts, str direction) {
     list[RulePart] new_rp = [];
     
     for (RulePart rp <- rule_parts) {
@@ -755,13 +755,13 @@ list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart]
 // --- Public convert level checker functions ----------------------------------
 
 /*
- * @Name:   compile_level_checkers
+ * @Name:   _ps_compile_level_checkers
  * @Desc:   Function to init and complete all the information inside the level 
  *          checkers
  * @Param:  engine -> Engine
  * @Ret:    Updated engine with the level checkers
  */
- Engine compile_level_checkers(Engine engine) {
+ Engine _ps_compile_level_checkers(Engine engine) {
     engine.level_checkers = ();
     for(Level level <- engine.levels) {
         LevelChecker lc = game_level_checker(
@@ -774,10 +774,10 @@ list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart]
             level       // Original level object
         );
 
-        lc = _compile_level_checker_size(lc, level);
-        lc = _compile_level_checker_starting_objects(lc, level);
-        lc = _compile_level_checker_to_be_applied_rules(lc, engine.rules, engine.late_rules);
-        lc = _compile_level_checker_moveable_objects(engine, lc, level);
+        lc = _ps_compile_level_checker_size(lc, level);
+        lc = _ps_compile_level_checker_starting_objects(lc, level);
+        lc = _ps_compile_level_checker_to_be_applied_rules(lc, engine.rules, engine.late_rules);
+        lc = _ps_compile_level_checker_moveable_objects(engine, lc, level);
         
         engine.level_checkers[level.original] = lc;
     }
@@ -789,26 +789,26 @@ list[RulePart] _compile_rule_part_relative_directions_to_absolute(list[RulePart]
 // --- Private convert level checker functions ---------------------------------
 
 /*
- * @Name:   _compile_level_checker_size
+ * @Name:   _ps_compile_level_checker_size
  * @Desc:   Function that completes the size of a level chekcer
  * @Param:  engine -> Engine
  *          level  -> Level to get the size from
  * @Ret:    Updated map of level data and level checker
  */
-LevelChecker _compile_level_checker_size(LevelChecker lc, Level level) {
+LevelChecker _ps_compile_level_checker_size(LevelChecker lc, Level level) {
     lc.size = <size(level.original.level[0]), size(level.original.level)>;
     return lc;
 }
 
 /*
- * @Name:   _compile_level_checker_starting_objects
+ * @Name:   _ps_compile_level_checker_starting_objects
  * @Desc:   Function to store the starting objects of a level on its level 
  *          checker
  * @Param:  lc    -> Level checker
  *          level -> Level
  * @Ret:    Updated level checker
  */
-LevelChecker _compile_level_checker_starting_objects(LevelChecker lc, Level level){
+LevelChecker _ps_compile_level_checker_starting_objects(LevelChecker lc, Level level){
     list[Object] all_objects = [];
     list[list[str]] object_names = [];
 
@@ -827,14 +827,14 @@ LevelChecker _compile_level_checker_starting_objects(LevelChecker lc, Level leve
 }
 
 /*
- * @Name:   _compile_level_checker_to_be_applied_rules
+ * @Name:   _ps_compile_level_checker_to_be_applied_rules
  * @Desc:   Function to find those rules that can be applied per level
  * @Param:  lc         -> Level checker
  *          rules      -> Engine rules
  *          late_rules -> Engie late rules
  * @Ret:    Updated level checker
  */
-LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[list[Rule]] rules, list[list[Rule]] late_rules) {
+LevelChecker _ps_compile_level_checker_to_be_applied_rules(LevelChecker lc, list[list[Rule]] rules, list[list[Rule]] late_rules) {
     list[list[Rule]] can_be_applied_rules = [];
     list[list[Rule]] can_be_applied_late_rules = [];
 
@@ -936,19 +936,19 @@ LevelChecker _compile_level_checker_to_be_applied_rules(LevelChecker lc, list[li
 }
 
 /*
- * @Name:   _compile_level_checker_moveable_objects
+ * @Name:   _ps_compile_level_checker_moveable_objects
  * @Desc:   Function to set all the moveable objects in a level checker
  * @Param:  lc    -> Level checker
  *          level -> Level
  * @Ret:    Updated level checker
  */
-LevelChecker _compile_level_checker_moveable_objects(Engine engine, LevelChecker lc, Level level) {
+LevelChecker _ps_compile_level_checker_moveable_objects(Engine engine, LevelChecker lc, Level level) {
     for (list[Rule] lrule <- lc.can_be_applied_rules) {
         for (RulePart rp <- lrule[0].left) {
-            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(engine, lc, rp.contents);
+            if (rp is rule_part) lc = _ps_compile_level_checker_get_moveable_objects(engine, lc, rp.contents);
         }
         for (RulePart rp <- lrule[0].right) {
-            if (rp is rule_part) lc = _compile_level_checker_get_moveable_objects(engine, lc, rp.contents);
+            if (rp is rule_part) lc = _ps_compile_level_checker_get_moveable_objects(engine, lc, rp.contents);
         }
     }
 
@@ -956,7 +956,7 @@ LevelChecker _compile_level_checker_moveable_objects(Engine engine, LevelChecker
 }
 
 /*
- * @Name:   _compile_level_checker_get_moveable_objects
+ * @Name:   _ps_compile_level_checker_get_moveable_objects
  * @Desc:   Function to get the moveable objects of a level. We loop over the 
  *          rule side and add those objects that have a valid direction and that
  *          are starting objects of our level
@@ -964,7 +964,7 @@ LevelChecker _compile_level_checker_moveable_objects(Engine engine, LevelChecker
  *          lc        -> Level checker to store the moveable objects
  *          rule_side -> Side of the rule to check
  */
-LevelChecker _compile_level_checker_get_moveable_objects(Engine engine, LevelChecker lc, list[RuleContent] rule_side) {
+LevelChecker _ps_compile_level_checker_get_moveable_objects(Engine engine, LevelChecker lc, list[RuleContent] rule_side) {
     list[str] found_objects = ["player"];
 
     for (RuleContent rc <- rule_side) {
