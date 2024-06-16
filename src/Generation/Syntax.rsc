@@ -64,8 +64,8 @@ syntax SECTION_DELIMITER = DELIMITER NEWLINE;
 // --- Section Syntax ----------------------------------------------------------
 
 syntax SectionData
-    = section_configuration_data: SECTION_DELIMITER 'CONFIGURATION' NEWLINE SECTION_DELIMITER ConfigurationData+
-    | section_pattern_data: SECTION_DELIMITER 'PATTERNS' NEWLINE SECTION_DELIMITER PatternData+
+    = section_configurations_data: SECTION_DELIMITER 'CONFIGURATION' NEWLINE SECTION_DELIMITER ConfigurationData+
+    | section_patterns_data: SECTION_DELIMITER 'PATTERNS' NEWLINE SECTION_DELIMITER PatternData+
     | section_modules_data: SECTION_DELIMITER 'MODULES' NEWLINE SECTION_DELIMITER ModuleData+
     | section_level_drafts_data: SECTION_DELIMITER 'LEVEL DRAFTS' NEWLINE SECTION_DELIMITER LevelDraftData+
     | section_empty: SECTION_DELIMITER SectionKeyword NEWLINE SECTION_DELIMITER

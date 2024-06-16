@@ -40,6 +40,7 @@ PapyrusData papyrus_load(loc path) {
 PapyrusData papyrus_load(str src) {
     start[PapyrusData] pd = papyrus_parse(src);
     PapyrusData ast = papyrus_implode(pd);
+    ast = papyrus_process(ast);
     return ast;
 }
 
@@ -89,6 +90,45 @@ start[PapyrusData] papyrus_parse(str src) {
  */
 PapyrusData papyrus_implode(start[PapyrusData] parse_tree) {
     PapyrusData papyrus = implode(#PapyrusData, parse_tree);
-    // iprintln(papyrus);
     return papyrus;
+}
+
+/******************************************************************************/
+// --- Public Processing Functions ---------------------------------------------
+
+/*
+ * @Name:   papyrus_process
+ * @Desc:   Function that processes (cleans) the ast to be compiled
+ * @Params: pprs -> default parsing ast
+ * @Ret:    Cleaned ast
+ */
+PapyrusData papyrus_process(PapyrusData pprs) {
+    list[ConfigurationData] unprocessed_configs = [];
+    list[PatternData] unprocessed_patterns = [];
+    list[ModuleData] unprocessed_modules = [];
+    list[LevelDraftData] unprocessed_level_drafts = [];
+
+    PapyrusData pprs_no_empty = visit(pprs) {
+        case list[ConfigurationData] config => [c | c <- config, !(configuration_empty(_) := c)]
+        case list[PatternData] patterns => [p | p <- patterns, !(pattern_empty(_) := p)]
+        case list[ModuleData] modules => [m | m <- modules, !(module_empty(_) := m)]
+        case list[LevelDraftData] level_drafts => [ld | ld <- level_drafts, !(level_draft_empty(_) := ld)]
+        case list[SectionData] sections => [s | s <- sections, !(section_empty(_,_,_,_) := s)]
+    };
+
+    visit(pprs_no_empty) {
+        case SectionData s:section_configurations_data(): unprocessed_configs += [s.configs];
+        case SectionData s:section_patterns_data(): unprocessed_patterns += [s.patterns];
+        case SectionData s:section_modules_data(): unprocessed_modules += [s.modules];
+        case SectionData s:section_level_drafts_data(): unprocessed_level_drafts += [s.level_drafts];
+    };
+
+    PapyrusData pprs_processed = papyrus_data(
+        unprocessed_configs,
+        unprocessed_patterns,
+        unprocessed_modules,
+        unprocessed_level_drafts
+    );
+
+    return pprs_processed;
 }

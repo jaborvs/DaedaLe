@@ -14,6 +14,7 @@ module Generation::AST
  */
 data PapyrusData 
     = papyrus_data(list[SectionData] sections)
+    | papyrus_data(list[ConfigurationData] configs, list[PatternData] patterns, list[ModuleData] modules, list[LevelDraftData] level_drafts)
     | papyrus_empty(str)
     ;
 
@@ -25,8 +26,8 @@ data PapyrusData
  * @Desc:   Data structure that models each of the sections of Papyrus
  */
 data SectionData
-    = section_configuration_data(str sep1, str name, str sep2, list[ConfigurationData] config)
-    | section_pattern_data(str sep1, str name, str sep2, list[PatternData] patterns)
+    = section_configurations_data(str sep1, str name, str sep2, list[ConfigurationData] configs)
+    | section_patterns_data(str sep1, str name, str sep2, list[PatternData] patterns)
     | section_modules_data(str sep1, str name, str sep2, list[ModuleData] modules)
     | section_level_drafts_data(str sep1, str name, str sep2, list[LevelDraftData] level_drafts)
     | section_empty(str sep1, str name, str sep2, str)                          

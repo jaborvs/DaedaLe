@@ -43,6 +43,7 @@ GameData ps_load(loc path) {
 GameData ps_load(str src) {
     start[GameData] pt = ps_parse(src);
     GameData ast = ps_implode(pt);
+    ast = process_game(ast);
     return ast;
 }
 
@@ -93,7 +94,7 @@ GameData ps_implode(start[GameData] parse_tree) {
     // println(comments);
     // println(game.sections[4].rules[3].src);
     // println(typeOf(game.sections[4].rules[3].comments));
-    return process_game(game);
+    return game;
 }
 
 
