@@ -112,13 +112,13 @@ data LevelDraftData
  * @Desc:   Data structure that models a level's chunk
  */
 data ChunkData
-    = chunk_data(list[VerbData] verb_dts, str, loc src = |unknown:///|, map[int,list[str]] comments = ())   // List of verbs to be used, separator (\n)
+    = chunk_data(list[VerbExpressionData] verb_dts, str, loc src = |unknown:///|, map[int,list[str]] comments = ())   // List of verbs to be used, separator (\n)
     ;
 
 /*
- * @Name:   VerbData
+ * @Name:   VerbExpressionData
  * @Desc:   Data structure that models a verb for generation
  */
-data VerbData
-    = verb_data(str name, str modifier)                     // Name, modifier
+data VerbExpressionData
+    = verb_expression_data(str name, str modifier)                     // Name, modifier
     ;

@@ -38,7 +38,6 @@ keyword ModifierKeyword
 /******************************************************************************/
 // --- Lexicals ----------------------------------------------------------------
 
-lexical SPACE = [\ ];
 lexical DELIMITER = [=]+;
 lexical NEWLINE = [\n];
 lexical COMMENT = @category="Comment" "(" (![()]|COMMENT)* ")";
@@ -57,7 +56,6 @@ start syntax PapyrusData
     ;
 
 syntax NEWLINES = NEWLINE+ !>> [\n];
-syntax SPACES = SPACE+ !>> [\ ];
 syntax SECTION_DELIMITER = DELIMITER NEWLINE;
 
 /******************************************************************************/
@@ -115,9 +113,9 @@ syntax LevelDraftData
     ;
 
 syntax ChunkData
-    = chunk_data: '[' {VerbData ','}+ ']' NEWLINE
+    = chunk_data: '[' {VerbExpressionData ','}+ ']' NEWLINE
     ;
 
-syntax VerbData
-    = verb_data: ID ModifierKeyword
+syntax VerbExpressionData
+    = verb_expression_data: ID ModifierKeyword
     ;

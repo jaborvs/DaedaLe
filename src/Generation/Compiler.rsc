@@ -16,6 +16,8 @@ import IO;
 // --- Own modules imports -----------------------------------------------------
 import Generation::Exception;
 import Generation::AST;
+import Verbs::Load;
+import Verbs::AST;
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -202,7 +204,7 @@ map[str, GenerationModule] _papyrus_compile_modules(list[ModuleData] modules) {
     for(ModuleData m <- modules) {
         tuple[str name, GenerationModule \module] m_c = _papyrus_compile_module(m);
         if (m_c.name in modules_compiled.names) exception_modules_duplicated_module(m_c.name);
-        else  modules_compiled[m_c] = m_c.\module;
+        else  modules_compiled[m_c.name] = m_c.\module;
     }
 
     return modules_compiled;
@@ -214,8 +216,8 @@ map[str, GenerationModule] _papyrus_compile_modules(list[ModuleData] modules) {
  * @Param:  \module -> ModuleData object from the ast
  * @Ret:    GenerationModule object
  */
-GenerationModule _papyrus_compile_module(ModuleData \module) {
-    GenerationModule compiled_module = generation_module_empty();
+tuple[str, GenerationModule] _papyrus_compile_module(ModuleData \module) {
+    tuple[str, GenerationModule] compiled_module = <"", generation_module_empty()>;
 
     map[str verbs, GenerationRule generation_rules] compiled_rules = ();
     for (RuleData r <- \module.rule_dts) {
@@ -223,6 +225,11 @@ GenerationModule _papyrus_compile_module(ModuleData \module) {
         if (c_r.verb in compiled_rules.verbs) exception_modules_duplicated_verb(c_r.verb);
         else compiled_rules[c_r.verb] = c_r.rule;
     }
+
+    compiled_module = <
+        \module.name,
+        generation_module(compiled_rules)
+    >;
 
     return compiled_module;
 }
@@ -233,6 +240,12 @@ tuple[str,GenerationRule] _papyrus_compile_rule(RuleData rule) {
     map[int key, list[str] content] comments = rule.comments;
     if (comments == ()) exception_rules_no_verb();
     str comments_processed = comments[toList(comments.key)[0]][0];
+    Verb verb = verb_load(comments_processed);
+
+    rule_compiled = <
+        verb.name,
+        generation_rule(rule.left, rule.right)
+    >;
 
     return rule_compiled;
 }

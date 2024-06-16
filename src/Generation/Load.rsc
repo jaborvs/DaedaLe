@@ -65,18 +65,6 @@ start[PapyrusData] papyrus_parse(loc path) {
  * @Param:  path -> Location of the file
  * @Ret:    
  */
-start[PapyrusData] papyrus_parse(loc path) {
-    str src = readFile(path);
-    start[PapyrusData] td = papyrus_parse(src);
-    return pd;
-}
-
-/*
- * @Name:   papyrus_parse
- * @Desc:   Function that reads a papyrus file and parses it
- * @Param:  path -> Location of the file
- * @Ret:    
- */
 start[PapyrusData] papyrus_parse(str src) {
     return parse(#start[PapyrusData], src + "\n\n\n");
 }
