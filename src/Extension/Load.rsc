@@ -29,19 +29,27 @@ import Extension::AST;
  */
 Verb extension_load_verb(map[int key, list[str] content] comments) {
     Extension ext = extension_load(comments);
-    if (size(ext.params) == 2) {
-        ext.params = insertAt(ext.params, 0, "default");    // Specification
-    }
-    if (size(ext.params) == 3) {
-        ext.params += ["None"];                             // Dependency
-    }
+
+    if (size(ext.args) == 2) ext.args = insertAt(ext.args, 0, argument_single("default"));    // Specification
+    if (size(ext.args) == 3) ext.args += [argument_tuple(["start", "end"])];                  // Dependency
+
+
+    list[str] prev = split("::", ext.args[3].vals[0]);
+    if (size(prev) == 1) prev += [""];
+    list[str] next = split("::", ext.args[3].vals[1]);
+    if (size(next) == 1) next += [""];
+
+    tuple[tuple[str,str] prev, tuple[str,str] next] dependency = <
+        <prev[0], prev[1]>,
+        <next[0], next[1]>
+        >;
 
     Verb v = verb(
         ext.name,
-        ext.params[0],
-        ext.params[1],
-        toInt(ext.params[2]),
-        ext.params[3]
+        ext.args[0].val,        // Specification: low, medium, large
+        ext.args[1].val,        // Direction: up, down, right
+        toInt(ext.args[2].val), // Size
+        dependency              // Dependency: <previous_verb, next_verb>
         );
     return v;
 }

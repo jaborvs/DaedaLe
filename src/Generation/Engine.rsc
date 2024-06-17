@@ -16,6 +16,7 @@ import IO;
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
 import Generation::Compiler;
+import Extension::AST;
 import Utils;
 
 /******************************************************************************/
@@ -82,15 +83,16 @@ list[str] _generate_chunk(GenerationEngine engine, GenerationChunk chunk) {
 /******************************************************************************/
 // --- Private Apply Functions -------------------------------------------------
 
-GenerationChunk _apply_generation_rules(GenerationEngine engine, GenerationChunk chunk, list[str] verbs_concretized) {
+// GenerationChunk _apply_generation_rules(GenerationEngine engine, GenerationChunk chunk, list[str] verbs_concretized) {
 
-}
+// }
 
 /******************************************************************************/
 // --- Private Verbs Functions -------------------------------------------------
 
-
-list[Verb]
+list[Verb] _verbs_translate(GenerationModule \module, list[list[str]] verbs_concretized) {
+    return [];
+}
 
 /*
  * @Name:   _verbs_concretize

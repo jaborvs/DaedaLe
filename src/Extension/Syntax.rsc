@@ -32,6 +32,10 @@ lexical ID = [a-z0-9.A-Z_:]+ !>> [a-z0-9.A-Z_] \ Keywords;
 // --- Syntax ------------------------------------------------------------------
 
 start syntax Extension 
-    = extension: '(' ExtensionKeyword ID ('(' {ID ','}+ ')')? ')'
+    = extension: '(' ExtensionKeyword ID ('(' {Argument ','}+ ')')? ')'
     ;
 
+syntax Argument
+    = argument_single: ID 
+    | argument_tuple: '\<' {ID ','}+ '\>'
+    ;

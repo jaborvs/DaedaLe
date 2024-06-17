@@ -60,10 +60,10 @@ MODULES
 
 Module1
 [PlayerCrawlStart]       -> [PlayerCrawlEnd]        (verb Crawl(right, 1))
-[PlayerClimbLowStart]    -> [PlayerClimbLowEnd]     (verb Climb(low, up, 1))
-[PlayerClimbMediumStart] -> [PlayerClimbMediumEnd]  (verb Climb(medium, up, 1, Climb::low))
-[PlayerClimbLargeStart]  -> [PlayerClimbLargeEnd]   (verb Climb(large, up, 1, Climb::medium))
-[PlayerClimbCoilStart]   -> [PlayerClimbCoilEnd]    (verb Climb(coil, up, 2))
+[PlayerClimbLowStart]    -> [PlayerClimbLowEnd]     (verb Climb(low,    up, 1, <start,         Climb::medium>))
+[PlayerClimbMediumStart] -> [PlayerClimbMediumEnd]  (verb Climb(medium, up, 1, <Climb::low,    Climb::large >))
+[PlayerClimbLargeStart]  -> [PlayerClimbLargeEnd]   (verb Climb(large,  up, 1, <Climb::medium, end          >))
+[PlayerClimbCoilStart]   -> [PlayerClimbCoilEnd]    (verb Climb(coil,   up, 2))
 
 ============
 LEVEL DRAFTS
