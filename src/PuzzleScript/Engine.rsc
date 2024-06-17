@@ -22,7 +22,7 @@ import util::Math;
 // --- Own modules imports -------------------------------------------------
 import PuzzleScript::AST;
 import PuzzleScript::Compiler;
-import PuzzleScript::Utils;
+import Utils;
 
 /******************************************************************************/
 // --- Public macro definitions ------------------------------------------------
@@ -133,6 +133,7 @@ Engine apply_rules(Engine engine, str move_direction, bool late) {
                         for (Object object <- engine.current_level.objects[coords]) {
                             // If the object is not referenced by rule, skip.
                             // (I think this is only half correct, reordered rule contents would make it break)
+                            if (object.current_name == "playerhead1") println();
                             if (object.current_name notin rc[0].content && !(any(str name <- object.possible_names, name in rc[0].content))) continue;
 
                             if (rule.movement && move_direction != rule.direction) continue;

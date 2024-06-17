@@ -8,80 +8,67 @@ chunk_size 10x10
 PATTERNS
 ========
 
-Player_Idle_R
-PH1 .
-#   .
+PlayerIdle
+PH1
+#
 
-Player_Crawl_R
+PlayerCrawlStart
+PH1 .
+[!] .
+
+PlayerCrawlEnd
 PBH PH1
-#   #
+[!] #
 
-Player_Fall_Start_R
-PBH PBV 
-#   PH1
-
-Player_Fall_Ind_Start_R
-#   PH1
-.   .
-
-Player_Fall_Ind_End_R
-#   PBV
-#   PH1
-
-Player_Fall_End_R
-#   PH1
-#   #
-
-Player_Climb_Start_R
-.   .
-PH1 .
-#   #
-
-Player_Climb_Normal_Start_R
+PlayerClimbLowStart
 .   .
 PH1 .
 
-Player_Climb_Normal_End_R
+PlayerClimbLowEnd
 PH2 .
 PBV #
 
-Player_Climb_Medium_Start_R
+PlayerClimbMediumStart
 .   .
 PH2 .
 
-Player_Climb_Medium_End_R
+PlayerClimbMediumEnd
 PH3 .
 PBV #
 
-Player_Climb_Large_Start_R
+PlayerClimbLargeStart
 .   .
 PH3 .
 
-Player_Climb_Large_End_R
+PlayerClimbLargeEnd
 PH4 .
 PBV #
 
-Player_Climb_End
-PBH PH1
-PBV #
+PlayerClimbCoilStart
+.   .
+.   .
+PH1 .
+
+PlayerClimbCoilEnd
+PH1 .
+PBV PBH
+PBH PBV
 
 =======
 MODULES
 =======
 
-Module_1
-[Player_Idle_R] -> [Player_Crawled_R]       (verb Crawl)
-[Player_Idle_R] -> [Player_]                (verb Climb)
-
-Module_2
-[Player_Idle_R] -> [Player_Fall_Start_R]    (verb Fall)
-
+Module1
+[PlayerCrawlStart]       -> [PlayerCrawlEnd]        (verb Crawl(right, 1))
+[PlayerClimbLowStart]    -> [PlayerClimbLowEnd]     (verb Climb(low, up, 1))
+[PlayerClimbMediumStart] -> [PlayerClimbMediumEnd]  (verb Climb(medium, up, 1, Climb::low))
+[PlayerClimbLargeStart]  -> [PlayerClimbLargeEnd]   (verb Climb(large, up, 1, Climb::medium))
+[PlayerClimbCoilStart]   -> [PlayerClimbCoilEnd]    (verb Climb(coil, up, 2))
 
 ============
 LEVEL DRAFTS
 ============
 
-Level_1
-[crawl +, climb +, crawl +]                 (module Module_1)
-[crawl +, fall +, crawl +]                  (module Module_2 // test)
+Level1
+[Crawl +, Climb +]                         (module Module1)
 

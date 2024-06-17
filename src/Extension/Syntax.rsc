@@ -26,11 +26,12 @@ keyword ExtensionKeyword
 
 lexical COMMENT = @category="Comment" "//" (![\n)] | COMMENT)*;
 
-lexical ID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ Keywords;
+lexical ID = [a-z0-9.A-Z_:]+ !>> [a-z0-9.A-Z_] \ Keywords;
 
 /******************************************************************************/
 // --- Syntax ------------------------------------------------------------------
 
 start syntax Extension 
-    = extension: '(' ExtensionKeyword ID ')'
+    = extension: '(' ExtensionKeyword ID ('(' {ID ','}+ ')')? ')'
     ;
+

@@ -29,9 +29,9 @@ import Extension::AST;
 data GenerationEngine 
     = generation_engine(
         GenerationConfig config,
-        map[str name, GenerationPattern generation_pattern] patterns,
-        map[str name, GenerationModule generation_module] modules,
-        map[str name, GenerationLevel generation_level] generated_levels
+        map[str names, GenerationPattern generation_patterns] patterns,
+        map[str names, GenerationModule generation_modules] modules,
+        map[str names, GenerationLevel generation_levels] generated_levels
         )
     ;
 
@@ -58,7 +58,7 @@ data GenerationPattern
  * @Desc:   Data structure that models a generation module
  */
 data GenerationModule
-    = generation_module(map[str verb, GenerationRule generation_rule] generation_rules)
+    = generation_module(map[Verb verb, GenerationRule generation_rule] generation_rules)
     | generation_module_empty()
     ;
 
@@ -85,8 +85,17 @@ data GenerationLevel
  * @Desc:   Data structure that models a generation chunk
  */
 data GenerationChunk
-    = generation_chunk(str \module, list[GenerationRow] rows)
+    = generation_chunk(str \module, list[GenerationVerbExpression] verbs, list[GenerationRow] rows)
     | generation_chunk_empty()
+    ;
+
+/*
+ * @Name:   GenerationVerbExpression
+ * @Desc:   Data structure that models a generation verb expression
+ */
+data GenerationVerbExpression
+    = generation_verb_expression(str verb, str modifier)
+    | generation_verb_expression_empty()
     ;
 
 /*
@@ -252,9 +261,9 @@ map[str, GenerationModule] _papyrus_compile_modules(list[ModuleData] modules) {
 tuple[str, GenerationModule] _papyrus_compile_module(ModuleData \module) {
     tuple[str, GenerationModule] module_compiled = <"", generation_module_empty()>;
 
-    map[str verbs, GenerationRule generation_rules] compiled_rules = ();
+    map[Verb verbs, GenerationRule generation_rules] compiled_rules = ();
     for (RuleData r <- \module.rule_dts) {
-        tuple[str verb, GenerationRule rule] c_r = _papyrus_compile_rule(r);
+        tuple[Verb verb, GenerationRule rule] c_r = _papyrus_compile_rule(r);
         if (c_r.verb in compiled_rules.verbs) exception_modules_duplicated_verb(c_r.verb);
         else compiled_rules[c_r.verb] = c_r.rule;
     }
@@ -267,15 +276,15 @@ tuple[str, GenerationModule] _papyrus_compile_module(ModuleData \module) {
     return module_compiled;
 }
 
-tuple[str,GenerationRule] _papyrus_compile_rule(RuleData rule) {
-    tuple[str verb, GenerationRule rule] rule_compiled = <"", generation_rule_empty()>;
+tuple[Verb, GenerationRule] _papyrus_compile_rule(RuleData rule) {
+    tuple[Verb verb, GenerationRule rule] rule_compiled = <verb_empty(), generation_rule_empty()>;
 
     map[int key, list[str] content] comments = rule.comments;
     if (comments == ()) exception_rules_no_verb();
-    Extension verb = extension_load(comments);
+    Verb verb = extension_load_verb(comments);
 
     rule_compiled = <
-        verb.name,
+        verb,
         generation_rule(rule.left, rule.right)
     >;
 
@@ -338,10 +347,11 @@ GenerationChunk _papyrus_compile_chunk(ChunkData chunk, int width, int height) {
 
     map[int key, list[str] content] comments = chunk.comments;
     if (comments == ()) exception_chunk_no_module();
-    Extension \module = extension_load(comments);
+    Module \module = extension_load_module(comments);
 
     chunk_compiled = generation_chunk(
         \module.name,
+        [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.verb_dts],
         [generation_row_init(width) | _ <- [0..height]]
     );
     

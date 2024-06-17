@@ -26,6 +26,7 @@ import Set;
 import IO;
 
 // --- Own modules imports ----------------------------------------------------
+import Utils;
 import PuzzleScript::Utils;
 import PuzzleScript::AST;
 import PuzzleScript::Load;
@@ -44,12 +45,13 @@ import Generation::Engine;
  *  @Desc:  Aplication Model data structure
  */
 alias Model = tuple[ 
-    int index,              // Turn of the game
-    Engine engine,          // Engine
-    str puzzlescript_code,  // PuzzleScript code
-    str papyrus_code,       // DSL code
-    str image,              // Level image (???)
-    str input               // Input
+    int index,                          // Turn of the game
+    Engine engine,                      // Engine
+    str puzzlescript_code,              // PuzzleScript code
+    GenerationEngine generation_engine, // Generation engine
+    str papyrus_code,                   // DSL code
+    str image,                          // Image displayed
+    str input                           // Input
 ];
 
 /*
@@ -115,13 +117,16 @@ App[Model] main() {
     PapyrusData pprs = papyrus_load(pprs_loc);
     GenerationEngine generation_engine = papyrus_compile(pprs);
 
-    // Test code
-    // list[str] verbs = _chunk_concretize(["crawl", "climb", "crawl"], <0,5>, 10, 10);
-    // println(verbs);
-
-
     // We start our GUI model
-    Model init() = <0, engine, readFile(game_loc), readFile(pprs_loc), "Interface/bin/output_image0.png", "">;
+    Model init() = <
+        0, 
+        engine, 
+        readFile(game_loc), 
+        generation_engine, 
+        readFile(pprs_loc), 
+        "Interface/bin/output_image0.png", 
+        ""
+        >;
     SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("DaedaLe", id, view, css = ["Interface/css/styles.css"]), update);
     App[Model] counterWebApp() = webApp(counterApp(), |project://DaedaLe/src/|);
 
@@ -175,6 +180,10 @@ Model update(Msg msg, Model model){
                 model = reload_code(model.puzzlescript_code, model.index);
 
                 draw(model.engine, model.index);
+            }
+            // Generate button
+            case generate(): {
+                list[list[str]] generated_levels = generate(model.generation_engine);
             }
             // Default case
             default: return model;

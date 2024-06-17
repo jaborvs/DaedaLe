@@ -6,6 +6,10 @@
 module Generation::Exception
 
 /******************************************************************************/
+// --- Own modules imports -----------------------------------------------------
+import Extension::AST;
+
+/******************************************************************************/
 // --- Public config functions -------------------------------------------------
 
 void exception_config_args_len() {
@@ -27,8 +31,8 @@ void exception_modules_duplicated_module(str name) {
     throw "Exception Modules: Duplicated module <name>";
 }
 
-void exception_modules_duplicated_verb(str verb) {
-    throw "Exception Modules: Duplicated verb <verb>";
+void exception_modules_duplicated_verb(Verb verb) {
+    throw "Exception Modules: Duplicated verb <verb.name>(<verb.specification>, <verb.direction>, <verb.size>)";
 }
 
 void exception_rules_no_verb() {
