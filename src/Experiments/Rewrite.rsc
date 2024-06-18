@@ -1,18 +1,7 @@
 module Experiments::Rewrite
 
 import IO;
-
-data Chunk
-    = chunk(list[str] objects)
-    ;
-
-data Pattern
-    = pattern(list[Row] rows)
-    ;
-
-data Row
-    = row(list[str] objects)
-    ;
+import Experiments::AST;
 
 void main() {
     Pattern left = pattern([
