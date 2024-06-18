@@ -38,7 +38,7 @@ data Verb
         str specification, 
         str direction, 
         int size, 
-        tuple[tuple[str,str] prev, tuple[str,str] next] dependency
+        tuple[tuple[str name, str specification] prev, tuple[str name, str specification] next] dependencies
         )
     | verb_empty()
     ;

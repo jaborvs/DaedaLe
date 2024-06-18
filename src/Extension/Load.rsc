@@ -39,17 +39,17 @@ Verb extension_load_verb(map[int key, list[str] content] comments) {
     list[str] next = split("::", ext.args[3].vals[1]);
     if (size(next) == 1) next += [""];
 
-    tuple[tuple[str,str] prev, tuple[str,str] next] dependency = <
-        <prev[0], prev[1]>,
-        <next[0], next[1]>
+    tuple[tuple[str,str] prev, tuple[str,str] next] dependencies = <
+        <toLowerCase(prev[0]), toLowerCase(prev[1])>,
+        <toLowerCase(next[0]), toLowerCase(next[1])>
         >;
 
     Verb v = verb(
-        ext.name,
-        ext.args[0].val,        // Specification: low, medium, large
-        ext.args[1].val,        // Direction: up, down, right
-        toInt(ext.args[2].val), // Size
-        dependency              // Dependency: <previous_verb, next_verb>
+        toLowerCase(ext.name),
+        toLowerCase(ext.args[0].val),   // Specification: low, medium, large
+        toLowerCase(ext.args[1].val),   // Direction: up, down, right
+        toInt(ext.args[2].val),         // Size
+        dependencies                    // Dependencies: <previous_verb, next_verb>
         );
     return v;
 }

@@ -75,7 +75,7 @@ list[str] _generate_chunk(GenerationEngine engine, GenerationChunk chunk) {
     list[list[str]] verbs_concretized = _verbs_concretize(chunk.verbs, engine.config.width, engine.config.height);
     list[Verb] verbs_translated       = _verbs_translate(engine.modules[chunk.\module], verbs_concretized);
 
-    chunk = _apply_generation_rules(engine, chunk, verbs_concretized);
+    // chunk = _apply_generation_rules(engine, chunk, verbs_concretized);
 
     return verbs_concretized;
 }
@@ -90,8 +90,86 @@ list[str] _generate_chunk(GenerationEngine engine, GenerationChunk chunk) {
 /******************************************************************************/
 // --- Private Verbs Functions -------------------------------------------------
 
+
 list[Verb] _verbs_translate(GenerationModule \module, list[list[str]] verbs_concretized) {
-    return [];
+    list[Verb] verbs_translated = [];
+
+    for (list[str] subchunk <- verbs_concretized) {
+        str v = subchunk[0];
+        list[Verb] verbs = _module_get_verbs(\module, v);
+        
+        if (size(verbs) == 1) verbs_translated += _verbs_translate_match_single(subchunk, verbs[0]);
+        else                  verbs_translated += _verbs_translate_match_multi(\module, subchunk, verbs);
+    }
+
+    return verbs_translated;
+}
+
+list[Verb] _verbs_translate_match_single(list[str] subchunk, Verb verb) {
+    list[Verb] verbs_translated = [];
+    int subchunk_size = 0;
+
+    subchunk_size = size(subchunk);
+    if (subchunk_size % verb.size != 0) exception_verbs_translation_size_mismatch(verb, subchunk_size);
+
+    while (subchunk_size > 0) {
+        verbs_translated += [verb];
+        subchunk_size -= verb.size;
+    }
+
+    return verbs_translated;
+}
+
+list[Verb] _verbs_translate_match_multi(GenerationModule \module, list[str] subchunk, list[Verb] verbs) {
+    list[Verb] verbs_translated = [];
+    int subchunk_size = size(subchunk);
+    int verbs_size = size(verbs);
+
+    int i = 0;
+    while (subchunk_size > 0) {
+        Verb verb = verbs[i];
+        int verb_seq_size = _verb_sequence_size(\module, verb);
+
+        if (verb_seq_size == -1) {
+            verbs_translated += [verb];
+            subchunk_size -= verb.size;
+        }
+        else if (verb_seq_size >= subchunk_size) {
+            Verb current = verb;
+            for (int i <- [0..subchunk_size]) {
+                verbs_translated += [current];
+                subchunk_size -= current.size;
+                if (current.dependencies.next.name != "end") current = _verb_sequence_next(\module, current);
+            }
+        }
+
+        if (subchunk_size < 0) exception_verbs_translation_size_mismatch(verb, subchunk_size);
+
+        i += 1;
+        i = i % verbs_size;
+    }
+
+    return verbs_translated;
+}
+
+int _verb_sequence_size(GenerationModule \module, Verb verb) {
+    int size = 0;
+
+    if (verb.dependencies.prev.name == "start"
+        && verb.dependencies.next.name == "end") return -1;
+
+    Verb current = verb;
+    while (current.dependencies.next.name != "end") {
+        size += current.size;
+        current = _verb_sequence_next(\module, current);
+    }
+    size += current.size;
+
+    return size;
+}
+
+Verb _verb_sequence_next(GenerationModule \module, Verb current) {
+    return _module_get_verb(\module, current.dependencies.next.name, current.dependencies.next.specification);
 }
 
 /*
@@ -104,7 +182,7 @@ list[Verb] _verbs_translate(GenerationModule \module, list[list[str]] verbs_conc
  *          height -> Chunk height
  * @Ret:    List of concretized verbs
  */
-list[list[str]] _verbs_concretize(GenerationVerbExpression verbs, int width, int height) {
+list[list[str]] _verbs_concretize(list[GenerationVerbExpression] verbs, int width, int height) {
     list[list[str]] verbs_concretized = [];
     
     Coords position_init = <0, toInt(height/2)>;
@@ -326,3 +404,24 @@ bool _verbs_concretize_check_position_current_exited(map[int keys, Coords coords
     return false;
 }
 
+/******************************************************************************/
+// --- Private Module Functions ------------------------------------------------
+
+Verb _module_get_verb(GenerationModule \module, str verb_name, str verb_specification) {
+    for (Verb v <- \module.generation_rules.verbs) {
+        if (v.name == verb_name && v.specification == verb_specification) return v;
+    }
+
+    exception_modules_not_found_verb(\module.name, verb_name, verb_specification);
+    return verb_empty();
+}
+
+list[Verb] _module_get_verbs(GenerationModule \module, str verb_name) {
+    list[Verb] verbs_matched = [];
+
+    for (Verb v <- \module.generation_rules.verbs) {
+        if (v.name == verb_name && v.dependencies.prev.name == "start") verbs_matched += [v];
+    }
+
+    return verbs_matched;
+}

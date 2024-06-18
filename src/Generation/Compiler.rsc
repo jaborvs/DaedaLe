@@ -58,7 +58,7 @@ data GenerationPattern
  * @Desc:   Data structure that models a generation module
  */
 data GenerationModule
-    = generation_module(map[Verb verb, GenerationRule generation_rule] generation_rules)
+    = generation_module(map[Verb verbs, GenerationRule generation_rule] generation_rules)
     | generation_module_empty()
     ;
 

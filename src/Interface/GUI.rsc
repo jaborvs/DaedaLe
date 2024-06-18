@@ -113,7 +113,7 @@ App[Model] main() {
     // We represent the level on its initial state
     draw(engine, 0);
 
-    // We build our tutorial
+    // We load and compile the generation
     PapyrusData pprs = papyrus_load(pprs_loc);
     GenerationEngine generation_engine = papyrus_compile(pprs);
 
