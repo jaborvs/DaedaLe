@@ -98,13 +98,13 @@ data CurrentLine = currentline(
  *  @Ret:   Application run
  */ 
 App[Model] main() {
-    game_loc = |project://DaedaLe/src/PuzzleScript/demo/limerick.ps|;
-    // game_loc = |project://DaedaLe/src/PuzzleScript/demo/sokoban_basic.ps|;
-    // game_loc = |project://DaedaLe/src/PuzzleScript/demo/nekopuzzle.ps|;
+    game_loc = |project://daedale/src/PuzzleScript/demo/limerick.ps|;
+    // game_loc = |project://daedale/src/PuzzleScript/demo/sokoban_basic.ps|;
+    // game_loc = |project://daedale/src/PuzzleScript/demo/nekopuzzle.ps|;
 
-    pprs_loc = |project://DaedaLe/src/Generation/demo/limerick.pprs|;
-    // pprs_loc = |project://DaedaLe/src/Generation/demo/sokoban_basic.pprs|;
-    // pprs_loc = |project://DaedaLe/src/Generation/demo/nekopuzzle.pprs|;
+    pprs_loc = |project://daedale/src/Generation/demo/limerick.pprs|;
+    // pprs_loc = |project://daedale/src/Generation/demo/sokoban_basic.pprs|;
+    // pprs_loc = |project://daedale/src/Generation/demo/nekopuzzle.pprs|;
 
     // We load and compile the game
     GameData game = ps_load(game_loc);
@@ -127,8 +127,8 @@ App[Model] main() {
         "Interface/bin/output_image0.png", 
         ""
         >;
-    SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("DaedaLe", id, view, css = ["Interface/css/styles.css"]), update);
-    App[Model] counterWebApp() = webApp(counterApp(), |project://DaedaLe/src/|);
+    SalixApp[Model] counterApp(str id = "root") = makeApp(id, init, withIndex("daedale", id, view, css = ["Interface/css/styles.css"]), update);
+    App[Model] counterWebApp() = webApp(counterApp(), |project://daedale/src/|);
 
     return counterWebApp();
 }
@@ -313,7 +313,7 @@ void view(Model model) {
             });
             div(class("bottom-right"),() {
                 div(class("header"), () {
-                    h3("DaedaLe Console");
+                    h3("daedale Console");
                 });
                 div(class("code terminal"), () {
                     p("Placeholder");
@@ -424,9 +424,9 @@ tuple[str,str,str] pixel_to_json(Engine engine, int index) {
  * @Ret:    void
  */
 void draw(Engine engine, int index) {
-    data_loc = |project://DaedaLe/src/Interface/bin/data.dat|;
+    data_loc = |project://daedale/src/Interface/bin/data.dat|;
 
     tuple[str, str, str] json_data = pixel_to_json(engine, index);
     writeFile(data_loc, json_data[0]);
-    tmp = execWithCode("python3", workingDir=|project://DaedaLe/src/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+    tmp = execWithCode("python3", workingDir=|project://daedale/src/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
 }
