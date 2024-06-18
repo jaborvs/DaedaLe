@@ -71,11 +71,11 @@ list[str] _generate_level(GenerationEngine engine, GenerationLevel level) {
  * @Params:
  * @Ret:    Generated chunk object
  */
-list[str] _generate_chunk(GenerationEngine engine, GenerationChunk chunk) {
+GenerationChunk _generate_chunk(GenerationEngine engine, GenerationChunk chunk) {
     list[list[str]] verbs_concretized = _verbs_concretize(chunk.verbs, engine.config.width, engine.config.height);
     list[Verb] verbs_translated       = _verbs_translate(engine.modules[chunk.\module], verbs_concretized);
 
-    // chunk = _apply_generation_rules(engine, chunk, verbs_concretized);
+    chunk = _apply_generation_rules(engine, chunk, verbs_concretized);
 
     return verbs_concretized;
 }
@@ -83,9 +83,18 @@ list[str] _generate_chunk(GenerationEngine engine, GenerationChunk chunk) {
 /******************************************************************************/
 // --- Private Apply Functions -------------------------------------------------
 
-// GenerationChunk _apply_generation_rules(GenerationEngine engine, GenerationChunk chunk, list[str] verbs_concretized) {
+GenerationChunk _apply_generation_rules(GenerationEngine engine, GenerationChunk chunk, list[Verb] verbs) {
+    for (Verb verb <- verbs) {
+        chunk = _apply_generation_rule(engine, chunk, verb);
+    }
 
-// }
+    return chunk;
+}
+
+GenerationChunk _apply_generation_rule(GenerationEngine engine, Generation chunk, Verb verb) {
+    // GenerationRule rule = engine.modules[chunk.\module].generation_rules[verb];
+    return chunk;
+}
 
 /******************************************************************************/
 // --- Private Verbs Functions -------------------------------------------------
