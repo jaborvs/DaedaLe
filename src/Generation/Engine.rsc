@@ -91,7 +91,7 @@ GenerationChunk _apply_generation_rules(GenerationEngine engine, GenerationChunk
     return chunk;
 }
 
-GenerationChunk _apply_generation_rule(GenerationEngine engine, Generation chunk, Verb verb) {
+GenerationChunk _apply_generation_rule(GenerationEngine engine, GenerationChunk chunk, Verb verb) {
     // GenerationRule rule = engine.modules[chunk.\module].generation_rules[verb];
     return chunk;
 }
