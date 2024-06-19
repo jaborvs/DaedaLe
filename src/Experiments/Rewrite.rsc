@@ -1,34 +1,40 @@
 module Experiments::Rewrite
 
 import IO;
+import List;
+import String;
 import Experiments::AST;
 
 void main() {
     Pattern left = pattern([
-        row(["P","."]),
-        row(["#","."])
+        row([".","."]),
+        row(["P","."])
         ]);
     Pattern right   = pattern([
-        row(["H","P"]),
-        row(["#","#"])
+        row(["P","."]),
+        row(["H","."])
         ]);
 
     int width = 5;
     int height = 5;
     Chunk c = chunk([
         ".",".",".",".",".",
-        ".","P",".",".",".",
-        ".","#",".",".",".",
         ".",".",".",".",".",
-        ".",".",".",".","."
+        ".",".",".",".",".",
+        ".",".","P",".",".",
+        ".",".","#",".","."
         ]);
 
     println("\>\>\> Initial chunk state");
     chunk_print(c, width);
     println();
 
-    c.objects = visit(c.objects) {
-        case list[str] p:[*str top,"P",".",*str mid,"#",".",*str bottom] => [*top,"H","P",*mid,"#","#",*bottom]
+    for(list[str] pattern: [*str top,"P",".",*str mid,"#",".",*str bottom] := c.objects) {
+        if (size(mid) == (width - size(left.rows[0].objects))) {
+            c.objects = visit(c.objects) {
+                case list[str] p:pattern => [*top,"H","P",*mid,"#","#",*bottom]
+            };
+        }
     }
 
     println("\>\>\> Final chunk state");

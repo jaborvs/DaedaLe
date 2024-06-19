@@ -14,11 +14,11 @@ PH1
 
 PlayerCrawlStart
 PH1 .
-[!] .
+#   .
 
 PlayerCrawlEnd
 PBH PH1
-[!] #
+#   #
 
 PlayerClimbLowStart
 .   .
@@ -47,10 +47,10 @@ PBV #
 PlayerClimbCoilStart
 .   .
 .   .
-PH1 .
+PBH PH1
 
 PlayerClimbCoilEnd
-PH1 .
+PBH PH1
 PBV PBH
 PBH PBV
 
@@ -70,5 +70,5 @@ LEVEL DRAFTS
 ============
 
 Level1
-[crawl +, climb +]                         (module Module1)
+[crawl +, climb +, crawl+]                         (module Module1)
 

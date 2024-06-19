@@ -1,6 +1,8 @@
 module Experiments::GenerateRewrite
 
 import IO;
+import String;
+import List;
 import util::Eval;
 import Experiments::AST;
 
@@ -31,29 +33,40 @@ void main() {
     }
 }
 
-str generate_program(Chunk c, Pattern left, Pattern right)
-  = "//module Experiments::Crawl
+str generate_program(Chunk c, Pattern left, Pattern right) {
+    str program = "";
+    str imports = "";
+    str left_str = "";
+    str right_str = "";
+
+    imports = readFile(|project://daedale/src/Experiments/AST.rsc|);
+    imports 
+        = "/******************************************************************************/"
+        + split(
+            "/******************************************************************************/",
+            imports
+            )[1];
+
+    left_str  = "[*str top, <for(int i <- [0..size(left.rows)]){><for(str object <- left.rows[i].objects){>\"<object>\", <}><if(i != size(left.rows)-1){>*str mid_<i+1>, <}><}> *str bottom]"; 
+    right_str = "[*top, <for(int i <- [0..size(right.rows)]){><for(str object <- right.rows[i].objects){>\"<object>\", <}><if(i != size(right.rows)-1){>*mid_<i+1>, <}><}> *bottom]"; 
+
+    program = "//module Experiments::Crawl
     '
-    'data Chunk
-    '   = chunk(list[str] objects)
-    '   ;
+    '<imports>
     '
-    'data Row
-    '   = row(list[str] objects)
-    '   ;
-    '
-    'data Pattern
-    '   = pattern(list[Row] rows)
-    '   ;
-    '
-    '
+    '/******************************************************************************/
+    '// --- Verb rewrite rule function ----------------------------------------------
+    ' 
     'public Chunk (Chunk c) crawl = 
     'Chunk (Chunk c) 
     '{
     '   c.objects = visit(c.objects) {
-    '       case list[str] p:[*str top,\"<left.rows[0].objects[0]>\",\"<left.rows[0].objects[1]>\",*str mid,\"<left.rows[1].objects[0]>\",\"<left.rows[1].objects[1]>\",*str bottom] =\> [*top,\"<right.rows[0].objects[0]>\",\"<right.rows[0].objects[1]>\",*mid,\"<right.rows[1].objects[0]>\",\"<right.rows[1].objects[1]>\",*bottom]
+    '       case list[str] p:<left_str> =\> <right_str>
     '   };
     '   return c;
     '};
     '
     'crawl(<c>);";
+
+    return program;
+}

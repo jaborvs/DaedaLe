@@ -9,6 +9,7 @@ module Generation::Engine
 /******************************************************************************/
 // --- General modules imports -------------------------------------------------
 import util::Math;
+import util::Eval;
 import List;
 import Set;
 import IO;
@@ -16,6 +17,7 @@ import IO;
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
 import Generation::Compiler;
+import Generation::Match;
 import Extension::AST;
 import Utils;
 
@@ -61,7 +63,7 @@ list[list[str]] _generate_levels(GenerationEngine engine) {
 list[str] _generate_level(GenerationEngine engine, GenerationLevel level) {
     // list[GenerationChunk] chunks_generated =  [_generate_chunk(engine, chunk) | GenerationChunk chunk <- level.chunks];
     // return chunks_generated;
-    list[list[str]] chunks_generated =  [_generate_chunk(engine, chunk) | GenerationChunk chunk <- level.chunks];
+    list[GenerationChunk] chunks_generated =  [_generate_chunk(engine, chunk) | GenerationChunk chunk <- level.chunks];
     return [];
 }
 
@@ -75,24 +77,58 @@ GenerationChunk _generate_chunk(GenerationEngine engine, GenerationChunk chunk) 
     list[list[str]] verbs_concretized = _verbs_concretize(chunk.verbs, engine.config.width, engine.config.height);
     list[Verb] verbs_translated       = _verbs_translate(engine.modules[chunk.\module], verbs_concretized);
 
-    chunk = _apply_generation_rules(engine, chunk, verbs_concretized);
+    Coords player_coords = <0,4>;
+    chunk.objects[engine.config.width * player_coords.y + player_coords.x]     = "PH1";
+    chunk.objects[engine.config.width * (player_coords.y+1) + player_coords.x] = "#";
+    chunk = _apply_generation_rules(engine, chunk, verbs_translated);
 
-    return verbs_concretized;
+    return chunk;
 }
 
 /******************************************************************************/
 // --- Private Apply Functions -------------------------------------------------
 
 GenerationChunk _apply_generation_rules(GenerationEngine engine, GenerationChunk chunk, list[Verb] verbs) {
+    println("\>\>\> Chunk inicial:");
+    chunk_print(chunk, engine.config.width);
+
     for (Verb verb <- verbs) {
         chunk = _apply_generation_rule(engine, chunk, verb);
+        println("\>\>\> Aplicamos <verb.name>_<verb.specification>:");
+        chunk_print(chunk, engine.config.width);
     }
 
     return chunk;
 }
 
+void chunk_print(GenerationChunk chunk, int width) {
+    str chunk_printed = "";
+
+    int i = 0;
+    for (str object <- chunk.objects) {
+        chunk_printed += object;
+        chunk_printed += "\t";
+        i += 1;
+
+        if (i % width == 0) chunk_printed += "\n";
+    }
+    
+    print(chunk_printed);
+    return;
+}
+
 GenerationChunk _apply_generation_rule(GenerationEngine engine, GenerationChunk chunk, Verb verb) {
-    // GenerationRule rule = engine.modules[chunk.\module].generation_rules[verb];
+    str program = "";
+
+    GenerationRule rule = engine.modules[chunk.\module].generation_rules[verb];
+    GenerationPattern left = engine.patterns[rule.left];
+    GenerationPattern right = engine.patterns[rule.right];
+
+    program = match_generate_program(chunk, engine.config.width, verb, left, right);
+    if(result(GenerationChunk chunk_rewritten) := eval(program)) {
+        chunk = chunk_rewritten;
+    }
+
     return chunk;
 }
 

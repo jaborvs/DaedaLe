@@ -23,25 +23,20 @@ import Extension::AST;
 // --- Data structure defines --------------------------------------------------
 
 /*
- * @Name:   GenerationEngine
- * @Desc:   Data structure that models the generation engine
- */
-data GenerationEngine 
-    = generation_engine(
-        GenerationConfig config,
-        map[str names, GenerationPattern generation_patterns] patterns,
-        map[str names, GenerationModule generation_modules] modules,
-        map[str names, GenerationLevel generation_levels] generated_levels
-        )
-    ;
-
-/*
  * @Name:   GenerationConfig
  * @Desc:   Data structure that models the configuration for generation
  */
 data GenerationConfig 
     = generation_config(int width, int height)
     | generation_config_empty()
+    ;
+
+/*
+ * @Name:   GenerationRow
+ * @Desc:   Data structure that models a generation row
+ */
+data GenerationRow
+    = generation_row(list[str] objects)
     ;
 
 /*
@@ -54,15 +49,6 @@ data GenerationPattern
     ;
 
 /*
- * @Name:   GenerationModule
- * @Desc:   Data structure that models a generation module
- */
-data GenerationModule
-    = generation_module(map[Verb verbs, GenerationRule generation_rule] generation_rules)
-    | generation_module_empty()
-    ;
-
-/*
  * @Name:   GenerationRule
  * @Desc:   Data structure that models a generation rule
  */
@@ -72,21 +58,12 @@ data GenerationRule
     ;
 
 /*
- * @Name:   GenerationLevel
- * @Desc:   Data structure that models a generation level draft
+ * @Name:   GenerationModule
+ * @Desc:   Data structure that models a generation module
  */
-data GenerationLevel
-    = generation_level(list[GenerationChunk] chunks)
-    | generation_level_empty()
-    ;
-
-/*
- * @Name:   GenerationChunk
- * @Desc:   Data structure that models a generation chunk
- */
-data GenerationChunk
-    = generation_chunk(str \module, list[GenerationVerbExpression] verbs, list[GenerationRow] rows)
-    | generation_chunk_empty()
+data GenerationModule
+    = generation_module(map[Verb verbs, GenerationRule generation_rule] generation_rules)
+    | generation_module_empty()
     ;
 
 /*
@@ -99,21 +76,35 @@ data GenerationVerbExpression
     ;
 
 /*
- * @Name:   GenerationRow
- * @Desc:   Data structure that models a generation row
+ * @Name:   GenerationChunk
+ * @Desc:   Data structure that models a generation chunk
  */
-data GenerationRow
-    = generation_row(list[GenerationCell] cells)
+data GenerationChunk
+    = generation_chunk(str \module, list[GenerationVerbExpression] verbs, list[str] objects)
+    | generation_chunk_empty()
     ;
 
 /*
- * @Name:   GenerationCell
- * @Desc:   Data structure that models a generation cell
+ * @Name:   GenerationLevel
+ * @Desc:   Data structure that models a generation level draft
  */
-data GenerationCell
-    = generation_cell(str object)
+data GenerationLevel
+    = generation_level(list[GenerationChunk] chunks)
+    | generation_level_empty()
     ;
 
+/*
+ * @Name:   GenerationEngine
+ * @Desc:   Data structure that models the generation engine
+ */
+data GenerationEngine 
+    = generation_engine(
+        GenerationConfig config,
+        map[str names, GenerationPattern generation_patterns] patterns,
+        map[str names, GenerationModule generation_modules] modules,
+        map[str names, GenerationLevel generation_levels] generated_levels
+        )
+    ;
 
 /******************************************************************************/
 // --- Public compile functions ------------------------------------------------
@@ -216,11 +207,7 @@ tuple[str, GenerationPattern] _papyrus_compile_pattern(PatternData pattern) {
 
     list[GenerationRow] rows_compiled = [];
     for (TilemapRowData r <- pattern.tilemap.row_dts) {
-        list[GenerationCell] cells_compiled = [];
-        for (str c <- r.objects) {
-            cells_compiled += [generation_cell(c)];
-        }
-        rows_compiled += [generation_row(cells_compiled)];
+        rows_compiled += [generation_row(r.objects)];
     }
 
     pattern_compiled = <
@@ -352,7 +339,7 @@ GenerationChunk _papyrus_compile_chunk(ChunkData chunk, int width, int height) {
     chunk_compiled = generation_chunk(
         \module.name,
         [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.verb_dts],
-        [generation_row_init(width) | _ <- [0..height]]
+        ["." | _ <- [0..(width*height)]]
     );
     
     return chunk_compiled;
@@ -376,27 +363,4 @@ GenerationEngine generation_engine_init() {
     );
 
     return engine;
-}
-
-/******************************************************************************/
-// --- Level functions ---------------------------------------------------------
-
-/*
- * @Name:   generation_row_init
- * @Desc:   Function to create a blank row filled only with background objects
- * @Params:
- * @Ret:    A blank row
- */
-GenerationRow generation_row_init(int length) {
-    return generation_row([generation_cell_init() | _ <- [0..length]]);
-}
-
-/*
- * @Name:   generation_cell_init
- * @Desc:   Function to create a blan cell filled with a background object
- * @Params:
- * @Ret:    A blank cell
- */
-GenerationCell generation_cell_init() {
-    return generation_cell(".");
 }

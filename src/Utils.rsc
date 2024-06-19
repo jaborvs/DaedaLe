@@ -7,6 +7,10 @@
 module Utils
 
 /******************************************************************************/
+// --- General modules imports -------------------------------------------------
+import String;
+
+/******************************************************************************/
 // --- Data structures defines -----------------------------------------------
 
 /*
@@ -17,3 +21,12 @@ alias Coords = tuple[
     int x,  // x-coordinate
     int y   // y-coordinate
 ];
+
+/******************************************************************************/
+// --- Public functions --------------------------------------------------------
+
+str string_capitalize(str word:/^<letter:[a-z]><rest:.*>/) 
+    = "<toUpperCase(letter)><rest>";
+
+str string_capitalize(str word) 
+    = word;
