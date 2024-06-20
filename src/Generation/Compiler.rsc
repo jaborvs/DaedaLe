@@ -17,7 +17,8 @@ import IO;
 import Generation::Exception;
 import Generation::AST;
 import Extension::Load;
-import Extension::AST;
+import Extension::Verb;
+import Extension::Module;
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -104,6 +105,7 @@ data GenerationEngine
         map[str names, GenerationModule generation_modules] modules,
         map[str names, GenerationLevel generation_levels] generated_levels
         )
+    | generation_engine_empty()
     ;
 
 /******************************************************************************/

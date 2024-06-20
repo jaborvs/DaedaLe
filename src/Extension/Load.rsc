@@ -17,6 +17,8 @@ import IO;
 // --- Own modules imports -----------------------------------------------------
 import Extension::Syntax;
 import Extension::AST;
+import Extension::Verb;
+import Extension::Module;
 
 /******************************************************************************/
 // --- Public load functions --------------------------------------------------
@@ -31,18 +33,19 @@ Verb extension_load_verb(map[int key, list[str] content] comments) {
     Extension ext = extension_load(comments);
 
     if (size(ext.args) == 2) ext.args = insertAt(ext.args, 0, argument_single("default"));    // Specification
-    if (size(ext.args) == 3) ext.args += [argument_tuple(["start", "end"])];                  // Dependency
+    if (size(ext.args) == 3) ext.args += [argument_tuple(
+            reference_none("none"),
+            reference_none("none")
+        )];                  // Dependency
 
-
-    list[str] prev = split("::", ext.args[3].vals[0]);
-    if (size(prev) == 1) prev += [""];
-    list[str] next = split("::", ext.args[3].vals[1]);
-    if (size(next) == 1) next += [""];
-
-    tuple[tuple[str,str] prev, tuple[str,str] next] dependencies = <
-        <toLowerCase(prev[0]), toLowerCase(prev[1])>,
-        <toLowerCase(next[0]), toLowerCase(next[1])>
-        >;
+    tuple[
+        tuple[str name, str specification] prev, 
+        tuple[str name, str specification] next
+        ] dependencies = <<"","">,<"","">>;
+    if (ext.args[3].prev is reference_none) dependencies.prev = <ext.args[3].prev.val,"_">;
+    else                                    dependencies.prev = <ext.args[3].prev.verb_name, ext.args[3].prev.verb_specification>;
+    if (ext.args[3].next is reference_none) dependencies.next = <ext.args[3].next.val,"_">;
+    else                                    dependencies.next = <ext.args[3].next.verb_name, ext.args[3].next.verb_specification>;
 
     Verb v = verb(
         toLowerCase(ext.name),
@@ -89,6 +92,7 @@ Extension extension_load(map[int key, list[str] content] comments) {
 Extension extension_load(str src) {
     start[Extension] v = extension_parse(src);
     Extension ast = extension_implode(v);
+    ast = extension_process(ast);
     return ast;
 }
 
@@ -114,4 +118,13 @@ start[Extension] extension_parse(str src) {
 Extension extension_implode(start[Extension] parse_tree) {
     Extension v = implode(#Extension, parse_tree);
     return v;
+}
+
+/******************************************************************************/
+// --- Processing functions ----------------------------------------------------
+
+Extension extension_process(Extension ext) {
+    return visit(ext) {
+        case str s => toLowerCase(s)
+    };
 }

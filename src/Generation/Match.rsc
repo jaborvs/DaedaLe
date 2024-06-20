@@ -17,7 +17,7 @@ import util::Eval;
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
 import Generation::Compiler;
-import Extension::AST;
+import Extension::Verb;
 import Utils;
 
 void main() {

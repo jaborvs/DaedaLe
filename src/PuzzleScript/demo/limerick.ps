@@ -135,23 +135,22 @@ RULES
 
 (this game handles all the movement stuff itself - it removes all movements before the movement phase has a chance to tick at all)
 
-UP [ UP PlayerHead4 ] -> [ PlayerHead4 ]                                                        (verb Climb(max)    // Max climb heigh reached)
-UP [ UP PlayerHead3 | No Obstacle ] -> [ PlayerBodyV | PlayerHead4 ] sfx1                       (verb Climb(large)  // Third climb: red head)
-UP [ UP PlayerHead2 | No Obstacle ] -> [ PlayerBodyV | PlayerHead3 ] sfx0                       (verb Climb(medium) // Second climb: orange head)
-UP [ UP PlayerHead1 | No Obstacle ] -> [ PlayerBodyV | PlayerHead2 ] sfx0                       (verb Climb(low)    // First climb: yellow head)
+UP [ UP PlayerHead4 ] -> [ PlayerHead4 ]                                                        (verb Climb(max)      // Max climb heigh reached)
+UP [ UP PlayerHead3 | No Obstacle ] -> [ PlayerBodyV | PlayerHead4 ] sfx1                       (verb Climb(large)    // Third climb: red head)
+UP [ UP PlayerHead2 | No Obstacle ] -> [ PlayerBodyV | PlayerHead3 ] sfx0                       (verb Climb(medium)   // Second climb: orange head)
+UP [ UP PlayerHead1 | No Obstacle ] -> [ PlayerBodyV | PlayerHead2 ] sfx0                       (verb Climb(low)      // First climb: yellow head)
 
-horizontal [ > Player | Crate | No Obstacle ] -> [ PlayerBodyH | PlayerHead1 | Crate ] sfx2     (verb Push          // push crates horizontally)
+horizontal [ > Player | Crate | No Obstacle ] -> [ PlayerBodyH | PlayerHead1 | Crate ] sfx2     (verb Push(default)   // push crates horizontally)
 
-horizontal [ > Player | No Obstacle ] -> [ PlayerBodyH | PlayerHead1 ] sfx2                     (verb Crawl         // snake grows horizontally)
+horizontal [ > Player | No Obstacle ] -> [ PlayerBodyH | PlayerHead1 ] sfx2                     (verb Crawl(default)  // snake grows horizontally)
 
-[ Player Apple ] [ PlayerBody ] -> [ Player Apple ] [ ]                                         (verb Clear         // clear the player body)
-[ Player Apple ] -> [ Player ]                                                                  (verb Eat           // eat the apple)
+[ Player Apple ] [ PlayerBody ] -> [ Player Apple ] [ ]                                         (verb Clear(default)  // clear the player body)
+[ Player Apple ] -> [ Player ]                                                                  (verb Eat(default)    // eat the apple)
 
-[ > Player ] -> [ Player ]                                                                      (verb Cancel        // prevent default movement)
+[ > Player ] -> [ Player ]                                                                      (verb Cancel(default) // prevent default movement)
 
-DOWN [ Player | No Obstacle ] -> [ PlayerBodyV | PlayerHead1 ]                                  (verb Fall(player)  // the head falls down)
-DOWN [ Crate | No Obstacle ] -> [ | Crate ]                                                     (verb Fall(crate)   // crates fall down)
-
+DOWN [ Player | No Obstacle ] -> [ PlayerBodyV | PlayerHead1 ]                                  (verb Fall(player)    // the head falls down)
+DOWN [ Crate | No Obstacle ] -> [ | Crate ]                                                     (verb Fall(crate)     // crates fall down)
 ==============
 WINCONDITIONS
 ==============

@@ -22,32 +22,14 @@ data Extension
  */
 data Argument
     = argument_single(str val)                            // Single argument
-    | argument_tuple(list[str] vals)                      // Tuple argument
-    ;
-
-/******************************************************************************/
-// --- Other structure defines -------------------------------------------------
-
-/*
- * @Name:   Extension
- * @Desc:   Structure to model an verb
- */
-data Verb 
-    = verb(
-        str name, 
-        str specification, 
-        str direction, 
-        int size, 
-        tuple[tuple[str name, str specification] prev, tuple[str name, str specification] next] dependencies
-        )
-    | verb_empty()
+    | argument_tuple(Reference prev, Reference next)      // Tuple argument
     ;
 
 /*
  * @Name:   Extension
- * @Desc:   Structure to model an module
+ * @Desc:   Structure to model an reference (none or verb)
  */
-data Module
-    = \module(str name)
-    | module_empty()
+data Reference
+    = reference_none(str val)
+    | reference_verb(str verb_name, str verb_specification)
     ;

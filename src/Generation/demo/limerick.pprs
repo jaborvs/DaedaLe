@@ -10,10 +10,10 @@ PATTERNS
 
 PlayerIdle
 PH1
-#
+.
 
 PlayerCrawlStart
-PH1 .
+PH1 . 
 #   .
 
 PlayerCrawlEnd
@@ -48,27 +48,60 @@ PlayerClimbCoilStart
 .   .
 .   .
 PBH PH1
+#   .
 
 PlayerClimbCoilEnd
 PBH PH1
 PBV PBH
 PBH PBV
+#   #
+
+PlayerCrawlBeforeFallStart
+PH1 .
+#   .
+
+PlayerCrawlBeforeFallEnd
+PBH PH1
+#   .
+
+PlayerFallStart
+PH1
+.
+
+PlayerFallEnd
+PBV
+PH1
+
+PlayerCrawlAfterFallStart
+PH1 .
+.   .
+
+PlayerCrawlAfterFallEnd
+PBH PH1
+#   #
 
 =======
 MODULES
 =======
 
 Module1
-[PlayerCrawlStart]       -> [PlayerCrawlEnd]        (verb Crawl(right, 1))
-[PlayerClimbLowStart]    -> [PlayerClimbLowEnd]     (verb Climb(low,    up, 1, <start,         Climb::medium>))
-[PlayerClimbMediumStart] -> [PlayerClimbMediumEnd]  (verb Climb(medium, up, 1, <Climb::low,    Climb::large >))
-[PlayerClimbLargeStart]  -> [PlayerClimbLargeEnd]   (verb Climb(large,  up, 1, <Climb::medium, end          >))
-[PlayerClimbCoilStart]   -> [PlayerClimbCoilEnd]    (verb Climb(coil,   up, 2))
+[PlayerCrawlStart]                 -> [PlayerCrawlEnd]             (verb Crawl(default,            right, 1))
+[PlayerCrawlBeforeClimbStart]      -> [PlayerCrawlBeforeClimbEnd]  (verb Crawl(before_climb,       right, 1, <none,          Climb(_)>))
+[PlayerCrawlAfterClimbLowStart]    -> [PlayerCrawlAfterClimbEnd]   (verb Crawl(after_climb_low,    right, 1, <Climb(low),    none    >))
+[PlayerCrawlAfterClimbMediumStart] -> [PlayerCrawlAfterClimbEnd]   (verb Crawl(after_climb_medium, right, 1, <Climb(medium), none    >))
+[PlayerCrawlAfterCLimbLargeStart]  -> [PlayerCrawlAfterClimbEnd]   (verb Crawl(after_climb_large,  right, 1, <Climb(large),  none    >))
+[PlayerCrawlBeforeFallStart]       -> [PlayerCrawlBeforeFallEnd]   (verb Crawl(before_fall,        right, 1, <none,          Fall(_) >))
+[PlayerCrawlAfterFallStart]        -> [PlayerCrawlAfterFallEnd]    (verb Crawl(after_fall_default, right, 1, <Fall(default), none    >))
+[PlayerClimbLowStart]              -> [PlayerClimbLowEnd]          (verb Climb(low,                up,    1, <none,          Climb(medium)>))
+[PlayerClimbMediumStart]           -> [PlayerClimbMediumEnd]       (verb Climb(medium,             up,    1, <Climb(low),    Climb(large) >))
+[PlayerClimbLargeStart]            -> [PlayerClimbLargeEnd]        (verb Climb(large,              up,    1, <Climb(medium), none         >))
+[PlayerClimbCoilStart]             -> [PlayerClimbCoilEnd]         (verb Climb(coil,               up,    2))
+[PlayerFallStart]                  -> [PlayerFallEnd]              (verb Fall (default,            down,  1))
 
 ============
 LEVEL DRAFTS
 ============
 
 Level1
-[crawl +, climb +, crawl+]                         (module Module1)
+[crawl +, fall +, crawl+]                         (module Module1)
 

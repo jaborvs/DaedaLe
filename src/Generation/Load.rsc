@@ -10,6 +10,7 @@ module Generation::Load
 /******************************************************************************/
 // --- General modules imports -------------------------------------------------
 import ParseTree;
+import String;
 import IO;
 
 /******************************************************************************/
@@ -91,12 +92,12 @@ PapyrusData papyrus_implode(start[PapyrusData] parse_tree) {
  * @Ret:    Cleaned ast
  */
 PapyrusData papyrus_process(PapyrusData pprs) {
-    list[ConfigurationData] unprocessed_configs = [];
-    list[PatternData] unprocessed_patterns = [];
-    list[ModuleData] unprocessed_modules = [];
-    list[LevelDraftData] unprocessed_level_drafts = [];
+    list[ConfigurationData] processed_configs = [];
+    list[PatternData] processed_patterns = [];
+    list[ModuleData] processed_modules = [];
+    list[LevelDraftData] processed_level_drafts = [];
 
-    PapyrusData pprs_no_empty = visit(pprs) {
+    pprs = visit(pprs) {
         case list[ConfigurationData] config => [c | c <- config, !(configuration_empty(_) := c)]
         case list[PatternData] patterns => [p | p <- patterns, !(pattern_empty(_) := p)]
         case list[ModuleData] modules => [m | m <- modules, !(module_empty(_) := m)]
@@ -104,18 +105,22 @@ PapyrusData papyrus_process(PapyrusData pprs) {
         case list[SectionData] sections => [s | s <- sections, !(section_empty(_,_,_,_) := s)]
     };
 
-    visit(pprs_no_empty) {
-        case SectionData s:section_configurations_data(_,_,_,_): unprocessed_configs += s.configs;
-        case SectionData s:section_patterns_data(_,_,_,_): unprocessed_patterns += s.patterns;
-        case SectionData s:section_modules_data(_,_,_,_): unprocessed_modules += s.modules;
-        case SectionData s:section_level_drafts_data(_,_,_,_): unprocessed_level_drafts += s.level_drafts;
+    pprs = visit(pprs) {
+        case str s => toLowerCase(s)
+    }
+
+    visit(pprs) {
+        case SectionData s:section_configurations_data(_,_,_,_): processed_configs += s.configs;
+        case SectionData s:section_patterns_data(_,_,_,_): processed_patterns += s.patterns;
+        case SectionData s:section_modules_data(_,_,_,_): processed_modules += s.modules;
+        case SectionData s:section_level_drafts_data(_,_,_,_): processed_level_drafts += s.level_drafts;
     };
 
     PapyrusData pprs_processed = papyrus_data(
-        unprocessed_configs,
-        unprocessed_patterns,
-        unprocessed_modules,
-        unprocessed_level_drafts
+        processed_configs,
+        processed_patterns,
+        processed_modules,
+        processed_level_drafts
     );
 
     return pprs_processed;

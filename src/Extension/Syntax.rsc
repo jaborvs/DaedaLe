@@ -26,7 +26,7 @@ keyword ExtensionKeyword
 
 lexical COMMENT = @category="Comment" "//" (![\n)] | COMMENT)*;
 
-lexical ID = [a-z0-9.A-Z_:]+ !>> [a-z0-9.A-Z_] \ Keywords;
+lexical ID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ ExtensionKeyword;
 
 /******************************************************************************/
 // --- Syntax ------------------------------------------------------------------
@@ -37,5 +37,10 @@ start syntax Extension
 
 syntax Argument
     = argument_single: ID 
-    | argument_tuple: '\<' {ID ','}+ '\>'
+    | argument_tuple: '\<' Reference ',' Reference '\>'
+    ;
+
+syntax Reference
+    = reference_none: ID
+    | reference_verb: ID '(' ID ')'
     ;

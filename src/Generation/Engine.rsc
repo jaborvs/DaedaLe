@@ -18,7 +18,7 @@ import IO;
 // --- Own modules imports -----------------------------------------------------
 import Generation::Compiler;
 import Generation::Match;
-import Extension::AST;
+import Extension::Verb;
 import Utils;
 
 /******************************************************************************/
@@ -78,7 +78,7 @@ GenerationChunk _generate_chunk(GenerationEngine engine, GenerationChunk chunk) 
     list[Verb] verbs_translated       = _verbs_translate(engine.modules[chunk.\module], verbs_concretized);
 
     Coords player_coords = <0,4>;
-    chunk.objects[engine.config.width * player_coords.y + player_coords.x]     = "PH1";
+    chunk.objects[engine.config.width * player_coords.y + player_coords.x]     = "ph1";
     chunk.objects[engine.config.width * (player_coords.y+1) + player_coords.x] = "#";
     chunk = _apply_generation_rules(engine, chunk, verbs_translated);
 
@@ -139,72 +139,122 @@ GenerationChunk _apply_generation_rule(GenerationEngine engine, GenerationChunk 
 list[Verb] _verbs_translate(GenerationModule \module, list[list[str]] verbs_concretized) {
     list[Verb] verbs_translated = [];
 
-    for (list[str] subchunk <- verbs_concretized) {
-        str v = subchunk[0];
-        list[Verb] verbs = _module_get_verbs(\module, v);
-        
-        if (size(verbs) == 1) verbs_translated += _verbs_translate_match_single(subchunk, verbs[0]);
-        else                  verbs_translated += _verbs_translate_match_multi(\module, subchunk, verbs);
+    int subchunks_num = size(verbs_concretized);
+    for (int i <- [0..subchunks_num]) {
+        list[str] subchunk = verbs_concretized[i];
+        tuple[list[Verb] verbs_translated, int subchunk_size] res = <[],size(subchunk)>;
+
+        str verb_prev_name = (verbs_translated != []) ? verbs_translated[-1].name : "";
+        str verb_prev_specification = (verbs_translated != []) ? verbs_translated[-1].specification : "";
+
+        str verb_next_name = (i+1 < subchunks_num) ? verbs_concretized[i+1][0] : "";
+        str verb_next_specification = (i+1 < subchunks_num) ? "_" : "";
+
+        str verb_current_name = subchunk[0];
+        str verb_current_after_specification = "_";
+        if (verb_prev_name != "" 
+            && verb_prev_specification != "") verb_current_after_specification = "after_<verb_prev_name>_<verb_prev_specification>";
+        str verb_current_before_specification = "_";
+        if (verb_next_name != "" 
+             && verb_next_specification != "") verb_current_before_specification = "before_<verb_next_name>";
+
+        Verb verb_after = _module_get_verb_after(\module, verb_current_name, verb_current_after_specification, verb_prev_name, verb_prev_specification);
+        tuple[Verb ind, Verb seq] verb_mid = _module_get_verb_mid(\module, verb_current_name);
+        Verb verb_before = _module_get_verb_before(\module, verb_current_name, verb_current_before_specification, verb_next_name, verb_next_specification);
+        bool verb_before_exists = !(verb_before is verb_empty);
+
+        res = _verbs_translate_single(res, verb_after);
+        res = _verbs_translate_multi(\module, res, verb_mid, verb_before_exists);
+        res = _verbs_translate_single(res, verb_before);
+
+        verbs_translated += res.verbs_translated;
     }
 
     return verbs_translated;
 }
 
-list[Verb] _verbs_translate_match_single(list[str] subchunk, Verb verb) {
-    list[Verb] verbs_translated = [];
-    int subchunk_size = 0;
+tuple[list[Verb],int] _verbs_translate_single(tuple[list[Verb] verbs_translated, int subchunk_size] res, Verb verb) {
+    if (verb is verb_empty) return res;
 
-    subchunk_size = size(subchunk);
-    if (subchunk_size % verb.size != 0) exception_verbs_translation_size_mismatch(verb, subchunk_size);
-
-    while (subchunk_size > 0) {
-        verbs_translated += [verb];
-        subchunk_size -= verb.size;
-    }
-
-    return verbs_translated;
+    res.verbs_translated += [verb];
+    res.subchunk_size -= verb.size;
+    return res;
 }
 
-list[Verb] _verbs_translate_match_multi(GenerationModule \module, list[str] subchunk, list[Verb] verbs) {
-    list[Verb] verbs_translated = [];
-    int subchunk_size = size(subchunk);
-    int verbs_size = size(verbs);
 
-    int i = 0;
-    while (subchunk_size > 0) {
-        Verb verb = verbs[i];
-        int verb_seq_size = _verb_sequence_size(\module, verb);
+tuple[list[Verb],int] _verbs_translate_multi(GenerationModule \module, tuple[list[Verb] verbs_translated, int subchunk_size] res, tuple[Verb ind, Verb seq] verb, bool verb_before_exists) {
+    if (verb.ind is verb_empty) res = _verbs_translate_multi_seq(\module, res, verb.seq, verb_before_exists);
+    else if (verb.seq is verb_empty) res = _verbs_translate_multi_ind(res, verb.ind, verb_before_exists);
+    else res = _verbs_translate_multi_both(\module, res, verb, verb_before_exists);
 
-        if (verb_seq_size == -1) {
-            verbs_translated += [verb];
-            subchunk_size -= verb.size;
-        }
-        else if (verb_seq_size >= subchunk_size) {
-            Verb current = verb;
-            for (int i <- [0..subchunk_size]) {
-                verbs_translated += [current];
-                subchunk_size -= current.size;
-                if (current.dependencies.next.name != "end") current = _verb_sequence_next(\module, current);
+    return res;
+}
+
+tuple[list[Verb],int] _verbs_translate_multi_seq(tuple[list[Verb] verbs_translated, int subchunk_size] res, Verb verb, bool verb_before_exists) {
+    int subchunk_size_partial = (verb_before_exists) ? res.subchunk_size-1 : res.subchunk_size;
+
+    if (verb_seq_size(verb) < subchunk_size_partial) exception_verbs_translation_size_mismatch(verb, res.subchunk_size);
+
+    for (_ <- [0..subchunk_size_partial]) {
+        res.verbs_translated += [current];
+        res.subchunk_size -= current.size;
+        subchunk_size_partial -= current.size;
+        if (current.dependencies.next.name != "none") current = _verb_sequence_next(\module, current);
+    }
+    
+    return res;
+}
+
+tuple[list[Verb],int] _verbs_translate_multi_ind(tuple[list[Verb] verbs_translated, int subchunk_size] res, Verb verb, bool verb_before_exists) {
+    int subchunk_size_partial = (verb_before_exists) ? res.subchunk_size-1 : res.subchunk_size;
+
+    if (subchunk_size_partial % verb.size != 0) exception_verbs_translation_size_mismatch(verb, res.subchunk_size);
+
+    while (subchunk_size_partial > 0) {
+        res.verbs_translated += [verb];
+        res.subchunk_size -= verb.size;
+        subchunk_size_partial -= verb.size;
+    }
+
+    return res;
+}
+
+tuple[list[Verb],int] _verbs_translate_multi_both(GenerationModule \module, tuple[list[Verb] verbs_translated, int subchunk_size] res, tuple[Verb ind, Verb seq] verb, bool verb_before_exists) {
+    int verb_seq_size = _verb_sequence_size(\module, verb.seq);
+    int subchunk_size_partial = (verb_before_exists) ? res.subchunk_size-1 : res.subchunk_size;
+
+    while (subchunk_size_partial > 0) {
+        if (verb_seq_size >= subchunk_size_partial) {
+            Verb current = verb.seq;
+            for (_ <- [0..subchunk_size_partial]) {
+                res.verbs_translated += [current];
+                res.subchunk_size -= current.size;
+                subchunk_size_partial -= current.size;
+                if (current.dependencies.next.name != "none") current = _verb_sequence_next(\module, current);
             }
         }
+        else {
+            res.verbs_translated += [verb.ind];
+            res.subchunk_size -= verb.ind.size;
+            subchunk_size_partial -= verb.ind.size;
+        }
 
-        if (subchunk_size < 0) exception_verbs_translation_size_mismatch(verb, subchunk_size);
-
-        i += 1;
-        i = i % verbs_size;
+        if (subchunk_size_partial < 0) exception_verbs_translation_size_mismatch(verb, res.subchunk_size);
     }
 
-    return verbs_translated;
+    return res;
 }
 
 int _verb_sequence_size(GenerationModule \module, Verb verb) {
     int size = 0;
 
-    if (verb.dependencies.prev.name == "start"
-        && verb.dependencies.next.name == "end") return -1;
+    if (verb.dependencies.prev.name == "none"
+        && verb.dependencies.next.name == "none") return -1;
+    if (verb.dependencies.prev.name == "none"
+        || verb.dependencies.next.name == "none") return 1;
 
     Verb current = verb;
-    while (current.dependencies.next.name != "end") {
+    while (current.dependencies.next.name != "none") {
         size += current.size;
         current = _verb_sequence_next(\module, current);
     }
@@ -454,19 +504,56 @@ bool _verbs_concretize_check_position_current_exited(map[int keys, Coords coords
 
 Verb _module_get_verb(GenerationModule \module, str verb_name, str verb_specification) {
     for (Verb v <- \module.generation_rules.verbs) {
-        if (v.name == verb_name && v.specification == verb_specification) return v;
+        if (v.name == verb_name 
+            && v.specification == verb_specification) return v;
     }
 
     exception_modules_not_found_verb(\module.name, verb_name, verb_specification);
     return verb_empty();
 }
 
-list[Verb] _module_get_verbs(GenerationModule \module, str verb_name) {
-    list[Verb] verbs_matched = [];
-
+Verb _module_get_verb_after(GenerationModule \module, str verb_current_name, str verb_current_specification, str verb_prev_name, str verb_prev_specification) {
     for (Verb v <- \module.generation_rules.verbs) {
-        if (v.name == verb_name && v.dependencies.prev.name == "start") verbs_matched += [v];
+        if (v.name == verb_current_name 
+            && v.specification == verb_current_specification
+            && verb_is_after(v)
+            && v.dependencies.prev.name == verb_prev_name
+            && v.dependencies.prev.specification == verb_prev_specification) return v;
     }
 
-    return verbs_matched;
+    return verb_empty();
+}
+
+Verb _module_get_verb_before(GenerationModule \module, str verb_current_name, str verb_current_specification, str verb_next_name, str verb_next_specification) {
+    for (Verb v <- \module.generation_rules.verbs) {
+        if (v.name == verb_current_name 
+            && v.specification == verb_current_specification
+            && verb_is_before(v)
+            && v.dependencies.next.name == verb_next_name
+            && v.dependencies.next.specification == verb_next_specification) return v;
+    }
+
+    return verb_empty();
+}
+
+tuple[Verb,Verb] _module_get_verb_mid(GenerationModule \module, str verb_current_name) {
+    tuple[Verb ind, Verb seq] verb = <verb_empty(), verb_empty()>;
+    list[Verb] verbs_ind = [];
+    list[Verb] verbs_seq = [];
+
+    for (Verb v <- \module.generation_rules.verbs) {
+        if (v.name == verb_current_name 
+            && !verb_is_after(v)
+            && !verb_is_before(v)) {
+
+            if (verb_is_sequence(v)) verbs_seq += [v];
+            else                     verbs_ind += [v];
+        }
+    }
+
+    if      (verbs_ind == []) verb.seq = getOneFrom(verbs_seq);
+    else if (verbs_seq == []) verb.ind = getOneFrom(verbs_ind);
+    else                      verb = <getOneFrom(verbs_ind),getOneFrom(verbs_seq)>;
+
+    return verb;
 }
