@@ -41,9 +41,8 @@ void main() {
 
     int width = 5;
     int height = 5;
-    GenerationChunk chunk = generation_chunk(
-        "Module1",
-        [],
+    Chunk c = chunk(
+        5,
         [
             ".",".",".",".",".",
             ".","P",".",".",".",
@@ -53,11 +52,11 @@ void main() {
         ]
         );
 
-    str program = match_generate_program(chunk, width, v, left, right);
+    str program = match_generate_program(c, v, left, right);
     println(program);
-    if(result(GenerationChunk chunk_rewritten) := eval(program)) {
-        chunk = chunk_rewritten;
-        println(chunk.objects);
+    if(result(Chunk c_r) := eval(program)) {
+        c = c_r;
+        println(c.objects);
     }
 }
 
@@ -68,18 +67,18 @@ void main() {
  * @Name:   match_generate_program
  * @Desc:   Function that generates the matching program for a given
  *          GenerationRule to rewrite a GenerationChunk
- * @Params: chunk -> GenerationChunk to be rewritten
+ * @Params: chunk -> Chunk to be rewritten
  *          left  -> Left pattern of the GenerationRule
  *          right -> Right pattern of the GenerationRule
  * @Ret:    str with the complete programm
  */
-str match_generate_program(GenerationChunk chunk, int chunk_width, Verb verb, GenerationPattern left, GenerationPattern right) {
+str match_generate_program(Chunk chunk, Verb verb, GenerationPattern left, GenerationPattern right) {
     str program = "";
 
     program += _match_generate_module_section(verb);
     program += _match_generate_imports_section();
     program += _match_generate_data_structures_section();
-    program += _match_generate_functions_section(chunk_width, verb, left, right);
+    program += _match_generate_functions_section(chunk.size.width, verb, left, right);
     program += _match_generate_calls_section(chunk, verb);
 
     return program;
@@ -109,13 +108,9 @@ str _match_generate_imports_section()
 str _match_generate_data_structures_section() 
     = _match_generate_separator()
     + _match_generate_title("Data structure defines")
-    + "data GenerationVerbExpression
-      '    = generation_verb_expression(str verb, str modifier)
-      '    | generation_verb_expression_empty()
-      '    ;
-      '
-      'data GenerationChunk
-      '    = generation_chunk(str \\module, list[GenerationVerbExpression] verbs, list[str] objects)
+    + "data Chunk
+      '    = chunk(tuple[int width, int height] size, list[str] objects)
+      '    | chunk_empty()
       '    ;
       '
       'data GenerationRow
@@ -161,24 +156,24 @@ str _match_generate_function_documentation(Verb verb)
     = "/*
       ' * @Name:   <_match_generate_function_name(verb)>
       ' * @Desc:   Function to apply the Generation rule associated to the given verb
-      ' * @Param:  chunk -\> GenerationChunk to be rewriten
-      ' * @Ret:    Rewritten GenerationChunk
+      ' * @Param:  c -\> Chunk to be rewriten
+      ' * @Ret:    Rewritten Chunk
       ' */"
     + _match_generate_line_break(1)
     ;
 
 str _match_generate_function_definition(int chunk_width, Verb verb, GenerationPattern left, GenerationPattern right) 
-    = "public GenerationChunk (GenerationChunk chunk) <_match_generate_function_name(verb)> = 
-      'GenerationChunk (GenerationChunk chunk) 
+    = "public Chunk (Chunk c) <_match_generate_function_name(verb)> = 
+      'Chunk (Chunk c) 
       '{
-      '    for(list[str] pattern: <_match_generate_pattern_left(left)> := chunk.objects) {
+      '    for(list[str] pattern: <_match_generate_pattern_left(left)> := c.objects) {
       '        if (<_match_generate_mid_condition(chunk_width, left)>) {
-      '            chunk.objects = visit(chunk.objects) {
+      '            c.objects = visit(c.objects) {
       '                case list[str] p:pattern =\> <_match_generate_pattern_right(right)>
       '            };
       '        }
       '    }
-      '    return chunk;
+      '    return c;
       '};"
     + _match_generate_line_break(2)
     ;
@@ -202,13 +197,13 @@ str _match_generate_pattern_right(GenerationPattern pattern)
 /******************************************************************************/
 // --- Private call section functions ------------------------------------------
 
-str _match_generate_calls_section(GenerationChunk chunk, Verb verb)
+str _match_generate_calls_section(Chunk chunk, Verb verb)
     = _match_generate_separator()
     + _match_generate_title("Calls")
     + _match_generate_call(chunk, verb)
     ;
 
-str _match_generate_call(GenerationChunk chunk, Verb verb)
+str _match_generate_call(Chunk chunk, Verb verb)
     = "<_match_generate_function_name(verb)>(<chunk>);";
 
 /******************************************************************************/

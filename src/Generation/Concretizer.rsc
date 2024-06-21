@@ -121,9 +121,9 @@ tuple[list[list[str]], map[int,Coords]] concretize_extend(GenerationModule \modu
  */
 bool concretize_check_future_position_exited(map[int keys, Coords coords] position_current, int index, str direction, int width, int height) {
     for(int i <- [index..size(position_current.keys)]) {
-        if (direction == "up"    && position_current[i].y+1 == height) return true;
+        if (direction == "up"    && position_current[i].y-1 == -1    ) return true;
         if (direction == "right" && position_current[i].x+1 == width ) return true;
-        if (direction == "down"  && position_current[i].y-1 == 0     ) return true;
+        if (direction == "down"  && position_current[i].y+1 == height-1) return true;
     }
     return false;
 }
@@ -139,9 +139,9 @@ bool concretize_check_future_position_exited(map[int keys, Coords coords] positi
  */
 map[int, Coords] concretize_update_position_current(map[int keys, Coords coords] position_current, int index, str direction) {
     for(int i <- [index..size(position_current.keys)]) {
-        if      (direction == "up")    position_current[i].y += 1;
+        if      (direction == "up")    position_current[i].y -= 1;
         else if (direction == "right") position_current[i].x += 1;
-        else if (direction == "down")  position_current[i].y -= 1;
+        else if (direction == "down")  position_current[i].y += 1;
     }
 
     return position_current;
@@ -159,9 +159,9 @@ map[int, Coords] concretize_update_position_current(map[int keys, Coords coords]
  */
 bool concretize_check_position_current_exited(map[int keys, Coords coords] position_current, int index, int width, int height) {
     for(int i <- [index..size(position_current.keys)]) {
-        if (position_current[i].x == width 
-            || position_current[i].y == height 
-            || position_current[i].y == -1) return true;
+        if (position_current[i].y == -1
+            || position_current[i].x == width 
+            || position_current[i].y == height) return true;
     }
     return false;
 }

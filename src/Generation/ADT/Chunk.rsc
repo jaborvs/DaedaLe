@@ -23,46 +23,42 @@ import Extension::ADT::Verb;
  * @Desc:   Data structure that models a generation chunk
  */
 data GenerationChunk
-    = generation_chunk(str \module, list[GenerationVerbExpression] verbs, list[str] objects)
+    = generation_chunk(str \module, list[GenerationVerbExpression] verbs)
     | generation_chunk_empty()
+    ;
+
+/*
+ * @Name:   GenerationChunk
+ * @Desc:   Data structure that models a chunk
+ */
+data Chunk
+    = chunk(tuple[int width, int height] size, list[str] objects)
+    | chunk_empty()
     ;
 
 /******************************************************************************/
 // --- Public functions --------------------------------------------------------
 
-void chunk_print(GenerationChunk chunk, int width) {
-    file_loc = |project://daedale/src/Interface/bin/chunk.out|;
-    str chunk_printed = readFile(file_loc);
-
-    chunk_printed += "\>\>\> Chunk:\n";
-
-    int i = 0;
-    for (str object <- chunk.objects) {
-        chunk_printed += object;
-        chunk_printed += "\t";
-        i += 1;
-
-        if (i % width == 0) chunk_printed += "\n";
-    }
-
-    chunk_printed += "\n<for(_ <- [0..(width-1)*4]){>-<}>\n\n";
-    writeFile(file_loc, chunk_printed);
-    return;
+Chunk chunk_init(tuple[int width, int height] size) {
+    return chunk(size, ["." | _ <- [0..(size.width*size.height)]]);
 }
 
-/*
- * @Name:   chunk_print_verb
- * @Desc:   Function that prints the modification of a verb in chunk
- * @Param:  chunk -> Generation chunk to be printed
- *          width -> Width of the chunk
- *          verb  -> Verb that rewrote the chunk
- * @Ret:    void
- */
-void chunk_print_verb(GenerationChunk chunk, int width, Verb verb) {
-    file_loc = |project://daedale/src/Interface/bin/chunk.out|;
-    str chunk_printed = readFile(file_loc);
+list[list[str]] chunk_get_rows(Chunk chunk) {
+    list[list[str]] rows= [];
 
-    chunk_printed += "\>\>\> Chunk after <verb.name>(<verb.specification>):\n";
+    for (int j <- [0..chunk.size.height]) {
+        rows += [chung_get_row(chunk, j)];
+    }
+
+    return rows;
+}
+
+list[str] chunk_get_row(Chunk chunk, int index) {
+    return chunk.objects[(chunk.size.width*index)..(chunk.size.width*(index+1))];
+}
+
+str chunk_print(Chunk chunk) {
+    str chunk_printed = "";
 
     int i = 0;
     for (str object <- chunk.objects) {
@@ -70,11 +66,19 @@ void chunk_print_verb(GenerationChunk chunk, int width, Verb verb) {
         chunk_printed += "\t";
         i += 1;
 
-        if (i % width == 0) chunk_printed += "\n";
+        if (i % chunk.size.width == 0) chunk_printed += "\n";
     }
 
-    chunk_printed += "\n<for(_ <- [0..(width-1)*4]){>-<}>\n\n";
+    return chunk_printed;
+}
+
+void chunk_print(Chunk chunk, loc file) {
+    str chunk_printed = "";
+
+    chunk_printed += readFile(file);
+    chunk_printed += chunk_print(chunk);
     
-    writeFile(file_loc, chunk_printed);
+    writeFile(file, chunk_printed);
+
     return;
 }

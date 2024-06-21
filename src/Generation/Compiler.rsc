@@ -21,7 +21,7 @@ import Generation::ADT::Rule;
 import Generation::ADT::Module;
 import Generation::ADT::VerbExpression;
 import Generation::ADT::Chunk;
-import Generation::ADT::LevelDraft;
+import Generation::ADT::Level;
 import Generation::Exception;
 
 import Extension::ADT::Verb;
@@ -40,7 +40,8 @@ data GenerationEngine
         GenerationConfig config,
         map[str names, GenerationPattern generation_patterns] patterns,
         map[str names, GenerationModule generation_modules] modules,
-        map[str names, GenerationLevel generation_levels] generated_levels
+        map[str names, GenerationLevel generation_levels] levels_draft,
+        map[str names, Level levels] levels_generated
         )
     | generation_engine_empty()
     ;
@@ -60,7 +61,7 @@ GenerationEngine papyrus_compile(PapyrusData pprs) {
     engine.config = papyrus_compile_config(pprs.configs);
     engine.patterns = papyrus_compile_patterns(pprs.patterns);
     engine.modules = papyrus_compile_modules(pprs.modules);
-    engine.generated_levels = papyrus_compile_levels(pprs.level_drafts, engine.config.width, engine.config.height);
+    engine.levels_draft = papyrus_compile_levels(pprs.level_drafts);
 
     return engine;
 }
@@ -228,11 +229,11 @@ tuple[Verb, GenerationRule] papyrus_compile_rule(RuleData rule) {
  *          height -> Chunk height
  * @Ret:    Map of level name and generation level object
  */
-map[str, GenerationLevel] papyrus_compile_levels(list[LevelDraftData] levels, int width, int height) {
+map[str, GenerationLevel] papyrus_compile_levels(list[LevelDraftData] levels) {
     map[str names, GenerationLevel levels] levels_compiled = ();
 
     for (LevelDraftData ld <- levels) {
-        tuple[str name, GenerationLevel level] ld_c = papyrus_compile_level(ld, width, height);
+        tuple[str name, GenerationLevel level] ld_c = papyrus_compile_level(ld);
         if (ld_c.name in levels_compiled.names) exception_levels_duplicated_level(ld_c.name);
         else levels_compiled[ld_c.name] = ld_c.level;
     }
@@ -248,10 +249,10 @@ map[str, GenerationLevel] papyrus_compile_levels(list[LevelDraftData] levels, in
  *          height -> Chunk height
  * @Ret:    Level name and GenerationLevel object
  */
-tuple[str, GenerationLevel] papyrus_compile_level(LevelDraftData level, int width, int height) {
+tuple[str, GenerationLevel] papyrus_compile_level(LevelDraftData level) {
     tuple[str, GenerationLevel] level_compiled = <"", generation_level_empty()>;
 
-    list[GenerationChunk] chunks_compiled = [papyrus_compile_chunk(c, width, height) | ChunkData c <- level.chunk_dts];
+    list[GenerationChunk] chunks_compiled = [papyrus_compile_chunk(c) | ChunkData c <- level.chunk_dts];
 
     level_compiled = <
         level.name,
@@ -268,7 +269,7 @@ tuple[str, GenerationLevel] papyrus_compile_level(LevelDraftData level, int widt
  *          height -> Chunk height
  * @Ret:    GenerationChunk object
  */
-GenerationChunk papyrus_compile_chunk(ChunkData chunk, int width, int height) {
+GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
     GenerationChunk chunk_compiled = generation_chunk_empty();
 
     map[int key, list[str] content] comments = chunk.comments;
@@ -277,8 +278,7 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk, int width, int height) {
 
     chunk_compiled = generation_chunk(
         \module.name,
-        [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.verb_dts],
-        ["." | _ <- [0..(width*height)]]
+        [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.verb_dts]
     );
     
     return chunk_compiled;
@@ -296,6 +296,7 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk, int width, int height) {
 GenerationEngine generation_engine_init() {
     GenerationEngine engine = generation_engine(
         generation_config_empty(),
+        (),
         (),
         (),
         ()

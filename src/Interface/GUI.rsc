@@ -183,7 +183,7 @@ Model update(Msg msg, Model model){
             }
             // Generate button
             case generate(): {
-                list[list[str]] generated_levels = generate(model.generation_engine);
+                list[list[str]] levels_draft = generate(model.generation_engine);
             }
             // Default case
             default: return model;

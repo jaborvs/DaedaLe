@@ -54,7 +54,7 @@ data ConfigurationData
  * @Desc:   Data structure that models each of the patterns used for generation
  */
 data PatternData
-    = pattern_data(str name, str, TilemapData tilemap)          // Name, separator (\n), tilemap
+    = pattern_data(str name, str, TilemapData tilemap, str)     // Name, separator (\n), tilemap, separator(\n)
     | pattern_empty(str)                                        // Empty line with only a separator (\n)
     ;
 
@@ -82,8 +82,8 @@ data TilemapRowData
  * @Desc:   Data structure that models a module for generation
  */
 data ModuleData
-    = module_data(str name, str, list[RuleData] rule_dts)  // Name, separator (\n), list of generation rules
-    | module_empty(str)                                 // Empty line with only a separator (\n)
+    = module_data(str name, str, list[RuleData] rule_dts, str)  // Name, separator (\n), list of generation rules, separator (\n)
+    | module_empty(str)                                         // Empty line with only a separator (\n)
     ;
 
 /*
@@ -103,8 +103,8 @@ data RuleData
  *          generation
  */
 data LevelDraftData
-    = level_draft_data(str name, str, list[ChunkData] chunk_dts)    // Name, separator (\n), list of chunks
-    | level_draft_empty(str)                                        // Empty line with only a separator (\n)
+    = level_draft_data(str name, str, list[ChunkData] chunk_dts, str)   // Name, separator (\n), list of chunks, separator (\n)
+    | level_draft_empty(str)                                            // Empty line with only a separator (\n)
     ;
 
 /*

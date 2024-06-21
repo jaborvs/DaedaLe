@@ -44,7 +44,7 @@ lexical COMMENT = @category="Comment" "(" (![()]|COMMENT)* ")";
 
 lexical STRING = ![\n]+ >> [\n];
 lexical INT = [0-9]+ val;
-lexical ID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ Keywords;
+lexical ID = [a-z0-9A-Z_]+ !>> [a-z0-9A-Z_] \ Keywords;
 lexical REP = [a-zA-Zぁ-㍿.!@#$%&0-9\-,`\'~_\"§è!çàé;?:/°£^{}|\>\<^v¬\[\]˅\\±←→↑↓]+ !>> [a-zA-Zぁ-㍿.!@#$%&0-9\-,`\'~_\"§è!çàé;?:/°£^{}|\>\<^v¬\[\]˅\\±←→↑↓] \ Keywords;
 
 /******************************************************************************/
@@ -81,7 +81,7 @@ syntax ConfigurationData
 // --- Pattern Syntax ----------------------------------------------------------
 
 syntax PatternData
-    = pattern_data: ID NEWLINE TilemapData
+    = pattern_data: ID NEWLINE TilemapData NEWLINE
     | pattern_empty: NEWLINE
     ;
 
@@ -97,7 +97,7 @@ syntax TilemapRowData
 // --- Module Syntax -----------------------------------------------------------
 
 syntax ModuleData
-    = module_data: ID NEWLINE RuleData+
+    = module_data: ID NEWLINE RuleData+ NEWLINE
     | module_empty: NEWLINE
     ;
 
@@ -108,7 +108,7 @@ syntax RuleData
 // --- Level Draft Syntax ------------------------------------------------------
 
 syntax LevelDraftData
-    = level_draft_data: ID NEWLINE ChunkData+
+    = level_draft_data: ID NEWLINE ChunkData+ NEWLINE
     | level_draft_empty: NEWLINE
     ;
 
