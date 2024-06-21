@@ -13,9 +13,11 @@ import Set;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
+import Generation::ADT::Module;
 import Generation::ADT::VerbExpression;
 import Generation::ADT::Chunk;
 
+import Extension::ADT::Verb;
 
 import Utils;
 
@@ -32,7 +34,7 @@ import Utils;
  *          height -> Chunk height
  * @Ret:    List of concretized verbs
  */
-list[list[str]] concretize(list[GenerationVerbExpression] verbs, int width, int height) {
+list[list[str]] concretize(GenerationModule \module, list[GenerationVerbExpression] verbs, int width, int height) {
     list[list[str]] verbs_concretized = [];
     
     Coords position_init = <0, toInt(height/2)>;
@@ -40,8 +42,8 @@ list[list[str]] concretize(list[GenerationVerbExpression] verbs, int width, int 
     for (int i <- [0..size(verbs)]) position_current[i] = position_init;
     
     tuple[list[list[str]] verbs_concretized, map[int, Coords] position_current] res = <[], ()>;
-    res = concretize_init(verbs, position_current);
-    res = concretize_extend(verbs, res.verbs_concretized, res.position_current, width, height);
+    res = concretize_init(\module, verbs, position_current);
+    res = concretize_extend(\module, verbs, res.verbs_concretized, res.position_current, width, height);
 
     return res.verbs_concretized;
 }
@@ -54,21 +56,20 @@ list[list[str]] concretize(list[GenerationVerbExpression] verbs, int width, int 
  *          position_current -> Dictionary with the current positions
  * @Ret:    List of concretized verbs and updated position_current
  */
-tuple[list[list[str]], map[int,Coords]] concretize_init(list[GenerationVerbExpression] verbs, map[int, Coords] position_current) {
+tuple[list[list[str]], map[int,Coords]] concretize_init(GenerationModule \module, list[GenerationVerbExpression] verbs, map[int, Coords] position_current) {
     list[list[str]] verbs_concretized = [];
 
     int subchunk_num = size(verbs);
 
     for (int i <- [0..subchunk_num]) {
-        str verb = verbs[i].verb;
-        str modifier = verbs[i].modifier;
+        str verb_name = verbs[i].verb;
+        str verb_modifier = verbs[i].modifier;
+        Verb verb = generation_module_get_verb(\module, verb_name, "_");
 
         list[str] basket = [];
-        if (modifier == "+") basket += [verb];
+        if (verb_modifier == "+") basket += [verb_name];
 
-        if      (verb == "climb") position_current = concretize_update_position_current_up(position_current, i);
-        else if (verb == "crawl") position_current = concretize_update_position_current_right(position_current, i);
-        else if (verb == "fall" ) position_current = concretize_update_position_current_down(position_current, i);
+        position_current = concretize_update_position_current(position_current, i, verb.direction);
 
         verbs_concretized += [basket];
     }
@@ -87,31 +88,21 @@ tuple[list[list[str]], map[int,Coords]] concretize_init(list[GenerationVerbExpre
  *          height            -> Chunk height
  * @Ret:    List of concretized verbs and updated position_current
  */
-tuple[list[list[str]], map[int,Coords]] concretize_extend(list[GenerationVerbExpression] verbs, list[list[str]] verbs_concretized, map[int,Coords] position_current, int width, int height) {
+tuple[list[list[str]], map[int,Coords]] concretize_extend(GenerationModule \module, list[GenerationVerbExpression] verbs, list[list[str]] verbs_concretized, map[int,Coords] position_current, int width, int height) {
     int subchunk_num = size(verbs);
     int subchunk_last_compulsory = max([i | int i <- [0..subchunk_num], verbs[i].modifier == "+"]);
 
     bool exited = false;
     while (!exited) {
         int i = arbInt(subchunk_num);
-        str verb = verbs[i].verb;
+        str verb_name = verbs[i].verb;
+        Verb verb = generation_module_get_verb(\module, verb_name, "_");
 
         if      (i < subchunk_last_compulsory
-                && verb == "climb" 
-                && concretize_check_future_position_exited_up(position_current, i, width, height))    continue;
-        else if (i < subchunk_last_compulsory 
-                && verb == "crawl" 
-                && concretize_check_future_position_exited_right(position_current, i, width, height)) continue;
-        else if (i < subchunk_last_compulsory 
-                && verb == "fall"  
-                && concretize_check_future_position_exited_down(position_current, i, width, height))  continue;
+                && concretize_check_future_position_exited(position_current, i, verb.direction, width, height))    continue;
                 
-        verbs_concretized[i] += [verb];
-
-        if (verb == "climb") position_current = concretize_update_position_current_up(position_current, i);
-        else if (verb == "crawl") position_current = concretize_update_position_current_right(position_current, i);
-        else if (verb == "fall" ) position_current = concretize_update_position_current_down(position_current, i);
-
+        verbs_concretized[i] += [verb_name];
+        position_current = concretize_update_position_current(position_current, i, verb.direction);
         exited = concretize_check_position_current_exited(position_current, i, width, height);
     }
 
@@ -139,48 +130,6 @@ bool concretize_check_future_position_exited(map[int keys, Coords coords] positi
 }
 
 /*
- * @Name:   concretize_check_future_position_exited_up
- * @Desc:   Function that checks if the future position to add (up) will make us 
- *          exit from the chunk. It calls concretize_check_future_position_exited
- * @Param:  position_current  -> Dictionary with the current positions
- *          index             -> Index of the verb's subchunk to include
- *          width             -> Chunk width
- *          height            -> Chunk height
- * @Ret:    Boolean indicating if we exit or not
- */
-bool concretize_check_future_position_exited_up(map[int keys, Coords coords] position_current, int index, int width, int height) {
-    return concretize_check_future_position_exited(position_current, index, "up", width, height);
-}
-
-/*
- * @Name:   concretize_check_future_position_exited_up
- * @Desc:   Function that checks if the future position to add (right) will make us 
- *          exit from the chunk. It calls concretize_check_future_position_exited
- * @Param:  position_current  -> Dictionary with the current positions
- *          index             -> Index of the verb's subchunk to include
- *          width             -> Chunk width
- *          height            -> Chunk height
- * @Ret:    Boolean indicating if we exit or not
- */
-bool concretize_check_future_position_exited_right(map[int keys, Coords coords] position_current, int index, int width, int height) {
-    return concretize_check_future_position_exited(position_current, index, "right", width, height);
-}
-
-/*
- * @Name:   concretize_check_future_position_exited_up
- * @Desc:   Function that checks if the future position to add (down) will make us 
- *          exit from the chunk. It calls concretize_check_future_position_exited
- * @Param:  position_current  -> Dictionary with the current positions
- *          index             -> Index of the verb's subchunk to include
- *          width             -> Chunk width
- *          height            -> Chunk height
- * @Ret:    Boolean indicating if we exit or not
- */
-bool concretize_check_future_position_exited_down(map[int keys, Coords coords] position_current, int index, int width, int height) {
-    return concretize_check_future_position_exited(position_current, index, "down", width, height);
-}
-
-/*
  * @Name:   concretize_update_position_current
  * @Desc:   Function that updates the position current after adding one more 
  *          concrete verb
@@ -197,42 +146,6 @@ map[int, Coords] concretize_update_position_current(map[int keys, Coords coords]
     }
 
     return position_current;
-}
-
-/*
- * @Name:   concretize_update_position_current
- * @Desc:   Function that updates the position current after adding one more 
- *          concrete verb (up). It calls concretize_update_position_current
- * @Param:  position_current  -> Dictionary with the current positions
- *          index             -> Index of the verb's subchunk to include
- * @Ret:    Updated position current
- */
-map[int, Coords] concretize_update_position_current_up(map[int keys, Coords coords] position_current, int index) {
-    return concretize_update_position_current(position_current, index, "up");
-}
-
-/*
- * @Name:   concretize_update_position_current
- * @Desc:   Function that updates the position current after adding one more 
- *          concrete verb (right). It calls concretize_update_position_current
- * @Param:  position_current  -> Dictionary with the current positions
- *          index             -> Index of the verb's subchunk to include
- * @Ret:    Updated position current
- */
-map[int, Coords] concretize_update_position_current_right(map[int keys, Coords coords] position_current, int index) {
-    return concretize_update_position_current(position_current, index, "right");
-}
-
-/*
- * @Name:   concretize_update_position_current
- * @Desc:   Function that updates the position current after adding one more 
- *          concrete verb (down). It calls concretize_update_position_current
- * @Param:  position_current  -> Dictionary with the current positions
- *          index             -> Index of the verb's subchunk to include
- * @Ret:    Updated position current
- */
-map[int, Coords] concretize_update_position_current_down(map[int keys, Coords coords] position_current, int index) {
-    return concretize_update_position_current(position_current, index, "down");
 }
 
 /*

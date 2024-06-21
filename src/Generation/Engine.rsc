@@ -83,7 +83,7 @@ list[str] _generate_level(GenerationEngine engine, GenerationLevel level) {
  * @Ret:    Generated chunk object
  */
 GenerationChunk _generate_chunk(GenerationEngine engine, GenerationChunk chunk) {
-    list[list[str]] verbs_concretized = concretize(chunk.verbs, engine.config.width, engine.config.height);
+    list[list[str]] verbs_concretized = concretize(engine.modules[chunk.\module], chunk.verbs, engine.config.width, engine.config.height);
     list[Verb] verbs_translated       = translate(engine.modules[chunk.\module], verbs_concretized);
 
     Coords player_coords = <0,engine.config.height/2-1>;
