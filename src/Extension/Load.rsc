@@ -17,8 +17,8 @@ import IO;
 // --- Own modules imports -----------------------------------------------------
 import Extension::Syntax;
 import Extension::AST;
-import Extension::Verb;
-import Extension::Module;
+import Extension::ADT::Verb;
+import Extension::ADT::Module;
 
 /******************************************************************************/
 // --- Public load functions --------------------------------------------------

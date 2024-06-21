@@ -3,7 +3,7 @@
  * @Desc:   Module that contains all the verb functionality
  * @Auth:   Borja Velasco -> code, comments
  */
-module Extension::Verb
+module Extension::ADT::Verb
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -57,15 +57,27 @@ bool verb_is_before(Verb verb) {
 }
 
 /*
- * @Name:   verb_is_sequence
- * @Desc:   Function that checks if a verb is a sequence. We consider a verb a 
- *          sequence verb if it has a dependency set
+ * @Name:   verb_is_sequence_start
+ * @Desc:   Function that checks if a verb is a sequence start. We consider a verb a 
+ *          sequence verb start if it has a non set prev and a set prev 
  * @Param:  verb -> Verb to be checked
  * @Ret:    Boolean
  */
-bool verb_is_sequence(Verb verb) {
-    return verb.dependencies.prev.name != "none" 
-           || verb.dependencies.next.name != "none";
+bool verb_is_sequence_start(Verb verb) {
+    return verb.dependencies.prev.name == "none" 
+           && verb.dependencies.next.name != "none";
+}
+
+/*
+ * @Name:   verb_is_sequence_start
+ * @Desc:   Function that checks if a verb is a sequence start. We consider a verb a 
+ *          sequence verb start if it has a non set prev and next
+ * @Param:  verb -> Verb to be checked
+ * @Ret:    Boolean
+ */
+bool verb_is_inductive(Verb verb) {
+    return verb.dependencies.prev.name == "none" 
+           && verb.dependencies.next.name == "none";
 }
 
 /*
@@ -84,5 +96,5 @@ str verb_to_string(Verb verb)
  *          specification -> Specification of the verb
  * @Ret:    Stringified verb
  */
-str verb_to_string(str name, str specification = "_")
+str verb_to_string(str name, str specification)
     = "<name>(<specification>)";

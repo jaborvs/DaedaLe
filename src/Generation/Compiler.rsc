@@ -14,85 +14,22 @@ import IO;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
-import Generation::Exception;
 import Generation::AST;
+import Generation::ADT::Config;
+import Generation::ADT::Pattern;
+import Generation::ADT::Rule;
+import Generation::ADT::Module;
+import Generation::ADT::VerbExpression;
+import Generation::ADT::Chunk;
+import Generation::ADT::LevelDraft;
+import Generation::Exception;
+
+import Extension::ADT::Verb;
+import Extension::ADT::Module;
 import Extension::Load;
-import Extension::Verb;
-import Extension::Module;
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
-
-/*
- * @Name:   GenerationConfig
- * @Desc:   Data structure that models the configuration for generation
- */
-data GenerationConfig 
-    = generation_config(int width, int height)
-    | generation_config_empty()
-    ;
-
-/*
- * @Name:   GenerationRow
- * @Desc:   Data structure that models a generation row
- */
-data GenerationRow
-    = generation_row(list[str] objects)
-    ;
-
-/*
- * @Name:   GenerationPattern
- * @Desc:   Data structure that models a generation pattern
- */
-data GenerationPattern
-    = generation_pattern(list[GenerationRow] rows)
-    | generation_pattern_empty()
-    ;
-
-/*
- * @Name:   GenerationRule
- * @Desc:   Data structure that models a generation rule
- */
-data GenerationRule
-    = generation_rule(str left, str right)
-    | generation_rule_empty()
-    ;
-
-/*
- * @Name:   GenerationModule
- * @Desc:   Data structure that models a generation module
- */
-data GenerationModule
-    = generation_module(map[Verb verbs, GenerationRule generation_rule] generation_rules)
-    | generation_module_empty()
-    ;
-
-/*
- * @Name:   GenerationVerbExpression
- * @Desc:   Data structure that models a generation verb expression
- */
-data GenerationVerbExpression
-    = generation_verb_expression(str verb, str modifier)
-    | generation_verb_expression_empty()
-    ;
-
-/*
- * @Name:   GenerationChunk
- * @Desc:   Data structure that models a generation chunk
- */
-data GenerationChunk
-    = generation_chunk(str \module, list[GenerationVerbExpression] verbs, list[str] objects)
-    | generation_chunk_empty()
-    ;
-
-/*
- * @Name:   GenerationLevel
- * @Desc:   Data structure that models a generation level draft
- */
-data GenerationLevel
-    = generation_level(list[GenerationChunk] chunks)
-    | generation_level_empty()
-    ;
 
 /*
  * @Name:   GenerationEngine
@@ -120,10 +57,10 @@ data GenerationEngine
 GenerationEngine papyrus_compile(PapyrusData pprs) {
     GenerationEngine engine = generation_engine_init();
 
-    engine.config = _papyrus_compile_config(pprs.configs);
-    engine.patterns = _papyrus_compile_patterns(pprs.patterns);
-    engine.modules = _papyrus_compile_modules(pprs.modules);
-    engine.generated_levels = _papyrus_compile_levels(pprs.level_drafts, engine.config.width, engine.config.height);
+    engine.config = papyrus_compile_config(pprs.configs);
+    engine.patterns = papyrus_compile_patterns(pprs.patterns);
+    engine.modules = papyrus_compile_modules(pprs.modules);
+    engine.generated_levels = papyrus_compile_levels(pprs.level_drafts, engine.config.width, engine.config.height);
 
     return engine;
 }
@@ -132,14 +69,14 @@ GenerationEngine papyrus_compile(PapyrusData pprs) {
 // --- Private compile config functions ----------------------------------------
 
 /*
- * @Name:   _papyrus_compile_config
+ * @Name:   papyrus_compile_config
  * @Desc:   Function to compile the generation configuration commands. For now,
  *          the only allowed command is 'chunk_size', but it is somewhat ready 
  *          to add more commands in the future if needed
  * @Params: configs -> Raw configuration data form the ast 
  * @Ret:    GenerationConfig object for the command
  */
-GenerationConfig _papyrus_compile_config(list[ConfigurationData] configs) {
+GenerationConfig papyrus_compile_config(list[ConfigurationData] configs) {
     GenerationConfig config_compiled = generation_config_empty();
 
     if (size(configs) > 1) exception_config_args_len();
@@ -150,19 +87,19 @@ GenerationConfig _papyrus_compile_config(list[ConfigurationData] configs) {
     if (command != "chunk_size") exception_config_unknown_cmd(command);
     
     switch(command) {
-        case "chunk_size": config_compiled = _papyrus_compile_config_chunk_size(params);
+        case "chunk_size": config_compiled = papyrus_compile_config_chunk_size(params);
     }
 
     return config_compiled;
 }
 
 /*
- * @Name:   _papyrus_compile_config_chunk_size
+ * @Name:   papyrus_compile_config_chunk_size
  * @Desc:   Function to compile chunk size
  * @Param:  params -> Unprocessed params
  * @Ret:    GenerationConfig object
  */
-GenerationConfig _papyrus_compile_config_chunk_size(str params) {
+GenerationConfig papyrus_compile_config_chunk_size(str params) {
     list[str] params_splitted = split("x", params);
     int width = 0;
     int height = 0;
@@ -180,18 +117,18 @@ GenerationConfig _papyrus_compile_config_chunk_size(str params) {
 // --- Private compile pattern functions ---------------------------------------
 
 /*
- * @Name:   _papyrus_compile_patterns
+ * @Name:   papyrus_compile_patterns
  * @Desc:   Function that compiles all the patterns of a PapyrusData object. It
  *          converts them into a rascal pattern to be used by 'visit'
  * @Param:  patterns -> List of PatternData from the ast
  * @Ret:    Map of pattern name and generation pattern object
  */
-map[str, GenerationPattern] _papyrus_compile_patterns(list[PatternData] patterns) {
+map[str, GenerationPattern] papyrus_compile_patterns(list[PatternData] patterns) {
     map[str names, GenerationPattern pattern] patterns_compiled = ();
 
     for (PatternData p <- patterns) {
-        tuple[str name, GenerationPattern pattern] p_c = _papyrus_compile_pattern(p);
-        if (p_c in patterns_compiled.names) exception_patterns_duplicated_pattern(p_c.name);
+        tuple[str name, GenerationPattern pattern] p_c = papyrus_compile_pattern(p);
+        if (p_c.name in patterns_compiled.names) exception_patterns_duplicated_pattern(p_c.name);
         else patterns_compiled[p_c.name] = p_c.pattern;
     }
     
@@ -199,12 +136,12 @@ map[str, GenerationPattern] _papyrus_compile_patterns(list[PatternData] patterns
 }
 
 /*
- * @Name:   _papyrus_compile_pattern
+ * @Name:   papyrus_compile_pattern
  * @Desc:   Function to compile a pattern 
  * @Param:  pattern -> PatternData object fromm the ast
  * @Ret:    Tuple with name and generation pattern object
  */
-tuple[str, GenerationPattern] _papyrus_compile_pattern(PatternData pattern) {
+tuple[str, GenerationPattern] papyrus_compile_pattern(PatternData pattern) {
     tuple[str, GenerationPattern] pattern_compiled = <"", generation_pattern_empty()>;
 
     list[GenerationRow] rows_compiled = [];
@@ -224,16 +161,16 @@ tuple[str, GenerationPattern] _papyrus_compile_pattern(PatternData pattern) {
 // --- Private compile module functions ----------------------------------------
 
 /*
- * @Name:   _papyrus_compile_modules
+ * @Name:   papyrus_compile_modules
  * @Desc:   Function that compiles all modules of a PapyrusData object
  * @Param:  modules -> List of ModuleData objects form the ast
  * @Ret:    Map of module name and generation module object
  */
-map[str, GenerationModule] _papyrus_compile_modules(list[ModuleData] modules) {
+map[str, GenerationModule] papyrus_compile_modules(list[ModuleData] modules) {
     map[str names, GenerationModule modules] modules_compiled = ();
 
     for(ModuleData m <- modules) {
-        tuple[str name, GenerationModule \module] m_c = _papyrus_compile_module(m);
+        tuple[str name, GenerationModule \module] m_c = papyrus_compile_module(m);
         if (m_c.name in modules_compiled.names) exception_modules_duplicated_module(m_c.name);
         else  modules_compiled[m_c.name] = m_c.\module;
     }
@@ -242,17 +179,17 @@ map[str, GenerationModule] _papyrus_compile_modules(list[ModuleData] modules) {
 }
 
 /*
- * @Name:   _papyrus_compile_module
+ * @Name:   papyrus_compile_module
  * @Desc:   Function that compiles a module of a PapyrusData object
  * @Param:  \module -> ModuleData object from the ast
  * @Ret:    GenerationModule object
  */
-tuple[str, GenerationModule] _papyrus_compile_module(ModuleData \module) {
+tuple[str, GenerationModule] papyrus_compile_module(ModuleData \module) {
     tuple[str, GenerationModule] module_compiled = <"", generation_module_empty()>;
 
     map[Verb verbs, GenerationRule generation_rules] compiled_rules = ();
     for (RuleData r <- \module.rule_dts) {
-        tuple[Verb verb, GenerationRule rule] c_r = _papyrus_compile_rule(r);
+        tuple[Verb verb, GenerationRule rule] c_r = papyrus_compile_rule(r);
         if (c_r.verb in compiled_rules.verbs) exception_modules_duplicated_verb(c_r.verb);
         else compiled_rules[c_r.verb] = c_r.rule;
     }
@@ -265,7 +202,7 @@ tuple[str, GenerationModule] _papyrus_compile_module(ModuleData \module) {
     return module_compiled;
 }
 
-tuple[Verb, GenerationRule] _papyrus_compile_rule(RuleData rule) {
+tuple[Verb, GenerationRule] papyrus_compile_rule(RuleData rule) {
     tuple[Verb verb, GenerationRule rule] rule_compiled = <verb_empty(), generation_rule_empty()>;
 
     map[int key, list[str] content] comments = rule.comments;
@@ -284,19 +221,19 @@ tuple[Verb, GenerationRule] _papyrus_compile_rule(RuleData rule) {
 // --- Private compile levels functions ----------------------------------------
 
 /*
- * @Name:   _papyrus_compile_levels
+ * @Name:   papyrus_compile_levels
  * @Desc:   Function that compiles all levels of a PapyrusData object
  * @Param:  levels -> List of LevelDraftData objects form the ast
  *          width  -> Chunk width
  *          height -> Chunk height
  * @Ret:    Map of level name and generation level object
  */
-map[str, GenerationLevel] _papyrus_compile_levels(list[LevelDraftData] levels, int width, int height) {
+map[str, GenerationLevel] papyrus_compile_levels(list[LevelDraftData] levels, int width, int height) {
     map[str names, GenerationLevel levels] levels_compiled = ();
 
     for (LevelDraftData ld <- levels) {
-        tuple[str name, GenerationLevel level] ld_c = _papyrus_compile_level(ld, width, height);
-        if (ld_c.name in levels_compiled.names) exception_levels_duplicated_level(ld_c);
+        tuple[str name, GenerationLevel level] ld_c = papyrus_compile_level(ld, width, height);
+        if (ld_c.name in levels_compiled.names) exception_levels_duplicated_level(ld_c.name);
         else levels_compiled[ld_c.name] = ld_c.level;
     }
 
@@ -304,17 +241,17 @@ map[str, GenerationLevel] _papyrus_compile_levels(list[LevelDraftData] levels, i
 }
 
 /*
- * @Name:   _papyrus_compile_level
+ * @Name:   papyrus_compile_level
  * @Desc:   Function that compiles a level of a PapyrusData object
  * @Param:  level -> LevelDraftData object from the ast
  *          width  -> Chunk width
  *          height -> Chunk height
  * @Ret:    Level name and GenerationLevel object
  */
-tuple[str, GenerationLevel] _papyrus_compile_level(LevelDraftData level, int width, int height) {
+tuple[str, GenerationLevel] papyrus_compile_level(LevelDraftData level, int width, int height) {
     tuple[str, GenerationLevel] level_compiled = <"", generation_level_empty()>;
 
-    list[GenerationChunk] chunks_compiled = [_papyrus_compile_chunk(c, width, height) | ChunkData c <- level.chunk_dts];
+    list[GenerationChunk] chunks_compiled = [papyrus_compile_chunk(c, width, height) | ChunkData c <- level.chunk_dts];
 
     level_compiled = <
         level.name,
@@ -324,14 +261,14 @@ tuple[str, GenerationLevel] _papyrus_compile_level(LevelDraftData level, int wid
 }
 
 /*
- * @Name:   _papyrus_compile_chunk
+ * @Name:   papyrus_compile_chunk
  * @Desc:   Function that compiles a chunk
  * @Params: chunk  -> Chunk object from the ast
  *          width  -> Chunk width
  *          height -> Chunk height
  * @Ret:    GenerationChunk object
  */
-GenerationChunk _papyrus_compile_chunk(ChunkData chunk, int width, int height) {
+GenerationChunk papyrus_compile_chunk(ChunkData chunk, int width, int height) {
     GenerationChunk chunk_compiled = generation_chunk_empty();
 
     map[int key, list[str] content] comments = chunk.comments;

@@ -2,7 +2,7 @@
 CONFIGURATION
 =============
 
-chunk_size 10x10
+chunk_size 15x15
 
 ========
 PATTERNS
@@ -19,6 +19,14 @@ PH1 .
 PlayerCrawlEnd
 PBH PH1
 #   #
+
+PlayerCrawlBeforeClimbStart
+PH1 .   .
+#   .   .
+
+PlayerCrawlBeforeClimbEnd
+PBH PH1 .
+#   #   #
 
 PlayerClimbLowStart
 .   .
@@ -45,16 +53,20 @@ PH4 .
 PBV #
 
 PlayerClimbCoilStart
-.   .
-.   .
-PBH PH1
-#   .
+.   .   .
+.   .   .
+PBH PH1 .
+#   #   #
 
 PlayerClimbCoilEnd
+PBH PH1 . 
+PBV PBH #
+PBH PBV #
+#   #   #
+
+PlayerCrawlAfterClimbEnd
 PBH PH1
-PBV PBH
-PBH PBV
-#   #
+PBV #
 
 PlayerCrawlBeforeFallStart
 PH1 .
@@ -87,9 +99,9 @@ MODULES
 Module1
 [PlayerCrawlStart]                 -> [PlayerCrawlEnd]             (verb Crawl(default,            right, 1))
 [PlayerCrawlBeforeClimbStart]      -> [PlayerCrawlBeforeClimbEnd]  (verb Crawl(before_climb,       right, 1, <none,          Climb(_)>))
-[PlayerCrawlAfterClimbLowStart]    -> [PlayerCrawlAfterClimbEnd]   (verb Crawl(after_climb_low,    right, 1, <Climb(low),    none    >))
-[PlayerCrawlAfterClimbMediumStart] -> [PlayerCrawlAfterClimbEnd]   (verb Crawl(after_climb_medium, right, 1, <Climb(medium), none    >))
-[PlayerCrawlAfterCLimbLargeStart]  -> [PlayerCrawlAfterClimbEnd]   (verb Crawl(after_climb_large,  right, 1, <Climb(large),  none    >))
+[PlayerClimbLowEnd]                -> [PlayerCrawlAfterClimbEnd]   (verb Crawl(after_climb_low,    right, 1, <Climb(low),    none    >))
+[PlayerClimbMediumEnd]             -> [PlayerCrawlAfterClimbEnd]   (verb Crawl(after_climb_medium, right, 1, <Climb(medium), none    >))
+[PlayerClimbLargeEnd]              -> [PlayerCrawlAfterClimbEnd]   (verb Crawl(after_climb_large,  right, 1, <Climb(large),  none    >))
 [PlayerCrawlBeforeFallStart]       -> [PlayerCrawlBeforeFallEnd]   (verb Crawl(before_fall,        right, 1, <none,          Fall(_) >))
 [PlayerCrawlAfterFallStart]        -> [PlayerCrawlAfterFallEnd]    (verb Crawl(after_fall_default, right, 1, <Fall(default), none    >))
 [PlayerClimbLowStart]              -> [PlayerClimbLowEnd]          (verb Climb(low,                up,    1, <none,          Climb(medium)>))
@@ -103,5 +115,5 @@ LEVEL DRAFTS
 ============
 
 Level1
-[crawl +, fall +, crawl+]                         (module Module1)
+[Crawl +, Climb +, Crawl+, Crawl+, Fall+, Crawl+, Crawl+, Climb+, Crawl +]                         (module Module1)
 

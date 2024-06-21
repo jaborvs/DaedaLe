@@ -16,8 +16,9 @@ import util::Eval;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
-import Generation::Compiler;
-import Extension::Verb;
+import Generation::ADT::Pattern;
+import Generation::ADT::Chunk;
+import Extension::ADT::Verb;
 import Utils;
 
 void main() {

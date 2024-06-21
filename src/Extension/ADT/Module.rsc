@@ -4,7 +4,7 @@
  * @Auth:   Borja Velasco -> code, comments
  */
 
-module Extension::Module
+module Extension::ADT::Module
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------

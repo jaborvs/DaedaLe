@@ -7,7 +7,7 @@ module Generation::Exception
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
-import Extension::Verb;
+import Extension::ADT::Verb;
 
 /******************************************************************************/
 // --- Public config functions -------------------------------------------------
@@ -22,6 +22,13 @@ void exception_config_unknown_cmd(str cmd) {
 
 void exception_config_chunk_size_illegal_arg(value v) {
     throw "Exception Configuration: Argument <v> cannot be converted to int";
+}
+
+/******************************************************************************/
+// --- Public pattern functions ------------------------------------------------
+
+void exception_patterns_duplicated_pattern(str name) {
+    throw "Exception Pattern: Duplicated pattern name <name>";
 }
 
 /******************************************************************************/
@@ -50,7 +57,7 @@ void exception_levels_duplicated_level(str name) {
     throw "Exception Modules: Duplicated level <name>";
 }
 
-void exception_chunk_no_verb() {
+void exception_chunk_no_module() {
     throw "Exception Chunks: All chunks must have an assigned module";
 }
 
