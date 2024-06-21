@@ -13,6 +13,7 @@ import String;
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
 import Generation::ADT::VerbExpression;
+import Extension::ADT::Verb;
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -29,22 +30,11 @@ data GenerationChunk
 /******************************************************************************/
 // --- Public functions --------------------------------------------------------
 
-/*
- * @Name:   chunk_print
- * @Desc:   Function that prints a chunk in a file
- * @Param:  chunk -> Generation chunk to be printed
- *          width -> Width of the chunk
- *          height -> Height of the chunk
- *          name -> Name of the verb just applied
- *          specification -> Specification of the verb just applied
- * @Ret:    void
- */
-void chunk_print(GenerationChunk chunk, int width, str name, str specification) {
+void chunk_print(GenerationChunk chunk, int width) {
     file_loc = |project://daedale/src/Interface/bin/chunk.out|;
     str chunk_printed = readFile(file_loc);
 
-    if (toLowerCase(name) == "initial state") chunk_printed += "\>\>\> <name>:\n\n";
-    else                                      chunk_printed += "\>\>\> Verb <name>(<specification>)\n\n";
+    chunk_printed += "\>\>\> Chunk:\n";
 
     int i = 0;
     for (str object <- chunk.objects) {
@@ -55,7 +45,35 @@ void chunk_print(GenerationChunk chunk, int width, str name, str specification) 
         if (i % width == 0) chunk_printed += "\n";
     }
 
-    chunk_printed += "\n<for(_ <- [0..(width-1)*4]){>-<}>\n";
+    chunk_printed += "\n<for(_ <- [0..(width-1)*4]){>-<}>\n\n";
+    writeFile(file_loc, chunk_printed);
+    return;
+}
+
+/*
+ * @Name:   chunk_print_verb
+ * @Desc:   Function that prints the modification of a verb in chunk
+ * @Param:  chunk -> Generation chunk to be printed
+ *          width -> Width of the chunk
+ *          verb  -> Verb that rewrote the chunk
+ * @Ret:    void
+ */
+void chunk_print_verb(GenerationChunk chunk, int width, Verb verb) {
+    file_loc = |project://daedale/src/Interface/bin/chunk.out|;
+    str chunk_printed = readFile(file_loc);
+
+    chunk_printed += "\>\>\> Chunk after <verb.name>(<verb.specification>):\n";
+
+    int i = 0;
+    for (str object <- chunk.objects) {
+        chunk_printed += object;
+        chunk_printed += "\t";
+        i += 1;
+
+        if (i % width == 0) chunk_printed += "\n";
+    }
+
+    chunk_printed += "\n<for(_ <- [0..(width-1)*4]){>-<}>\n\n";
     
     writeFile(file_loc, chunk_printed);
     return;

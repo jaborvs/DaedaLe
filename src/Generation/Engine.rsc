@@ -11,7 +11,6 @@ module Generation::Engine
 import util::Eval;
 import util::Math;
 import List;
-import String;
 import IO;
 
 /******************************************************************************/
@@ -107,11 +106,11 @@ tuple[GenerationChunk, Coords] generate_chunk(GenerationEngine engine, Generatio
 
 GenerationChunk apply_generation_rules(GenerationEngine engine, GenerationChunk chunk, list[Verb] verbs) {
     writeFile(|project://daedale/src/Interface/bin/chunk.out|, "");
-    chunk_print(chunk, engine.config.width, "Initial state", "");
+    chunk_print(chunk, engine.config.width);
 
-    for (Verb verb <- verbs) {
+    for (Verb verb <- slice(verbs, 0, size(verbs)-1)) {
         chunk = apply_generation_rule(engine, chunk, verb);
-        chunk_print(chunk, engine.config.width, verb.name, verb.specification);
+        chunk_print_verb(chunk, engine.config.width, verb);
     }
 
     return chunk;
