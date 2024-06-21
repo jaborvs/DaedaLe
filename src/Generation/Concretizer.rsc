@@ -34,18 +34,17 @@ import Utils;
  *          height -> Chunk height
  * @Ret:    List of concretized verbs
  */
-list[list[str]] concretize(GenerationModule \module, list[GenerationVerbExpression] verbs, int width, int height) {
+tuple[list[list[str]], Coords] concretize(GenerationModule \module, list[GenerationVerbExpression] verbs, Coords entry, int width, int height) {
     list[list[str]] verbs_concretized = [];
     
-    Coords position_init = <0, toInt(height/2)>;
     map[int, Coords] position_current = ();
-    for (int i <- [0..size(verbs)]) position_current[i] = position_init;
+    for (int i <- [0..size(verbs)]) position_current[i] = entry;
     
     tuple[list[list[str]] verbs_concretized, map[int, Coords] position_current] res = <[], ()>;
     res = concretize_init(\module, verbs, position_current);
     res = concretize_extend(\module, verbs, res.verbs_concretized, res.position_current, width, height);
 
-    return res.verbs_concretized;
+    return <res.verbs_concretized, res.position_current[size(verbs)-1]>;
 }
 
 /*

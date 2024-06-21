@@ -9,6 +9,7 @@ module Generation::Engine
 /******************************************************************************/
 // --- General modules imports -------------------------------------------------
 import util::Eval;
+import util::Math;
 import List;
 import String;
 import IO;
@@ -42,7 +43,7 @@ import Utils;
  */
 list[list[str]] generate(GenerationEngine engine) {
     list[list[str]] levels_generated = [];
-    levels_generated = _generate_levels(engine);
+    levels_generated = generate_levels(engine);
 
     return levels_generated;
 }
@@ -51,87 +52,72 @@ list[list[str]] generate(GenerationEngine engine) {
 // --- Private Generation Functions --------------------------------------------
 
 /*
- * @Name:   _generate_levels
+ * @Name:   generate_levels
  * @Desc:   Function that generates all the specified levels
  * @Params: 
  * @Ret:    list[list[str]] given that a level is a list[str] and we are
  *          returning all levels generated
  */
-list[list[str]] _generate_levels(GenerationEngine engine) {
-    list[list[str]] levels_generated = [_generate_level(engine, engine.generated_levels[name]) | str name <- engine.generated_levels.names];
+list[list[str]] generate_levels(GenerationEngine engine) {
+    list[list[str]] levels_generated = [generate_level(engine, engine.generated_levels[name]) | str name <- engine.generated_levels.names];
     return levels_generated;
 }
 
 /*
- * @Name:   _generate_level
+ * @Name:   generate_level
  * @Desc:   Function that generates a single level from a given draft
  * @Params: 
  * @Ret:    list[list[str]] given that a level is a list[str] and we are
  *          returning all levels generated
  */
-list[str] _generate_level(GenerationEngine engine, GenerationLevel level) {
-    // list[GenerationChunk] chunks_generated =  [_generate_chunk(engine, chunk) | GenerationChunk chunk <- level.chunks];
-    // return chunks_generated;
-    list[GenerationChunk] chunks_generated =  [_generate_chunk(engine, chunk) | GenerationChunk chunk <- level.chunks];
+list[str] generate_level(GenerationEngine engine, GenerationLevel level) {
+    // list[GenerationChunk] chunks_generated =  [generate_chunk(engine, chunk) | GenerationChunk chunk <- level.chunks];
+    list[GenerationChunk] chunks_generated = [];
+
+    Coords entry = <0, toInt(engine.config.height/2)-1>;
+    tuple[GenerationChunk generated_chunk, Coords exit] res = <generation_chunk_empty(), <-1,-1>>;
+    for (GenerationChunk chunk <- level.chunks) {      
+        res = generate_chunk(engine, chunk, entry);
+        entry = res.exit;
+        chunks_generated += [res.generated_chunk];
+    }
+
     return [];
 }
 
 /*
- * @Name:   _generate_chunk
+ * @Name:   generate_chunk
  * @Desc:   Function that generates a chunk from a given chunk data
  * @Params:
  * @Ret:    Generated chunk object
  */
-GenerationChunk _generate_chunk(GenerationEngine engine, GenerationChunk chunk) {
-    list[list[str]] verbs_concretized = concretize(engine.modules[chunk.\module], chunk.verbs, engine.config.width, engine.config.height);
-    list[Verb] verbs_translated       = translate(engine.modules[chunk.\module], verbs_concretized);
+tuple[GenerationChunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chunk, Coords entry) {
+    tuple[list[list[str]] verbs, Coords exit] chunk_concretized = concretize(engine.modules[chunk.\module], chunk.verbs, entry, engine.config.width, engine.config.height);
+    list[Verb] verbs_translated = translate(engine.modules[chunk.\module], chunk_concretized.verbs);
 
-    Coords player_coords = <0,engine.config.height/2-1>;
-    chunk.objects[engine.config.width * player_coords.y + player_coords.x]     = "ph1";
-    chunk.objects[engine.config.width * (player_coords.y+1) + player_coords.x] = "#";
-    chunk = _apply_generation_rules(engine, chunk, verbs_translated);
-
-    return chunk;
+    chunk.objects[engine.config.width * entry.y + entry.x]     = "ph1";
+    chunk.objects[engine.config.width * (entry.y+1) + entry.x] = "#";
+    chunk = apply_generation_rules(engine, chunk, verbs_translated);
+    
+    return <chunk, chunk_concretized.exit>;
 }
 
 /******************************************************************************/
 // --- Private Apply Functions -------------------------------------------------
 
-GenerationChunk _apply_generation_rules(GenerationEngine engine, GenerationChunk chunk, list[Verb] verbs) {
+GenerationChunk apply_generation_rules(GenerationEngine engine, GenerationChunk chunk, list[Verb] verbs) {
     writeFile(|project://daedale/src/Interface/bin/chunk.out|, "");
     chunk_print(chunk, engine.config.width, "Initial state", "");
 
     for (Verb verb <- verbs) {
-        chunk = _apply_generation_rule(engine, chunk, verb);
+        chunk = apply_generation_rule(engine, chunk, verb);
         chunk_print(chunk, engine.config.width, verb.name, verb.specification);
     }
 
     return chunk;
 }
 
-void chunk_print(GenerationChunk chunk, int width, str name, str specification) {
-    file_loc = |project://daedale/src/Interface/bin/chunk.out|;
-    str chunk_printed = readFile(file_loc);
-
-    if (toLowerCase(name) == "initial state") chunk_printed += "\>\>\> <name>:\n\n";
-    else                                      chunk_printed += "\>\>\> Verb <name>(<specification>)\n\n";
-
-    int i = 0;
-    for (str object <- chunk.objects) {
-        chunk_printed += object;
-        chunk_printed += "\t";
-        i += 1;
-
-        if (i % width == 0) chunk_printed += "\n";
-    }
-
-    chunk_printed += "\n<for(_ <- [0..(width-1)*4]){>-<}>\n";
-    
-    writeFile(file_loc, chunk_printed);
-    return;
-}
-
-GenerationChunk _apply_generation_rule(GenerationEngine engine, GenerationChunk chunk, Verb verb) {
+GenerationChunk apply_generation_rule(GenerationEngine engine, GenerationChunk chunk, Verb verb) {
     str program = "";
 
     GenerationRule rule = engine.modules[chunk.\module].generation_rules[verb];
