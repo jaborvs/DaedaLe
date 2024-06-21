@@ -24,9 +24,9 @@ import Generation::ADT::Chunk;
 import Generation::ADT::Level;
 import Generation::Exception;
 
-import Extension::ADT::Verb;
-import Extension::ADT::Module;
-import Extension::Load;
+import Annotation::ADT::Verb;
+import Annotation::ADT::Chunk;
+import Annotation::Load;
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -208,7 +208,7 @@ tuple[Verb, GenerationRule] papyrus_compile_rule(RuleData rule) {
 
     map[int key, list[str] content] comments = rule.comments;
     if (comments == ()) exception_rules_no_verb();
-    Verb verb = extension_load_verb(comments);
+    Verb verb = annotation_load_verb(comments);
 
     rule_compiled = <
         verb,
@@ -274,10 +274,11 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
 
     map[int key, list[str] content] comments = chunk.comments;
     if (comments == ()) exception_chunk_no_module();
-    Module \module = extension_load_module(comments);
+    ChunkAnnotation chunk_anno = annotation_load_module(comments);
 
     chunk_compiled = generation_chunk(
-        \module.name,
+        chunk_anno.name,
+        chunk_anno.\module,
         [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.verb_dts]
     );
     

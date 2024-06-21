@@ -115,6 +115,6 @@ LEVEL DRAFTS
 ============
 
 Level1
-[Crawl+, Climb+, Crawl+, Crawl+, Fall+, Crawl+, Crawl+, Climb+, Crawl +]    (module Module1)
-[Crawl+, Fall+,  Crawl+, Crawl+, Fall+]                                     (module Module1)
+[Crawl+, Climb+, Crawl+, Crawl+, Fall+, Crawl+, Crawl+, Climb+, Crawl +]    (chunk Chunk1(Module1))
+[Crawl+, Fall+,  Crawl+, Crawl+, Fall+]                                     (chunk Chunk2(Module1))
 

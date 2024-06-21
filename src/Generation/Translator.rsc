@@ -16,7 +16,7 @@ import List;
 import Generation::ADT::Module;
 import Generation::Exception;
 
-import Extension::ADT::Verb;
+import Annotation::ADT::Verb;
 
 /******************************************************************************/
 // --- Public translate functions ----------------------------------------------

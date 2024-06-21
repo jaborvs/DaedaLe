@@ -3,17 +3,17 @@
  * @Desc:   Module that models the ast of the extension
  * @Auth:   Borja Velasco -> code, comments
  */
-module Extension::AST
+module Annotation::AST
 
 /******************************************************************************/
 // --- Extension syntax structure defines --------------------------------------
 
 /*
- * @Name:   Extension
- * @Desc:   Structure to model an extension
+ * @Name:   Annotation
+ * @Desc:   Structure to model an annotation
  */
-data Extension
-    = extension(str \type, str name, list[Argument] args)   // Name of the verb/module, list of arguments
+data Annotation
+    = annotation(str \type, str name, list[Argument] args)   // Name of the verb/module, list of arguments
     ;
 
 /*

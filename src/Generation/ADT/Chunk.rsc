@@ -8,12 +8,10 @@ module Generation::ADT::Chunk
 /******************************************************************************/
 // --- General modules imports -------------------------------------------------
 import IO;
-import String;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
 import Generation::ADT::VerbExpression;
-import Extension::ADT::Verb;
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -23,7 +21,7 @@ import Extension::ADT::Verb;
  * @Desc:   Data structure that models a generation chunk
  */
 data GenerationChunk
-    = generation_chunk(str \module, list[GenerationVerbExpression] verbs)
+    = generation_chunk(str name, str \module, list[GenerationVerbExpression] verbs)
     | generation_chunk_empty()
     ;
 
@@ -32,22 +30,22 @@ data GenerationChunk
  * @Desc:   Data structure that models a chunk
  */
 data Chunk
-    = chunk(tuple[int width, int height] size, list[str] objects)
+    = chunk(str name, tuple[int width, int height] size, list[str] objects)
     | chunk_empty()
     ;
 
 /******************************************************************************/
 // --- Public functions --------------------------------------------------------
 
-Chunk chunk_init(tuple[int width, int height] size) {
-    return chunk(size, ["." | _ <- [0..(size.width*size.height)]]);
+Chunk chunk_init(str name, tuple[int width, int height] size) {
+    return chunk(name, size, ["." | _ <- [0..(size.width*size.height)]]);
 }
 
 list[list[str]] chunk_get_rows(Chunk chunk) {
     list[list[str]] rows= [];
 
     for (int j <- [0..chunk.size.height]) {
-        rows += [chung_get_row(chunk, j)];
+        rows += [chunk_get_row(chunk, j)];
     }
 
     return rows;

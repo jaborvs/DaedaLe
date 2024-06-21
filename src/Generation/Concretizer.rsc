@@ -17,7 +17,7 @@ import Generation::ADT::Module;
 import Generation::ADT::VerbExpression;
 import Generation::ADT::Chunk;
 
-import Extension::ADT::Verb;
+import Annotation::ADT::Verb;
 
 import Utils;
 

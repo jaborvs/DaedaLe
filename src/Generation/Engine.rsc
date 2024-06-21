@@ -27,7 +27,7 @@ import Generation::Concretizer;
 import Generation::Translator;
 import Generation::Match;
 
-import Extension::ADT::Verb;
+import Annotation::ADT::Verb;
 
 import Utils;
 

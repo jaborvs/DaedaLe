@@ -4,16 +4,16 @@
  * @Auth:   Borja Velasco -> code, comments
  */
 
-module Extension::ADT::Module
+module Annotation::ADT::Chunk
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
 
 /*
- * @Name:   Extension
- * @Desc:   Structure to model an module
+ * @Name:   ChunkAnno
+ * @Desc:   Structure to model an chunk annotation
  */
-data Module
-    = \module(str name)
-    | module_empty()
+data ChunkAnnotation
+    = chunk_annotation(str name, str \module)
+    | chunk_annotation_empty()
     ;

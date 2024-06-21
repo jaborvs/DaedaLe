@@ -3,7 +3,7 @@
  * @Desc:   Module that models the ast of the verbs
  * @Auth:   Borja Velasco -> code, comments
  */
-module Extension::Syntax
+module Annotation::Syntax
 
 /******************************************************************************/
 // --- Layout ------------------------------------------------------------------
@@ -17,8 +17,8 @@ lexical LAYOUT
 /******************************************************************************/
 // --- Keywords ----------------------------------------------------------------
 
-keyword ExtensionKeyword 
-    = "verb" | "module"
+keyword AnnotationKeyword 
+    = "verb" | "chunk"
     ;
 
 /******************************************************************************/
@@ -26,13 +26,13 @@ keyword ExtensionKeyword
 
 lexical COMMENT = @category="Comment" "//" (![\n)] | COMMENT)*;
 
-lexical ID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ ExtensionKeyword;
+lexical ID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ AnnotationKeyword;
 
 /******************************************************************************/
 // --- Syntax ------------------------------------------------------------------
 
-start syntax Extension 
-    = extension: '(' ExtensionKeyword ID ('(' {Argument ','}+ ')')? ')'
+start syntax Annotation 
+    = annotation: '(' AnnotationKeyword ID ('(' {Argument ','}+ ')')? ')'
     ;
 
 syntax Argument

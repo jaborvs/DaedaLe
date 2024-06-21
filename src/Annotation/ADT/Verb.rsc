@@ -3,7 +3,7 @@
  * @Desc:   Module that contains all the verb functionality
  * @Auth:   Borja Velasco -> code, comments
  */
-module Extension::ADT::Verb
+module Annotation::ADT::Verb
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
