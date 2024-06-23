@@ -11,7 +11,6 @@ import ParseTree;
 import String;
 import List;
 import Set;
-import IO;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
@@ -27,9 +26,9 @@ import Annotation::ADT::Chunk;
  * @Name:   annotation_load_verb
  * @Desc:   Function that reads a comment and parses the verb
  * @Param:  src -> String with the comment
- * @Ret:    Verb object
+ * @Ret:    VerbAnnotationobject
  */
-Verb annotation_load_verb(map[int key, list[str] content] comments) {
+VerbAnnotation annotation_load_verb(map[int key, list[str] content] comments) {
     Annotation \anno = annotation_load(comments);
 
     // Specification
@@ -50,7 +49,7 @@ Verb annotation_load_verb(map[int key, list[str] content] comments) {
     if (\anno.args[3].next is reference_none) dependencies.next = <\anno.args[3].next.val,"_">;
     else                                    dependencies.next = <\anno.args[3].next.verb_name, \anno.args[3].next.verb_specification>;
 
-    Verb v = verb(
+    VerbAnnotation v = verb_annotation(
         toLowerCase(\anno.name),
         toLowerCase(\anno.args[0].val),   // Specification: low, medium, large
         toLowerCase(\anno.args[1].val),   // Direction: up, down, right

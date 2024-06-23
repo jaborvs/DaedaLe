@@ -11,8 +11,6 @@ module Generation::Engine
 import util::Eval;
 import util::Math;
 import List;
-import Map;
-import IO;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
@@ -112,9 +110,9 @@ Level generate_level(GenerationEngine engine, str level_name, GenerationLevel ge
  */
 tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chunk, Coords entry) {
     tuple[list[list[str]] verbs, Coords exit] chunk_concretized = concretize(engine.modules[chunk.\module], chunk.verbs, entry, engine.config.width, engine.config.height);
-    list[Verb] verbs_translated = translate(engine.modules[chunk.\module], chunk_concretized.verbs);
+    list[VerbAnnotation] verbs_translated = translate(engine.modules[chunk.\module], chunk_concretized.verbs);
 
-    Chunk chunk_generated = chunk_init(<engine.config.width, engine.config.height>);
+    Chunk chunk_generated = chunk_init(chunk.name, <engine.config.width, engine.config.height>);
     chunk_generated.objects[engine.config.width * entry.y + entry.x]     = "ph1";
     chunk_generated.objects[engine.config.width * (entry.y+1) + entry.x] = "#";
     chunk_generated = apply_generation_rules(engine, engine.modules[chunk.\module], verbs_translated, chunk_generated);
@@ -125,8 +123,8 @@ tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chu
 /******************************************************************************/
 // --- Private Apply Functions -------------------------------------------------
 
-Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, list[Verb] verbs, Chunk chunk) {
-    for (Verb verb <- verbs[0..(size(verbs)-1)]) {
+Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, list[VerbAnnotation] verbs, Chunk chunk) {
+    for (VerbAnnotation verb <- verbs[0..(size(verbs)-1)]) {
         GenerationRule rule = \module.generation_rules[verb];
         GenerationPattern left = engine.patterns[rule.left];
         GenerationPattern right = engine.patterns[rule.right];
@@ -136,7 +134,7 @@ Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, 
     return chunk;
 }
 
-Chunk apply_generation_rule(Verb verb, GenerationPattern left, GenerationPattern right, Chunk chunk) {
+Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, GenerationPattern right, Chunk chunk) {
     str program = "";
 
     program = match_generate_program(chunk, verb, left, right);

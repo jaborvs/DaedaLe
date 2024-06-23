@@ -63,7 +63,7 @@ tuple[list[list[str]], map[int,Coords]] concretize_init(GenerationModule \module
     for (int i <- [0..subchunk_num]) {
         str verb_name = verbs[i].verb;
         str verb_modifier = verbs[i].modifier;
-        Verb verb = generation_module_get_verb(\module, verb_name, "_");
+        VerbAnnotation verb = generation_module_get_verb(\module, verb_name, "_");
 
         list[str] basket = [];
         if (verb_modifier == "+") basket += [verb_name];
@@ -95,7 +95,7 @@ tuple[list[list[str]], map[int,Coords]] concretize_extend(GenerationModule \modu
     while (!exited) {
         int i = arbInt(subchunk_num);
         str verb_name = verbs[i].verb;
-        Verb verb = generation_module_get_verb(\module, verb_name, "_");
+        VerbAnnotation verb = generation_module_get_verb(\module, verb_name, "_");
 
         if      (i < subchunk_last_compulsory
                 && concretize_check_future_position_exited(position_current, i, verb.direction, width, height))    continue;

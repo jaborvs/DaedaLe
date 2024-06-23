@@ -188,9 +188,9 @@ map[str, GenerationModule] papyrus_compile_modules(list[ModuleData] modules) {
 tuple[str, GenerationModule] papyrus_compile_module(ModuleData \module) {
     tuple[str, GenerationModule] module_compiled = <"", generation_module_empty()>;
 
-    map[Verb verbs, GenerationRule generation_rules] compiled_rules = ();
+    map[VerbAnnotation verbs, GenerationRule generation_rules] compiled_rules = ();
     for (RuleData r <- \module.rule_dts) {
-        tuple[Verb verb, GenerationRule rule] c_r = papyrus_compile_rule(r);
+        tuple[VerbAnnotation verb, GenerationRule rule] c_r = papyrus_compile_rule(r);
         if (c_r.verb in compiled_rules.verbs) exception_modules_duplicated_verb(c_r.verb);
         else compiled_rules[c_r.verb] = c_r.rule;
     }
@@ -203,12 +203,12 @@ tuple[str, GenerationModule] papyrus_compile_module(ModuleData \module) {
     return module_compiled;
 }
 
-tuple[Verb, GenerationRule] papyrus_compile_rule(RuleData rule) {
-    tuple[Verb verb, GenerationRule rule] rule_compiled = <verb_empty(), generation_rule_empty()>;
+tuple[VerbAnnotation, GenerationRule] papyrus_compile_rule(RuleData rule) {
+    tuple[VerbAnnotation verb, GenerationRule rule] rule_compiled = <verb_annotation_empty(), generation_rule_empty()>;
 
     map[int key, list[str] content] comments = rule.comments;
     if (comments == ()) exception_rules_no_verb();
-    Verb verb = annotation_load_verb(comments);
+    VerbAnnotation verb = annotation_load_verb(comments);
 
     rule_compiled = <
         verb,

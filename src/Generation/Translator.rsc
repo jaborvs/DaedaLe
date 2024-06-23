@@ -30,22 +30,22 @@ import Annotation::ADT::Verb;
  *          verbs_concretized -> List of verbs concretized
  * @Ret:    List of verbs translated
  */
-list[Verb] translate(GenerationModule \module, list[list[str]] verbs_concretized) {
-    list[Verb] verbs_translated = [];
+list[VerbAnnotation] translate(GenerationModule \module, list[list[str]] verbs_concretized) {
+    list[VerbAnnotation] verbs_translated = [];
 
     int subchunks_num = size(verbs_concretized);
     for (int i <- [0..subchunks_num]) {
         list[str] subchunk = verbs_concretized[i];
-        tuple[list[Verb] verbs_translated, int subchunk_size] res = <[],size(subchunk)>;
+        tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res = <[],size(subchunk)>;
 
         tuple[str name, str specification] verb_prev = translate_get_verb_previous(verbs_translated);
         tuple[str name, str specification] verb_next = translate_get_verb_next(verbs_concretized, i);
         tuple[str name, str after_specification, str before_specification] verb_current = translate_get_verb_current(subchunk, verb_prev, verb_next);
 
-        Verb verb_after = generation_module_get_verb_after(\module, verb_current.name, verb_current.after_specification, verb_prev.name, verb_prev.specification);
-        tuple[Verb ind, Verb seq] verb_mid = generation_module_get_verb_mid(\module, verb_current.name);
-        Verb verb_before = generation_module_get_verb_before(\module, verb_current.name, verb_current.before_specification, verb_next.name, verb_next.specification);
-        bool verb_before_exists = !(verb_before is verb_empty);
+        VerbAnnotation verb_after = generation_module_get_verb_after(\module, verb_current.name, verb_current.after_specification, verb_prev.name, verb_prev.specification);
+        tuple[VerbAnnotation ind, VerbAnnotation seq] verb_mid = generation_module_get_verb_mid(\module, verb_current.name);
+        VerbAnnotation verb_before = generation_module_get_verb_before(\module, verb_current.name, verb_current.before_specification, verb_next.name, verb_next.specification);
+        bool verb_before_exists = !(verb_before is verb_annotation_empty);
 
         res = translate_single(res, verb_after);
         res = translate_loop(\module, res, verb_mid, verb_before_exists);
@@ -63,11 +63,11 @@ list[Verb] translate(GenerationModule \module, list[list[str]] verbs_concretized
  *          before verbs
  * @Param:  res     -> Tuple containing the translated verbs and the remaining 
  *                     subchunk size
- *          verb    -> Verb to be translated
+ *          verb    -> VerbAnnotationto be translated
  * @Ret:
  */
-tuple[list[Verb],int] translate_single(tuple[list[Verb] verbs_translated, int subchunk_size] res, Verb verb) {
-    if (verb is verb_empty) return res;
+tuple[list[VerbAnnotation],int] translate_single(tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res, VerbAnnotation verb) {
+    if (verb is verb_annotation_empty) return res;
 
     res.verbs_translated += [verb];
     res.subchunk_size -= verb.size;
@@ -86,9 +86,9 @@ tuple[list[Verb],int] translate_single(tuple[list[Verb] verbs_translated, int su
  *                                be applied after the mid verbs
  * @Ret:    Updated res
  */
-tuple[list[Verb],int] translate_loop(GenerationModule \module, tuple[list[Verb] verbs_translated, int subchunk_size] res, tuple[Verb ind, Verb seq] verb, bool verb_before_exists) {
-    if (verb.ind is verb_empty) res = translate_loop_seq(\module, res, verb.seq, verb_before_exists);
-    else if (verb.seq is verb_empty) res = translate_loop_ind(res, verb.ind, verb_before_exists);
+tuple[list[VerbAnnotation],int] translate_loop(GenerationModule \module, tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res, tuple[VerbAnnotation ind, VerbAnnotation seq] verb, bool verb_before_exists) {
+    if (verb.ind is verb_annotation_empty) res = translate_loop_seq(\module, res, verb.seq, verb_before_exists);
+    else if (verb.seq is verb_annotation_empty) res = translate_loop_ind(res, verb.ind, verb_before_exists);
     else res = translate_loop_both(\module, res, verb, verb_before_exists);
 
     return res;
@@ -106,12 +106,12 @@ tuple[list[Verb],int] translate_loop(GenerationModule \module, tuple[list[Verb] 
  *                                be applied after the mid verbs
  * @Ret:    Updated res tuple
  */
-tuple[list[Verb],int] translate_loop_seq(GenerationModule \module, tuple[list[Verb] verbs_translated, int subchunk_size] res, Verb verb, bool verb_before_exists) {
+tuple[list[VerbAnnotation],int] translate_loop_seq(GenerationModule \module, tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res, VerbAnnotation verb, bool verb_before_exists) {
     int subchunk_size_partial = (verb_before_exists) ? res.subchunk_size-1 : res.subchunk_size;
 
     if (generation_module_verb_sequence_size(\module, verb) < subchunk_size_partial) exception_verbs_translation_size_mismatch(verb, res.subchunk_size);
 
-    Verb current = verb;
+    VerbAnnotation current = verb;
     for (_ <- [0..subchunk_size_partial]) {
         res.verbs_translated += [current];
         res.subchunk_size -= current.size;
@@ -134,7 +134,7 @@ tuple[list[Verb],int] translate_loop_seq(GenerationModule \module, tuple[list[Ve
  *                                be applied after the mid verbs
  * @Ret:    Updated res tuple
  */
-tuple[list[Verb],int] translate_loop_ind(tuple[list[Verb] verbs_translated, int subchunk_size] res, Verb verb, bool verb_before_exists) {
+tuple[list[VerbAnnotation],int] translate_loop_ind(tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res, VerbAnnotation verb, bool verb_before_exists) {
     int subchunk_size_partial = (verb_before_exists) ? res.subchunk_size-1 : res.subchunk_size;
 
     if (subchunk_size_partial % verb.size != 0) exception_verbs_translation_size_mismatch(verb, res.subchunk_size);
@@ -162,13 +162,13 @@ tuple[list[Verb],int] translate_loop_ind(tuple[list[Verb] verbs_translated, int 
  *                                be applied after the mid verbs
  * @Ret:    Updated res tuple
  */
-tuple[list[Verb],int] translate_loop_both(GenerationModule \module, tuple[list[Verb] verbs_translated, int subchunk_size] res, tuple[Verb ind, Verb seq] verb, bool verb_before_exists) {
+tuple[list[VerbAnnotation],int] translate_loop_both(GenerationModule \module, tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res, tuple[VerbAnnotation ind, VerbAnnotation seq] verb, bool verb_before_exists) {
     int verb_seq_size = generation_module_verb_sequence_size(\module, verb.seq);
     int subchunk_size_partial = (verb_before_exists) ? res.subchunk_size-1 : res.subchunk_size;
 
     while (subchunk_size_partial > 0) {
         if (verb_seq_size >= subchunk_size_partial) {
-            Verb current = verb.seq;
+            VerbAnnotation current = verb.seq;
             for (_ <- [0..subchunk_size_partial]) {
                 res.verbs_translated += [current];
                 res.subchunk_size -= current.size;
@@ -194,7 +194,7 @@ tuple[list[Verb],int] translate_loop_both(GenerationModule \module, tuple[list[V
  * @Param:  verbs_translated -> List of verbs translated
  * @Ret:    Name and specification of the last translated verb
  */
-tuple[str,str] translate_get_verb_previous(list[Verb] verbs_translated) {
+tuple[str,str] translate_get_verb_previous(list[VerbAnnotation] verbs_translated) {
     str name = (verbs_translated != []) ? verbs_translated[-1].name : "";
     str specification = (verbs_translated != []) ? verbs_translated[-1].specification : "";
     return <name, specification>;

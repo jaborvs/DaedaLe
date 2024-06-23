@@ -38,12 +38,12 @@ void exception_modules_duplicated_module(str name) {
     throw "Exception Modules: Duplicated module <name>";
 }
 
-void exception_modules_duplicated_verb(Verb verb) {
+void exception_modules_duplicated_verb(VerbAnnotation verb) {
     throw "Exception Modules: Duplicated verb <verb.name>(<verb.specification>, <verb.direction>, <verb.size>)";
 }
 
 void exception_modules_not_found_verb(str name, str verb_name, str verb_specification) {
-    throw "Exception Modules: Verb <verb_name>::<verb_specification> not found in module <name>";
+    throw "Exception Modules: VerbAnnotation<verb_name>::<verb_specification> not found in module <name>";
 }
 
 void exception_rules_no_verb() {
@@ -64,7 +64,7 @@ void exception_chunk_no_module() {
 /******************************************************************************/
 // --- Public verbs functions --------------------------------------------------
 
-void exception_verbs_translation_size_mismatch(Verb verb, int subchunk_size) {
+void exception_verbs_translation_size_mismatch(VerbAnnotation verb, int subchunk_size) {
     str verb_full_name = "";
     if (verb.specification != "") verb_full_name = "<verb.name>::<verb.specification>";
 

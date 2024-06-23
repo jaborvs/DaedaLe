@@ -25,7 +25,7 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
     map[str, list[RuleData]] verb_rules = ();
 
     // Resolve rule data for verbs
-    for (Verb verb <- verb_definitions) {
+    for (VerbAnnotation verb <- verb_definitions) {
 
         if (size(verb.numbers) == 0) verb_rules += (verb.name.name: []);
 
@@ -42,7 +42,7 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
     for (int i <- [0..length]) {
 
         if (!rules[i]?) {
-            if (any(Verb verb <- verb_definitions, size(verb.numbers) == 0)) {
+            if (any(VerbAnnotation verb <- verb_definitions, size(verb.numbers) == 0)) {
                 all_verbs += verb.name.name;
             }
             continue;
@@ -50,7 +50,7 @@ tuple[list[str],list[str],list[str]] resolve_verbs(Engine engine, map[int,list[R
         
         list[RuleData] lrd = rules[i];
 
-        for (Verb verb <- verb_definitions) {
+        for (VerbAnnotation verb <- verb_definitions) {
             if (any(RuleData rd <- verb_rules[verb.name.name], rd.src in [x.src | x <- lrd])) {
                 all_verbs += verb.name.name;
             }

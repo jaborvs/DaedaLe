@@ -61,7 +61,7 @@ list[list[str]] level_get_rows(Level level) {
         // Step 1: We take the row formed by chunks
         list[Chunk] row_chunks = [];
         for (int i <- [0..(level.abs_size.x_max+1)]) {
-            Chunk chunk = (<i,j> in level.chunks_generated.coords) ? level.chunks_generated[<i,j>] : chunk_init(level.chunk_size);
+            Chunk chunk = (<i,j> in level.chunks_generated.coords) ? level.chunks_generated[<i,j>] : chunk_init("blank", level.chunk_size);
             row_chunks += [chunk];
         }
 

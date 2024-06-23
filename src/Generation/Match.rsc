@@ -22,7 +22,7 @@ import Annotation::ADT::Verb;
 import Utils;
 
 void main() {
-    Verb v = verb(
+    VerbAnnotation v = verb_annotation(
         "crawl",
         "",
         "up",
@@ -42,7 +42,8 @@ void main() {
     int width = 5;
     int height = 5;
     Chunk c = chunk(
-        5,
+        "Test",
+        <5,5>,
         [
             ".",".",".",".",".",
             ".","P",".",".",".",
@@ -72,7 +73,7 @@ void main() {
  *          right -> Right pattern of the GenerationRule
  * @Ret:    str with the complete programm
  */
-str match_generate_program(Chunk chunk, Verb verb, GenerationPattern left, GenerationPattern right) {
+str match_generate_program(Chunk chunk, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) {
     str program = "";
 
     program += _match_generate_module_section(verb);
@@ -87,7 +88,7 @@ str match_generate_program(Chunk chunk, Verb verb, GenerationPattern left, Gener
 /******************************************************************************/
 // --- Private module section functions ----------------------------------------
 
-str _match_generate_module_section(Verb verb) 
+str _match_generate_module_section(VerbAnnotation verb) 
     = "//module Generation::<string_capitalize(verb.name)><string_capitalize(verb.specification)>"
     + _match_generate_line_break(2)
     ;
@@ -109,7 +110,7 @@ str _match_generate_data_structures_section()
     = _match_generate_separator()
     + _match_generate_title("Data structure defines")
     + "data Chunk
-      '    = chunk(tuple[int width, int height] size, list[str] objects)
+      '    = chunk(str name, tuple[int width, int height] size, list[str] objects)
       '    | chunk_empty()
       '    ;
       '
@@ -122,7 +123,7 @@ str _match_generate_data_structures_section()
       '    | generation_pattern_empty()
       '    ;
       '
-      'data Verb 
+      'data VerbAnnotation
       '    = verb(
       '        str name, 
       '        str specification, 
@@ -130,29 +131,29 @@ str _match_generate_data_structures_section()
       '        int size, 
       '        tuple[tuple[str name, str specification] prev, tuple[str name, str specification] next] dependencies
       '        )
-      '    | verb_empty()
+      '    | verb_annotation_empty()
       '    ;"
     ;
 
 /******************************************************************************/
 // --- Private functions section functions -------------------------------------
 
-str _match_generate_functions_section(int chunk_width, Verb verb, GenerationPattern left, GenerationPattern right) 
+str _match_generate_functions_section(int chunk_width, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
     = _match_generate_separator()
     + _match_generate_title("Public functions")
     + _match_generate_function(chunk_width, verb, left, right)
     ;
 
-str _match_generate_function(int chunk_width, Verb verb, GenerationPattern left, GenerationPattern right)
+str _match_generate_function(int chunk_width, VerbAnnotation verb, GenerationPattern left, GenerationPattern right)
     = _match_generate_function_documentation(verb)
     + _match_generate_function_definition(chunk_width, verb, left, right)
     ;
 
-str _match_generate_function_name(Verb verb)
+str _match_generate_function_name(VerbAnnotation verb)
     = (verb.specification == "") ? "<verb.name>" : "<verb.name>_<verb.specification>"
     ;
 
-str _match_generate_function_documentation(Verb verb)
+str _match_generate_function_documentation(VerbAnnotation verb)
     = "/*
       ' * @Name:   <_match_generate_function_name(verb)>
       ' * @Desc:   Function to apply the Generation rule associated to the given verb
@@ -162,7 +163,7 @@ str _match_generate_function_documentation(Verb verb)
     + _match_generate_line_break(1)
     ;
 
-str _match_generate_function_definition(int chunk_width, Verb verb, GenerationPattern left, GenerationPattern right) 
+str _match_generate_function_definition(int chunk_width, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
     = "public Chunk (Chunk c) <_match_generate_function_name(verb)> = 
       'Chunk (Chunk c) 
       '{
@@ -197,13 +198,13 @@ str _match_generate_pattern_right(GenerationPattern pattern)
 /******************************************************************************/
 // --- Private call section functions ------------------------------------------
 
-str _match_generate_calls_section(Chunk chunk, Verb verb)
+str _match_generate_calls_section(Chunk chunk, VerbAnnotation verb)
     = _match_generate_separator()
     + _match_generate_title("Calls")
     + _match_generate_call(chunk, verb)
     ;
 
-str _match_generate_call(Chunk chunk, Verb verb)
+str _match_generate_call(Chunk chunk, VerbAnnotation verb)
     = "<_match_generate_function_name(verb)>(<chunk>);";
 
 /******************************************************************************/

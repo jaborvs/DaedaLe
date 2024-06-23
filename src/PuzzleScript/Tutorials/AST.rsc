@@ -13,7 +13,7 @@ data Elem
     | dead_end(list[ID] names)
     | win_condition(list[ID] names);
 
-data Verb = verb(ID name, list[int] numbers);
+data VerbAnnotation= verb(ID name, list[int] numbers);
 
 data ID = id(str name);
 

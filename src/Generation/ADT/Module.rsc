@@ -22,7 +22,7 @@ import Annotation::ADT::Verb;
  * @Desc:   Data structure that models a generation module
  */
 data GenerationModule
-    = generation_module(map[Verb verbs, GenerationRule generation_rule] generation_rules)
+    = generation_module(map[VerbAnnotation verbs, GenerationRule generation_rule] generation_rules)
     | generation_module_empty()
     ;
 
@@ -36,7 +36,7 @@ data GenerationModule
  *          current -> Current verb to get the next from
  * @Ret:    Next verb
  */
-Verb generation_module_verb_sequence_next(GenerationModule \module, Verb current) {
+VerbAnnotation generation_module_verb_sequence_next(GenerationModule \module, VerbAnnotation  current) {
     return generation_module_get_verb(\module, current.dependencies.next.name, current.dependencies.next.specification);
 }
 
@@ -47,12 +47,12 @@ Verb generation_module_verb_sequence_next(GenerationModule \module, Verb current
  *          verb    -> Start of the sequence
  * @Ret:    Size of the sequence or -1 if the verb is inductive
  */
-int generation_module_verb_sequence_size(GenerationModule \module, Verb verb) {
+int generation_module_verb_sequence_size(GenerationModule \module, VerbAnnotation verb) {
     int size = 0;
 
-    if (verb_is_inductive(verb)) return -1;
+    if (verb_annotation_is_inductive(verb)) return -1;
 
-    Verb current = verb;
+    VerbAnnotation current = verb;
     while (current.dependencies.next.name != "none") {
         size += current.size;
         current = generation_module_verb_sequence_next(\module, current);
@@ -71,14 +71,14 @@ int generation_module_verb_sequence_size(GenerationModule \module, Verb verb) {
  *          verb_specification -> Specification of the verb 
  * @Ret:    Verb
  */
-Verb generation_module_get_verb(GenerationModule \module, str verb_name, str verb_specification) {
-    for (Verb v <- \module.generation_rules.verbs) {
+VerbAnnotation generation_module_get_verb(GenerationModule \module, str verb_name, str verb_specification) {
+    for (VerbAnnotation v <- \module.generation_rules.verbs) {
         if (v.name == verb_name 
             && (v.specification == verb_specification
                 || verb_specification == "_")) return v;
     }
 
-    return verb_empty();
+    return verb_annotation_empty();
 }
 
 /*
@@ -91,16 +91,16 @@ Verb generation_module_get_verb(GenerationModule \module, str verb_name, str ver
  *          verb_prev_specification    -> Specification of the previous verb
  * @Ret:    Verb
  */
-Verb generation_module_get_verb_after(GenerationModule \module, str verb_current_name, str verb_current_specification, str verb_prev_name, str verb_prev_specification) {
-    for (Verb v <- \module.generation_rules.verbs) {
+VerbAnnotation generation_module_get_verb_after(GenerationModule \module, str verb_current_name, str verb_current_specification, str verb_prev_name, str verb_prev_specification) {
+    for (VerbAnnotation v <- \module.generation_rules.verbs) {
         if (v.name == verb_current_name 
             && v.specification == verb_current_specification
-            && verb_is_after(v)
+            && verb_annotation_is_after(v)
             && v.dependencies.prev.name == verb_prev_name
             && v.dependencies.prev.specification == verb_prev_specification) return v;
     }
 
-    return verb_empty();
+    return verb_annotation_empty();
 }
 
 /*
@@ -113,16 +113,16 @@ Verb generation_module_get_verb_after(GenerationModule \module, str verb_current
  *          verb_next_specification    -> Specification of the next verb
  * @Ret:    Verb
  */
-Verb generation_module_get_verb_before(GenerationModule \module, str verb_current_name, str verb_current_specification, str verb_next_name, str verb_next_specification) {
-    for (Verb v <- \module.generation_rules.verbs) {
+VerbAnnotation generation_module_get_verb_before(GenerationModule \module, str verb_current_name, str verb_current_specification, str verb_next_name, str verb_next_specification) {
+    for (VerbAnnotation v <- \module.generation_rules.verbs) {
         if (v.name == verb_current_name 
             && v.specification == verb_current_specification
-            && verb_is_before(v)
+            && verb_annotation_is_before(v)
             && v.dependencies.next.name == verb_next_name
             && v.dependencies.next.specification == verb_next_specification) return v;
     }
 
-    return verb_empty();
+    return verb_annotation_empty();
 }
 
 /*
@@ -132,18 +132,18 @@ Verb generation_module_get_verb_before(GenerationModule \module, str verb_curren
  *          verb_current_name          -> Name of the verb to be found
  * @Ret:    Tuple with an inductive and sequential verb
  */
-tuple[Verb,Verb] generation_module_get_verb_mid(GenerationModule \module, str verb_current_name) {
-    tuple[Verb ind, Verb seq] verb = <verb_empty(), verb_empty()>;
-    list[Verb] verbs_ind = [];
-    list[Verb] verbs_seq = [];
+tuple[VerbAnnotation,VerbAnnotation] generation_module_get_verb_mid(GenerationModule \module, str verb_current_name) {
+    tuple[VerbAnnotation ind, VerbAnnotation seq] verb = <verb_annotation_empty(), verb_annotation_empty()>;
+    list[VerbAnnotation] verbs_ind = [];
+    list[VerbAnnotation] verbs_seq = [];
 
-    for (Verb v <- \module.generation_rules.verbs) {
+    for (VerbAnnotation v <- \module.generation_rules.verbs) {
         if (v.name == verb_current_name 
-            && !verb_is_after(v)
-            && !verb_is_before(v)) {
+            && !verb_annotation_is_after(v)
+            && !verb_annotation_is_before(v)) {
 
-            if (verb_is_sequence_start(v)) verbs_seq += [v];
-            else if (verb_is_inductive(v)) verbs_ind += [v];
+            if (verb_annotation_is_sequence_start(v)) verbs_seq += [v];
+            else if (verb_annotation_is_inductive(v)) verbs_ind += [v];
         }
     }
 

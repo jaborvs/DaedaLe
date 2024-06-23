@@ -55,7 +55,7 @@ str generate_program(Chunk c, Pattern left, Pattern right) {
     '<imports>
     '
     '/******************************************************************************/
-    '// --- Verb rewrite rule function ----------------------------------------------
+    '// --- VerbAnnotationrewrite rule function ----------------------------------------------
     ' 
     'public Chunk (Chunk c) crawl = 
     'Chunk (Chunk c) 
