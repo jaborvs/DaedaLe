@@ -3,7 +3,7 @@
  * @Desc:   Module that contains the functionality for the generation config
  * @Auth:   Borja Velasco -> code, comments
  */
-module Generation::ADT::Config
+module Generation::ADT::Command
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -12,7 +12,8 @@ module Generation::ADT::Config
  * @Name:   GenerationConfig
  * @Desc:   Data structure that models the configuration for generation
  */
-data GenerationConfig 
-    = generation_config(int width, int height)
-    | generation_config_empty()
+data GenerationCommand
+    = generation_command_chunk_size(int width, int height)
+    | generation_command_objects_permanent(list[str] objects)
+    | generation_command_empty()
     ;

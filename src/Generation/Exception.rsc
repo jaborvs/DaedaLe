@@ -12,8 +12,8 @@ import Annotation::ADT::Verb;
 /******************************************************************************/
 // --- Public config functions -------------------------------------------------
 
-void exception_config_args_len() {
-    throw "Exception Configuration: Too many configuration commands defined";
+void exception_config_duplicated_cmd(str cmd) {
+    throw "Exception Configuration: Duplicated command <cmd>";
 }
 
 void exception_config_unknown_cmd(str cmd) {

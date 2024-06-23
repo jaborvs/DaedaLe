@@ -92,13 +92,13 @@ PapyrusData papyrus_implode(start[PapyrusData] parse_tree) {
  * @Ret:    Cleaned ast
  */
 PapyrusData papyrus_process(PapyrusData pprs) {
-    list[ConfigurationData] processed_configs = [];
+    list[CommandData] processed_commands = [];
     list[PatternData] processed_patterns = [];
     list[ModuleData] processed_modules = [];
     list[LevelDraftData] processed_level_drafts = [];
 
     pprs = visit(pprs) {
-        case list[ConfigurationData] config => [c | c <- config, !(configuration_empty(_) := c)]
+        case list[CommandData] commands => [c | c <- commands, !(command_empty(_) := c)]
         case list[PatternData] patterns => [p | p <- patterns, !(pattern_empty(_) := p)]
         case list[ModuleData] modules => [m | m <- modules, !(module_empty(_) := m)]
         case list[LevelDraftData] level_drafts => [ld | ld <- level_drafts, !(level_draft_empty(_) := ld)]
@@ -110,14 +110,14 @@ PapyrusData papyrus_process(PapyrusData pprs) {
     }
 
     visit(pprs) {
-        case SectionData s:section_configurations_data(_,_,_,_): processed_configs += s.configs;
+        case SectionData s:section_commands_data(_,_,_,_): processed_commands += s.commands;
         case SectionData s:section_patterns_data(_,_,_,_): processed_patterns += s.patterns;
         case SectionData s:section_modules_data(_,_,_,_): processed_modules += s.modules;
         case SectionData s:section_level_drafts_data(_,_,_,_): processed_level_drafts += s.level_drafts;
     };
 
     PapyrusData pprs_processed = papyrus_data(
-        processed_configs,
+        processed_commands,
         processed_patterns,
         processed_modules,
         processed_level_drafts

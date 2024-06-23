@@ -55,26 +55,26 @@ list[str] chunk_get_row(Chunk chunk, int index) {
     return chunk.objects[(chunk.size.width*index)..(chunk.size.width*(index+1))];
 }
 
-str chunk_print(Chunk chunk) {
-    str chunk_printed = "";
+str chunk_to_string(Chunk chunk) {
+    str chunk_str = "";
 
     int i = 0;
     for (str object <- chunk.objects) {
-        chunk_printed += object;
-        chunk_printed += "\t";
+        chunk_str += object;
+        chunk_str += "\t";
         i += 1;
 
-        if (i % chunk.size.width == 0) chunk_printed += "\n";
+        if (i % chunk.size.width == 0) chunk_str += "\n";
     }
 
-    return chunk_printed;
+    return chunk_str;
 }
 
 void chunk_print(Chunk chunk, loc file) {
     str chunk_printed = "";
 
     chunk_printed += readFile(file);
-    chunk_printed += chunk_print(chunk);
+    chunk_printed += chunk_to_string(chunk);
     
     writeFile(file, chunk_printed);
 

@@ -85,22 +85,22 @@ void level_print(Level level, loc file) {
     str level_printed = "";
 
     level_printed += readFile(file);
-    level_printed += level_print(level);
+    level_printed += level_to_string(level);
 
     writeFile(file, level_printed);
 
     return;
 } 
 
-str level_print(Level level) {
-    str level_printed = "";
+str level_to_string(Level level) {
+    str level_str = "";
     
     list[list[str]] rows = level_get_rows(level);
     
-    level_printed += level_print_name(level);
-    level_printed += level_print_rows(rows);
+    level_str += level_print_name(level);
+    level_str += level_print_rows(rows);
 
-    return level_printed;
+    return level_str;
 }
 
 str level_print_name(Level level) {

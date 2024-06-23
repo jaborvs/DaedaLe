@@ -37,8 +37,8 @@ data VerbAnnotation
  */
 bool verb_annotation_is_after(VerbAnnotation verb) {
     return verb.dependencies.prev.name != "none" 
-           && verb.dependencies.prev.name != verb.name
-           && verb.dependencies.next.name == "none";
+           && verb.dependencies.prev.name != verb.name;
+        //    && verb.dependencies.next.name == "none";
 }
 
 /*
@@ -51,9 +51,10 @@ bool verb_annotation_is_after(VerbAnnotation verb) {
  * @Ret:    Boolean
  */
 bool verb_annotation_is_before(VerbAnnotation verb) {
-    return verb.dependencies.prev.name == "none"
-           && verb.dependencies.next.name != "none" 
+    return  verb.dependencies.next.name != "none" 
            && verb.dependencies.next.name != verb.name;
+        //    verb.dependencies.prev.name == "none"
+        //    &&
 }
 
 /*

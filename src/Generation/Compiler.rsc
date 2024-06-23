@@ -15,7 +15,7 @@ import IO;
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
 import Generation::AST;
-import Generation::ADT::Config;
+import Generation::ADT::Command;
 import Generation::ADT::Pattern;
 import Generation::ADT::Rule;
 import Generation::ADT::Module;
@@ -37,7 +37,7 @@ import Annotation::Load;
  */
 data GenerationEngine 
     = generation_engine(
-        GenerationConfig config,
+        map[str names, GenerationCommand generation_commands] config,
         map[str names, GenerationPattern generation_patterns] patterns,
         map[str names, GenerationModule generation_modules] modules,
         map[str names, GenerationLevel generation_levels] levels_draft,
@@ -58,7 +58,7 @@ data GenerationEngine
 GenerationEngine papyrus_compile(PapyrusData pprs) {
     GenerationEngine engine = generation_engine_init();
 
-    engine.config = papyrus_compile_config(pprs.configs);
+    engine.config = papyrus_compile_config(pprs.commands);
     engine.patterns = papyrus_compile_patterns(pprs.patterns);
     engine.modules = papyrus_compile_modules(pprs.modules);
     engine.levels_draft = papyrus_compile_levels(pprs.level_drafts);
@@ -74,44 +74,66 @@ GenerationEngine papyrus_compile(PapyrusData pprs) {
  * @Desc:   Function to compile the generation configuration commands. For now,
  *          the only allowed command is 'chunk_size', but it is somewhat ready 
  *          to add more commands in the future if needed
- * @Params: configs -> Raw configuration data form the ast 
+ * @Params: command_datas -> Raw commands data form the ast 
  * @Ret:    GenerationConfig object for the command
  */
-GenerationConfig papyrus_compile_config(list[ConfigurationData] configs) {
-    GenerationConfig config_compiled = generation_config_empty();
+map[str,GenerationCommand] papyrus_compile_config(list[CommandData] commands_datas) {
+    map[str names, GenerationCommand generation_commmands] config = ();
 
-    if (size(configs) > 1) exception_config_args_len();
-    if (configs == []) return generation_config(15,15);
+    for (CommandData cmd <- commands_datas) {
+        if (cmd.name in config.names) exception_config_duplicated_cmd(cmd.name);
+        else                          config[cmd.name] = papyrus_compile_command(cmd);
+    } 
 
-    str command = toLowerCase(configs[0].command);
-    str params = configs[0].params;
-    if (command != "chunk_size") exception_config_unknown_cmd(command);
-    
-    switch(command) {
-        case "chunk_size": config_compiled = papyrus_compile_config_chunk_size(params);
+    return config;
+}
+
+/*
+ * @Name:   papyrus_compile_command
+ * @Desc:   Function to compile configuration commands
+ * @Param:  command_data -> Unprocessed command
+ * @Ret:    GenerationCommand object
+ */
+GenerationCommand papyrus_compile_command(CommandData command_data) {
+    GenerationCommand command = generation_command_empty();
+
+    switch(command_data.name) {
+        case /chunk_size/: command = papyrus_compile_chunk_size(command_data);
+        case /objects_permanent/: command = papyrus_compile_objects_permanent(command_data);
     }
 
-    return config_compiled;
+    return command;
 }
 
 /*
  * @Name:   papyrus_compile_config_chunk_size
  * @Desc:   Function to compile chunk size
- * @Param:  params -> Unprocessed params
- * @Ret:    GenerationConfig object
+ * @Param:  command -> Unprocessed command
+ * @Ret:    GenerationCommand object
  */
-GenerationConfig papyrus_compile_config_chunk_size(str params) {
-    list[str] params_splitted = split("x", params);
+GenerationCommand papyrus_compile_chunk_size(CommandData command) {
+    list[str] params = split("x", command.params);
     int width = 0;
     int height = 0;
 
     try {
-        width = toInt(params_splitted[0]);
-        height = toInt(params_splitted[1]);
+        width = toInt(params[0]);
+        height = toInt(params[1]);
     } 
     catch IllegalArgument(value v, _): exception_config_chunk_size_illegal_arg(v);
 
-    return generation_config(width, height);
+    return generation_command_chunk_size(width, height);
+}
+
+/*
+ * @Name:   papyrus_compile_config_chunk_size
+ * @Desc:   Function to compile permanent objects
+ * @Param:  command -> Unprocessed command
+ * @Ret:    GenerationCommand object
+ */
+GenerationCommand papyrus_compile_objects_permanent(CommandData command) {
+    list[str] params = split(" and ", command.params);
+    return generation_command_objects_permanent(params);
 }
 
 /******************************************************************************/
@@ -296,7 +318,7 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
  */
 GenerationEngine generation_engine_init() {
     GenerationEngine engine = generation_engine(
-        generation_config_empty(),
+        (),
         (),
         (),
         (),

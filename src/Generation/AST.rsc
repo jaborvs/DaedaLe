@@ -14,7 +14,7 @@ module Generation::AST
  */
 data PapyrusData 
     = papyrus_data(list[SectionData] sections)
-    | papyrus_data(list[ConfigurationData] configs, list[PatternData] patterns, list[ModuleData] modules, list[LevelDraftData] level_drafts)
+    | papyrus_data(list[CommandData] commands, list[PatternData] patterns, list[ModuleData] modules, list[LevelDraftData] level_drafts)
     | papyrus_empty(str)
     ;
 
@@ -26,7 +26,7 @@ data PapyrusData
  * @Desc:   Data structure that models each of the sections of Papyrus
  */
 data SectionData
-    = section_configurations_data(str sep1, str name, str sep2, list[ConfigurationData] configs)
+    = section_commands_data(str sep1, str name, str sep2, list[CommandData] commands)
     | section_patterns_data(str sep1, str name, str sep2, list[PatternData] patterns)
     | section_modules_data(str sep1, str name, str sep2, list[ModuleData] modules)
     | section_level_drafts_data(str sep1, str name, str sep2, list[LevelDraftData] level_drafts)
@@ -37,13 +37,13 @@ data SectionData
 // --- Configuration structure defines -----------------------------------------
 
 /*
- * @Name:   ConfigurationData
+ * @Name:   CommandData
  * @Desc:   Data structure that models each of the lines of the configuration
  *          section
  */
-data ConfigurationData
-    = configuration_data(str command, str params, str)  // Command keyword, parameters, separator (\n)
-    | configuration_empty(str)                          // Empty line with only a separator (\n)
+data CommandData
+    = command_data(str name, str params, str)   // Command keyword, parameters, separator (\n)
+    | command_empty(str)                        // Empty line with only a separator (\n)
     ;
 
 /******************************************************************************/

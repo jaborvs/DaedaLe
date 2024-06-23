@@ -20,15 +20,15 @@ lexical LAYOUT
 // --- Keywords ----------------------------------------------------------------
 
 keyword Keywords 
-    = SectionKeyword | ConfigurationKeyword | ModifierKeyword
+    = SectionKeyword | CommandKeyword | ModifierKeyword
     ;  
 
 keyword SectionKeyword 
     = "configuration" | "patterns" | "modules" | "level drafts"
     ; 
 
-keyword ConfigurationKeyword
-    = "chunk_size"
+keyword CommandKeyword
+    = "chunk_size" | "objects_permanent"
     ;
 
 keyword ModifierKeyword
@@ -62,7 +62,7 @@ syntax SECTION_DELIMITER = DELIMITER NEWLINE;
 // --- Section Syntax ----------------------------------------------------------
 
 syntax SectionData
-    = section_configurations_data: SECTION_DELIMITER 'CONFIGURATION' NEWLINE SECTION_DELIMITER ConfigurationData+
+    = section_commands_data: SECTION_DELIMITER 'CONFIGURATION' NEWLINE SECTION_DELIMITER CommandData+
     | section_patterns_data: SECTION_DELIMITER 'PATTERNS' NEWLINE SECTION_DELIMITER PatternData+
     | section_modules_data: SECTION_DELIMITER 'MODULES' NEWLINE SECTION_DELIMITER ModuleData+
     | section_level_drafts_data: SECTION_DELIMITER 'LEVEL DRAFTS' NEWLINE SECTION_DELIMITER LevelDraftData+
@@ -72,9 +72,9 @@ syntax SectionData
 /******************************************************************************/
 // --- Configuration Syntax ----------------------------------------------------
 
-syntax ConfigurationData
-    = configuration_data: ConfigurationKeyword STRING? NEWLINE
-    | configuration_empty: NEWLINE
+syntax CommandData
+    = command_data: CommandKeyword '=' STRING NEWLINE
+    | command_empty: NEWLINE
     ;
 
 /******************************************************************************/
