@@ -10,6 +10,7 @@ module Generation::Concretizer
 import util::Math;
 import List;
 import Set;
+import Map;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
@@ -44,7 +45,7 @@ tuple[list[list[str]], Coords] concretize(GenerationModule \module, list[Generat
     res = concretize_init(\module, verbs, position_current);
     res = concretize_extend(\module, verbs, res.verbs_concretized, res.position_current, width, height);
 
-    return <res.verbs_concretized, res.position_current[size(verbs)-1]>;
+    return <res.verbs_concretized, res.position_current[size(res.verbs_concretized)-1]>;
 }
 
 /*
@@ -66,9 +67,10 @@ tuple[list[list[str]], map[int,Coords]] concretize_init(GenerationModule \module
         VerbAnnotation verb = generation_module_get_verb(\module, verb_name, "_");
 
         list[str] basket = [];
-        if (verb_modifier == "+") basket += [verb_name];
-
-        position_current = concretize_update_position_current(position_current, i, verb.direction);
+        if (verb_modifier == "+" || verb_modifier == "") {
+            basket += [verb_name];
+            position_current = concretize_update_position_current(position_current, i, verb.direction);
+        }
 
         verbs_concretized += [basket];
     }
@@ -89,20 +91,50 @@ tuple[list[list[str]], map[int,Coords]] concretize_init(GenerationModule \module
  */
 tuple[list[list[str]], map[int,Coords]] concretize_extend(GenerationModule \module, list[GenerationVerbExpression] verbs, list[list[str]] verbs_concretized, map[int,Coords] position_current, int width, int height) {
     int subchunk_num = size(verbs);
-    int subchunk_last_compulsory = max([i | int i <- [0..subchunk_num], verbs[i].modifier == "+"]);
+    int subchunk_last_compulsory = max([i | int i <- [0..subchunk_num], verbs[i].modifier == "+" || verbs[i].modifier == ""] + [0]);
 
     bool exited = false;
     while (!exited) {
         int i = arbInt(subchunk_num);
         str verb_name = verbs[i].verb;
+
+        if(verbs[i].modifier == "" 
+           || (verbs[i].modifier == "?" && size(verbs_concretized[i])== 1)) continue; 
+
         VerbAnnotation verb = generation_module_get_verb(\module, verb_name, "_");
 
-        if      (i < subchunk_last_compulsory
-                && concretize_check_future_position_exited(position_current, i, verb.direction, width, height))    continue;
+        if (i < subchunk_last_compulsory
+            && concretize_check_future_position_exited(position_current, i, verb.direction, width, height)) continue;
                 
         verbs_concretized[i] += [verb_name];
         position_current = concretize_update_position_current(position_current, i, verb.direction);
         exited = concretize_check_position_current_exited(position_current, i, width, height);
+    }
+
+    return concretize_delete_unused(verbs_concretized, position_current, width, height);
+}
+
+/*
+ * @Name:   concretize_delete_unused
+ * @Desc:   Function that deletes those verbs that are after the chunk exit
+ * @Param:  verbs_concretized -> List of concretized verbs
+ *          position_current  -> Dictionary with the current positions
+ *          width             -> Chunk width
+ *          height            -> Chunk height
+ * @Ret:    List of concretized verbs and updated position_current
+ */
+tuple[list[list[str]], map[int,Coords]] concretize_delete_unused(list[list[str]] verbs_concretized, map[int keys, Coords coords] position_current, int width, int height) {
+    int exit_num = min(
+        [i | int i <- [0..size(position_current.keys)], 
+             position_current[i].y == -1 
+             || position_current[i].x == width 
+             || position_current[i].y == height
+        ]
+        );
+
+    for (int i <- [(exit_num+1)..size(position_current.keys)]) {
+        verbs_concretized = remove(verbs_concretized, i);
+        position_current = delete(position_current, i);
     }
 
     return <verbs_concretized, position_current>;
@@ -125,6 +157,7 @@ bool concretize_check_future_position_exited(map[int keys, Coords coords] positi
         if (direction == "right" && position_current[i].x+1 == width ) return true;
         if (direction == "down"  && position_current[i].y+1 == height-1) return true;
     }
+
     return false;
 }
 

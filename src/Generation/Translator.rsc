@@ -36,6 +36,8 @@ list[VerbAnnotation] translate(GenerationModule \module, list[list[str]] verbs_c
     int subchunks_num = size(verbs_concretized);
     for (int i <- [0..subchunks_num]) {
         list[str] subchunk = verbs_concretized[i];
+        if(subchunk == []) continue;
+
         tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res = <[],size(subchunk)>;
 
         tuple[str name, str specification] verb_prev = translate_get_verb_previous(verbs_translated);
