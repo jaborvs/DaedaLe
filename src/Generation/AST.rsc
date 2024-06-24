@@ -112,7 +112,29 @@ data LevelDraftData
  * @Desc:   Data structure that models a level's chunk
  */
 data ChunkData
-    = chunk_data(list[VerbExpressionData] verb_dts, str, loc src = |unknown:///|, map[int,list[str]] comments = ())   // List of verbs to be used, separator (\n)
+    = chunk_data(
+        WinPlaytraceData win_pt, 
+        list[FailPlaytraceData] fail_pt, 
+        str, 
+        loc src = |unknown:///|, 
+        map[int,list[str]] comments = ()
+        )   // List of verbs to be used, separator (\n)
+    ;
+
+/*
+ * @Name:   WinPlaytraceData
+ * @Desc:   Data structure that models a winning playtrace
+ */
+data WinPlaytraceData
+    = win_playtrace_data(list[VerbExpressionData] verb_dts)
+    ;
+
+/*
+ * @Name:   FailPlaytraceData
+ * @Desc:   Data structure that models a failure playtrace
+ */
+data FailPlaytraceData
+    = fail_playtrace_data(list[VerbExpressionData] verb_dts)
     ;
 
 /*

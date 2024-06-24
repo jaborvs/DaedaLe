@@ -113,6 +113,7 @@ Level generate_level(GenerationEngine engine, str level_name, GenerationLevel ge
  */
 tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chunk, Coords entry) {
     tuple[list[list[str]] verbs, Coords exit] chunk_concretized = concretize(engine.modules[chunk.\module], chunk.verbs, entry, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+    println(chunk_concretized);
     list[VerbAnnotation] verbs_translated = translate(engine.modules[chunk.\module], chunk_concretized.verbs);
 
     Chunk chunk_generated = chunk_init(chunk.name, <engine.config["chunk_size"].width, engine.config["chunk_size"].height>);

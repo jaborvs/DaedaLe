@@ -9,118 +9,192 @@ objects_permanent = #
 PATTERNS
 ========
 
-PlayerIdle
-PH1
-.
-
-PlayerCrawlStart
+(------------------------------------------------------------------------------)
+(--- Crawling Patterns --------------------------------------------------------)
+(------------------------------------------------------------------------------)
+PlayerCrawl__Start
 PH1 . 
 #   .
 
-PlayerCrawlEnd
+PlayerCrawl__End
 PBH PH1
 #   #
 
-PlayerCrawlBeforeClimbStart
+PlayerCrawl__BeforeClimb__Solid__Start
 PH1 .   .
 #   .   .
 
-PlayerCrawlBeforeClimbEnd
+PlayerCrawl__BeforeClimb__Solid__End
 PBH PH1 .
 #   #   #
 
-PlayerClimbLowStart
+PlayerCrawl__AfterClimb__End
+PBH PH1
+PBV #
+
+PlayerCrawl__BeforeFall__Start
+PH1 .
+#   .
+
+PlayerCrawl__BeforeFall__End
+PBH PH1
+#   .
+
+PlayerCrawl__AfterFall__Solid__Start
+#   PH1 .
+.   .   .
+
+PlayerCrawl__AfterFall__Solid__End
+#   PBH PH1
+#   #   #
+
+PlayerCrawl__AfterFall__Floating__Start
+PH1 .
+.   .
+
+PlayerCrawl__AfterFall__Floating__End
+PBH PH1
+#   #
+
+(------------------------------------------------------------------------------)
+(--- Climbing Solid Patterns --------------------------------------------------)
+(------------------------------------------------------------------------------)
+PlayerClimb__Solid__Low__Start
 .   .
 PH1 .
 
-PlayerClimbLowEnd
+PlayerClimb__Solid__Low__End
 PH2 .
 PBV #
 
-PlayerClimbMediumStart
+PlayerClimb__Solid__Medium__Start
 .   .
 PH2 .
 
-PlayerClimbMediumEnd
+PlayerClimb__Solid__Medium__End
 PH3 .
 PBV #
 
-PlayerClimbLargeStart
+PlayerClimb__Solid__Large__Start
 .   .
 PH3 .
-
-PlayerClimbLargeEnd
+PlayerClimb__Solid__Large__End
 PH4 .
 PBV #
 
-PlayerClimbCoilStart
+PlayerClimb__Solid__Coil__Start
 .   .   .
 .   .   .
 PBH PH1 .
 #   #   #
 
-PlayerClimbCoilEnd
+PlayerClimb__Solid__Coil__End
 PBH PH1 . 
 PBV PBH #
 PBH PBV #
 #   #   #
 
-PlayerCrawlAfterClimbEnd
-PBH PH1
-PBV #
-
-PlayerCrawlBeforeFallStart
+(------------------------------------------------------------------------------)
+(--- Climbing FLoating Patterns -----------------------------------------------)
+(------------------------------------------------------------------------------)
+PlayerClimb__Floating__Low__Start
+.   .
 PH1 .
-#   .
 
-PlayerCrawlBeforeFallEnd
+PlayerClimb__Floating__Low__End
+PH2 .
+PBV .
+
+PlayerClimb__Floating__Medium__Start
+.   .
+PH2 .
+
+PlayerClimb__Floating__Medium__End
+PH3 .
+PBV .
+
+PlayerClimb__Floating__Large__Start
+.   .
+PH3 .
+
+PlayerClimb__Floating__Large__End
+PH4 .
+PBV .
+
+PlayerClimb__Floating__Coil__Start
+.   .
+.   .
 PBH PH1
-#   .
+#   # 
 
-PlayerFallAfterCrawlBeforeFallStartEnd
+PlayerClimb__Floating__Coil__End
+PBH PH1 
+PBV PBH
 PBH PBV
-#   PH1
+#   #
 
-PlayerFallStart
+(------------------------------------------------------------------------------)
+(--- Falling Solid Patterns ---------------------------------------------------)
+(------------------------------------------------------------------------------)
+PlayerFall__Solid__Start
 #   PH1
 .   .
 
-PlayerFallEnd
+PlayerFall__Solid__End
 #   PBV
 #   PH1
 
-PlayerCrawlAfterFallStart
-#   PH1 .
-.   .   .
+PlayerFall__Solid__AfterCrawlBeforeFall__End
+PBH PBV
+#   PH1
 
-PlayerCrawlAfterFallEnd
-#   PBH PH1
-#   #   #
+(------------------------------------------------------------------------------)
+(--- Falling Floating Patterns ------------------------------------------------)
+(------------------------------------------------------------------------------)
+PlayerFall__Floating__Start
+PH1
+.
+
+PlayerFall__Floating__End
+PBV
+PH1
 
 =======
 MODULES
 =======
 
 Module1
-[PlayerCrawlStart]            -> [PlayerCrawlEnd]                           (verb Crawl(default,                 right, 1))
-[PlayerCrawlBeforeClimbStart] -> [PlayerCrawlBeforeClimbEnd]                (verb Crawl(before_climb,            right, 1, <none,               Climb(_)     >))
-[PlayerClimbLowEnd]           -> [PlayerCrawlAfterClimbEnd]                 (verb Crawl(after_climb_low,         right, 1, <Climb(low),         none         >))
-[PlayerClimbMediumEnd]        -> [PlayerCrawlAfterClimbEnd]                 (verb Crawl(after_climb_medium,      right, 1, <Climb(medium),      none         >))
-[PlayerClimbLargeEnd]         -> [PlayerCrawlAfterClimbEnd]                 (verb Crawl(after_climb_large,       right, 1, <Climb(large),       none         >))
-[PlayerCrawlBeforeFallStart]  -> [PlayerCrawlBeforeFallEnd]                 (verb Crawl(before_fall,             right, 1, <none,               Fall(_)      >))
-[PlayerCrawlAfterFallStart]   -> [PlayerCrawlAfterFallEnd]                  (verb Crawl(after_fall,              right, 1, <Fall(_),            none         >))
-[PlayerClimbLowStart]         -> [PlayerClimbLowEnd]                        (verb Climb(low,                     up,    1, <none,               Climb(medium)>))
-[PlayerClimbMediumStart]      -> [PlayerClimbMediumEnd]                     (verb Climb(medium,                  up,    1, <Climb(low),         Climb(large) >))
-[PlayerClimbLargeStart]       -> [PlayerClimbLargeEnd]                      (verb Climb(large,                   up,    1, <Climb(medium),      none         >))
-[PlayerClimbCoilStart]        -> [PlayerClimbCoilEnd]                       (verb Climb(coil,                    up,    2))
-[PlayerFallStart]             -> [PlayerFallEnd]                            (verb Fall (default,                 down,  1))
-[PlayerCrawlBeforeFallEnd]    -> [PlayerFallAfterCrawlBeforeFallStartEnd]   (verb Fall (after_crawl_before_fall, down,  1, <Crawl(before_fall), none         >))
+[PlayerCrawl__Start]                      -> [PlayerCrawl__End]                             (verb Crawl(default,                 right, 1))
+[PlayerCrawl__BeforeClimb__Solid__Start]  -> [PlayerCrawl__BeforeClimb__Solid__End]         (verb Crawl(before_climb,            right, 1, <none,               Climb(_)     >))
+[PlayerClimb__Solid__Low__End]            -> [PlayerCrawl__AfterClimb__End]                 (verb Crawl(after_climb_low,         right, 1, <Climb(low),         none         >))
+[PlayerClimb__Solid__Medium__End]         -> [PlayerCrawl__AfterClimb__End]                 (verb Crawl(after_climb_medium,      right, 1, <Climb(medium),      none         >))
+[PlayerClimb__Solid__Large__End]          -> [PlayerCrawl__AfterClimb__End]                 (verb Crawl(after_climb_large,       right, 1, <Climb(large),       none         >))
+[PlayerCrawl__BeforeFall__Start]          -> [PlayerCrawl__BeforeFall__End]                 (verb Crawl(before_fall,             right, 1, <none,               Fall(_)      >))
+[PlayerCrawl__AfterFall__Solid__Start]    -> [PlayerCrawl__AfterFall__Solid__End]           (verb Crawl(after_fall,              right, 1, <Fall(_),            none         >))
+[PlayerClimb__Solid__Low__Start]          -> [PlayerClimb__Solid__Low__End]                 (verb Climb(low,                     up,    1, <none,               Climb(medium)>))
+[PlayerClimb__Solid__Medium__Start]       -> [PlayerClimb__Solid__Medium__End]              (verb Climb(medium,                  up,    1, <Climb(low),         Climb(large) >))
+[PlayerClimb__Solid__Large__Start]        -> [PlayerClimb__Solid__Large__End]               (verb Climb(large,                   up,    1, <Climb(medium),      none         >))
+[PlayerClimb__Solid__Coil__Start]         -> [PlayerClimb__Solid__Coil__End]                (verb Climb(coil,                    up,    2))
+[PlayerFall__Solid__Start]                -> [PlayerFall__Solid__End]                       (verb Fall (default,                 down,  1))
+[PlayerCrawl__BeforeFall__End]            -> [PlayerFall__Solid__AfterCrawlBeforeFall__End] (verb Fall (after_crawl_before_fall, down,  1, <Crawl(before_fall), none         >))
 
+Module2
+[PlayerCrawl__Start]                      -> [PlayerCrawl__End]                             (verb Crawl(default,                 right, 1))
+[PlayerClimb__Floating__Low__End]         -> [PlayerCrawl__AfterClimb__End]                 (verb Crawl(after_climb_low,         right, 1, <Climb(low),         none         >))
+[PlayerClimb__Floating__Medium__End]      -> [PlayerCrawl__AfterClimb__End]                 (verb Crawl(after_climb_medium,      right, 1, <Climb(medium),      none         >))
+[PlayerClimb__Floating__Large__End]       -> [PlayerCrawl__AfterClimb__End]                 (verb Crawl(after_climb_large,       right, 1, <Climb(large),       none         >))
+[PlayerCrawl__BeforeFall__Start]          -> [PlayerCrawl__BeforeFall__End]                 (verb Crawl(before_fall,             right, 1, <none,               Fall(_)      >))
+[PlayerCrawl__AfterFall__Floating__Start] -> [PlayerCrawl__AfterFall__Floating__End]        (verb Crawl(after_fall,              right, 1, <Fall(_),            none         >))
+[PlayerClimb__Floating__Low__Start]       -> [PlayerClimb__Floating__Low__End]              (verb Climb(low,                     up,    1, <none,               Climb(medium)>))
+[PlayerClimb__Floating__Medium__Start]    -> [PlayerClimb__Floating__Medium__End]           (verb Climb(medium,                  up,    1, <Climb(low),         Climb(large) >))
+[PlayerClimb__Floating__Large__Start]     -> [PlayerClimb__Floating__Large__End]            (verb Climb(large,                   up,    1, <Climb(medium),      none         >))
+[PlayerClimb__Floating__Coil__Start]      -> [PlayerClimb__Floating__Coil__End]             (verb Climb(coil,                    up,    2))
+[PlayerFall__Floating__Start]             -> [PlayerFall__Floating__End]                    (verb Fall (default,                 down,  1))
+    
 ============
 LEVEL DRAFTS
 ============
 
 Level1
-[Crawl+, Climb+, Crawl+, Crawl+, Fall+, Crawl+, Crawl+, Climb+, Crawl +]    (chunk Chunk1(Module1))
-[Crawl+, Fall+,  Crawl+, Crawl+, Fall+]                                     (chunk Chunk2(Module1))
+W:[Crawl+, Climb+, Crawl+, Crawl+, Crawl+, Fall+, Crawl+]   F:[Crawl+, Crawl]               (chunk Chunk1(Module2))
 

@@ -32,7 +32,7 @@ keyword CommandKeyword
     ;
 
 keyword ModifierKeyword
-    = "+" | "*" 
+    = "+" | "*"
     ;
 
 /******************************************************************************/
@@ -113,9 +113,17 @@ syntax LevelDraftData
     ;
 
 syntax ChunkData
-    = chunk_data: '[' {VerbExpressionData ','}+ ']' NEWLINE
+    = chunk_data: WinPlaytraceData FailPlaytraceData? NEWLINE
+    ;
+
+syntax WinPlaytraceData
+    = win_playtrace_data: 'W:[' {VerbExpressionData ','}+ ']'
+    ;
+
+syntax FailPlaytraceData
+    = fail_playtrace_data:  'F:[' {VerbExpressionData ','}+ ']'
     ;
 
 syntax VerbExpressionData
-    = verb_expression_data: ID ModifierKeyword
+    = verb_expression_data: ID ModifierKeyword?
     ;

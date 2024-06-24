@@ -301,7 +301,7 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
     chunk_compiled = generation_chunk(
         chunk_anno.name,
         chunk_anno.\module,
-        [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.verb_dts]
+        [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.win_pt.verb_dts]
     );
     
     return chunk_compiled;
