@@ -25,11 +25,6 @@ void main() {
         ".",".","#",".","."
         ]);
 
-
-    visit(c) {
-        case str obj if obj notin e.objects_permanent => "." // Reemplazar el objeto no permanente con "."
-    };
-
     println("\>\>\> Initial chunk state");
     chunk_print(c, width);
     println();

@@ -72,6 +72,7 @@ h1, h2, h3, h4, h5, h6 {
     display: flex;
     flex-direction: column;
     background-color: #282c24;
+    overflow-y: auto;
 }
 
 .puzzlescript-game {
@@ -143,9 +144,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .code {
     flex: 1;
+    overflow-y: auto;
 }
 
-.terminal {
+.console {
     font-size: x-small;
     padding-inline: 8px;
 }
