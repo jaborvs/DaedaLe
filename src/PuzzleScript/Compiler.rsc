@@ -1,6 +1,8 @@
 /*
  * @Module: Compiler
  * @Desc:   Module that compiles the AST.
+ *          NOTE: This module could potentially be refactored to be shorter and
+ *                to use a better notation for data structures.
  * @Auth:   Dennis Vet    -> code
  *          Borja Velasco -> code, comments
  */

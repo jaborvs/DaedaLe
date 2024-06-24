@@ -1,6 +1,9 @@
 /*
  * @Module: Engine
  * @Desc:   Module to model the engine of a PuzzleScript game    
+ *          NOTE: This module needs to be refactored soon. See Generation engine
+ *                and make use of Rascal's list pattern matching to apply rewrite
+ *                rules
  * @Author: Clement Julia -> code
  *          Denis Vet     -> code
  *          Boja Velasco  -> code, comments
