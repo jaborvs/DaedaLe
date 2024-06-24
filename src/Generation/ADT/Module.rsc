@@ -8,6 +8,7 @@ module Generation::ADT::Module
 /******************************************************************************/
 // --- Genearal modules imports ------------------------------------------------
 import List;
+import String;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
@@ -93,11 +94,18 @@ VerbAnnotation generation_module_get_verb(GenerationModule \module, str verb_nam
  */
 VerbAnnotation generation_module_get_verb_after(GenerationModule \module, str verb_current_name, str verb_current_specification, str verb_prev_name, str verb_prev_specification) {
     for (VerbAnnotation v <- \module.generation_rules.verbs) {
+        bool tmp1 = v.name == verb_current_name;
+        bool tmp2 = startsWith(verb_current_specification, v.specification);
+        bool tmp3 = verb_annotation_is_after(v);
+        bool tmp4 = v.dependencies.prev.name == verb_prev_name;
+        bool tmp5 = v.dependencies.prev.specification == verb_prev_specification;
+
         if (v.name == verb_current_name 
-            && v.specification == verb_current_specification
+            && startsWith(verb_current_specification, v.specification)
             && verb_annotation_is_after(v)
             && v.dependencies.prev.name == verb_prev_name
-            && v.dependencies.prev.specification == verb_prev_specification) return v;
+            && (v.dependencies.prev.specification == verb_prev_specification
+                || v.dependencies.prev.specification == "_")) return v;
     }
 
     return verb_annotation_empty();
@@ -119,7 +127,8 @@ VerbAnnotation generation_module_get_verb_before(GenerationModule \module, str v
             && v.specification == verb_current_specification
             && verb_annotation_is_before(v)
             && v.dependencies.next.name == verb_next_name
-            && v.dependencies.next.specification == verb_next_specification) return v;
+            && (v.dependencies.next.specification == verb_next_specification
+                || v.dependencies.next.specification == "_")) return v;
     }
 
     return verb_annotation_empty();

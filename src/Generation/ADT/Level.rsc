@@ -113,7 +113,7 @@ str level_print_rows(list[list[str]] rows) {
     for(int i <- [0..size(rows)]) {
         for(int j <- [0..size(rows[i])]) {
             level_printed += rows[i][j];
-            level_printed += "\t";
+            // level_printed += "\t";
         }
         level_printed += "\n";
     }

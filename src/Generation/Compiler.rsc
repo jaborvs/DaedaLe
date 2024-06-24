@@ -230,7 +230,7 @@ tuple[VerbAnnotation, GenerationRule] papyrus_compile_rule(RuleData rule) {
 
     map[int key, list[str] content] comments = rule.comments;
     if (comments == ()) exception_rules_no_verb();
-    VerbAnnotation verb = annotation_load_verb(comments);
+    VerbAnnotation verb = annotation_load_verb_annotation(comments);
 
     rule_compiled = <
         verb,
@@ -296,7 +296,7 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
 
     map[int key, list[str] content] comments = chunk.comments;
     if (comments == ()) exception_chunk_no_module();
-    ChunkAnnotation chunk_anno = annotation_load_module(comments);
+    ChunkAnnotation chunk_anno = annotation_load_chunk_annotation(comments);
 
     chunk_compiled = generation_chunk(
         chunk_anno.name,

@@ -23,12 +23,12 @@ import Annotation::ADT::Chunk;
 // --- Public load functions --------------------------------------------------
 
 /*
- * @Name:   annotation_load_verb
+ * @Name:   annotation_load_verb_annotation
  * @Desc:   Function that reads a comment and parses the verb
  * @Param:  src -> String with the comment
  * @Ret:    VerbAnnotationobject
  */
-VerbAnnotation annotation_load_verb(map[int key, list[str] content] comments) {
+VerbAnnotation annotation_load_verb_annotation(map[int key, list[str] content] comments) {
     Annotation \anno = annotation_load(comments);
 
     // Specification
@@ -60,12 +60,12 @@ VerbAnnotation annotation_load_verb(map[int key, list[str] content] comments) {
 }
 
 /*
- * @Name:   annotation_load_module
+ * @Name:   annotation_load_chunk_annotation
  * @Desc:   Function that reads a comment and parses the module
  * @Param:  src -> String with the comment
  * @Ret:    Module object
  */
-ChunkAnnotation annotation_load_module(map[int key, list[str] content] comments) {
+ChunkAnnotation annotation_load_chunk_annotation(map[int key, list[str] content] comments) {
     Annotation \anno = annotation_load(comments);
     ChunkAnnotation v = chunk_annotation(
         \anno.name,

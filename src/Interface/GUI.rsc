@@ -15,7 +15,6 @@ import salix::Index;
 import salix::ace::Editor;
 import salix::Node;
 
-import util::Benchmark;
 import util::ShellExec;
 import lang::json::IO;
 
@@ -73,8 +72,8 @@ data Msg
  *  @Name:  Json(???)
  *  @Desc:  JSON data structure
  */
-data Json
-    = json(
+data JsonData
+    = alldata(
         CurrentLine \start,                                     // Start position 
         str action,                                             // Action 
         list[str] lines,                                        // Lines
@@ -232,12 +231,12 @@ Model update_clear(Model model) {
  * @Ret:    Updated model
  */
 Model update_change_code(Model model, map[str,value] delta, str lang) {
-    Json json_change = json_empty();
+    JsonData json_change = json_empty();
     str code = "";
     list[str] code_lines = [];
     str code_new_line = "";
 
-    json_change = parseJSON(#Json, asJSON(delta["payload"]));
+    json_change =  parseJSON(#JsonData, asJSON(delta["payload"]));
 
     code = (lang == "puzzlescript") ? model.puzzlescript_code : model.papyrus_code;
     code_lines = split("\n", code);
@@ -273,6 +272,8 @@ Model update_change_code(Model model, map[str,value] delta, str lang) {
  */
 Model update_run(Model model) {
     model.index += 1;
+
+    draw(model.engine, model.index);
  
     model = <
         0, 
@@ -280,12 +281,10 @@ Model update_run(Model model) {
         model.puzzlescript_code, 
         papyrus_compile(papyrus_load(model.papyrus_code)),
         model.papyrus_code, 
-        "PuzzleScript/Interface/bin/output_image<index>.png", 
+        "Interface/bin/output_image<model.index>.png", 
         model.console,
         ""
     >;
-
-    draw(model.engine, model.index);
 
     return update_console(model, "run", "Successful compilation, running game");
 }

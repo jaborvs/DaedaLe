@@ -138,6 +138,18 @@ tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chu
  * @Ret:    Generated chunk object
  */
 Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, list[VerbAnnotation] verbs, Chunk chunk) {
+    println();
+    println();
+    println();
+    println();
+    println();
+    println();
+    println();
+    println();
+    println();
+    println();
+    println();
+
     for (VerbAnnotation verb <- verbs[0..(size(verbs)-1)]) {
         GenerationRule rule = \module.generation_rules[verb];
         GenerationPattern left = engine.patterns[rule.left];
@@ -169,6 +181,10 @@ Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, Generat
         chunk = chunk_rewritten;
     }
 
+    println("Verb <verb.name>(<verb.specification>)");
+    println(chunk_to_string(chunk));
+    println();
+
     return chunk;
 }
 
@@ -183,6 +199,8 @@ Chunk apply_blanketize(GenerationEngine engine, Chunk chunk) {
     for(int i <- [0..size(chunk.objects)]) {
         if (chunk.objects[i] notin engine.config["objects_permanent"].objects) chunk.objects[i] = ".";
     }
+
+    
 
     return chunk;
 }
