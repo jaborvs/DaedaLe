@@ -21,7 +21,12 @@ import Generation::ADT::VerbExpression;
  * @Desc:   Data structure that models a generation chunk
  */
 data GenerationChunk
-    = generation_chunk(str name, str \module, list[GenerationVerbExpression] verbs)
+    = generation_chunk(
+        str name, 
+        str \module, 
+        list[GenerationVerbExpression] win_verbs, 
+        list[GenerationVerbExpression] fail_verbs
+        )
     | generation_chunk_empty()
     ;
 

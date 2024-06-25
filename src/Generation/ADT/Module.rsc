@@ -92,17 +92,9 @@ VerbAnnotation generation_module_get_verb(GenerationModule \module, str verb_nam
  *          verb_prev_specification    -> Specification of the previous verb
  * @Ret:    Verb
  */
-VerbAnnotation generation_module_get_verb_after(GenerationModule \module, str verb_current_name, str verb_current_specification, str verb_prev_name, str verb_prev_specification) {
+VerbAnnotation generation_module_get_verb_after(GenerationModule \module, str verb_current_name, str verb_prev_name, str verb_prev_specification) {
     for (VerbAnnotation v <- \module.generation_rules.verbs) {
-        bool tmp1 = v.name == verb_current_name;
-        bool tmp2 = startsWith(verb_current_specification, v.specification);
-        bool tmp3 = verb_annotation_is_after(v);
-        bool tmp4 = v.dependencies.prev.name == verb_prev_name;
-        bool tmp5 = v.dependencies.prev.specification == verb_prev_specification;
-
         if (v.name == verb_current_name 
-            && startsWith(verb_current_specification, v.specification)
-            && verb_annotation_is_after(v)
             && v.dependencies.prev.name == verb_prev_name
             && (v.dependencies.prev.specification == verb_prev_specification
                 || v.dependencies.prev.specification == "_")) return v;
@@ -121,11 +113,9 @@ VerbAnnotation generation_module_get_verb_after(GenerationModule \module, str ve
  *          verb_next_specification    -> Specification of the next verb
  * @Ret:    Verb
  */
-VerbAnnotation generation_module_get_verb_before(GenerationModule \module, str verb_current_name, str verb_current_specification, str verb_next_name, str verb_next_specification) {
+VerbAnnotation generation_module_get_verb_before(GenerationModule \module, str verb_current_name, str verb_next_name, str verb_next_specification) {
     for (VerbAnnotation v <- \module.generation_rules.verbs) {
         if (v.name == verb_current_name 
-            && v.specification == verb_current_specification
-            && verb_annotation_is_before(v)
             && v.dependencies.next.name == verb_next_name
             && (v.dependencies.next.specification == verb_next_specification
                 || v.dependencies.next.specification == "_")) return v;
@@ -156,9 +146,9 @@ tuple[VerbAnnotation,VerbAnnotation] generation_module_get_verb_mid(GenerationMo
         }
     }
 
-    if      (verbs_ind == []) verb.seq = getOneFrom(verbs_seq);
-    else if (verbs_seq == []) verb.ind = getOneFrom(verbs_ind);
-    else                      verb = <getOneFrom(verbs_ind),getOneFrom(verbs_seq)>;
+    if      (verbs_ind == [] && verbs_seq != []) verb.seq = getOneFrom(verbs_seq);
+    else if (verbs_ind != [] && verbs_seq == []) verb.ind = getOneFrom(verbs_ind);
+    else if (verbs_ind != [] && verbs_seq != []) verb = <getOneFrom(verbs_ind),getOneFrom(verbs_seq)>;
 
     return verb;
 }

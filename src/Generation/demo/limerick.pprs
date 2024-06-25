@@ -155,6 +155,21 @@ PlayerFall__Floating__End
 PBV
 PH1
 
+(------------------------------------------------------------------------------)
+(--- Get Stuck Patterns -------------------------------------------------------)
+(------------------------------------------------------------------------------)
+
+PlayerGetStuck_AfterCrawl_Start
+.   .
+PH1 .
+#   .
+
+
+PlayerGetStuck_AfterCrawl_End
+#   #
+PH1 #
+#   #
+
 =======
 MODULES
 =======
@@ -186,11 +201,12 @@ Module2
 [PlayerClimb__Floating__Large__Start]     -> [PlayerClimb__Floating__Large__End]            (verb Climb(large,                   up,    1, <Climb(medium),      none         >))
 [PlayerClimb__Floating__Coil__Start]      -> [PlayerClimb__Floating__Coil__End]             (verb Climb(coil,                    up,    2))
 [PlayerFall__Floating__Start]             -> [PlayerFall__Floating__End]                    (verb Fall (default,                 down,  1))
+[PlayerGetStuck_AfterCrawl_Start]         -> [PlayerGetStuck_AfterCrawl_End]                (verb GetStuck(after_crawl,          none,  0, <Crawl(_),           none         >))
     
 ============
 LEVEL DRAFTS
 ============
 
 Level1
-W:[Crawl*, Climb*, Crawl, Crawl, Crawl*, Fall*]   F:[Crawl+, Crawl]               (chunk Chunk1(Module2))
+W:[Crawl+, Climb, Climb+, Crawl+]       F:[Crawl+, Crawl, GetStuck]                         (chunk Chunk1(Module2))
 

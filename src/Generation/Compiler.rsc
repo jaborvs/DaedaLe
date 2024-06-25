@@ -298,10 +298,14 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
     if (comments == ()) exception_chunk_no_module();
     ChunkAnnotation chunk_anno = annotation_load_chunk_annotation(comments);
 
+    list[GenerationVerbExpression] win_verbs = [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.win_pt.verb_dts];
+    list[GenerationVerbExpression] fail_verbs = (chunk.fail_pt != []) ? [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.fail_pt[0].verb_dts] : [];
+
     chunk_compiled = generation_chunk(
         chunk_anno.name,
         chunk_anno.\module,
-        [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.win_pt.verb_dts]
+        win_verbs,
+        fail_verbs
     );
     
     return chunk_compiled;
