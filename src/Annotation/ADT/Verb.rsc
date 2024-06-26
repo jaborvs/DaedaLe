@@ -18,7 +18,10 @@ data VerbAnnotation
         str specification, 
         str direction, 
         int size, 
-        tuple[tuple[str name, str specification] prev, tuple[str name, str specification] next] dependencies
+        tuple[
+            tuple[str name, str specification, str direction] prev, 
+            tuple[str name, str specification, str direction] next
+            ] dependencies
         )
     | verb_annotation_empty()
     ;
@@ -26,8 +29,8 @@ data VerbAnnotation
 /******************************************************************************/
 // --- Global implicit verb defines --------------------------------------------
 
-VerbAnnotation enter_verb = verb_annotation("enter", "default", "none", 0, <<"none", "">,<"none", "">>);
-VerbAnnotation exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"none", "">,<"none", "">>);
+VerbAnnotation enter_verb = verb_annotation("enter", "default", "none", 0, <<"none", "", "">,<"none", "", "">>);
+VerbAnnotation exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"none", "", "">,<"none", "", "">>);
 
 /******************************************************************************/
 // --- Public function defines -------------------------------------------------

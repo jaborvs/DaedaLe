@@ -21,15 +21,14 @@ data Annotation
  * @Desc:   Structure to model an parameter (single param or tuple)
  */
 data Argument
-    = argument_single(str val)                            // Single argument
+    = argument_single(str arg)                            // Single argument
     | argument_tuple(Reference prev, Reference next)      // Tuple argument
     ;
 
 /*
- * @Name:   Extension
+ * @Name:   Reference
  * @Desc:   Structure to model an reference (none or verb)
  */
 data Reference
-    = reference_none(str val)
-    | reference_verb(str verb_name, str verb_specification)
+    = reference(str verb_name, list[str] args)
     ;

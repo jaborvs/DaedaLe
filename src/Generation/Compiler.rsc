@@ -26,7 +26,10 @@ import Generation::Exception;
 
 import Annotation::ADT::Verb;
 import Annotation::ADT::Chunk;
+import Annotation::AST;
 import Annotation::Load;
+import Annotation::Compiler;
+
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -231,10 +234,12 @@ tuple[str, GenerationModule] papyrus_compile_module(ModuleData \module) {
 
 tuple[VerbAnnotation, GenerationRule] papyrus_compile_rule(RuleData rule) {
     tuple[VerbAnnotation verb, GenerationRule rule] rule_compiled = <verb_annotation_empty(), generation_rule_empty()>;
-
     map[int key, list[str] content] comments = rule.comments;
+
     if (comments == ()) exception_rules_no_verb();
-    VerbAnnotation verb = annotation_load_verb_annotation(comments);
+
+    Annotation \anno = annotation_load(comments);
+    VerbAnnotation verb = compile_verb_annotation(\anno);
 
     rule_compiled = <
         verb,
@@ -297,10 +302,12 @@ tuple[str, GenerationLevel] papyrus_compile_level(LevelDraftData level) {
  */
 GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
     GenerationChunk chunk_compiled = generation_chunk_empty();
-
     map[int key, list[str] content] comments = chunk.comments;
+
     if (comments == ()) exception_chunk_no_module();
-    ChunkAnnotation chunk_anno = annotation_load_chunk_annotation(comments);
+
+    Annotation \anno = annotation_load(comments);
+    ChunkAnnotation chunk_anno = compile_chunk_annotation(\anno);
 
     list[GenerationVerbExpression] win_verbs = [papyrus_compile_verb_expression(v) | VerbExpressionData v <- chunk.win_pt.verb_dts];
     list[GenerationVerbExpression] fail_verbs = (chunk.fail_pt != []) ? [papyrus_compile_verb_expression(v) | VerbExpressionData v <- chunk.fail_pt[0].verb_dts] : [];
