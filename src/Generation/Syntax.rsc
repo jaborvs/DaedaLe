@@ -10,7 +10,7 @@ module Generation::Syntax
 /******************************************************************************/
 // --- Layout ------------------------------------------------------------------
 
-layout LAYOUTLIST = LAYOUT* !>> [\t\ \r(];
+layout LAYOUTLIST = LAYOUT* !>> [\t\ \r] !>> "(--";
 lexical LAYOUT
     = [\t\ \r]
     | COMMENT
@@ -40,7 +40,7 @@ keyword ModifierKeyword
 
 lexical DELIMITER = [=]+;
 lexical NEWLINE = [\n];
-lexical COMMENT = @category="Comment" "(" (![()]|COMMENT)* ")";
+lexical COMMENT = @category="Comment" "(--" ![\n]* ")";
 
 lexical STRING = ![\n]+ >> [\n];
 lexical INT = [0-9]+ val;

@@ -19,6 +19,7 @@ import Generation::ADT::Command;
 import Generation::ADT::Pattern;
 import Generation::ADT::Rule;
 import Generation::ADT::Module;
+import Generation::ADT::Verb;
 import Generation::ADT::Chunk;
 import Generation::ADT::Level;
 import Generation::Compiler;
@@ -116,8 +117,8 @@ tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, Coords level_chunk_
     Chunk chunk_generated = chunk_empty();   
 
     tuple[
-        tuple[list[list[str]] verbs, Coords exit]     win,
-        tuple[list[list[str]] verbs, Coords dead_end] \fail
+        tuple[list[list[GenerationVerbConcretized]] verbs, Coords exit]     win,
+        tuple[list[list[GenerationVerbConcretized]] verbs, Coords dead_end] \fail
     ] verbs_concretized = concretize(engine.modules[chunk_abs.\module], chunk_abs, entry, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
 
     tuple[

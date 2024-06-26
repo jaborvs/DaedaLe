@@ -19,7 +19,7 @@ import Generation::ADT::Command;
 import Generation::ADT::Pattern;
 import Generation::ADT::Rule;
 import Generation::ADT::Module;
-import Generation::ADT::VerbExpression;
+import Generation::ADT::Verb;
 import Generation::ADT::Chunk;
 import Generation::ADT::Level;
 import Generation::Exception;

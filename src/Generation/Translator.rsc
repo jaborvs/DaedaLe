@@ -14,6 +14,7 @@ import List;
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
 import Generation::ADT::Module;
+import Generation::ADT::Verb;
 import Generation::Exception;
 
 import Annotation::ADT::Verb;
@@ -31,7 +32,7 @@ import Annotation::ADT::Verb;
  *          fail_verbs_concretized -> List of fail verbs concretized
  * @Ret:    Tuple of win verbs translated and fail verbs translated
  */
-tuple[list[VerbAnnotation], list[VerbAnnotation]] translate(GenerationModule \module, list[list[str]] win_verbs_concretized, list[list[str]] fail_verbs_concretized) {
+tuple[list[VerbAnnotation], list[VerbAnnotation]] translate(GenerationModule \module, list[list[GenerationVerbConcretized]] win_verbs_concretized, list[list[GenerationVerbConcretized]] fail_verbs_concretized) {
     list[VerbAnnotation] win_verbs_translated = translate(\module, win_verbs_concretized);
     list[VerbAnnotation] fail_verbs_translated = translate(\module, fail_verbs_concretized);
     return <win_verbs_translated, fail_verbs_translated>;
@@ -46,12 +47,12 @@ tuple[list[VerbAnnotation], list[VerbAnnotation]] translate(GenerationModule \mo
  *          verbs_concretized -> List of verbs concretized
  * @Ret:    List of verbs translated
  */
-list[VerbAnnotation] translate(GenerationModule \module, list[list[str]] verbs_concretized) {
+list[VerbAnnotation] translate(GenerationModule \module, list[list[GenerationVerbConcretized]] verbs_concretized) {
     list[VerbAnnotation] verbs_translated = [];
 
     int subchunks_num = size(verbs_concretized);
     for (int i <- [0..subchunks_num]) {
-        list[str] subchunk = verbs_concretized[i];
+        list[GenerationVerbConcretized] subchunk = verbs_concretized[i];
         if(subchunk == []) continue;
 
         tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res = <[],size(subchunk)>;
@@ -225,9 +226,9 @@ tuple[str,str] translate_get_verb_previous(list[VerbAnnotation] verbs_translated
  *          index             -> Current index of the subhcunk to be translated
  * @Ret:    Tuple with name and specification of the next verb
  */
-tuple[str,str] translate_get_verb_next(list[list[str]] verbs_concretized, int index) {
-    str name = (index+1 < size(verbs_concretized)) ? verbs_concretized[index+1][0] : "";
-    str specification = (index+1 < size(verbs_concretized)) ? "_" : "";
+tuple[str,str] translate_get_verb_next(list[list[GenerationVerbConcretized]] verbs_concretized, int index) {
+    str name = (index+1 < size(verbs_concretized)) ? verbs_concretized[index+1][0].name : "";
+    str specification = (index+1 < size(verbs_concretized)) ? verbs_concretized[index+1][0].specification : "";
     return <name, specification>;
 }
 
@@ -237,7 +238,7 @@ tuple[str,str] translate_get_verb_next(list[list[str]] verbs_concretized, int in
  * @Param:  subchunk  -> Current subchunk we are translating
  * @Ret:    Name of the verb
  */
-str translate_get_verb_current(list[str] subchunk) {
-    return subchunk[0];
+str translate_get_verb_current(list[GenerationVerbConcretized] subchunk) {
+    return subchunk[0].name;
 }
  
