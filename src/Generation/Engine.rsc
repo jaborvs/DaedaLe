@@ -73,29 +73,28 @@ list[Level] generate_levels(GenerationEngine engine) {
 Level generate_level(GenerationEngine engine, str level_name, GenerationLevel level_abs) {
     Level level_generated = level_init(level_name, <engine.config["chunk_size"].width, engine.config["chunk_size"].height>);
 
-    Coords chunk_level_coords= <0,0>;
+    Coords level_chunk_coords= <0,0>;
     Coords chunk_entry = <0, toInt(engine.config["chunk_size"].height/2)-1>;
     tuple[Chunk chunk_generated, Coords chunk_exit] res = <chunk_empty(), <-1,-1>>;
     for (GenerationChunk chunk_abs <- level_abs.chunks) {      
-        res = generate_chunk(engine, chunk_abs, chunk_entry);
+        res = generate_chunk(engine, level_chunk_coords, chunk_abs, chunk_entry);
 
-        // if (chunk_level_coords in chunks_generated.coords) exception_wip
-        level_generated.chunks_generated[chunk_level_coords] = res.chunk_generated;
+        level_generated.chunks_generated[level_chunk_coords] = res.chunk_generated;
 
         chunk_entry = res.chunk_exit;
         if (res.chunk_exit.x == engine.config["chunk_size"].width) {          // We exit right
             chunk_entry.x = 0;
-            chunk_level_coords.x += 1;
+            level_chunk_coords.x += 1;
             level_generated.abs_size.x_max += 1;
         }
         else if (res.chunk_exit.y == engine.config["chunk_size"].height) {    // We exit down
             chunk_entry.y = 0;
-            chunk_level_coords.y += 1;
+            level_chunk_coords.y += 1;
             level_generated.abs_size.y_max += 1;
         }
         else if (res.chunk_exit.y == 0) {                       // We exit up
             chunk_entry.y = engine.config["chunk_size"].height-1 ;
-            chunk_level_coords.y -= 1;
+            level_chunk_coords.y -= 1;
             level_generated.abs_size.y_min -= 1;
         }
     }
@@ -111,10 +110,10 @@ Level generate_level(GenerationEngine engine, str level_name, GenerationLevel le
  *          entry  -> Entry coords to the chunk
  * @Ret:    Generated chunk object
  */
-tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chunk_abs, Coords entry) {
+tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, Coords level_chunk_coords, GenerationChunk chunk_abs, Coords entry) {
     Chunk win_chunk_generated = chunk_empty();
     Chunk fail_chunk_generated = chunk_empty();
-    Chunk chunk_generated = chunk_empty();
+    Chunk chunk_generated = chunk_empty();   
 
     tuple[
         tuple[list[list[str]] verbs, Coords exit]     win,
@@ -130,6 +129,8 @@ tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chu
     fail_chunk_generated = generate_chunk_partial(engine, chunk_abs, entry, verbs_translated.\fail, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
     chunk_generated = apply_merge(chunk_abs.name, win_chunk_generated, fail_chunk_generated);
     chunk_generated = apply_blanketize(engine, chunk_generated);
+
+    if (level_chunk_coords == <0,0>) chunk_generated = apply_place_player(chunk_generated, entry);
 
     println(chunk_to_string(chunk_generated));
     println();
@@ -155,8 +156,6 @@ Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk_abs,
     if (verbs_translated == []) return chunk_generated;
 
     chunk_generated = chunk_init(chunk_abs.name, <width, height>);
-    // chunk_generated.objects[width * entry.y + entry.x]     = "ph1";
-    // chunk_generated.objects[width * (entry.y+1) + entry.x] = "#";
     chunk_generated = apply_generation_rules(engine, engine.modules[chunk_abs.\module], chunk_generated, verbs_translated);
     
     return chunk_generated;
@@ -176,11 +175,8 @@ Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk_abs,
  * @Ret:    Generated chunk object
  */
 Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, Chunk chunk, list[VerbAnnotation] verbs) {
-    enter_verb = verb_annotation("enter", "default", "none", 0, <<"none", "">,<"none", "">>);
-    exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"none", "">,<"none", "">>);
-
-    verbs = insertAt(verbs, 0, enter_verb);
-    verbs += [exit_verb];
+    verbs = insertAt(verbs, 0, Annotation::ADT::Verb::enter_verb);
+    verbs += [Annotation::ADT::Verb::exit_verb];
 
     for (VerbAnnotation verb <- verbs[0..(size(verbs))]) {
         GenerationRule rule = \module.generation_rules[verb];
@@ -212,6 +208,11 @@ Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, Generat
         chunk = chunk_rewritten;
     }
 
+    return chunk;
+}
+
+Chunk apply_place_player(Chunk chunk, Coords entry) {
+    chunk.objects[chunk.size.width * entry.y + entry.x] = "p";
     return chunk;
 }
 

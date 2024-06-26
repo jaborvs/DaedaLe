@@ -3,7 +3,7 @@ CONFIGURATION
 =============
 
 chunk_size = 15x15
-objects_permanent = #
+objects_permanent = # and E
 
 ========
 PATTERNS
@@ -164,6 +164,7 @@ PBH PBV
 (------------------------------------------------------------------------------)
 (--- Falling Floating Patterns ------------------------------------------------)
 (------------------------------------------------------------------------------)
+
 PlayerFall__Floating__Start
 PH1
 .
@@ -171,6 +172,14 @@ PH1
 PlayerFall__Floating__End
 PBV
 PH1
+
+(------------------------------------------------------------------------------)
+(--- Get Stuck Patterns -------------------------------------------------------)
+(------------------------------------------------------------------------------)
+
+PlayerEat__End
+PH1 E
+#   #
 
 (------------------------------------------------------------------------------)
 (--- Get Stuck Patterns -------------------------------------------------------)
@@ -218,6 +227,7 @@ Module2
 [PlayerClimb__Floating__Large__Start]     -> [PlayerClimb__Floating__Large__End]            (verb Climb(large,                   up,    1, <Climb(medium),      none         >))
 [PlayerClimb__Floating__Coil__Start]      -> [PlayerClimb__Floating__Coil__End]             (verb Climb(coil,                    up,    2))
 [PlayerFall__Floating__Start]             -> [PlayerFall__Floating__End]                    (verb Fall (default,                 down,  1))
+[PlayerCrawl__Start]                      -> [PlayerEat__End]                               (verb Eat  (default,                 right, 1))
 [PlayerGetStuck_AfterCrawl_Start]         -> [PlayerGetStuck_AfterCrawl_End]                (verb GetStuck(after_crawl,          none,  0, <Crawl(_),           none         >))
     
 ============
@@ -226,4 +236,5 @@ LEVEL DRAFTS
 
 Level1
 W:[Crawl+, Climb, Climb+, Crawl+]       F:[Crawl+, Crawl, GetStuck]                         (chunk Chunk1(Module2))
+W:[Crawl+]                                                                             (chunk Chunk2(Module2))
 

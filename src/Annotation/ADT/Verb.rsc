@@ -24,6 +24,12 @@ data VerbAnnotation
     ;
 
 /******************************************************************************/
+// --- Global implicit verb defines --------------------------------------------
+
+VerbAnnotation enter_verb = verb_annotation("enter", "default", "none", 0, <<"none", "">,<"none", "">>);
+VerbAnnotation exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"none", "">,<"none", "">>);
+
+/******************************************************************************/
 // --- Public function defines -------------------------------------------------
 
 /*
