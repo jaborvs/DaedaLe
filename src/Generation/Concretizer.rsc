@@ -237,13 +237,13 @@ list[int] concretize_get_neighbors_equivalent(list[list[str]] concretized_verbs,
  *          height -> Chunk height
  * @Ret:    List of concretized verbs
  */
-tuple[list[list[str]], map[int,Coords]] concretize_win(GenerationModule \module, list[GenerationVerbExpression] verbs, Coords entry, int width, int height) {
+tuple[list[list[str]], map[int,Coords]] concretize_win(GenerationModule \module, list[GenerationVerbExpression] verbs_abs, Coords entry, int width, int height) {
     map[int, Coords] position_current = ();
-    for (int i <- [0..size(verbs)]) position_current[i] = entry;
+    for (int i <- [0..size(verbs_abs)]) position_current[i] = entry;
     
     tuple[list[list[str]] verbs_concretized, map[int, Coords] position_current] res = <[], position_current>;
-    res = concretize_win_init(\module, verbs, res.position_current);
-    res = concretize_win_extend(\module, verbs, res.verbs_concretized, res.position_current, width, height);
+    res = concretize_win_init(\module, verbs_abs, res.verbs_concretized, res.position_current);
+    res = concretize_win_extend(\module, verbs_abs, res.verbs_concretized, res.position_current, width, height);
     res = concretize_concat(res.verbs_concretized, res.position_current);
 
     return <res.verbs_concretized, res.position_current>;
@@ -253,18 +253,14 @@ tuple[list[list[str]], map[int,Coords]] concretize_win(GenerationModule \module,
  * @Name:   concretize_win_init
  * @Desc:   Function that concretizes the mandatory verbs to be applied in a 
  *          chunk
- * @Param:  verbs  -> GenerationVerbExpressions to be concretized
+ * @Param:  verbs_abs        -> GenerationVerbExpressions to be concretized
  *          position_current -> Dictionary with the current positions
  * @Ret:    List of concretized verbs and updated position_current
  */
-tuple[list[list[str]], map[int,Coords]] concretize_win_init(GenerationModule \module, list[GenerationVerbExpression] verbs, map[int, Coords] position_current) {
-    list[list[str]] verbs_concretized = [];
-
-    int subchunk_num = size(verbs);
-
-    for (int i <- [0..subchunk_num]) {
-        str verb_name = verbs[i].verb;
-        str verb_modifier = verbs[i].modifier;
+tuple[list[list[str]], map[int,Coords]] concretize_win_init(GenerationModule \module, list[GenerationVerbExpression] verbs_abs, list[list[str]] verbs_concretized, map[int, Coords] position_current) {
+    for (int i <- [0..size(verbs_abs)]) {
+        str verb_name = verbs_abs[i].verb;
+        str verb_modifier = verbs_abs[i].modifier;
         VerbAnnotation verb = generation_module_get_verb(\module, verb_name, "_");
 
         list[str] basket = [];
@@ -283,24 +279,24 @@ tuple[list[list[str]], map[int,Coords]] concretize_win_init(GenerationModule \mo
  * @Name:   concretize_win_extend
  * @Desc:   Function that concretizes all the verbs to be applied in a chunk
  *          (mandatory and non-mandatory)
- * @Param:  verbs             -> GenerationVerbExpressions to be concretized
+ * @Param:  verbs_abs         -> GenerationVerbExpressions to be concretized
  *          verbs_concretized -> List of concretized verbs
  *          position_current  -> Dictionary with the current positions
  *          width             -> Chunk width
  *          height            -> Chunk height
  * @Ret:    List of concretized verbs and updated position_current
  */
-tuple[list[list[str]], map[int,Coords]] concretize_win_extend(GenerationModule \module, list[GenerationVerbExpression] verbs, list[list[str]] verbs_concretized, map[int,Coords] position_current, int width, int height) {
-    int subchunk_num = size(verbs);
-    int subchunk_last_compulsory = max([i | int i <- [0..subchunk_num], verbs[i].modifier == "+" || verbs[i].modifier == ""] + [0]);
+tuple[list[list[str]], map[int,Coords]] concretize_win_extend(GenerationModule \module, list[GenerationVerbExpression] verbs_abs, list[list[str]] verbs_concretized, map[int,Coords] position_current, int width, int height) {
+    int subchunk_num = size(verbs_abs);
+    int subchunk_last_compulsory = max([i | int i <- [0..subchunk_num], verbs_abs[i].modifier == "+" || verbs_abs[i].modifier == ""] + [0]);
 
     bool exited = false;
     while (!exited) {
         int i = arbInt(subchunk_num);
-        str verb_name = verbs[i].verb;
+        str verb_name = verbs_abs[i].verb;
 
-        if(verbs[i].modifier == "" 
-           || (verbs[i].modifier == "?" && size(verbs_concretized[i])== 1)) continue; 
+        if(verbs_abs[i].modifier == "" 
+           || (verbs_abs[i].modifier == "?" && size(verbs_concretized[i])== 1)) continue; 
 
         VerbAnnotation verb = generation_module_get_verb(\module, verb_name, "_");
 
