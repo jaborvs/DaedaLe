@@ -13,6 +13,7 @@ import IO;
 import String;
 import List;
 import util::Eval;
+import util::Math;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
@@ -23,20 +24,20 @@ import Utils;
 
 void main() {
     VerbAnnotation v = verb_annotation(
-        "crawl",
-        "",
-        "up",
-        1,
-        <<"start","">,<"end","">>
+        "enter",
+        "default",
+        "none",
+        0,
+        <<"none","">,<"none","">>
         );
 
     GenerationPattern left = generation_pattern([
-        ["P","."],
-        ["#","."]
+        ["."],
+        ["."]
         ]);
     GenerationPattern right = generation_pattern([
-        ["H","P"],
-        ["#","#"]
+        ["P"],
+        ["#"]
         ]);
 
     int width = 5;
@@ -46,8 +47,8 @@ void main() {
         <5,5>,
         [
             ".",".",".",".",".",
-            ".","P",".",".",".",
-            ".","#",".",".",".",
+            ".",".",".",".",".",
+            ".",".",".",".",".",
             ".",".",".",".",".",
             ".",".",".",".","."
         ]
@@ -57,7 +58,7 @@ void main() {
     println(program);
     if(result(Chunk c_r) := eval(program)) {
         c = c_r;
-        println(c.objects);
+        println(chunk_to_string(c));
     }
 }
 
@@ -79,7 +80,7 @@ str match_generate_program(Chunk chunk, VerbAnnotation verb, GenerationPattern l
     program += _match_generate_module_section(verb);
     program += _match_generate_imports_section();
     program += _match_generate_data_structures_section();
-    program += _match_generate_functions_section(chunk.size.width, verb, left, right);
+    program += _match_generate_functions_section(chunk.size, verb, left, right);
     program += _match_generate_calls_section(chunk, verb);
 
     return program;
@@ -134,15 +135,15 @@ str _match_generate_data_structures_section()
 /******************************************************************************/
 // --- Private functions section functions -------------------------------------
 
-str _match_generate_functions_section(int chunk_width, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
+str _match_generate_functions_section(tuple[int,int] chunk_size, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
     = _match_generate_separator()
     + _match_generate_title("Public functions")
-    + _match_generate_function(chunk_width, verb, left, right)
+    + _match_generate_function(chunk_size, verb, left, right)
     ;
 
-str _match_generate_function(int chunk_width, VerbAnnotation verb, GenerationPattern left, GenerationPattern right)
+str _match_generate_function(tuple[int,int] chunk_size, VerbAnnotation verb, GenerationPattern left, GenerationPattern right)
     = _match_generate_function_documentation(verb)
-    + _match_generate_function_definition(chunk_width, verb, left, right)
+    + _match_generate_function_definition(chunk_size, verb, left, right)
     ;
 
 str _match_generate_function_name(VerbAnnotation verb)
@@ -159,12 +160,12 @@ str _match_generate_function_documentation(VerbAnnotation verb)
     + _match_generate_line_break(1)
     ;
 
-str _match_generate_function_definition(int chunk_width, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
+str _match_generate_function_definition(tuple[int,int] chunk_size, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
     = "public Chunk (Chunk c) <_match_generate_function_name(verb)> = 
       'Chunk (Chunk c) 
       '{
       '    for(list[str] pattern: <_match_generate_pattern_left(left)> := c.objects) {
-      '        if (<_match_generate_mid_condition(chunk_width, left)>) {
+      '        if (<_match_generate_mid_condition(chunk_size, verb, left)>) {
       '            c.objects = visit(c.objects) {
       '                case list[str] p:pattern =\> <_match_generate_pattern_right(right)>
       '            };
@@ -175,8 +176,8 @@ str _match_generate_function_definition(int chunk_width, VerbAnnotation verb, Ge
     + _match_generate_line_break(2)
     ;
 
-str _match_generate_mid_condition(int chunk_width, GenerationPattern pattern) 
-    = "<for(int i <- [0..size(pattern.objects)-1]){>size(mid_<i+1>) == <chunk_width - size(pattern.objects[0])><if(i != size(pattern.objects)-2){> && <}><}>"
+str _match_generate_mid_condition(tuple[int width, int height] chunk_size, VerbAnnotation verb, GenerationPattern pattern) 
+    = "<if(verb.name == "enter"){>size(top) == <((toInt(chunk_size.width/2) - 1) * chunk_size.height)> && <}><for(int i <- [0..size(pattern.objects)-1]){>size(mid_<i+1>) == <chunk_size.width - size(pattern.objects[0])><if(i != size(pattern.objects)-2){> && <}><}>"
     ;
 
 str _match_generate_pattern(GenerationPattern pattern, str side)

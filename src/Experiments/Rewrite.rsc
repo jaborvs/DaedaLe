@@ -4,15 +4,16 @@ import IO;
 import List;
 import String;
 import Experiments::AST;
+import util::Math;
 
 void main() {
     Pattern left = pattern([
-        row([".","."]),
-        row(["P","."])
+        ["."],
+        ["."]
         ]);
     Pattern right   = pattern([
-        row(["P","."]),
-        row(["H","."])
+        ["P"],
+        ["#"]
         ]);
 
     int width = 5;
@@ -21,18 +22,20 @@ void main() {
         ".",".",".",".",".",
         ".",".",".",".",".",
         ".",".",".",".",".",
-        ".",".","P",".",".",
-        ".",".","#",".","."
+        ".",".",".",".",".",
+        ".",".",".",".","."
         ]);
 
     println("\>\>\> Initial chunk state");
     chunk_print(c, width);
     println();
+    println((toInt(height/2)-1) * width);
 
-    for(list[str] pattern: [*str top,"P",".",*str mid,"#",".",*str bottom] := c.objects) {
-        if (size(mid) == (width - size(left.rows[0].objects))) {
+    for(list[str] pattern: [*str top,".",*str mid, ".",*str bottom] := c.objects) {
+        if (size(top) == ((toInt(height/2) - 1) * width)
+            && size(mid) == (width - size(left.objects[0]))) {
             c.objects = visit(c.objects) {
-                case list[str] p:pattern => [*top,"H","P",*mid,"#","#",*bottom]
+                case list[str] p:pattern => [*top,"P",*mid,"#",*bottom]
             };
         }
     }

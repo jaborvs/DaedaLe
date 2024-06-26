@@ -70,14 +70,14 @@ list[Level] generate_levels(GenerationEngine engine) {
  * @Ret:    list[list[str]] given that a level is a list[str] and we are
  *          returning all levels generated
  */
-Level generate_level(GenerationEngine engine, str level_name, GenerationLevel gen_level) {
+Level generate_level(GenerationEngine engine, str level_name, GenerationLevel level_abs) {
     Level level_generated = level_init(level_name, <engine.config["chunk_size"].width, engine.config["chunk_size"].height>);
 
     Coords chunk_level_coords= <0,0>;
     Coords chunk_entry = <0, toInt(engine.config["chunk_size"].height/2)-1>;
     tuple[Chunk chunk_generated, Coords chunk_exit] res = <chunk_empty(), <-1,-1>>;
-    for (GenerationChunk chunk <- gen_level.chunks) {      
-        res = generate_chunk(engine, chunk, chunk_entry);
+    for (GenerationChunk chunk_abs <- level_abs.chunks) {      
+        res = generate_chunk(engine, chunk_abs, chunk_entry);
 
         // if (chunk_level_coords in chunks_generated.coords) exception_wip
         level_generated.chunks_generated[chunk_level_coords] = res.chunk_generated;
@@ -111,7 +111,7 @@ Level generate_level(GenerationEngine engine, str level_name, GenerationLevel ge
  *          entry  -> Entry coords to the chunk
  * @Ret:    Generated chunk object
  */
-tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chunk, Coords entry) {
+tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chunk_abs, Coords entry) {
     Chunk win_chunk_generated = chunk_empty();
     Chunk fail_chunk_generated = chunk_empty();
     Chunk chunk_generated = chunk_empty();
@@ -119,16 +119,16 @@ tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chu
     tuple[
         tuple[list[list[str]] verbs, Coords exit]     win,
         tuple[list[list[str]] verbs, Coords dead_end] \fail
-    ] verbs_concretized = concretize(engine.modules[chunk.\module], chunk, entry, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+    ] verbs_concretized = concretize(engine.modules[chunk_abs.\module], chunk_abs, entry, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
 
     tuple[
         list[VerbAnnotation] win,
         list[VerbAnnotation] \fail
-    ] verbs_translated = translate(engine.modules[chunk.\module], verbs_concretized.win.verbs, verbs_concretized.\fail.verbs);
+    ] verbs_translated = translate(engine.modules[chunk_abs.\module], verbs_concretized.win.verbs, verbs_concretized.\fail.verbs);
 
-    win_chunk_generated = generate_chunk_partial(engine, chunk, entry, verbs_translated.win, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
-    fail_chunk_generated = generate_chunk_partial(engine, chunk, entry, verbs_translated.\fail, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
-    chunk_generated = apply_merge(chunk.name, win_chunk_generated, fail_chunk_generated);
+    win_chunk_generated = generate_chunk_partial(engine, chunk_abs, entry, verbs_translated.win, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+    fail_chunk_generated = generate_chunk_partial(engine, chunk_abs, entry, verbs_translated.\fail, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+    chunk_generated = apply_merge(chunk_abs.name, win_chunk_generated, fail_chunk_generated);
     chunk_generated = apply_blanketize(engine, chunk_generated);
 
     println(chunk_to_string(chunk_generated));
@@ -142,22 +142,22 @@ tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chu
  * @Desc:   Function that generates a chunk. It is called partial cause the result
  *          will later be merged with another chunk.
  * @Params: engine           -> Generation engine
- *          chunk            -> Generation chunk
+ *          chunk_abs        -> Generation chunk
  *          entry            -> Entry coords to the chunk
  *          verbs_translated -> List of verbs to apply to generate the chunk
  *          width            -> Width of the chunk
  *          height           -> Height of the chunk
  * @Ret:    Chunk generated
  */
-Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk, Coords entry, list[VerbAnnotation] verbs_translated, int width, int height) {
+Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk_abs, Coords entry, list[VerbAnnotation] verbs_translated, int width, int height) {
     Chunk chunk_generated = chunk_empty();
 
     if (verbs_translated == []) return chunk_generated;
 
-    chunk_generated = chunk_init(chunk.name, <width, height>);
-    chunk_generated.objects[width * entry.y + entry.x]     = "ph1";
-    chunk_generated.objects[width * (entry.y+1) + entry.x] = "#";
-    chunk_generated = apply_generation_rules(engine, engine.modules[chunk.\module], chunk_generated, verbs_translated);
+    chunk_generated = chunk_init(chunk_abs.name, <width, height>);
+    // chunk_generated.objects[width * entry.y + entry.x]     = "ph1";
+    // chunk_generated.objects[width * (entry.y+1) + entry.x] = "#";
+    chunk_generated = apply_generation_rules(engine, engine.modules[chunk_abs.\module], chunk_generated, verbs_translated);
     
     return chunk_generated;
 }
@@ -176,12 +176,17 @@ Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk, Coo
  * @Ret:    Generated chunk object
  */
 Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, Chunk chunk, list[VerbAnnotation] verbs) {
+    enter_verb = verb_annotation("enter", "default", "none", 0, <<"none", "">,<"none", "">>);
+    exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"none", "">,<"none", "">>);
+
+    verbs = insertAt(verbs, 0, enter_verb);
+    verbs += [exit_verb];
+
     for (VerbAnnotation verb <- verbs[0..(size(verbs))]) {
         GenerationRule rule = \module.generation_rules[verb];
         GenerationPattern left = engine.patterns[rule.left];
         GenerationPattern right = engine.patterns[rule.right];
         chunk = apply_generation_rule(verb, left, right, chunk);
-        
     }
 
     println(chunk_to_string(chunk));

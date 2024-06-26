@@ -191,9 +191,23 @@ tuple[str, GenerationPattern] papyrus_compile_pattern(PatternData pattern) {
  */
 map[str, GenerationModule] papyrus_compile_modules(list[ModuleData] modules) {
     map[str names, GenerationModule modules] modules_compiled = ();
+    VerbAnnotation enter_verb = verb_annotation_empty();
+    GenerationRule enter_generation_rule = generation_rule_empty();
+    VerbAnnotation exit_verb  = verb_annotation_empty();
+    GenerationRule exit_generation_rule  = generation_rule_empty();
+    
+    enter_verb = verb_annotation("enter", "default", "none", 0, <<"none", "">,<"none", "">>);
+    enter_generation_rule = generation_rule("player_entry_start", "player_idle");
+
+    exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"none", "">,<"none", "">>);
+    exit_generation_rule = generation_rule("player_idle", "player_exit_end");
 
     for(ModuleData m <- modules) {
         tuple[str name, GenerationModule \module] m_c = papyrus_compile_module(m);
+        
+        m_c.\module.generation_rules[enter_verb] = enter_generation_rule;
+        m_c.\module.generation_rules[exit_verb]  = exit_generation_rule;
+
         if (m_c.name in modules_compiled.names) exception_modules_duplicated_module(m_c.name);
         else  modules_compiled[m_c.name] = m_c.\module;
     }
