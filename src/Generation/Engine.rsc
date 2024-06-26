@@ -247,7 +247,7 @@ Chunk apply_merge(str name, Chunk win_chunk_generated, Chunk fail_chunk_generate
     for (int i <- [0..size(win_chunk_generated.objects)]) {
         if      (win_chunk_generated.objects[i] != "." && fail_chunk_generated.objects[i] == ".") objects_merged += [win_chunk_generated.objects[i]];
         else if (win_chunk_generated.objects[i] == "." && fail_chunk_generated.objects[i] != ".") objects_merged += [fail_chunk_generated.objects[i]];
-        else if (win_chunk_generated.objects[i] != "." && fail_chunk_generated.objects[i] != ".") objects_merged += [win_chunk_generated.objects[i]];
+        else if (win_chunk_generated.objects[i] != "." && fail_chunk_generated.objects[i] != ".") objects_merged += [fail_chunk_generated.objects[i]];
         else                                                                                      objects_merged += [win_chunk_generated.objects[i]];
     }
 
