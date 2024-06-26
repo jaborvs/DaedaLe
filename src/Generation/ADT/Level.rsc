@@ -87,7 +87,7 @@ void level_print(Level level, loc file) {
     level_printed += readFile(file);
     level_printed += level_to_string(level);
 
-    writeFile(file, level_printed);
+    writeFile(file, level_printed + "\n");
 
     return;
 } 

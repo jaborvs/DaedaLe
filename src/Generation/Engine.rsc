@@ -92,7 +92,7 @@ Level generate_level(GenerationEngine engine, str level_name, GenerationLevel le
             level_chunk_coords.y += 1;
             level_generated.abs_size.y_max += 1;
         }
-        else if (res.chunk_exit.y == 0) {                       // We exit up
+        else if (res.chunk_exit.y == -1) {                       // We exit up
             chunk_entry.y = engine.config["chunk_size"].height-1 ;
             level_chunk_coords.y -= 1;
             level_generated.abs_size.y_min -= 1;
@@ -156,7 +156,7 @@ Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk_abs,
     if (verbs_translated == []) return chunk_generated;
 
     chunk_generated = chunk_init(chunk_abs.name, <width, height>);
-    chunk_generated = apply_generation_rules(engine, engine.modules[chunk_abs.\module], chunk_generated, verbs_translated);
+    chunk_generated = apply_generation_rules(engine, engine.modules[chunk_abs.\module], chunk_generated, entry, verbs_translated);
     
     return chunk_generated;
 }
@@ -174,7 +174,7 @@ Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk_abs,
  *          chunk   -> chunk to generate
  * @Ret:    Generated chunk object
  */
-Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, Chunk chunk, list[VerbAnnotation] verbs) {
+Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, Chunk chunk, Coords entry, list[VerbAnnotation] verbs) {
     verbs = insertAt(verbs, 0, Annotation::ADT::Verb::enter_verb);
     verbs += [Annotation::ADT::Verb::exit_verb];
 
@@ -182,7 +182,7 @@ Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, 
         GenerationRule rule = \module.generation_rules[verb];
         GenerationPattern left = engine.patterns[rule.left];
         GenerationPattern right = engine.patterns[rule.right];
-        chunk = apply_generation_rule(verb, left, right, chunk);
+        chunk = apply_generation_rule(verb, left, right, chunk, entry);
     }
 
     println(chunk_to_string(chunk));
@@ -200,10 +200,10 @@ Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, 
  *          chunk -> Chunk to generate
  * @Ret:    Generated chunk object
  */
-Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, GenerationPattern right, Chunk chunk) {
+Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, GenerationPattern right, Chunk chunk, Coords entry) {
     str program = "";
 
-    program = match_generate_program(chunk, verb, left, right);
+    program = match_generate_program(chunk, entry, verb, left, right);
     if(result(Chunk chunk_rewritten) := eval(program)) {
         chunk = chunk_rewritten;
     }

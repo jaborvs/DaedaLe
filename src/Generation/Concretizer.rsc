@@ -290,6 +290,7 @@ tuple[list[list[str]], map[int,Coords]] concretize_win_extend(GenerationModule \
     int subchunk_num = size(verbs_abs);
     int subchunk_last_compulsory = max([i | int i <- [0..subchunk_num], verbs_abs[i].modifier == "+" || verbs_abs[i].modifier == ""] + [0]);
 
+    bool subchunk_contains_end = concretize_contains_end(\module, verbs_abs);
     bool exited = false;
     while (!exited) {
         int i = arbInt(subchunk_num);
@@ -306,9 +307,23 @@ tuple[list[list[str]], map[int,Coords]] concretize_win_extend(GenerationModule \
         position_current = concretize_update_position_current(position_current, i, verb.direction);
         exited = concretize_check_position_current_exited(position_current, i, width, height);
         if (!exited) verbs_concretized[i] += [verb_name];
+
+        if (subchunk_contains_end) exited = (arbInt(2) == 1);
     }
 
-    return concretize_delete_unused(verbs_concretized, position_current, width, height);
+    tuple[list[list[str]], map[int,Coords]] res = <verbs_concretized, position_current>;
+    if (!subchunk_contains_end) res = concretize_delete_unused(verbs_concretized, position_current, width, height);
+
+    return res;
+}
+
+bool concretize_contains_end(GenerationModule \module, list[GenerationVerbExpression] verbs_abs) {
+    for (GenerationVerbExpression v <- verbs_abs) {
+        VerbAnnotation verb = generation_module_get_verb(\module, v.verb, "end");
+        if (!(verb is verb_annotation_empty)) return true;
+    }
+
+    return false;
 }
 
 /******************************************************************************/

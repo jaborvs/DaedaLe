@@ -54,7 +54,7 @@ void main() {
         ]
         );
 
-    str program = match_generate_program(c, v, left, right);
+    str program = match_generate_program(c, <0,2>, v, left, right);
     println(program);
     if(result(Chunk c_r) := eval(program)) {
         c = c_r;
@@ -74,13 +74,13 @@ void main() {
  *          right -> Right pattern of the GenerationRule
  * @Ret:    str with the complete programm
  */
-str match_generate_program(Chunk chunk, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) {
+str match_generate_program(Chunk chunk, Coords entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) {
     str program = "";
 
     program += _match_generate_module_section(verb);
     program += _match_generate_imports_section();
     program += _match_generate_data_structures_section();
-    program += _match_generate_functions_section(chunk.size, verb, left, right);
+    program += _match_generate_functions_section(chunk.size, entry, verb, left, right);
     program += _match_generate_calls_section(chunk, verb);
 
     return program;
@@ -135,15 +135,15 @@ str _match_generate_data_structures_section()
 /******************************************************************************/
 // --- Private functions section functions -------------------------------------
 
-str _match_generate_functions_section(tuple[int,int] chunk_size, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
+str _match_generate_functions_section(tuple[int,int] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
     = _match_generate_separator()
     + _match_generate_title("Public functions")
-    + _match_generate_function(chunk_size, verb, left, right)
+    + _match_generate_function(chunk_size, entry, verb, left, right)
     ;
 
-str _match_generate_function(tuple[int,int] chunk_size, VerbAnnotation verb, GenerationPattern left, GenerationPattern right)
+str _match_generate_function(tuple[int,int] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right)
     = _match_generate_function_documentation(verb)
-    + _match_generate_function_definition(chunk_size, verb, left, right)
+    + _match_generate_function_definition(chunk_size, entry, verb, left, right)
     ;
 
 str _match_generate_function_name(VerbAnnotation verb)
@@ -160,12 +160,12 @@ str _match_generate_function_documentation(VerbAnnotation verb)
     + _match_generate_line_break(1)
     ;
 
-str _match_generate_function_definition(tuple[int,int] chunk_size, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
+str _match_generate_function_definition(tuple[int,int] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
     = "public Chunk (Chunk c) <_match_generate_function_name(verb)> = 
       'Chunk (Chunk c) 
       '{
       '    for(list[str] pattern: <_match_generate_pattern_left(left)> := c.objects) {
-      '        if (<_match_generate_mid_condition(chunk_size, verb, left)>) {
+      '        if (<_match_generate_mid_condition(chunk_size, entry, verb, left)>) {
       '            c.objects = visit(c.objects) {
       '                case list[str] p:pattern =\> <_match_generate_pattern_right(right)>
       '            };
@@ -176,8 +176,8 @@ str _match_generate_function_definition(tuple[int,int] chunk_size, VerbAnnotatio
     + _match_generate_line_break(2)
     ;
 
-str _match_generate_mid_condition(tuple[int width, int height] chunk_size, VerbAnnotation verb, GenerationPattern pattern) 
-    = "<if(verb.name == "enter"){>size(top) == <((toInt(chunk_size.width/2) - 1) * chunk_size.height)> && <}><for(int i <- [0..size(pattern.objects)-1]){>size(mid_<i+1>) == <chunk_size.width - size(pattern.objects[0])><if(i != size(pattern.objects)-2){> && <}><}>"
+str _match_generate_mid_condition(tuple[int width, int height] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern pattern) 
+    = "<if(verb.name == "enter"){>size(top) == <(chunk_size.width * entry.y + entry.x)> && <}><for(int i <- [0..size(pattern.objects)-1]){>size(mid_<i+1>) == <chunk_size.width - size(pattern.objects[0])><if(i != size(pattern.objects)-2){> && <}><}>"
     ;
 
 str _match_generate_pattern(GenerationPattern pattern, str side)
