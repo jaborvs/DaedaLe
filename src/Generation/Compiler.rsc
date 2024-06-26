@@ -167,14 +167,14 @@ map[str, GenerationPattern] papyrus_compile_patterns(list[PatternData] patterns)
 tuple[str, GenerationPattern] papyrus_compile_pattern(PatternData pattern) {
     tuple[str, GenerationPattern] pattern_compiled = <"", generation_pattern_empty()>;
 
-    list[GenerationRow] rows_compiled = [];
+    list[list[str]] objects_compiled = [];
     for (TilemapRowData r <- pattern.tilemap.row_dts) {
-        rows_compiled += [generation_row(r.objects)];
+        objects_compiled += [r.objects];
     }
 
     pattern_compiled = <
         pattern.name,
-        generation_pattern(rows_compiled)
+        generation_pattern(objects_compiled)
         >;
 
     return pattern_compiled;

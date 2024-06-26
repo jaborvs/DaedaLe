@@ -9,18 +9,10 @@ module Generation::ADT::Pattern
 // --- Data structure defines --------------------------------------------------
 
 /*
- * @Name:   GenerationRow
- * @Desc:   Data structure that models a generation row
- */
-data GenerationRow
-    = generation_row(list[str] objects)
-    ;
-
-/*
  * @Name:   GenerationPattern
  * @Desc:   Data structure that models a generation pattern
  */
 data GenerationPattern
-    = generation_pattern(list[GenerationRow] rows)
+    = generation_pattern(list[list[str]] objects)
     | generation_pattern_empty()
     ;

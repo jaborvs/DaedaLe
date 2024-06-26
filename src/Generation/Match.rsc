@@ -31,12 +31,12 @@ void main() {
         );
 
     GenerationPattern left = generation_pattern([
-        generation_row(["P","."]),
-        generation_row(["#","."])
+        ["P","."],
+        ["#","."]
         ]);
     GenerationPattern right = generation_pattern([
-        generation_row(["H","P"]),
-        generation_row(["#","#"])
+        ["H","P"],
+        ["#","#"]
         ]);
 
     int width = 5;
@@ -114,12 +114,8 @@ str _match_generate_data_structures_section()
       '    | chunk_empty()
       '    ;
       '
-      'data GenerationRow
-      '    = generation_row(list[str] objects)
-      '    ;
-      '
       'data GenerationPattern
-      '    = generation_pattern(list[GenerationRow] rows)
+      '    = generation_pattern(list[list[str]] objects)
       '    | generation_pattern_empty()
       '    ;
       '
@@ -180,11 +176,11 @@ str _match_generate_function_definition(int chunk_width, VerbAnnotation verb, Ge
     ;
 
 str _match_generate_mid_condition(int chunk_width, GenerationPattern pattern) 
-    = "<for(int i <- [0..size(pattern.rows)-1]){>size(mid_<i+1>) == <chunk_width - size(pattern.rows[0].objects)><if(i != size(pattern.rows)-2){> && <}><}>"
+    = "<for(int i <- [0..size(pattern.objects)-1]){>size(mid_<i+1>) == <chunk_width - size(pattern.objects[0])><if(i != size(pattern.objects)-2){> && <}><}>"
     ;
 
 str _match_generate_pattern(GenerationPattern pattern, str side)
-    = "[*<if(side == "left"){>str <}>top, <for(int i <- [0..size(pattern.rows)]){><for(str object <- pattern.rows[i].objects){>\"<object>\", <}><if(i != size(pattern.rows)-1){>*<if(side == "left"){>str <}>mid_<i+1>, <}><}> *<if(side == "left"){>str <}>bottom]"
+    = "[*<if(side == "left"){>str <}>top, <for(int i <- [0..size(pattern.objects)]){><for(str object <- pattern.objects[i]){>\"<object>\", <}><if(i != size(pattern.objects)-1){>*<if(side == "left"){>str <}>mid_<i+1>, <}><}> *<if(side == "left"){>str <}>bottom]"
     ; 
 
 str _match_generate_pattern_left(GenerationPattern pattern) 
