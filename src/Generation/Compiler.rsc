@@ -302,8 +302,8 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
     if (comments == ()) exception_chunk_no_module();
     ChunkAnnotation chunk_anno = annotation_load_chunk_annotation(comments);
 
-    list[GenerationVerbExpression] win_verbs = [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.win_pt.verb_dts];
-    list[GenerationVerbExpression] fail_verbs = (chunk.fail_pt != []) ? [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.fail_pt[0].verb_dts] : [];
+    list[GenerationVerbExpression] win_verbs = [papyrus_compile_verb_expression(v) | VerbExpressionData v <- chunk.win_pt.verb_dts];
+    list[GenerationVerbExpression] fail_verbs = (chunk.fail_pt != []) ? [papyrus_compile_verb_expression(v) | VerbExpressionData v <- chunk.fail_pt[0].verb_dts] : [];
 
     chunk_compiled = generation_chunk(
         chunk_anno.name,
@@ -313,6 +313,37 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
     );
     
     return chunk_compiled;
+}
+
+
+/*
+ * @Name:   papyrus_compile_verb_expression
+ * @Desc:   Function that compiles a verb expression
+ * @Params: verb_dt -> Verb expression from the ast
+ * @Ret:    GenerationVerbExpression object
+ */
+GenerationVerbExpression papyrus_compile_verb_expression(VerbExpressionData verb_dt) {
+    str specification = "";
+    str direction = "";
+
+    if      (size(verb_dt.args) == 0) {
+        specification = "_";
+    }
+    else if (size(verb_dt.args) == 1) {
+        specification = verb_dt.args[0].arg;
+    }
+    else if (size(verb_dt.args) == 2) {
+        specification = verb_dt.args[0].arg;
+        direction     = verb_dt.args[1].arg;
+    }
+    else exception_chunk_verb_invalid_args();
+
+    return generation_verb_expression(
+        verb_dt.name,
+        specification,
+        direction,
+        verb_dt.modifier
+    );
 }
 
 /******************************************************************************/

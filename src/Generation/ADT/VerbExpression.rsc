@@ -13,6 +13,6 @@ module Generation::ADT::VerbExpression
  * @Desc:   Data structure that models a generation verb expression
  */
 data GenerationVerbExpression
-    = generation_verb_expression(str verb, str modifier)
+    = generation_verb_expression(str verb, str specification, str direction, str modifier)
     | generation_verb_expression_empty()
     ;

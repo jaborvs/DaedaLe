@@ -125,5 +125,9 @@ syntax FailPlaytraceData
     ;
 
 syntax VerbExpressionData
-    = verb_expression_data: ID ModifierKeyword?
+    = verb_expression_data: ID ('(' {ArgumentData ','}+ ')')? ModifierKeyword?
+    ;
+
+syntax ArgumentData
+    = argument_data: ID
     ;

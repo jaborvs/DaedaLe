@@ -142,5 +142,13 @@ data FailPlaytraceData
  * @Desc:   Data structure that models a verb for generation
  */
 data VerbExpressionData
-    = verb_expression_data(str name, str modifier)                     // Name, modifier
+    = verb_expression_data(str name, list[ArgumentData] args, str modifier)                     // Name, modifier
+    ;
+
+/*
+ * @Name:   ArgumentDat
+ * @Desc:   Data structure that models an argument of a verb
+ */
+data ArgumentData
+    = argument_data(str arg)
     ;

@@ -61,6 +61,10 @@ void exception_chunk_no_module() {
     throw "Exception Chunks: All chunks must have an assigned module";
 }
 
+void exception_chunk_verb_invalid_args() {
+    throw "Exception Chunks: All chunk verbs must have between 0 to 2 args";
+}
+
 /******************************************************************************/
 // --- Public verbs functions --------------------------------------------------
 
