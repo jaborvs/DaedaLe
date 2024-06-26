@@ -26,6 +26,22 @@ import Annotation::ADT::Verb;
  * @Desc:   Function that translates a complete chunk. It translates each 
  *          subchunk individually keeping in mind which verbs the previous and 
  *          next subchunk use
+ * @Param:  \module                -> Generation module of the chunk
+ *          win_verbs_concretized  -> List of win verbs concretized
+ *          fail_verbs_concretized -> List of fail verbs concretized
+ * @Ret:    Tuple of win verbs translated and fail verbs translated
+ */
+tuple[list[VerbAnnotation], list[VerbAnnotation]] translate(GenerationModule \module, list[list[str]] win_verbs_concretized, list[list[str]] fail_verbs_concretized) {
+    list[VerbAnnotation] win_verbs_translated = translate(\module, win_verbs_concretized);
+    list[VerbAnnotation] fail_verbs_translated = translate(\module, fail_verbs_concretized);
+    return <win_verbs_translated, fail_verbs_translated>;
+} 
+
+/*
+ * @Name:   translate
+ * @Desc:   Function that translates a complete chunk. It translates each 
+ *          subchunk individually keeping in mind which verbs the previous and 
+ *          next subchunk use
  * @Param:  \module           -> Generation module of the chunk
  *          verbs_concretized -> List of verbs concretized
  * @Ret:    List of verbs translated

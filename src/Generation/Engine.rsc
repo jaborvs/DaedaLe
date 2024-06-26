@@ -112,51 +112,61 @@ Level generate_level(GenerationEngine engine, str level_name, GenerationLevel ge
  * @Ret:    Generated chunk object
  */
 tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, GenerationChunk chunk, Coords entry) {
-    tuple[list[list[str]] verbs, map[int,Coords] position_current] win_concretized  = concretize_win(engine.modules[chunk.\module], chunk.win_verbs, entry, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
-    tuple[list[list[str]] verbs, map[int,Coords] position_current] fail_concretized = concretize_fail(engine.modules[chunk.\module], chunk.fail_verbs, entry, chunk.win_verbs, win_concretized.verbs, win_concretized.position_current);
+    Chunk win_chunk_generated = chunk_empty();
+    Chunk fail_chunk_generated = chunk_empty();
+    Chunk chunk_generated = chunk_empty();
 
-    Coords exit     = win_concretized.position_current[size(win_concretized.verbs)-1];
-    Coords dead_end = (size(fail_concretized.verbs)-1 in fail_concretized.position_current) ? fail_concretized.position_current[size(fail_concretized.verbs)-1] : <-1,-1>;
+    tuple[
+        tuple[list[list[str]] verbs, Coords exit]     win,
+        tuple[list[list[str]] verbs, Coords dead_end] \fail
+    ] verbs_concretized = concretize(engine.modules[chunk.\module], chunk, entry, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
 
-    list[VerbAnnotation] win_verbs_translated  = translate(engine.modules[chunk.\module], win_concretized.verbs);
-    list[VerbAnnotation] fail_verbs_translated = translate(engine.modules[chunk.\module], fail_concretized.verbs);
+    tuple[
+        list[VerbAnnotation] win,
+        list[VerbAnnotation] \fail
+    ] verbs_translated = translate(engine.modules[chunk.\module], verbs_concretized.win.verbs, verbs_concretized.\fail.verbs);
 
-    Chunk win_chunk_generated = chunk_init(chunk.name, <engine.config["chunk_size"].width, engine.config["chunk_size"].height>);
-    win_chunk_generated.objects[engine.config["chunk_size"].width * entry.y + entry.x]     = "ph1";
-    win_chunk_generated.objects[engine.config["chunk_size"].width * (entry.y+1) + entry.x] = "#";
-    win_chunk_generated = apply_generation_rules(engine, engine.modules[chunk.\module], win_verbs_translated, win_chunk_generated);
+    win_chunk_generated = generate_chunk_partial(engine, chunk, entry, verbs_translated.win, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+    fail_chunk_generated = generate_chunk_partial(engine, chunk, entry, verbs_translated.\fail, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+    chunk_generated = apply_merge(chunk.name, win_chunk_generated, fail_chunk_generated);
+    chunk_generated = apply_blanketize(engine, chunk_generated);
 
-    Chunk fail_chunk_generated = chunk_init(chunk.name, <engine.config["chunk_size"].width, engine.config["chunk_size"].height>);
-    fail_chunk_generated.objects[engine.config["chunk_size"].width * entry.y + entry.x]     = "ph1";
-    fail_chunk_generated.objects[engine.config["chunk_size"].width * (entry.y+1) + entry.x] = "#";
-    fail_chunk_generated = apply_generation_rules(engine, engine.modules[chunk.\module], fail_verbs_translated, fail_chunk_generated);
-
-    Chunk chunk_generated = apply_merge(chunk.name, win_chunk_generated, fail_chunk_generated);
     println(chunk_to_string(chunk_generated));
     println();
 
-    return <chunk_generated, exit>;
+    return <chunk_generated, verbs_concretized.win.exit>;
+}
+
+/*
+ * @Name:   generate_chunk_partial
+ * @Desc:   Function that generates a chunk. It is called partial cause the result
+ *          will later be merged with another chunk.
+ * @Params: engine           -> Generation engine
+ *          chunk            -> Generation chunk
+ *          entry            -> Entry coords to the chunk
+ *          verbs_translated -> List of verbs to apply to generate the chunk
+ *          width            -> Width of the chunk
+ *          height           -> Height of the chunk
+ * @Ret:    Chunk generated
+ */
+Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk, Coords entry, list[VerbAnnotation] verbs_translated, int width, int height) {
+    Chunk chunk_generated = chunk_empty();
+
+    if (verbs_translated == []) return chunk_generated;
+
+    chunk_generated = chunk_init(chunk.name, <width, height>);
+    chunk_generated.objects[width * entry.y + entry.x]     = "ph1";
+    chunk_generated.objects[width * (entry.y+1) + entry.x] = "#";
+    chunk_generated = apply_generation_rules(engine, engine.modules[chunk.\module], chunk_generated, verbs_translated);
+    
+    return chunk_generated;
 }
 
 /******************************************************************************/
 // --- Private Apply Functions -------------------------------------------------
 
-
-Chunk apply_merge(str name, Chunk win_chunk_generated, Chunk fail_chunk_generated) {
-    list[str] objects_merged = [];
-
-    for (int i <- [0..size(win_chunk_generated.objects)]) {
-        if      (win_chunk_generated.objects[i] != "." && fail_chunk_generated.objects[i] == ".") objects_merged += [win_chunk_generated.objects[i]];
-        else if (win_chunk_generated.objects[i] == "." && fail_chunk_generated.objects[i] != ".") objects_merged += [fail_chunk_generated.objects[i]];
-        else if (win_chunk_generated.objects[i] != "." && fail_chunk_generated.objects[i] != ".") objects_merged += [win_chunk_generated.objects[i]];
-        else                                                                                      objects_merged += [win_chunk_generated.objects[i]];
-    }
-
-    return chunk(name, win_chunk_generated.size, objects_merged);
-}
-
 /*
- * @Name:   generate_chunk
+ * @Name:   apply_generation_rules
  * @Desc:   Function that applies the generation rules associated to each of the 
  *          verbs
  * @Params: engine  -> Generation engine
@@ -165,7 +175,7 @@ Chunk apply_merge(str name, Chunk win_chunk_generated, Chunk fail_chunk_generate
  *          chunk   -> chunk to generate
  * @Ret:    Generated chunk object
  */
-Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, list[VerbAnnotation] verbs, Chunk chunk) {
+Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, Chunk chunk, list[VerbAnnotation] verbs) {
     for (VerbAnnotation verb <- verbs[0..(size(verbs))]) {
         GenerationRule rule = \module.generation_rules[verb];
         GenerationPattern left = engine.patterns[rule.left];
@@ -212,7 +222,28 @@ Chunk apply_blanketize(GenerationEngine engine, Chunk chunk) {
         if (chunk.objects[i] notin engine.config["objects_permanent"].objects) chunk.objects[i] = ".";
     }
 
-    
-
     return chunk;
+}
+
+/*
+ * @Name:   apply_merge
+ * @Desc:   Function that merges two chunks
+ * @Params: name                 -> Name of the chunk
+ *          win_chunk_generated  -> Chunk containing the win playtrace
+ *          fail_chunk_generated -> Chunk containing the fail playtrace
+ * @Ret:    Merged chunk object
+ */
+Chunk apply_merge(str name, Chunk win_chunk_generated, Chunk fail_chunk_generated) {
+    list[str] objects_merged = [];
+
+    if (fail_chunk_generated is chunk_empty) return win_chunk_generated;
+
+    for (int i <- [0..size(win_chunk_generated.objects)]) {
+        if      (win_chunk_generated.objects[i] != "." && fail_chunk_generated.objects[i] == ".") objects_merged += [win_chunk_generated.objects[i]];
+        else if (win_chunk_generated.objects[i] == "." && fail_chunk_generated.objects[i] != ".") objects_merged += [fail_chunk_generated.objects[i]];
+        else if (win_chunk_generated.objects[i] != "." && fail_chunk_generated.objects[i] != ".") objects_merged += [win_chunk_generated.objects[i]];
+        else                                                                                      objects_merged += [win_chunk_generated.objects[i]];
+    }
+
+    return chunk(name, win_chunk_generated.size, objects_merged);
 }
