@@ -76,7 +76,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .puzzlescript-game {
-    width: 100%; /* La anchura se ajustará automáticamente */
     height: 100%; /* La altura se ajusta al 100% del contenedor */
     object-fit: cover; /* La imagen se recorta para llenar el contenedor sin distorsionarse */
     image-rendering: pixelated

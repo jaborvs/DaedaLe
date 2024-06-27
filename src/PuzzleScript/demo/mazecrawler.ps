@@ -1,0 +1,77 @@
+title Maze Crawler
+author Borja Velasco
+homepage https://github.com/jaborvs/DaedaLe
+
+
+========
+OBJECTS
+========
+
+Background .
+white
+
+Player P
+white blue
+00000
+01110
+01110
+01110
+00000
+
+Wall #
+black
+
+Exit E
+white red
+00000
+01110
+01110
+01110
+00000
+
+=======
+LEGEND
+=======
+
+=======
+SOUNDS
+=======
+
+================
+COLLISIONLAYERS
+================
+Background
+Exit
+Player, Wall
+
+======
+RULES
+======
+
+[ > Player | Wall ] -> [Player | Wall]
+
+==============
+WINCONDITIONS
+==============
+
+some player on exit
+
+=======
+LEVELS
+=======
+
+message level 1
+
+P....#....
+####.#.##.
+.....#.#..
+.###...#.#
+.#.#.###..
+...###...#
+####.#.###
+.#.#......
+.#...#####
+...#.....E
+
+
+
