@@ -2,7 +2,7 @@
 CONFIGURATION
 =============
 
-chunk_size = 15x15
+chunk_size = 8x8
 objects_permanent = F
 
 ========
@@ -70,24 +70,28 @@ PlayerEat_Default_Up_End
 P
 X
 
+PlayerEat_End_End
+F
+
 =======
 MODULES
 =======
 
 Module1
-[PlayerEat_First_Right_Start]   -> [PlayerEat_First_Right_End]      (-- verb Eat(first,   right, 1, <none, Eat(default, right)>) )
+[PlayerEat_First_Right_Start]   -> [PlayerEat_First_Right_End]      (-- verb Eat(first,   right, 1, <none,                Eat(default, right)>) )
 [PlayerEat_Default_Right_Start] -> [PlayerEat_Default_Right_End]    (-- verb Eat(default, right, 1) )
-[PlayerEat_First_Down_Start]    -> [PlayerEat_First_Down_End]       (-- verb Eat(first,   down,  1, <none, Eat(default, down) >) )
+[PlayerEat_First_Down_Start]    -> [PlayerEat_First_Down_End]       (-- verb Eat(first,   down,  1, <none,                Eat(default, down) >) )
 [PlayerEat_Default_Down_Start]  -> [PlayerEat_Default_Down_End]     (-- verb Eat(default, down,  1) )
-[PlayerEat_First_Up_Start]      -> [PlayerEat_First_Up_End]         (-- verb Eat(first,   up,    1, <none, Eat(default, up)   >) )
+[PlayerEat_First_Up_Start]      -> [PlayerEat_First_Up_End]         (-- verb Eat(first,   up,    1, <none,                Eat(default, up)   >) )
 [PlayerEat_Default_Up_Start]    -> [PlayerEat_Default_Up_End]       (-- verb Eat(default, up,    1) )
+[Player_Idle]                   -> [PlayerEat_End_End]           (-- verb Eat(end,     none,  1) )
 
 ============
 LEVEL DRAFTS
 ============
 
 Level1
-W:[Eat(_, right)+, Eat(_, up)+, Eat(_, right)]                      (-- chunk Chunk1(Module1) )
+W:[Eat(_, right)+, Eat(_, up)+, Eat(_, right)+, Eat(end, none)]   F:[Eat(_,right)+, Eat(_,down), Eat(_,end)]                    (-- chunk Chunk1(Module1) )
 
 
 

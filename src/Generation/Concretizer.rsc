@@ -261,7 +261,7 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ini
         str verb_name = verbs_abs[i].verb;
         str verb_specification = verbs_abs[i].specification;
         str verb_modifier = verbs_abs[i].modifier;
-        str verb_direction = (verbs_abs[i].direction != "") ? verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification).direction;
+        str verb_direction = (verbs_abs[i].direction != "") ? verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
 
         list[GenerationVerbConcretized] basket = [];
         if (verb_modifier == "+" || verb_modifier == "") {
@@ -299,7 +299,7 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ext
         str verb_name = verbs_abs[i].verb;
         str verb_specification = verbs_abs[i].specification;
         str verb_modifier = verbs_abs[i].modifier;
-        str verb_direction = (verbs_abs[i].direction != "") ? verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification).direction;
+        str verb_direction = (verbs_abs[i].direction != "") ? verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
 
         if(verb_modifier == "" 
            || (verb_modifier == "?" && size(verbs_concretized[i])== 1)) continue; 
@@ -325,7 +325,7 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ext
 
 bool concretize_contains_end(GenerationModule \module, list[GenerationVerbExpression] verbs_abs) {
     for (GenerationVerbExpression v <- verbs_abs) {
-        VerbAnnotation verb = generation_module_get_verb(\module, v.verb, "end");
+        VerbAnnotation verb = generation_module_get_verb(\module, v.verb, "end", "_");
         if (!(verb is verb_annotation_empty)) return true;
     }
 
@@ -417,7 +417,7 @@ tuple[list[list[GenerationVerbConcretized]], map[int, Coords]] concretize_fail_n
     for (int i <- [0..size(fail_verbs_abs)]) {
         str verb_name = fail_verbs_abs[i].verb;
         str verb_specification = fail_verbs_abs[i].specification;
-        str verb_direction = (fail_verbs_abs[i].direction != "") ? fail_verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification).direction;
+        str verb_direction = (fail_verbs_abs[i].direction != "") ? fail_verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
         str verb_modifier = fail_verbs_abs[i].modifier;
 
         if (verb_modifier != "") exception_playtraces_fail_non_specific_verb(verb_name, verb_modifier);

@@ -165,11 +165,11 @@ str _match_generate_function_definition(tuple[int,int] chunk_size, Coords entry,
       'Chunk (Chunk c) 
       '{
       '    for(list[str] pattern: <_match_generate_pattern_left(left)> := c.objects) {
-      '        if (<_match_generate_mid_condition(chunk_size, entry, verb, left)>) {
+      '        <if (size(left.objects) > 1 || verb.name == "enter") {>if (<_match_generate_mid_condition(chunk_size, entry, verb, left)>) { <}>
       '            c.objects = visit(c.objects) {
       '                case list[str] p:pattern =\> <_match_generate_pattern_right(right)>
       '            };
-      '        }
+      '        <if (size(left.objects) > 1 || verb.name == "enter") {>}<}>
       '    }
       '    return c;
       '};"
@@ -177,7 +177,7 @@ str _match_generate_function_definition(tuple[int,int] chunk_size, Coords entry,
     ;
 
 str _match_generate_mid_condition(tuple[int width, int height] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern pattern) 
-    = "<if(verb.name == "enter"){>size(top) == <(chunk_size.width * entry.y + entry.x)> && <}><for(int i <- [0..size(pattern.objects)-1]){>size(mid_<i+1>) == <chunk_size.width - size(pattern.objects[0])><if(i != size(pattern.objects)-2){> && <}><}>"
+    = "<if(verb.name == "enter"){>size(top) == <(chunk_size.width * entry.y + entry.x)><if(size(pattern.objects) > 1){> && <}><}><for(int i <- [0..size(pattern.objects)-1]){>size(mid_<i+1>) == <chunk_size.width - size(pattern.objects[0])><if(i != size(pattern.objects)-2){> && <}><}>"
     ;
 
 str _match_generate_pattern(GenerationPattern pattern, str side)

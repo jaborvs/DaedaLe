@@ -113,8 +113,8 @@ tuple[tuple[str,str,str], tuple[str,str,str]] compile_verb_annotation_dependenci
 tuple[str,str,str] compile_verb_annotation_dependency(str name, list[str] args) {
     tuple[str name, str specification, str direction] dependency = <"","","">;
  
-    if      (size(args) == 0) dependency = <name, "", "">;
-    else if (size(args) == 1) dependency = <name, args[0], "">;
+    if      (size(args) == 0) dependency = <name, "_", "_">;
+    else if (size(args) == 1) dependency = <name, args[0], "_">;
     else if (size(args) == 2) dependency = <name, args[0], args[1]>;
     else                      exception_verb_annotation_dependency_invalid_args();
 

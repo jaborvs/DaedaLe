@@ -35,6 +35,11 @@ VerbAnnotation exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"no
 /******************************************************************************/
 // --- Public function defines -------------------------------------------------
 
+bool verb_is_end(VerbAnnotation verb) {
+    return (verb.specification == "end");
+}
+
+
 /*
  * @Name:   verb_annotation_is_before
  * @Desc:   Function that checks if a verb is an after verb. We consider a verb a 

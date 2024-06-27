@@ -205,9 +205,12 @@ Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, Generat
     str program = "";
 
     program = match_generate_program(chunk, entry, verb, left, right);
+    println(program);
     if(result(Chunk chunk_rewritten) := eval(program)) {
         chunk = chunk_rewritten;
     }
+
+    println(chunk_to_string(chunk));
 
     return chunk;
 }
