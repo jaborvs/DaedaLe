@@ -91,7 +91,7 @@ LEVEL DRAFTS
 ============
 
 Level1
-W:[Eat(_, right)+, Eat(_, up)+, Eat(_, right)+, Eat(end, none)]   F:[Eat(_,right)+, Eat(_,down), Eat(_,end)]                    (-- chunk Chunk1(Module1) )
+W:[Eat(_, right)+, Eat(_, up)+, Eat(_, right)+, Eat(end, none)]   F:[Eat(_,right)+, Eat(_,down), Eat(end, none)]                    (-- chunk Chunk1(Module1) )
 
 
 

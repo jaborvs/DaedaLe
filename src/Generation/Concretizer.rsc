@@ -439,7 +439,12 @@ tuple[list[list[GenerationVerbConcretized]], map[int, Coords]] concretize_fail_n
  */
 int concretize_fail_get_subplaytrace_index(list[GenerationVerbExpression] fail_verbs_abs, list[GenerationVerbExpression] win_verbs_abs) {
     for (int i <- [0..size(win_verbs_abs)]) {
-        if(win_verbs_abs[i].verb != fail_verbs_abs[i].verb) return i;
+        if(win_verbs_abs[i].verb != fail_verbs_abs[i].verb
+           || (win_verbs_abs[i].verb == fail_verbs_abs[i].verb 
+               && win_verbs_abs[i].specification != fail_verbs_abs[i].specification)
+           || (win_verbs_abs[i].verb == fail_verbs_abs[i].verb 
+               && win_verbs_abs[i].specification == fail_verbs_abs[i].specification
+               && win_verbs_abs[i].direction != fail_verbs_abs[i].direction)) return i;
     }
     return -1;
 }
