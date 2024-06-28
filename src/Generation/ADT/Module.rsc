@@ -115,10 +115,10 @@ VerbAnnotation generation_module_get_verb(GenerationModule \module, str verb_nam
  *          verb_prev_specification    -> Specification of the previous verb
  * @Ret:    Verb
  */
-VerbAnnotation generation_module_get_verb_after(GenerationModule \module, GenerationVerbConcretized verb_current, GenerationVerbConcretized verb_prev) {
+VerbAnnotation generation_module_get_verb_after(GenerationModule \module, GenerationVerbConcretized verb_current, GenerationVerbConcretized verb_prev, bool chunk_end) {
     for (VerbAnnotation v <- \module.generation_rules.verbs) {
         if (v.name == verb_current.name 
-            && !(verb_is_end(v))
+            && (v.direction != "end" || chunk_end)
             && v.dependencies.prev.name == verb_prev.name
             && (v.dependencies.prev.specification == verb_prev.specification || v.dependencies.prev.specification == "_")
             && (v.dependencies.prev.direction == verb_prev.direction         || v.dependencies.prev.direction == "_")) return v;

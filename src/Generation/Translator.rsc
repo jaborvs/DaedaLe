@@ -58,10 +58,11 @@ list[VerbAnnotation] translate(GenerationModule \module, list[list[GenerationVer
         tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res = <[],size(subchunk)>;
 
         GenerationVerbConcretized verb_prev = translate_get_verb_previous(verbs_translated);
-        GenerationVerbConcretized verb_next = translate_get_verb_next(verbs_concretized, i);
         GenerationVerbConcretized verb_current = translate_get_verb_current(subchunk);
+        GenerationVerbConcretized verb_next = translate_get_verb_next(verbs_concretized, i);
+        bool chunk_end = (verb_next.name == "undefined");
 
-        VerbAnnotation verb_after = generation_module_get_verb_after(\module, verb_current, verb_prev);
+        VerbAnnotation verb_after = generation_module_get_verb_after(\module, verb_current, verb_prev, chunk_end);
         tuple[VerbAnnotation ind, VerbAnnotation seq] verb_mid = generation_module_get_verb_mid(\module, verb_current);
         VerbAnnotation verb_before = generation_module_get_verb_before(\module, verb_current, verb_next);
         bool verb_before_exists = !(verb_before is verb_annotation_empty);
@@ -106,10 +107,10 @@ tuple[list[VerbAnnotation],int] translate_single(tuple[list[VerbAnnotation] verb
  * @Ret:    Updated res
  */
 tuple[list[VerbAnnotation],int] translate_loop(GenerationModule \module, tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res, tuple[VerbAnnotation ind, VerbAnnotation seq] verb, bool verb_before_exists) {
-    if      (verb.ind is verb_annotation_empty    
-             && !(verb.seq is verb_annotation_empty))                  res = translate_loop_seq(\module, res, verb.seq, verb_before_exists);
+    if (verb.ind is verb_annotation_empty    
+             && !(verb.seq is verb_annotation_empty))                         res = translate_loop_seq(\module, res, verb.seq, verb_before_exists);
     else if (!(verb.ind is verb_annotation_empty) 
-             &&   verb.seq is verb_annotation_empty)                   res = translate_loop_ind(res, verb.ind, verb_before_exists);
+             &&   verb.seq is verb_annotation_empty)                          res = translate_loop_ind(res, verb.ind, verb_before_exists);
     else if (!(verb.ind is verb_annotation_empty) 
              && !(verb.seq is verb_annotation_empty) 
              && generation_module_verb_depends(\module, verb.seq, verb.ind))  res = translate_loop_seq_ind(\module, res, verb, verb_before_exists);

@@ -133,9 +133,6 @@ tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, Coords level_chunk_
 
     if (level_chunk_coords == <0,0>) chunk_generated = apply_place_player(chunk_generated, entry);
 
-    println(chunk_to_string(chunk_generated));
-    println();
-
     return <chunk_generated, verbs_concretized.win.exit>;
 }
 
@@ -186,9 +183,6 @@ Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, 
         chunk = apply_generation_rule(verb, left, right, chunk, entry);
     }
 
-    println(chunk_to_string(chunk));
-    println();
-
     return chunk;
 }
 
@@ -205,12 +199,9 @@ Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, Generat
     str program = "";
 
     program = match_generate_program(chunk, entry, verb, left, right);
-    println(program);
     if(result(Chunk chunk_rewritten) := eval(program)) {
         chunk = chunk_rewritten;
     }
-
-    println(chunk_to_string(chunk));
 
     return chunk;
 }

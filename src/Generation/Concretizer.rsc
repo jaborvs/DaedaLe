@@ -325,7 +325,8 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ext
 
 bool concretize_contains_end(GenerationModule \module, list[GenerationVerbExpression] verbs_abs) {
     for (GenerationVerbExpression v <- verbs_abs) {
-        VerbAnnotation verb = generation_module_get_verb(\module, v.verb, "end", "_");
+
+        VerbAnnotation verb = generation_module_get_verb(\module, v.verb, v.specification, "end");
         if (!(verb is verb_annotation_empty)) return true;
     }
 

@@ -55,10 +55,8 @@ void main() {
         );
 
     str program = match_generate_program(c, <0,2>, v, left, right);
-    println(program);
     if(result(Chunk c_r) := eval(program)) {
         c = c_r;
-        println(chunk_to_string(c));
     }
 }
 
