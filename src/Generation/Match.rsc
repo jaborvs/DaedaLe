@@ -28,7 +28,7 @@ void main() {
         "default",
         "none",
         0,
-        <<"none","">,<"none","">>
+        <<"none","undefined","undefined">,<"none","undefined","undefined">>
         );
 
     GenerationPattern left = generation_pattern([
@@ -90,7 +90,7 @@ str match_generate_program(Chunk chunk, Coords entry, VerbAnnotation verb, Gener
 // --- Private module section functions ----------------------------------------
 
 str _match_generate_module_section(VerbAnnotation verb) 
-    = "//module Generation::<string_capitalize(verb.name)><string_capitalize(verb.specification)>"
+    = "//module Generation::<string_capitalize(verb.name)><string_capitalize(verb.specification)><string_capitalize(verb.direction)>"
     + _match_generate_line_break(2)
     ;
 
@@ -129,7 +129,8 @@ str _match_generate_data_structures_section()
       '        tuple[tuple[str name, str specification] prev, tuple[str name, str specification] next] dependencies
       '        )
       '    | verb_annotation_empty()
-      '    ;"
+      '    ;
+      '\n"
     ;
 
 /******************************************************************************/
@@ -147,7 +148,7 @@ str _match_generate_function(tuple[int,int] chunk_size, Coords entry, VerbAnnota
     ;
 
 str _match_generate_function_name(VerbAnnotation verb)
-    = (verb.specification == "") ? "<verb.name>" : "<verb.name>_<verb.specification>"
+    = (verb.specification == "") ? "<verb.name>_<verb.direction>" : "<verb.name>_<verb.specification>_<verb.direction>"
     ;
 
 str _match_generate_function_documentation(VerbAnnotation verb)

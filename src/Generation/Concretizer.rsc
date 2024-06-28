@@ -261,7 +261,7 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ini
         str verb_name = verbs_abs[i].verb;
         str verb_specification = verbs_abs[i].specification;
         str verb_modifier = verbs_abs[i].modifier;
-        str verb_direction = (verbs_abs[i].direction != "") ? verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
+        str verb_direction = (verbs_abs[i].direction != "_") ? verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
 
         list[GenerationVerbConcretized] basket = [];
         if (verb_modifier == "+" || verb_modifier == "") {
@@ -299,7 +299,7 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ext
         str verb_name = verbs_abs[i].verb;
         str verb_specification = verbs_abs[i].specification;
         str verb_modifier = verbs_abs[i].modifier;
-        str verb_direction = (verbs_abs[i].direction != "") ? verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
+        str verb_direction = (verbs_abs[i].direction != "_") ? verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
 
         if(verb_modifier == "" 
            || (verb_modifier == "?" && size(verbs_concretized[i])== 1)) continue; 

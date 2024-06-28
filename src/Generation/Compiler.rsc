@@ -335,9 +335,11 @@ GenerationVerbExpression papyrus_compile_verb_expression(VerbExpressionData verb
 
     if      (size(verb_dt.args) == 0) {
         specification = "_";
+        direction = "_";
     }
     else if (size(verb_dt.args) == 1) {
         specification = verb_dt.args[0].arg;
+        direction = "_";
     }
     else if (size(verb_dt.args) == 2) {
         specification = verb_dt.args[0].arg;

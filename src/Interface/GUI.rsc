@@ -6,8 +6,8 @@
  */
 module Interface::GUI
 
-/*****************************************************************************/
-// --- General modules imports ------------------------------------------------
+/******************************************************************************/
+// --- General modules imports -------------------------------------------------
 import salix::HTML;
 import salix::Core;
 import salix::App;
@@ -15,22 +15,24 @@ import salix::Index;
 import salix::ace::Editor;
 import salix::Node;
 
-import util::ShellExec;
-import lang::json::IO;
-
 import String;
 import List;
 import Type;
 import Set;
 import IO;
 
-// --- Own modules imports ----------------------------------------------------
+/******************************************************************************/
+// --- Own modules imports -----------------------------------------------------
 import Utils;
+
+import Interface::Draw;
+
 import PuzzleScript::Utils;
 import PuzzleScript::AST;
 import PuzzleScript::Load;
 import PuzzleScript::Compiler;
 import PuzzleScript::Engine;
+
 import Generation::Load;
 import Generation::AST;
 import Generation::Compiler;
@@ -411,86 +413,4 @@ void view_console(Model model) {
             p("<executed.output>");
         }
     });
-}
-
-/******************************************************************************/
-// --- Public Json Conversion Functions ----------------------------------------
-
-/*
- *  @Name:  level_to_json
- *  @Desc:  Converts a pixel to JSON format for the level GUI representation
- *  @Param: engine -> Engine of the application
- *          index  -> Index of the model
- *  @Ret:   Tuple containing the coordinates in json, the level size in json 
- *          and the index in json
- */
-tuple[str,str,str] level_to_json(Engine engine, int index) {
-    tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
-    str json = "[";
-    tmp = 0;
-
-    for (int i <- [0..level_size.height]) {
-        for (int j <- [0..level_size.width]) {
-            if (!(engine.current_level.objects[<i,j>]?) 
-                || isEmpty(engine.current_level.objects[<i,j>])) continue;
-
-            for (Object object <- engine.current_level.objects[<i,j>]) {
-                json += object_to_json(engine.objects[object.current_name], i, j);                
-            }
-        }
-    }
-
-    json = json[0..size(json) - 1];
-    json += "]";
-
-    return <json, "{\"width\": <level_size.width>, \"height\": <level_size.height>}", "{\"index\": <index>}">;
-}
-
-str object_to_json(ObjectData object, int i, int j) {
-    str json = "";
-
-    for (int k <- [0..5]) {
-        for (int l <- [0..5]) {
-            json += "{";
-            json += "\"x\": <j * 5 + l>,";
-            json += "\"y\": <i * 5 + k>,";
-
-            if(isEmpty(object.sprite)) {
-                json += "\"c\": \"<COLORS[toLowerCase(object.colors[0])]>\"";
-            }
-            else {
-                Pixel pix = object.sprite[k][l];
-                if (pix.color_number == ".") {
-                    json += "\"c\": \"<COLORS["transparent"]>\"";
-                }
-                else if (COLORS[object.colors[toInt(pix.color_number)]]?) {
-                    json += "\"c\": \"<COLORS[object.colors[toInt(pix.color_number)]]>\"";
-                }
-                else {
-                    json += "\"c\": \"#FFFFFF\"";
-                }
-            }
-            json += "},";
-        }
-    }
-
-    return json;
-}
-
-/******************************************************************************/
-// --- Drawing Functions ------------------------------------------------------
-
-/*
- * @Name:   draw
- * @Desc:   Function that draws a level
- * @Params: engine -> Engine
- *          index  -> Current Turn
- * @Ret:    void
- */
-void draw(Engine engine, int index) {
-    data_loc = |project://daedale/src/Interface/bin/data.dat|;
-
-    tuple[str, str, str] json_data = level_to_json(engine, index);
-    writeFile(data_loc, json_data[0]);
-    tmp = execWithCode("python3", workingDir=|project://daedale/src/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
 }

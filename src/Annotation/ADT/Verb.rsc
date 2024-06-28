@@ -6,6 +6,10 @@
 module Annotation::ADT::Verb
 
 /******************************************************************************/
+// --- Own modules imports -----------------------------------------------------
+import Utils;
+
+/******************************************************************************/
 // --- Data structure defines --------------------------------------------------
 
 /*
@@ -99,14 +103,4 @@ bool verb_annotation_is_inductive(VerbAnnotation verb) {
  * @Ret:    Stringified verb
  */
 str verb_annotation_to_string(VerbAnnotation verb)
-    = verb_annotation_to_string(verb.name, verb.specification);
-
-/*
- * @Name:   verb_annotation_to_string
- * @Desc:   Function that converts a verb to a string
- * @Param:  name          -> Name of the verb
- *          specification -> Specification of the verb
- * @Ret:    Stringified verb
- */
-str verb_annotation_to_string(str name, str specification)
-    = "<name>(<specification>)";
+    = "<string_capitalize(verb.name)>(<verb.specification>, <verb.direction>)";

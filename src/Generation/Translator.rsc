@@ -57,13 +57,13 @@ list[VerbAnnotation] translate(GenerationModule \module, list[list[GenerationVer
 
         tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res = <[],size(subchunk)>;
 
-        tuple[str name, str specification, str direction] verb_prev = translate_get_verb_previous(verbs_translated);
-        tuple[str name, str specification, str direction] verb_next = translate_get_verb_next(verbs_concretized, i);
+        GenerationVerbConcretized verb_prev = translate_get_verb_previous(verbs_translated);
+        GenerationVerbConcretized verb_next = translate_get_verb_next(verbs_concretized, i);
         GenerationVerbConcretized verb_current = translate_get_verb_current(subchunk);
 
-        VerbAnnotation verb_after = generation_module_get_verb_after(\module, verb_current.name, verb_prev.name, verb_prev.specification, verb_prev.direction);
+        VerbAnnotation verb_after = generation_module_get_verb_after(\module, verb_current, verb_prev);
         tuple[VerbAnnotation ind, VerbAnnotation seq] verb_mid = generation_module_get_verb_mid(\module, verb_current);
-        VerbAnnotation verb_before = generation_module_get_verb_before(\module, verb_current.name, verb_next.name, verb_next.specification, verb_next.direction);
+        VerbAnnotation verb_before = generation_module_get_verb_before(\module, verb_current, verb_next);
         bool verb_before_exists = !(verb_before is verb_annotation_empty);
 
         res = translate_single(res, verb_after);
@@ -240,11 +240,11 @@ tuple[list[VerbAnnotation],int] translate_loop_ind_seq(GenerationModule \module,
  * @Param:  verbs_translated -> List of verbs translated
  * @Ret:    Name, specification and direction of the last translated verb
  */
-tuple[str,str, str] translate_get_verb_previous(list[VerbAnnotation] verbs_translated) {
-    str name          = (verbs_translated != []) ? verbs_translated[-1].name : "";
-    str specification = (verbs_translated != []) ? verbs_translated[-1].specification : "";
-    str direction     = (verbs_translated != []) ? verbs_translated[-1].direction : "";
-    return <name, specification, direction>;
+GenerationVerbConcretized translate_get_verb_previous(list[VerbAnnotation] verbs_translated) {
+    str name          = (verbs_translated != []) ? verbs_translated[-1].name : "undefined";
+    str specification = (verbs_translated != []) ? verbs_translated[-1].specification : "undefined";
+    str direction     = (verbs_translated != []) ? verbs_translated[-1].direction : "undefined";
+    return generation_verb_concretized(name, specification, direction);
 }
 
 /*
@@ -254,11 +254,11 @@ tuple[str,str, str] translate_get_verb_previous(list[VerbAnnotation] verbs_trans
  *          index             -> Current index of the subhcunk to be translated
  * @Ret:    Tuple with name and specification of the next verb
  */
-tuple[str,str,str] translate_get_verb_next(list[list[GenerationVerbConcretized]] verbs_concretized, int index) {
-    str name          = (index+1 < size(verbs_concretized)) ? verbs_concretized[index+1][0].name : "";
-    str specification = (index+1 < size(verbs_concretized)) ? verbs_concretized[index+1][0].specification : "";
-    str direction     = (index+1 < size(verbs_concretized)) ? verbs_concretized[index+1][0].direction : "";
-    return <name, specification, direction>;
+GenerationVerbConcretized translate_get_verb_next(list[list[GenerationVerbConcretized]] verbs_concretized, int index) {
+    str name          = (index+1 < size(verbs_concretized)) ? verbs_concretized[index+1][0].name : "undefined";
+    str specification = (index+1 < size(verbs_concretized)) ? verbs_concretized[index+1][0].specification : "undefined";
+    str direction     = (index+1 < size(verbs_concretized)) ? verbs_concretized[index+1][0].direction : "undefined";
+    return generation_verb_concretized(name, specification, direction);
 }
 
 /*

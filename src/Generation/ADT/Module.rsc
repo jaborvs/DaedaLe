@@ -31,6 +31,14 @@ data GenerationModule
 /******************************************************************************/
 // --- Public functions --------------------------------------------------------
 
+/*
+ * @Name:   generation_module_verb_depends
+ * @Desc:   Function that checks if one verb depends of another
+ * @Param:  \module -> Module of the verb
+ *          verb1   -> Verb to check the dependency
+ *          verb2   -> Verb to check if the verb1 depends on
+ * @Ret:    Boolean
+ */
 bool generation_module_verb_depends(GenerationModule \module, VerbAnnotation verb1, VerbAnnotation verb2) {
     VerbAnnotation current = verb1;
 
@@ -107,13 +115,13 @@ VerbAnnotation generation_module_get_verb(GenerationModule \module, str verb_nam
  *          verb_prev_specification    -> Specification of the previous verb
  * @Ret:    Verb
  */
-VerbAnnotation generation_module_get_verb_after(GenerationModule \module, str verb_current_name, str verb_prev_name, str verb_prev_specification, str verb_prev_direction) {
+VerbAnnotation generation_module_get_verb_after(GenerationModule \module, GenerationVerbConcretized verb_current, GenerationVerbConcretized verb_prev) {
     for (VerbAnnotation v <- \module.generation_rules.verbs) {
-        if (v.name == verb_current_name 
+        if (v.name == verb_current.name 
             && !(verb_is_end(v))
-            && v.dependencies.prev.name == verb_prev_name
-            && (v.dependencies.prev.specification == verb_prev_specification || v.dependencies.prev.specification == "_")
-            && (v.dependencies.prev.direction == verb_prev_direction || v.dependencies.prev.direction == "_")) return v;
+            && v.dependencies.prev.name == verb_prev.name
+            && (v.dependencies.prev.specification == verb_prev.specification || v.dependencies.prev.specification == "_")
+            && (v.dependencies.prev.direction == verb_prev.direction         || v.dependencies.prev.direction == "_")) return v;
     }
 
     return verb_annotation_empty();
@@ -129,12 +137,12 @@ VerbAnnotation generation_module_get_verb_after(GenerationModule \module, str ve
  *          verb_next_specification    -> Specification of the next verb
  * @Ret:    Verb
  */
-VerbAnnotation generation_module_get_verb_before(GenerationModule \module, str verb_current_name, str verb_next_name, str verb_next_specification, str verb_next_direction) {
+VerbAnnotation generation_module_get_verb_before(GenerationModule \module, GenerationVerbConcretized verb_current, GenerationVerbConcretized verb_next) {
     for (VerbAnnotation v <- \module.generation_rules.verbs) {
-        if (v.name == verb_current_name 
-            && v.dependencies.next.name == verb_next_name
-            && (v.dependencies.next.specification == verb_next_specification || v.dependencies.next.specification == "_")
-            && (v.dependencies.next.direction == verb_next_direction || v.dependencies.next.direction == "_")) return v;
+        if (v.name == verb_current.name 
+            && v.dependencies.next.name == verb_next.name
+            && (v.dependencies.next.specification == verb_next.specification || v.dependencies.next.specification == "_")
+            && (v.dependencies.next.direction == verb_next.direction || v.dependencies.next.direction == "_")) return v;
     }
 
     return verb_annotation_empty();
