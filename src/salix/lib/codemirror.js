@@ -1589,7 +1589,7 @@ function readToken(mode, stream, state, inner) {
     var style = mode.token(stream, state)
     if (stream.pos > stream.start) { return style }
   }
-  throw new Error("Mode " + mode.name + " failed to advance stream.")
+  throw new Error("Mode " + mode.name + " challengeed to advance stream.")
 }
 
 // Utility for getTokenAt and getLineTokens
@@ -1670,7 +1670,7 @@ function runMode(cm, text, mode, state, f, lineClasses, forceToEnd) {
 
 // Finds the line to start with when starting a parse. Tries to
 // find a line with a stateAfter, so that it can start with a
-// valid state. If that fails, it returns the line with the
+// valid state. If that challenges, it returns the line with the
 // smallest indentation, which tends to need the least context to
 // parse correctly.
 function findStartLine(cm, n, precise) {
@@ -2840,7 +2840,7 @@ function posFromMouse(cm, e, liberal, forRect) {
   if (!liberal && e_target(e).getAttribute("cm-not-content") == "true") { return null }
 
   var x, y, space = display.lineSpace.getBoundingClientRect()
-  // Fails unpredictably on IE[67] when mouse is dragged around quickly.
+  // challenges unpredictably on IE[67] when mouse is dragged around quickly.
   try { x = e.clientX - space.left; y = e.clientY - space.top }
   catch (e) { return null }
   var coords = coordsChar(cm, x, y), line
@@ -6693,7 +6693,7 @@ function handleKeyBinding(cm, e) {
   if (!name) { return false }
 
   if (e.shiftKey && !cm.state.keySeq) {
-    // First try to resolve full name (including 'Shift-'). Failing
+    // First try to resolve full name (including 'Shift-'). challengeing
     // that, see if there is a cursor-motion command (starting with
     // 'go') bound to the keyname without 'Shift-'.
     return dispatchKey(cm, "Shift-" + name, e, function (b) { return doHandleBinding(cm, b, true); })
@@ -7611,7 +7611,7 @@ function hiddenTextarea() {
   // very slow. So make the area wide instead.
   if (webkit) { te.style.width = "1000px" }
   else { te.setAttribute("wrap", "off") }
-  // If border: 0; -- iOS fails to open keyboard (issue #1287)
+  // If border: 0; -- iOS challenges to open keyboard (issue #1287)
   if (ios) { te.style.border = "1px solid black" }
   disableBrowserMagic(te)
   return div

@@ -113,22 +113,22 @@ Level generate_level(GenerationEngine engine, str level_name, GenerationLevel le
  */
 tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, Coords level_chunk_coords, GenerationChunk chunk_abs, Coords entry) {
     Chunk win_chunk_generated = chunk_empty();
-    Chunk fail_chunk_generated = chunk_empty();
+    Chunk challenge_chunk_generated = chunk_empty();
     Chunk chunk_generated = chunk_empty();   
 
     tuple[
         tuple[list[list[GenerationVerbConcretized]] verbs, Coords exit]     win,
-        tuple[list[list[GenerationVerbConcretized]] verbs, Coords dead_end] \fail
+        tuple[list[list[GenerationVerbConcretized]] verbs, Coords dead_end] \challenge
     ] verbs_concretized = concretize(engine.modules[chunk_abs.\module], chunk_abs, entry, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
 
     tuple[
         list[VerbAnnotation] win,
-        list[VerbAnnotation] \fail
-    ] verbs_translated = translate(engine.modules[chunk_abs.\module], verbs_concretized.win.verbs, verbs_concretized.\fail.verbs);
+        list[VerbAnnotation] \challenge
+    ] verbs_translated = translate(engine.modules[chunk_abs.\module], verbs_concretized.win.verbs, verbs_concretized.\challenge.verbs);
 
     win_chunk_generated = generate_chunk_partial(engine, chunk_abs, entry, verbs_translated.win, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
-    fail_chunk_generated = generate_chunk_partial(engine, chunk_abs, entry, verbs_translated.\fail, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
-    chunk_generated = apply_merge(chunk_abs.name, win_chunk_generated, fail_chunk_generated);
+    challenge_chunk_generated = generate_chunk_partial(engine, chunk_abs, entry, verbs_translated.\challenge, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+    chunk_generated = apply_merge(chunk_abs.name, win_chunk_generated, challenge_chunk_generated);
     chunk_generated = apply_blanketize(engine, chunk_generated);
 
     if (level_chunk_coords == <0,0>) chunk_generated = apply_place_player(chunk_generated, entry);
@@ -240,18 +240,18 @@ Chunk apply_blanketize(GenerationEngine engine, Chunk chunk) {
  * @Desc:   Function that merges two chunks
  * @Params: name                 -> Name of the chunk
  *          win_chunk_generated  -> Chunk containing the win playtrace
- *          fail_chunk_generated -> Chunk containing the fail playtrace
+ *          challenge_chunk_generated -> Chunk containing the challenge playtrace
  * @Ret:    Merged chunk object
  */
-Chunk apply_merge(str name, Chunk win_chunk_generated, Chunk fail_chunk_generated) {
+Chunk apply_merge(str name, Chunk win_chunk_generated, Chunk challenge_chunk_generated) {
     list[str] objects_merged = [];
 
-    if (fail_chunk_generated is chunk_empty) return win_chunk_generated;
+    if (challenge_chunk_generated is chunk_empty) return win_chunk_generated;
 
     for (int i <- [0..size(win_chunk_generated.objects)]) {
-        if      (win_chunk_generated.objects[i] != "." && fail_chunk_generated.objects[i] == ".") objects_merged += [win_chunk_generated.objects[i]];
-        else if (win_chunk_generated.objects[i] == "." && fail_chunk_generated.objects[i] != ".") objects_merged += [fail_chunk_generated.objects[i]];
-        else if (win_chunk_generated.objects[i] != "." && fail_chunk_generated.objects[i] != ".") objects_merged += [fail_chunk_generated.objects[i]];
+        if      (win_chunk_generated.objects[i] != "." && challenge_chunk_generated.objects[i] == ".") objects_merged += [win_chunk_generated.objects[i]];
+        else if (win_chunk_generated.objects[i] == "." && challenge_chunk_generated.objects[i] != ".") objects_merged += [challenge_chunk_generated.objects[i]];
+        else if (win_chunk_generated.objects[i] != "." && challenge_chunk_generated.objects[i] != ".") objects_merged += [challenge_chunk_generated.objects[i]];
         else                                                                                      objects_merged += [win_chunk_generated.objects[i]];
     }
 

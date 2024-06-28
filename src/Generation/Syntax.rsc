@@ -113,15 +113,15 @@ syntax LevelDraftData
     ;
 
 syntax ChunkData
-    = chunk_data: WinPlaytraceData FailPlaytraceData? NEWLINE
+    = chunk_data: WinPlaytraceData ChallengePlaytraceData? NEWLINE
     ;
 
 syntax WinPlaytraceData
     = win_playtrace_data: 'W:[' {VerbExpressionData ','}+ ']'
     ;
 
-syntax FailPlaytraceData
-    = fail_playtrace_data:  'F:[' {VerbExpressionData ','}+ ']'
+syntax ChallengePlaytraceData
+    = challenge_playtrace_data:  'C:[' {VerbExpressionData ','}+ ']'
     ;
 
 syntax VerbExpressionData

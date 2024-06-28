@@ -75,10 +75,10 @@ void exception_verbs_translation_size_mismatch(VerbAnnotation verb, int subchunk
     throw "Exception Verbs: Size mismatch between verb <verb_full_name> of size <verb.size> and subchunk of size <subchunk_size>";
 }
 
-void exception_playtraces_fail_not_subplaytrace(){
-    throw "Exception Playtraces: The fail playtrace is not a subplaytrace of the win playtrace for any index";
+void exception_playtraces_challenge_not_subplaytrace(){
+    throw "Exception Playtraces: The challenge playtrace is not a subplaytrace of the win playtrace for any index";
 }
 
-void exception_playtraces_fail_non_specific_verb(str verb_name, str verb_modifier){
-    throw "Exception Playtraces: The the new subplaytrace of the fail playtrace contains a non-specific verb <verb_name><verb_modifier>";
+void exception_playtraces_challenge_non_specific_verb(str verb_name, str verb_modifier){
+    throw "Exception Playtraces: The the new subplaytrace of the challenge playtrace contains a non-specific verb <verb_name><verb_modifier>";
 }

@@ -237,6 +237,6 @@ LEVEL DRAFTS
 ============
 
 Level1
-W:[Crawl+, Climb, Climb+, Crawl+]       F:[Crawl+, Crawl, GetStuck]                         (-- chunk Chunk1(Module1) )
+W:[Crawl+, Climb, Climb+, Crawl+]       C:[Crawl+, Crawl, GetStuck]                         (-- chunk Chunk1(Module1) )
 W:[Crawl+, Eat]                                                                             (-- chunk Chunk2(Module1) )
 

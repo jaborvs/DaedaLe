@@ -29,13 +29,13 @@ import Annotation::ADT::Verb;
  *          next subchunk use
  * @Param:  \module                -> Generation module of the chunk
  *          win_verbs_concretized  -> List of win verbs concretized
- *          fail_verbs_concretized -> List of fail verbs concretized
- * @Ret:    Tuple of win verbs translated and fail verbs translated
+ *          challenge_verbs_concretized -> List of challenge verbs concretized
+ * @Ret:    Tuple of win verbs translated and challenge verbs translated
  */
-tuple[list[VerbAnnotation], list[VerbAnnotation]] translate(GenerationModule \module, list[list[GenerationVerbConcretized]] win_verbs_concretized, list[list[GenerationVerbConcretized]] fail_verbs_concretized) {
+tuple[list[VerbAnnotation], list[VerbAnnotation]] translate(GenerationModule \module, list[list[GenerationVerbConcretized]] win_verbs_concretized, list[list[GenerationVerbConcretized]] challenge_verbs_concretized) {
     list[VerbAnnotation] win_verbs_translated = translate(\module, win_verbs_concretized);
-    list[VerbAnnotation] fail_verbs_translated = translate(\module, fail_verbs_concretized);
-    return <win_verbs_translated, fail_verbs_translated>;
+    list[VerbAnnotation] challenge_verbs_translated = translate(\module, challenge_verbs_concretized);
+    return <win_verbs_translated, challenge_verbs_translated>;
 } 
 
 /*

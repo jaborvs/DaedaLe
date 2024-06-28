@@ -35,11 +35,11 @@ import Utils;
  *          entry   -> Entry coords to the chunk
  *          width   -> Width of the chunk
  *          height  -> Height of the chunk
- * @Ret:    Tuple with the winning and failing playtraces
+ * @Ret:    Tuple with the winning and challengeing playtraces
  */
 tuple[tuple[list[list[GenerationVerbConcretized]], Coords], tuple[list[list[GenerationVerbConcretized]], Coords]] concretize(GenerationModule \module, GenerationChunk chunk, Coords entry, int width, int height) {
     tuple[list[list[GenerationVerbConcretized]] verbs, map[int,Coords] position_current] win_concretized = <[], ()>;
-    tuple[list[list[GenerationVerbConcretized]] verbs, map[int,Coords] position_current] fail_concretized = <[], ()>;
+    tuple[list[list[GenerationVerbConcretized]] verbs, map[int,Coords] position_current] challenge_concretized = <[], ()>;
 
     win_concretized = concretize_win(
         \module, 
@@ -50,19 +50,19 @@ tuple[tuple[list[list[GenerationVerbConcretized]], Coords], tuple[list[list[Gene
         );
     Coords exit = win_concretized.position_current[size(win_concretized.verbs)-1];
 
-    fail_concretized = concretize_fail(
+    challenge_concretized = concretize_challenge(
         \module, 
-        chunk.fail_verbs, 
+        chunk.challenge_verbs, 
         entry, 
         chunk.win_verbs, 
         win_concretized.verbs, 
         win_concretized.position_current
         );
-    Coords dead_end = (size(fail_concretized.verbs)-1 in fail_concretized.position_current) ? fail_concretized.position_current[size(fail_concretized.verbs)-1] : <-1,-1>;
+    Coords dead_end = (size(challenge_concretized.verbs)-1 in challenge_concretized.position_current) ? challenge_concretized.position_current[size(challenge_concretized.verbs)-1] : <-1,-1>;
 
     return <
         <win_concretized.verbs, exit>,
-        <fail_concretized.verbs, dead_end>
+        <challenge_concretized.verbs, dead_end>
     >;
 }
 
@@ -333,15 +333,15 @@ bool concretize_contains_end(GenerationModule \module, list[GenerationVerbExpres
 }
 
 /******************************************************************************/
-// --- Public concretize fail functions ----------------------------------------
+// --- Public concretize challenge functions ----------------------------------------
 
 /*
- * @Name:   concretize_fail
- * @Desc:   Function that concretized the fail playtrace of a chunk. Intuitively
+ * @Name:   concretize_challenge
+ * @Desc:   Function that concretized the challenge playtrace of a chunk. Intuitively
  *          it copies a part of the winning playtrace and extends another part 
  *          that is new
  * @Params: \module -> Module of the chunk
- *          fail_verbs_abs -> Abstract list of failing verbs
+ *          challenge_verbs_abs -> Abstract list of challengeing verbs
  *          entry -> Entry coords to the chunk
  *          win_verbs_abs -> Abstract list of winning verbs
  *          win_verbs_concretized -> List of winning verbs concretized
@@ -349,102 +349,102 @@ bool concretize_contains_end(GenerationModule \module, list[GenerationVerbExpres
  * @Ret:    Tuple with the list of concretized verbs and the map of partial 
  *          current positions
  */
-tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_fail(GenerationModule \module, list[GenerationVerbExpression] fail_verbs_abs,  Coords entry, list[GenerationVerbExpression] win_verbs_abs, list[list[GenerationVerbConcretized]] win_verbs_concretized, map[int, Coords] win_position_current) {
+tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_challenge(GenerationModule \module, list[GenerationVerbExpression] challenge_verbs_abs,  Coords entry, list[GenerationVerbExpression] win_verbs_abs, list[list[GenerationVerbConcretized]] win_verbs_concretized, map[int, Coords] win_position_current) {
     tuple[list[list[GenerationVerbConcretized]] verbs_concretized, map[int, Coords] position_current] res = <[],()>;
-    list[GenerationVerbExpression] fail_verbs_abs_subpt = [];
-    list[GenerationVerbExpression] fail_verbs_abs_newpt = [];
+    list[GenerationVerbExpression] challenge_verbs_abs_subpt = [];
+    list[GenerationVerbExpression] challenge_verbs_abs_newpt = [];
     int newpt_index = -1;
 
-    if (fail_verbs_abs == []) return res;
+    if (challenge_verbs_abs == []) return res;
 
-    newpt_index = concretize_fail_get_subplaytrace_index(fail_verbs_abs, win_verbs_abs);
-    if (newpt_index == -1) exception_playtraces_fail_not_subplaytrace();
+    newpt_index = concretize_challenge_get_subplaytrace_index(challenge_verbs_abs, win_verbs_abs);
+    if (newpt_index == -1) exception_playtraces_challenge_not_subplaytrace();
 
-    list[list[GenerationVerbConcretized]] verbs_concretized = [[] | _ <- [0..(size(fail_verbs_abs))]];
+    list[list[GenerationVerbConcretized]] verbs_concretized = [[] | _ <- [0..(size(challenge_verbs_abs))]];
     map[int, Coords] position_current = ();
-    for (int i <- [0..(size(fail_verbs_abs))]) position_current[i] = entry;
+    for (int i <- [0..(size(challenge_verbs_abs))]) position_current[i] = entry;
     res = <verbs_concretized, position_current>;
 
-    fail_verbs_abs_subpt = fail_verbs_abs[0..newpt_index];
-    fail_verbs_abs_newpt = fail_verbs_abs[newpt_index..size(fail_verbs_abs)];
-    res = concretize_fail_subplaytrace(fail_verbs_abs_subpt, res.verbs_concretized, res.position_current, win_verbs_concretized, win_position_current);
-    res = concretize_fail_newplaytrace(\module, fail_verbs_abs_newpt, res.verbs_concretized, res.position_current, newpt_index);
+    challenge_verbs_abs_subpt = challenge_verbs_abs[0..newpt_index];
+    challenge_verbs_abs_newpt = challenge_verbs_abs[newpt_index..size(challenge_verbs_abs)];
+    res = concretize_challenge_subplaytrace(challenge_verbs_abs_subpt, res.verbs_concretized, res.position_current, win_verbs_concretized, win_position_current);
+    res = concretize_challenge_newplaytrace(\module, challenge_verbs_abs_newpt, res.verbs_concretized, res.position_current, newpt_index);
     res = concretize_concat(res.verbs_concretized, res.position_current);
 
     return <res.verbs_concretized, res.position_current>;
 }   
 
 /*
- * @Name:   concretize_fail_subplaytrace
- * @Desc:   Function that concretizes the subplaytrace of the failing playtrace
+ * @Name:   concretize_challenge_subplaytrace
+ * @Desc:   Function that concretizes the subplaytrace of the challengeing playtrace
  *          that is also part of the winning playtrace
- * @Params: fail_verbs_abs         -> Failing verbs part of the subplaytrace
- *          fail_verbs_concretized -> Current list of failing verbs concretized
- *          fail_position_current  -> Current map of partial current positions
+ * @Params: challenge_verbs_abs         -> challengeing verbs part of the subplaytrace
+ *          challenge_verbs_concretized -> Current list of challengeing verbs concretized
+ *          challenge_position_current  -> Current map of partial current positions
  *          win_verbs_concretized  -> List of winning verbs concretized
  *          win_position_current   -> Map of win partial current positions
- * @Ret:    Tuple with list of fail verbs concretized and position current updated
+ * @Ret:    Tuple with list of challenge verbs concretized and position current updated
  */
-tuple[list[list[GenerationVerbConcretized]], map[int, Coords]] concretize_fail_subplaytrace(list[GenerationVerbExpression] fail_verbs_abs, list[list[GenerationVerbConcretized]] fail_verbs_concretized, map[int, Coords] fail_position_current, list[list[GenerationVerbConcretized]] win_verbs_concretized, map[int, Coords] win_position_current) {
-    int fail_subchunk_subpt_num = size(fail_verbs_abs);
-    for (int i <- [0..fail_subchunk_subpt_num]) {
-        fail_verbs_concretized[i] += win_verbs_concretized[i];
-        fail_position_current[i]  = win_position_current[i];
+tuple[list[list[GenerationVerbConcretized]], map[int, Coords]] concretize_challenge_subplaytrace(list[GenerationVerbExpression] challenge_verbs_abs, list[list[GenerationVerbConcretized]] challenge_verbs_concretized, map[int, Coords] challenge_position_current, list[list[GenerationVerbConcretized]] win_verbs_concretized, map[int, Coords] win_position_current) {
+    int challenge_subchunk_subpt_num = size(challenge_verbs_abs);
+    for (int i <- [0..challenge_subchunk_subpt_num]) {
+        challenge_verbs_concretized[i] += win_verbs_concretized[i];
+        challenge_position_current[i]  = win_position_current[i];
     }
 
-    return <fail_verbs_concretized, fail_position_current>;
+    return <challenge_verbs_concretized, challenge_position_current>;
 }
 
 /*
- * @Name:   concretize_fail_subplaytrace
- * @Desc:   Function that concretizes the subplaytrace of the failing playtrace
+ * @Name:   concretize_challenge_subplaytrace
+ * @Desc:   Function that concretizes the subplaytrace of the challengeing playtrace
  *          that is also part of the winning playtrace. It first sets the initial
  *          position current of each of the corresponding subchunks to the value
  *          of the last position current of the subplaytrace and then includes
  *          the needed verbs
- * @Params: fail_verbs_abs         -> Failing verbs part of the subplaytrace
- *          fail_verbs_concretized -> Current list of failing verbs concretized
- *          fail_position_current  -> Current map of partial current positions
+ * @Params: challenge_verbs_abs         -> challengeing verbs part of the subplaytrace
+ *          challenge_verbs_concretized -> Current list of challengeing verbs concretized
+ *          challenge_position_current  -> Current map of partial current positions
  *          win_verbs_concretized  -> List of winning verbs concretized
  *          win_position_current   -> Map of win partial current positions
- * @Ret:    Tuple with list of fail verbs concretized and position current updated
+ * @Ret:    Tuple with list of challenge verbs concretized and position current updated
  */
-tuple[list[list[GenerationVerbConcretized]], map[int, Coords]] concretize_fail_newplaytrace(GenerationModule \module, list[GenerationVerbExpression] fail_verbs_abs, list[list[GenerationVerbConcretized]] fail_verbs_concretized, map[int, Coords] fail_position_current, int newpt_index) {
-    for (int i <- [newpt_index..(size(fail_verbs_abs)+newpt_index)]) {
-        fail_position_current[i] = fail_position_current[newpt_index-1];
+tuple[list[list[GenerationVerbConcretized]], map[int, Coords]] concretize_challenge_newplaytrace(GenerationModule \module, list[GenerationVerbExpression] challenge_verbs_abs, list[list[GenerationVerbConcretized]] challenge_verbs_concretized, map[int, Coords] challenge_position_current, int newpt_index) {
+    for (int i <- [newpt_index..(size(challenge_verbs_abs)+newpt_index)]) {
+        challenge_position_current[i] = challenge_position_current[newpt_index-1];
     }
 
-    for (int i <- [0..size(fail_verbs_abs)]) {
-        str verb_name = fail_verbs_abs[i].verb;
-        str verb_specification = fail_verbs_abs[i].specification;
-        str verb_direction = (fail_verbs_abs[i].direction != "") ? fail_verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
-        str verb_modifier = fail_verbs_abs[i].modifier;
+    for (int i <- [0..size(challenge_verbs_abs)]) {
+        str verb_name = challenge_verbs_abs[i].verb;
+        str verb_specification = challenge_verbs_abs[i].specification;
+        str verb_direction = (challenge_verbs_abs[i].direction != "") ? challenge_verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
+        str verb_modifier = challenge_verbs_abs[i].modifier;
 
-        if (verb_modifier != "") exception_playtraces_fail_non_specific_verb(verb_name, verb_modifier);
+        if (verb_modifier != "") exception_playtraces_challenge_non_specific_verb(verb_name, verb_modifier);
 
         GenerationVerbConcretized verb_concretized = generation_verb_concretized(verb_name, verb_specification, verb_direction);
-        fail_verbs_concretized[i + newpt_index] += [verb_concretized];
-        fail_position_current = concretize_update_position_current(fail_position_current, i + newpt_index, verb_direction);
+        challenge_verbs_concretized[i + newpt_index] += [verb_concretized];
+        challenge_position_current = concretize_update_position_current(challenge_position_current, i + newpt_index, verb_direction);
     }
 
-    return <fail_verbs_concretized, fail_position_current>;
+    return <challenge_verbs_concretized, challenge_position_current>;
 }
 
 /*
- * @Name:   concretize_fail_get_subplaytrace_index
- * @Desc:   Function that gets the index of when the subplaytrace of failing
+ * @Name:   concretize_challenge_get_subplaytrace_index
+ * @Desc:   Function that gets the index of when the subplaytrace of challengeing
  *          abstract verbs ends with respect to the winning abstract verbs
- * @Params: fail_verbs_abs -> Failing verbs abstract
+ * @Params: challenge_verbs_abs -> challengeing verbs abstract
  *          win_verbs_abs  -> Winning verbs abstract 
  */
-int concretize_fail_get_subplaytrace_index(list[GenerationVerbExpression] fail_verbs_abs, list[GenerationVerbExpression] win_verbs_abs) {
+int concretize_challenge_get_subplaytrace_index(list[GenerationVerbExpression] challenge_verbs_abs, list[GenerationVerbExpression] win_verbs_abs) {
     for (int i <- [0..size(win_verbs_abs)]) {
-        if(win_verbs_abs[i].verb != fail_verbs_abs[i].verb
-           || (win_verbs_abs[i].verb == fail_verbs_abs[i].verb 
-               && win_verbs_abs[i].specification != fail_verbs_abs[i].specification)
-           || (win_verbs_abs[i].verb == fail_verbs_abs[i].verb 
-               && win_verbs_abs[i].specification == fail_verbs_abs[i].specification
-               && win_verbs_abs[i].direction != fail_verbs_abs[i].direction)) return i;
+        if(win_verbs_abs[i].verb != challenge_verbs_abs[i].verb
+           || (win_verbs_abs[i].verb == challenge_verbs_abs[i].verb 
+               && win_verbs_abs[i].specification != challenge_verbs_abs[i].specification)
+           || (win_verbs_abs[i].verb == challenge_verbs_abs[i].verb 
+               && win_verbs_abs[i].specification == challenge_verbs_abs[i].specification
+               && win_verbs_abs[i].direction != challenge_verbs_abs[i].direction)) return i;
     }
     return -1;
 }

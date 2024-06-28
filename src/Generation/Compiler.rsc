@@ -310,13 +310,13 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
     ChunkAnnotation chunk_anno = compile_chunk_annotation(\anno);
 
     list[GenerationVerbExpression] win_verbs = [papyrus_compile_verb_expression(v) | VerbExpressionData v <- chunk.win_pt.verb_dts];
-    list[GenerationVerbExpression] fail_verbs = (chunk.fail_pt != []) ? [papyrus_compile_verb_expression(v) | VerbExpressionData v <- chunk.fail_pt[0].verb_dts] : [];
+    list[GenerationVerbExpression] challenge_verbs = (chunk.challenge_pt != []) ? [papyrus_compile_verb_expression(v) | VerbExpressionData v <- chunk.challenge_pt[0].verb_dts] : [];
 
     chunk_compiled = generation_chunk(
         chunk_anno.name,
         chunk_anno.\module,
         win_verbs,
-        fail_verbs
+        challenge_verbs
     );
     
     return chunk_compiled;
