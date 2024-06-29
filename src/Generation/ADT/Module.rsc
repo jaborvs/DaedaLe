@@ -118,6 +118,7 @@ VerbAnnotation generation_module_get_verb(GenerationModule \module, str verb_nam
 VerbAnnotation generation_module_get_verb_after(GenerationModule \module, GenerationVerbConcretized verb_current, GenerationVerbConcretized verb_prev, bool chunk_end) {
     for (VerbAnnotation v <- \module.generation_rules.verbs) {
         if (v.name == verb_current.name 
+            && v.direction == verb_current.direction
             && (v.direction != "end" || chunk_end)
             && v.dependencies.prev.name == verb_prev.name
             && (v.dependencies.prev.specification == verb_prev.specification || v.dependencies.prev.specification == "_")
@@ -140,6 +141,7 @@ VerbAnnotation generation_module_get_verb_after(GenerationModule \module, Genera
 VerbAnnotation generation_module_get_verb_before(GenerationModule \module, GenerationVerbConcretized verb_current, GenerationVerbConcretized verb_next) {
     for (VerbAnnotation v <- \module.generation_rules.verbs) {
         if (v.name == verb_current.name 
+            && (v.direction == verb_current.direction)
             && v.dependencies.next.name == verb_next.name
             && (v.dependencies.next.specification == verb_next.specification || v.dependencies.next.specification == "_")
             && (v.dependencies.next.direction == verb_next.direction || v.dependencies.next.direction == "_")) return v;
@@ -161,6 +163,12 @@ tuple[VerbAnnotation,VerbAnnotation] generation_module_get_verb_mid(GenerationMo
     list[VerbAnnotation] verbs_seq = [];
 
     for (VerbAnnotation v <- \module.generation_rules.verbs) {
+        bool tmp1 = v.name == verb_current.name;
+        bool tmp2 = (v.specification == verb_current.specification || verb_current.specification == "_");
+        bool tmp3 = (v.direction == verb_current.direction || verb_current.direction == "_");
+        bool tmp4 = !verb_annotation_is_after(v);
+        bool tmp5 = !verb_annotation_is_before(v);
+
         if (v.name == verb_current.name 
             && (v.specification == verb_current.specification || verb_current.specification == "_")
             && (v.direction == verb_current.direction || verb_current.direction == "_")

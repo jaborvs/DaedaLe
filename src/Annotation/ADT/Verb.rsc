@@ -6,6 +6,10 @@
 module Annotation::ADT::Verb
 
 /******************************************************************************/
+// --- General modules imports -------------------------------------------------
+import String;
+
+/******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
 import Utils;
 
@@ -33,11 +37,23 @@ data VerbAnnotation
 /******************************************************************************/
 // --- Global implicit verb defines --------------------------------------------
 
-VerbAnnotation enter_verb = verb_annotation("enter", "default", "none", 0, <<"none", "", "">,<"none", "", "">>);
-VerbAnnotation exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"none", "", "">,<"none", "", "">>);
+VerbAnnotation enter_horizontal_verb = verb_annotation("enter", "default", "horizontal", 0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation enter_vertical_verb   = verb_annotation("enter", "default", "vertical",   0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation exit_horizontal_verb  = verb_annotation("exit",  "default", "horizontal", 0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation exit_vertical_verb    = verb_annotation("exit",  "default", "vertical",   0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
 
 /******************************************************************************/
 // --- Public function defines -------------------------------------------------
+
+/*
+ * @Name:   verb_is_enter
+ * @Desc:   Function that checks if a verb is an enter verb
+ * @Param:  verb -> VerbAnnotationto be checked
+ * @Ret:    Boolean
+ */
+bool verb_is_enter(VerbAnnotation verb) {
+    return startsWith(verb.name, "enter");
+}
 
 /*
  * @Name:   verb_is_end
@@ -61,7 +77,9 @@ bool verb_is_end(VerbAnnotation verb) {
  */
 bool verb_annotation_is_after(VerbAnnotation verb) {
     return verb.dependencies.prev.name != "none" 
-           && verb.dependencies.prev.name != verb.name;
+           && (verb.dependencies.prev.name != verb.name
+               || (verb.dependencies.prev.direction != verb.direction
+                   && verb.dependencies.prev.direction != "_"));
 }
 
 /*
@@ -75,7 +93,9 @@ bool verb_annotation_is_after(VerbAnnotation verb) {
  */
 bool verb_annotation_is_before(VerbAnnotation verb) {
     return verb.dependencies.next.name != "none" 
-           && verb.dependencies.next.name != verb.name;
+           && (verb.dependencies.next.name != verb.name
+               || (verb.dependencies.next.direction != verb.direction
+                   && verb.dependencies.next.direction != "_"));
 }
 
 /*

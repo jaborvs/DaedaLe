@@ -2,7 +2,9 @@
  * @Module: Match
  * @Desc:   Module that contains the functionality to generate a program that 
  *          enables us to use GenerationPatterns through Rascal's list pattern
- *          matching 
+ *          matching. 
+ *          NOTE: The function to generate the body could be further fragmented,
+ *                but for now that is future work
  * @Auth:   Borja Velasco -> code
  */
 module Generation::Match
@@ -24,7 +26,7 @@ import Utils;
 
 void main() {
     VerbAnnotation v = verb_annotation(
-        "enter",
+        "enasdfasdfter",
         "default",
         "none",
         0,
@@ -32,11 +34,9 @@ void main() {
         );
 
     GenerationPattern left = generation_pattern([
-        ["."],
         ["."]
         ]);
     GenerationPattern right = generation_pattern([
-        ["P"],
         ["#"]
         ]);
 
@@ -55,8 +55,10 @@ void main() {
         );
 
     str program = match_generate_program(c, <0,2>, v, left, right);
+    println(program);
     if(result(Chunk c_r) := eval(program)) {
         c = c_r;
+        println(chunk_to_string(c));
     }
 }
 
@@ -72,13 +74,19 @@ void main() {
  *          right -> Right pattern of the GenerationRule
  * @Ret:    str with the complete programm
  */
-str match_generate_program(Chunk chunk, Coords entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) {
+str match_generate_program(Chunk chunk, Coords player_entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) {
     str program = "";
+    Coords pattern_entry = <-1,-1>;
+    Coords pattern_player = <-1,-1>;
+
+    pattern_entry   = player_entry;
+    pattern_entry.x = player_entry.x - generation_pattern_get_player_coords(right).x;
+    pattern_entry.y = player_entry.y - generation_pattern_get_player_coords(right).y;
 
     program += _match_generate_module_section(verb);
     program += _match_generate_imports_section();
     program += _match_generate_data_structures_section();
-    program += _match_generate_functions_section(chunk.size, entry, verb, left, right);
+    program += _match_generate_functions_section(chunk.size, pattern_entry, verb, left, right);
     program += _match_generate_calls_section(chunk, verb);
 
     return program;
@@ -134,15 +142,15 @@ str _match_generate_data_structures_section()
 /******************************************************************************/
 // --- Private functions section functions -------------------------------------
 
-str _match_generate_functions_section(tuple[int,int] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
+str _match_generate_functions_section(tuple[int,int] chunk_size, Coords pattern_entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
     = _match_generate_separator()
     + _match_generate_title("Public functions")
-    + _match_generate_function(chunk_size, entry, verb, left, right)
+    + _match_generate_function(chunk_size, pattern_entry, verb, left, right)
     ;
 
-str _match_generate_function(tuple[int,int] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right)
+str _match_generate_function(tuple[int,int] chunk_size, Coords pattern_entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right)
     = _match_generate_function_documentation(verb)
-    + _match_generate_function_definition(chunk_size, entry, verb, left, right)
+    + _match_generate_function_definition(chunk_size, pattern_entry, verb, left, right)
     ;
 
 str _match_generate_function_name(VerbAnnotation verb)
@@ -159,16 +167,16 @@ str _match_generate_function_documentation(VerbAnnotation verb)
     + _match_generate_line_break(1)
     ;
 
-str _match_generate_function_definition(tuple[int,int] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
+str _match_generate_function_definition_old(tuple[int,int] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
     = "public Chunk (Chunk c) <_match_generate_function_name(verb)> = 
       'Chunk (Chunk c) 
       '{
       '    for(list[str] pattern: <_match_generate_pattern_left(left)> := c.objects) {
-      '        <if (size(left.objects) > 1 || verb.name == "enter") {>if (<_match_generate_mid_condition(chunk_size, entry, verb, left)>) { <}>
+      '        if (<_match_generate_mid_condition(chunk_size, entry, verb, left)>) {
       '            c.objects = visit(c.objects) {
       '                case list[str] p:pattern =\> <_match_generate_pattern_right(right)>
       '            };
-      '        <if (size(left.objects) > 1 || verb.name == "enter") {>}<}>
+      '        }
       '    }
       '    return c;
       '};"
@@ -176,7 +184,75 @@ str _match_generate_function_definition(tuple[int,int] chunk_size, Coords entry,
     ;
 
 str _match_generate_mid_condition(tuple[int width, int height] chunk_size, Coords entry, VerbAnnotation verb, GenerationPattern pattern) 
-    = "<if(verb.name == "enter"){>size(top) == <(chunk_size.width * entry.y + entry.x)><if(size(pattern.objects) > 1){> && <}><}><for(int i <- [0..size(pattern.objects)-1]){>size(mid_<i+1>) == <chunk_size.width - size(pattern.objects[0])><if(i != size(pattern.objects)-2){> && <}><}>"
+    = "<if(verb.name == "enter"){>size(top) == <(chunk_size.width * entry.y + entry.x)> && <}><for(int i <- [0..size(pattern.objects)-1]){>size(mid_<i+1>) == <chunk_size.width - size(pattern.objects[0])><if(i != size(pattern.objects)-2){> && <}><}>"
+    ;
+
+str _match_generate_function_definition(tuple[int,int] chunk_size, Coords pattern_entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right) 
+    = _match_generate_function_header(verb)
+    + _match_generate_curly_bracket_open(0)
+    + _match_generate_function_body(chunk_size, pattern_entry, verb, left, right, 1)
+    + _match_generate_function_return(1)
+    + _match_generate_curly_bracket_semicolon_close(0)
+    + _match_generate_line_break(2)
+    ;
+
+str _match_generate_function_header(VerbAnnotation verb)
+    = "public Chunk (Chunk c) <_match_generate_function_name(verb)> = 
+      'Chunk (Chunk c)"
+    ;
+
+str _match_generate_function_body(tuple[int,int] chunk_size, Coords pattern_entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right, int tabs) 
+    = _match_generate_for(chunk_size, pattern_entry, verb, left, right, tabs)
+    ;
+
+str _match_generate_function_return(int tabs)
+    = _match_generate_tabbed("return c;", tabs)
+    ;
+
+str _match_generate_for(tuple[int,int] chunk_size, Coords pattern_entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right, int tabs)
+    = _match_generate_for_header(left, tabs)
+    + _match_generate_curly_bracket_open(tabs) 
+    + _match_generate_for_body(chunk_size, pattern_entry, verb, left, right, tabs)
+    + _match_generate_curly_bracket_close(tabs)
+    ;
+
+str _match_generate_for_header(GenerationPattern left, int tabs)
+    = _match_generate_tabbed("for(list[str] pattern: <_match_generate_pattern_left(left)> := c.objects)", tabs) 
+    ;
+
+str _match_generate_for_body(tuple[int,int] chunk_size, Coords pattern_entry, VerbAnnotation verb, GenerationPattern left, GenerationPattern right, int tabs) 
+    = ((verb_is_enter(verb) || size(left.objects) > 1) ? _match_generate_if_header(chunk_size, pattern_entry, verb, left, tabs+1) + _match_generate_curly_bracket_open(tabs+1) : "")
+    + ((verb_is_enter(verb) || size(left.objects) > 1) ? _match_generate_if_body(right, tabs+1) : _match_generate_visit(right, tabs+1))
+    + ((verb_is_enter(verb) || size(left.objects) > 1) ? _match_generate_curly_bracket_close(tabs+1) : "")
+    ;
+
+str _match_generate_if_header(tuple[int,int] chunk_size, Coords pattern_entry, VerbAnnotation verb, GenerationPattern left, int tabs)
+    = _match_generate_tabbed("if (<_match_generate_condition(chunk_size, pattern_entry, verb, left)>)", tabs)
+    ;
+
+str _match_generate_if_body(GenerationPattern right, int tabs)
+    = _match_generate_visit(right, tabs+1)
+    ;
+
+str _match_generate_visit(GenerationPattern right, int tabs)
+    = _match_generate_tabbed("c.objects = visit(c.objects)", tabs)
+    + _match_generate_curly_bracket_open(tabs)
+    + _match_generate_tabbed("case list[str] p:pattern =\> <_match_generate_pattern_right(right)>", tabs+1)
+    + _match_generate_curly_bracket_semicolon_close(tabs)
+    ;
+
+str _match_generate_condition(tuple[int width, int height] chunk_size, Coords pattern_entry, VerbAnnotation verb, GenerationPattern left)
+    = (verb_is_enter(verb) ? _match_generate_condition_top(chunk_size, pattern_entry, left) : "")
+    + _match_generate_condition_mid(chunk_size, left)
+    ;
+
+str _match_generate_condition_top(tuple[int width, int height] chunk_size, Coords pattern_entry, GenerationPattern left)
+    = "size(top) == <chunk_size.width * pattern_entry.y + pattern_entry.x>" 
+    + ((size(left.objects) > 1) ? " && "  : "")
+    ;
+
+str _match_generate_condition_mid(tuple[int width, int height] chunk_size, GenerationPattern left) 
+    = "<for(int i <- [0..size(left.objects)-1]){>size(mid_<i+1>) == <chunk_size.width - size(left.objects[0])><if(i != size(left.objects)-2){> && <}><}>"
     ;
 
 str _match_generate_pattern(GenerationPattern pattern, str side)
@@ -217,4 +293,31 @@ str _match_generate_separator()
 str _match_generate_title(str title)
     = "// --- <title> <for(_ <- [0..(80 - size("// --- <title> "))]){>-<}>"
     + _match_generate_line_break(2)
+    ;
+
+str _match_generate_curly_bracket_open(int tabs)
+    = _match_generate_line_break(1)
+    + _match_generate_tabbed("{",tabs)
+    + _match_generate_line_break(1)
+    ;
+
+str _match_generate_curly_bracket_close(int tabs)
+    = _match_generate_line_break(1)
+    + _match_generate_tabbed("}",tabs)
+    + _match_generate_line_break(1)
+    ;
+
+str _match_generate_curly_bracket_semicolon_close(int tabs)
+    = _match_generate_line_break(1)
+    + _match_generate_tabbed("};",tabs)
+    + _match_generate_line_break(1)
+    ;
+
+str _match_generate_tabbed(str string, int tabs) 
+    = _match_generate_tabs(tabs) 
+    + string
+    ;
+
+str _match_generate_tabs(int tabs) 
+    = "<for(_ <- [0..tabs]){>    <}>"
     ;

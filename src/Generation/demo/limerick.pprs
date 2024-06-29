@@ -13,17 +13,26 @@ PATTERNS
 (--- Player Patterns ----------------------------------------------------------)
 (------------------------------------------------------------------------------)
 
-Player_Entry_Start
+PlayerEnter_Horizontal
 .
 .
 
-Player_Idle
+PlayerEnter_Vertical
+.   
+
+PlayerIdle_Horizontal
 PH1
 #
 
-Player_Exit_End
-PB
+PlayerIdle_Vertical
+P
+
+PlayerExit_Horizontal
+.
 #
+
+PlayerExit_Vertical
+.
 
 
 (------------------------------------------------------------------------------)
@@ -95,6 +104,7 @@ PBV #
 PlayerClimb__Solid__Large__Start
 .   .
 PH3 .
+
 PlayerClimb__Solid__Large__End
 PH4 .
 PBV #
@@ -185,13 +195,13 @@ PH1 E
 (--- Get Stuck Patterns -------------------------------------------------------)
 (------------------------------------------------------------------------------)
 
-PlayerGetStuck_AfterCrawl_Start
+PlayerStuck_AfterCrawl_Start
 .   .
 PH1 .
 #   .
 
 
-PlayerGetStuck_AfterCrawl_End
+PlayerStuck_AfterCrawl_End
 #   #
 PH1 #
 #   #
@@ -215,7 +225,7 @@ Module1
 [PlayerFall__Solid__Start]                -> [PlayerFall__Solid__End]                       (-- verb Fall (default,                 down,  1) )
 [PlayerCrawl__BeforeFall__End]            -> [PlayerFall__Solid__AfterCrawlBeforeFall__End] (-- verb Fall (after_crawl_before_fall, down,  1, <Crawl(before_fall), none         >) )
 [PlayerCrawl__Start]                      -> [PlayerEat__End]                               (-- verb Eat  (after_crawl,             end,   0, <Crawl(_),           none         >) )
-[PlayerGetStuck_AfterCrawl_Start]         -> [PlayerGetStuck_AfterCrawl_End]                (-- verb Stuck(after_crawl,             end,   0, <Crawl(_),           none         >) )
+[PlayerStuck_AfterCrawl_Start]         -> [PlayerStuck_AfterCrawl_End]                (-- verb Stuck(after_crawl,             end,   0, <Crawl(_),           none         >) )
 
 Module2
 [PlayerCrawl__Start]                      -> [PlayerCrawl__End]                             (-- verb Crawl(default,                 right, 1) )
@@ -229,8 +239,8 @@ Module2
 [PlayerClimb__Floating__Large__Start]     -> [PlayerClimb__Floating__Large__End]            (-- verb Climb(large,                   up,    1, <Climb(medium),      none         >) )
 [PlayerClimb__Floating__Coil__Start]      -> [PlayerClimb__Floating__Coil__End]             (-- verb Climb(coil,                    up,    2) )
 [PlayerFall__Floating__Start]             -> [PlayerFall__Floating__End]                    (-- verb Fall (default,                 down,  1) )
-[PlayerCrawl__Start]                      -> [PlayerEat__End]                               (-- verb Eat  (after_crawl,             end,   0, <Crawl(_),           none         >) )
-[PlayerGetStuck_AfterCrawl_Start]         -> [PlayerGetStuck_AfterCrawl_End]                (-- verb Stuck(after_crawl,             end,   0, <Crawl(_),           none         >) )
+[PlayerIdle]                              -> [PlayerEat__End]                               (-- verb Eat  (after_crawl,             end,   0, <Crawl(_),           none         >) )
+[PlayerStuck_AfterCrawl_Start]            -> [PlayerStuck_AfterCrawl_End]                   (-- verb Stuck(after_crawl,             end,   0, <Crawl(_),           none         >) )
     
 ============
 LEVEL DRAFTS

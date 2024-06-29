@@ -26,6 +26,7 @@ import Generation::Compiler;
 import Generation::Concretizer;
 import Generation::Translator;
 import Generation::Match;
+import Generation::Exception;
 
 import Annotation::ADT::Verb;
 
@@ -74,29 +75,29 @@ list[Level] generate_levels(GenerationEngine engine) {
 Level generate_level(GenerationEngine engine, str level_name, GenerationLevel level_abs) {
     Level level_generated = level_init(level_name, <engine.config["chunk_size"].width, engine.config["chunk_size"].height>);
 
-    Coords level_chunk_coords= <0,0>;
-    Coords chunk_entry = <0, toInt(engine.config["chunk_size"].height/2)-1>;
-    tuple[Chunk chunk_generated, Coords chunk_exit] res = <chunk_empty(), <-1,-1>>;
+    Coords chunk_coords= <0,0>;
+    Coords player_entry = <0, toInt(engine.config["chunk_size"].height/2)>;
+    tuple[Chunk chunk_generated, Coords player_exit] res = <chunk_empty(), <-1,-1>>;
     for (GenerationChunk chunk_abs <- level_abs.chunks) {      
-        res = generate_chunk(engine, level_chunk_coords, chunk_abs, chunk_entry);
+        res = generate_chunk(engine, chunk_coords, chunk_abs, player_entry);
 
-        level_generated.chunks_generated[level_chunk_coords] = res.chunk_generated;
+        level_generated.chunks_generated[chunk_coords] = res.chunk_generated;
 
-        chunk_entry = res.chunk_exit;
-        if (res.chunk_exit.x == engine.config["chunk_size"].width) {          // We exit right
-            chunk_entry.x = 0;
-            level_chunk_coords.x += 1;
-            level_generated.abs_size.x_max += 1;
+        player_entry = res.player_exit;
+        if      (check_exited_right(engine, res.player_exit)) {          // We exit right
+            player_entry.x = 0;
+            chunk_coords.x += 1;
+            if (chunk_coords.x > level_generated.abs_size.x_max) level_generated.abs_size.x_max += 1;
         }
-        else if (res.chunk_exit.y == engine.config["chunk_size"].height) {    // We exit down
-            chunk_entry.y = 0;
-            level_chunk_coords.y += 1;
-            level_generated.abs_size.y_max += 1;
+        else if (check_exited_down(engine, res.player_exit)) {    // We exit down
+            player_entry.y = 0;
+            chunk_coords.y += 1;
+            if (chunk_coords.y > level_generated.abs_size.y_max) level_generated.abs_size.y_max += 1;
         }
-        else if (res.chunk_exit.y == -1) {                       // We exit up
-            chunk_entry.y = engine.config["chunk_size"].height-1 ;
-            level_chunk_coords.y -= 1;
-            level_generated.abs_size.y_min -= 1;
+        else if (check_exited_up(res.player_exit)) {                       // We exit up
+            player_entry.y = engine.config["chunk_size"].height-1 ;
+            chunk_coords.y -= 1;
+            if (chunk_coords.y < level_generated.abs_size.y_min)level_generated.abs_size.y_min -= 1;
         }
     }
 
@@ -106,34 +107,34 @@ Level generate_level(GenerationEngine engine, str level_name, GenerationLevel le
 /*
  * @Name:   generate_chunk
  * @Desc:   Function that generates a chunk from a given chunk data
- * @Params: engine -> Generation engine
- *          chunk  -> Generation chunk
- *          entry  -> Entry coords to the chunk
+ * @Params: engine        -> Generation engine
+ *          chunk         -> Generation chunk
+ *          player_entry  -> Entry coords to the chunk
  * @Ret:    Generated chunk object
  */
-tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, Coords level_chunk_coords, GenerationChunk chunk_abs, Coords entry) {
+tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, Coords chunk_coords, GenerationChunk chunk_abs, Coords player_entry) {
     Chunk win_chunk_generated = chunk_empty();
     Chunk challenge_chunk_generated = chunk_empty();
     Chunk chunk_generated = chunk_empty();   
 
     tuple[
-        tuple[list[list[GenerationVerbConcretized]] verbs, Coords exit]     win,
-        tuple[list[list[GenerationVerbConcretized]] verbs, Coords dead_end] \challenge
-    ] verbs_concretized = concretize(engine.modules[chunk_abs.\module], chunk_abs, entry, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+        tuple[list[list[GenerationVerbConcretized]] verbs, Coords player_exit]     win,
+        tuple[list[list[GenerationVerbConcretized]] verbs, Coords player_dead_end] \challenge
+    ] verbs_concretized = concretize(engine.modules[chunk_abs.\module], chunk_abs, player_entry, <engine.config["pattern_max_size"].width, engine.config["pattern_max_size"].height>, <engine.config["chunk_size"].width, engine.config["chunk_size"].height>);
 
     tuple[
         list[VerbAnnotation] win,
         list[VerbAnnotation] \challenge
     ] verbs_translated = translate(engine.modules[chunk_abs.\module], verbs_concretized.win.verbs, verbs_concretized.\challenge.verbs);
 
-    win_chunk_generated = generate_chunk_partial(engine, chunk_abs, entry, verbs_translated.win, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
-    challenge_chunk_generated = generate_chunk_partial(engine, chunk_abs, entry, verbs_translated.\challenge, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+    win_chunk_generated = generate_chunk_partial(engine, chunk_abs, player_entry, verbs_concretized.win.player_exit, verbs_translated.win, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
+    challenge_chunk_generated = generate_chunk_partial(engine, chunk_abs, player_entry, <-1,-1>, verbs_translated.\challenge, engine.config["chunk_size"].width, engine.config["chunk_size"].height);
     chunk_generated = apply_merge(chunk_abs.name, win_chunk_generated, challenge_chunk_generated);
     chunk_generated = apply_blanketize(engine, chunk_generated);
 
-    if (level_chunk_coords == <0,0>) chunk_generated = apply_place_player(chunk_generated, entry);
+    if (chunk_coords == <0,0>) chunk_generated = apply_place_player(chunk_generated, player_entry);
 
-    return <chunk_generated, verbs_concretized.win.exit>;
+    return <chunk_generated, verbs_concretized.win.player_exit>;
 }
 
 /*
@@ -142,19 +143,19 @@ tuple[Chunk, Coords] generate_chunk(GenerationEngine engine, Coords level_chunk_
  *          will later be merged with another chunk.
  * @Params: engine           -> Generation engine
  *          chunk_abs        -> Generation chunk
- *          entry            -> Entry coords to the chunk
+ *          player_entry     -> Player entry coords to the chunk
  *          verbs_translated -> List of verbs to apply to generate the chunk
  *          width            -> Width of the chunk
  *          height           -> Height of the chunk
  * @Ret:    Chunk generated
  */
-Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk_abs, Coords entry, list[VerbAnnotation] verbs_translated, int width, int height) {
+Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk_abs, Coords player_entry, Coords player_exit, list[VerbAnnotation] verbs_translated, int width, int height) {
     Chunk chunk_generated = chunk_empty();
 
     if (verbs_translated == []) return chunk_generated;
 
     chunk_generated = chunk_init(chunk_abs.name, <width, height>);
-    chunk_generated = apply_generation_rules(engine, engine.modules[chunk_abs.\module], chunk_generated, entry, verbs_translated);
+    chunk_generated = apply_generation_rules(engine, engine.modules[chunk_abs.\module], chunk_generated, player_entry, player_exit, verbs_translated);
     
     return chunk_generated;
 }
@@ -172,15 +173,23 @@ Chunk generate_chunk_partial(GenerationEngine engine, GenerationChunk chunk_abs,
  *          chunk   -> chunk to generate
  * @Ret:    Generated chunk object
  */
-Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, Chunk chunk, Coords entry, list[VerbAnnotation] verbs) {
-    verbs = insertAt(verbs, 0, Annotation::ADT::Verb::enter_verb);
-    verbs += [Annotation::ADT::Verb::exit_verb];
+Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, Chunk chunk, Coords player_entry, Coords player_exit, list[VerbAnnotation] verbs) {
+    VerbAnnotation verb_enter = verb_annotation_empty();
+    VerbAnnotation verb_exit  = verb_annotation_empty(); 
+
+    if      (check_entered_vertical(engine, player_entry))   verb_enter = Annotation::ADT::Verb::enter_vertical_verb;
+    else if (check_entered_horizontal(engine, player_entry)) verb_enter = Annotation::ADT::Verb::enter_horizontal_verb;
+    verbs = insertAt(verbs, 0, verb_enter);
+
+    if      (check_exited_vertical(engine, player_exit))    verb_exit = Annotation::ADT::Verb::exit_vertical_verb;
+    else if (check_exited_horizontal(engine, player_exit)) verb_exit = Annotation::ADT::Verb::exit_horizontal_verb;
+    if (!verb_exit is verb_annotation_empty) verbs += [verb_exit];
 
     for (VerbAnnotation verb <- verbs[0..(size(verbs))]) {
         GenerationRule rule = \module.generation_rules[verb];
         GenerationPattern left = engine.patterns[rule.left];
         GenerationPattern right = engine.patterns[rule.right];
-        chunk = apply_generation_rule(verb, left, right, chunk, entry);
+        chunk = apply_generation_rule(verb, left, right, chunk, player_entry);
     }
 
     return chunk;
@@ -195,19 +204,22 @@ Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, 
  *          chunk -> Chunk to generate
  * @Ret:    Generated chunk object
  */
-Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, GenerationPattern right, Chunk chunk, Coords entry) {
+Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, GenerationPattern right, Chunk chunk, Coords player_entry) {
     str program = "";
 
-    program = match_generate_program(chunk, entry, verb, left, right);
+    program = match_generate_program(chunk, player_entry, verb, left, right);
     if(result(Chunk chunk_rewritten) := eval(program)) {
         chunk = chunk_rewritten;
     }
+    println(verb_annotation_to_string(verb));
+    println(chunk_to_string(chunk));
+    println();
 
     return chunk;
 }
 
-Chunk apply_place_player(Chunk chunk, Coords entry) {
-    chunk.objects[chunk.size.width * entry.y + entry.x] = "p";
+Chunk apply_place_player(Chunk chunk, Coords player_entry) {
+    chunk.objects[chunk.size.width * player_entry.y + player_entry.x] = "p";
     return chunk;
 }
 
@@ -247,4 +259,51 @@ Chunk apply_merge(str name, Chunk win_chunk_generated, Chunk challenge_chunk_gen
     }
 
     return chunk(name, win_chunk_generated.size, objects_merged);
+}
+
+
+/******************************************************************************/
+// --- Calculate functions -----------------------------------------------------
+
+/******************************************************************************/
+// --- Check functions ---------------------------------------------------------
+
+bool check_exited_vertical(GenerationEngine engine, Coords player_exit) {
+    return check_exited_up(player_exit) || check_exited_down(engine, player_exit);
+}
+
+bool check_exited_horizontal(GenerationEngine engine, Coords player_exit) {
+    return check_exited_right(engine, player_exit);
+}
+
+bool check_exited_up(Coords player_exit) {
+    return player_exit.y == -1;
+}
+
+bool check_exited_right(GenerationEngine engine, Coords player_exit) {
+    return player_exit.x == engine.config["chunk_size"].width;
+}
+
+bool check_exited_down(GenerationEngine engine, Coords player_exit) {
+    return player_exit.y == engine.config["chunk_size"].height;
+}
+
+bool check_entered_vertical(GenerationEngine engine, Coords player_entry) {
+    return check_entered_above(player_entry) || check_entered_below(engine, player_entry);
+}
+
+bool check_entered_horizontal(GenerationEngine engine, Coords player_entry) {
+    return check_entered_left(player_entry);
+}
+
+bool check_entered_above(Coords player_entry) {
+    return  player_entry.y == 0 && player_entry.x != 0;
+}
+
+bool check_entered_below(GenerationEngine engine, Coords player_entry) {
+    return  player_entry.y == (engine.config["chunk_size"].height - 1) && player_entry.x != 0;
+}
+
+bool check_entered_left(Coords player_entry) {
+    return player_entry.x == 0;
 }

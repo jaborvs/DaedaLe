@@ -37,7 +37,7 @@ import Utils;
  *          height  -> Height of the chunk
  * @Ret:    Tuple with the winning and challengeing playtraces
  */
-tuple[tuple[list[list[GenerationVerbConcretized]], Coords], tuple[list[list[GenerationVerbConcretized]], Coords]] concretize(GenerationModule \module, GenerationChunk chunk, Coords entry, int width, int height) {
+tuple[tuple[list[list[GenerationVerbConcretized]], Coords], tuple[list[list[GenerationVerbConcretized]], Coords]] concretize(GenerationModule \module, GenerationChunk chunk, Coords entry, tuple[int,int] pattern_max_size, tuple[int,int] chunk_size) {
     tuple[list[list[GenerationVerbConcretized]] verbs, map[int,Coords] position_current] win_concretized = <[], ()>;
     tuple[list[list[GenerationVerbConcretized]] verbs, map[int,Coords] position_current] challenge_concretized = <[], ()>;
 
@@ -45,8 +45,8 @@ tuple[tuple[list[list[GenerationVerbConcretized]], Coords], tuple[list[list[Gene
         \module, 
         chunk.win_verbs, 
         entry, 
-        width, 
-        height
+        pattern_max_size,
+        chunk_size
         );
     Coords exit = win_concretized.position_current[size(win_concretized.verbs)-1];
 
@@ -77,13 +77,30 @@ tuple[tuple[list[list[GenerationVerbConcretized]], Coords], tuple[list[list[Gene
  *          height            -> Chunk height
  * @Ret:    Boolean indicating if we exit or not
  */
-bool concretize_check_future_position_exited(map[int keys, Coords coords] position_current, int index, str direction, int width, int height) {
+bool concretize_check_future_position_exited(map[int keys, Coords coords] position_current, int index, str direction, tuple[int width, int height] chunk_size) {
     for(int i <- [index..size(position_current.keys)]) {
-        if (direction == "up"    && position_current[i].y-1 == -1)       return true;
-        if (direction == "right" && position_current[i].x+1 == width)    return true;
-        if (direction == "down"  && position_current[i].y+1 == height-1) return true;
+        if      (direction == "up"    && position_current[i].y-1 == -1)                  return true;
+        else if (direction == "right" && position_current[i].x+1 == chunk_size.width)    return true;
+        else if (direction == "down"  && position_current[i].y+1 == chunk_size.height-1) return true;
     }
 
+    return false;
+}
+
+/*
+ * @Name:   concretize_check_future_pattern_fit
+ * @Desc:   Function that checks if the pattern that will be applied fits
+ * @Param:  position_current  -> Dictionary with the current positions
+ *          index             -> Index of the verb's subchunk to include
+ *          direction         -> Direction of the verb
+ *          width             -> Chunk width
+ *          height            -> Chunk height
+ * @Ret:    Boolean indicating if it fits
+ */
+bool concretize_check_future_pattern_fit(map[int keys, Coords coords] position_current, int index, tuple[int width, int height] pattern_size, str direction, tuple[int width, int height] chunk_size) {
+    if      (direction == "up"    && position_current[index].y > pattern_size.height)                           return true;
+    else if (direction == "right" && (chunk_size.width - position_current[index].x - 1) > pattern_size.width)   return true;
+    else if (direction == "down"  && (chunk_size.height - position_current[index].y - 1) > pattern_size.height) return true;
     return false;
 }
 
@@ -116,11 +133,11 @@ map[int, Coords] concretize_update_position_current(map[int keys, Coords coords]
  *          height            -> Chunk height
  * @Ret:    Updated position current
  */
-bool concretize_check_position_current_exited(map[int keys, Coords coords] position_current, int index, int width, int height) {
+bool concretize_check_position_current_exited(map[int keys, Coords coords] position_current, int index, tuple[int width, int height] chunk_size) {
     for(int i <- [index..size(position_current.keys)]) {
         if (position_current[i].y == -1
-            || position_current[i].x == width 
-            || position_current[i].y == height) return true;
+            || position_current[i].x == chunk_size.width 
+            || position_current[i].y == chunk_size.height) return true;
     }
     return false;
 }
@@ -134,12 +151,12 @@ bool concretize_check_position_current_exited(map[int keys, Coords coords] posit
  *          height            -> Chunk height
  * @Ret:    List of concretized verbs and updated position_current
  */
-tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_delete_unused(list[list[GenerationVerbConcretized]] verbs_concretized, map[int keys, Coords coords] position_current, int width, int height) {
+tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_delete_unused(list[list[GenerationVerbConcretized]] verbs_concretized, map[int keys, Coords coords] position_current, tuple[int width, int height] chunk_size) {
     int exit_num = min(
         [i | int i <- [0..size(position_current.keys)], 
              position_current[i].y == -1 
-             || position_current[i].x == width 
-             || position_current[i].y == height
+             || position_current[i].x == chunk_size.width 
+             || position_current[i].y == chunk_size.height
         ]
         );
 
@@ -236,13 +253,13 @@ list[int] concretize_get_neighbors_equivalent(list[list[GenerationVerbConcretize
  *          height -> Chunk height
  * @Ret:    List of concretized verbs
  */
-tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win(GenerationModule \module, list[GenerationVerbExpression] verbs_abs, Coords entry, int width, int height) {
+tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win(GenerationModule \module, list[GenerationVerbExpression] verbs_abs, Coords entry, tuple[int,int] pattern_max_size, tuple[int,int] chunk_size) {
     map[int, Coords] position_current = ();
     for (int i <- [0..size(verbs_abs)]) position_current[i] = entry;
     
     tuple[list[list[GenerationVerbConcretized]] verbs_concretized, map[int, Coords] position_current] res = <[], position_current>;
     res = concretize_win_init(\module, verbs_abs, res.verbs_concretized, res.position_current);
-    res = concretize_win_extend(\module, verbs_abs, res.verbs_concretized, res.position_current, width, height);
+    res = concretize_win_extend(\module, verbs_abs, res.verbs_concretized, res.position_current, pattern_max_size, chunk_size);
     res = concretize_concat(res.verbs_concretized, res.position_current);
 
     return <res.verbs_concretized, res.position_current>;
@@ -287,7 +304,7 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ini
  *          height            -> Chunk height
  * @Ret:    List of concretized verbs and updated position_current
  */
-tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_extend(GenerationModule \module, list[GenerationVerbExpression] verbs_abs, list[list[GenerationVerbConcretized]] verbs_concretized, map[int,Coords] position_current, int width, int height) {
+tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_extend(GenerationModule \module, list[GenerationVerbExpression] verbs_abs, list[list[GenerationVerbConcretized]] verbs_concretized, map[int,Coords] position_current, tuple[int,int] pattern_max_size, tuple[int,int] chunk_size) {
     int subchunk_num = size(verbs_abs);
     int subchunk_last_compulsory = max([i | int i <- [0..subchunk_num], verbs_abs[i].modifier == "+" || verbs_abs[i].modifier == ""] + [0]);
 
@@ -299,16 +316,18 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ext
         str verb_name = verbs_abs[i].verb;
         str verb_specification = verbs_abs[i].specification;
         str verb_modifier = verbs_abs[i].modifier;
-        str verb_direction = (verbs_abs[i].direction != "_") ? verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
+        VerbAnnotation verb = generation_module_get_verb(\module, verb_name, verb_specification, "_");
+        str verb_direction = (verbs_abs[i].direction != "_") ? verbs_abs[i].direction : verb.direction;
 
         if(verb_modifier == "" 
            || (verb_modifier == "?" && size(verbs_concretized[i])== 1)) continue; 
 
         if (i < subchunk_last_compulsory
-            && concretize_check_future_position_exited(position_current, i, verb_direction, width, height)) continue;
+            && (concretize_check_future_position_exited(position_current, i, verb_direction, chunk_size)
+                || !concretize_check_future_pattern_fit(position_current, i, pattern_max_size, verb_direction, chunk_size))) continue;
                 
         position_current = concretize_update_position_current(position_current, i, verb_direction);
-        exited = concretize_check_position_current_exited(position_current, i, width, height);
+        exited = concretize_check_position_current_exited(position_current, i, chunk_size);
         if (!exited) {
             GenerationVerbConcretized verb_concretized = generation_verb_concretized(verb_name, verb_specification, verb_direction);
             verbs_concretized[i] += [verb_concretized];
@@ -318,16 +337,15 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ext
     }
 
     tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] res = <verbs_concretized, position_current>;
-    if (!subchunk_contains_end) res = concretize_delete_unused(verbs_concretized, position_current, width, height);
+    if (!subchunk_contains_end) res = concretize_delete_unused(verbs_concretized, position_current, chunk_size);
 
     return res;
 }
 
 bool concretize_contains_end(GenerationModule \module, list[GenerationVerbExpression] verbs_abs) {
     for (GenerationVerbExpression v <- verbs_abs) {
-
-        VerbAnnotation verb = generation_module_get_verb(\module, v.verb, v.specification, "end");
-        if (!(verb is verb_annotation_empty)) return true;
+        VerbAnnotation verb = generation_module_get_verb(\module, v.verb, v.specification, v.direction);
+        if (verb_is_end(verb)) return true;
     }
 
     return false;
@@ -418,7 +436,7 @@ tuple[list[list[GenerationVerbConcretized]], map[int, Coords]] concretize_challe
     for (int i <- [0..size(challenge_verbs_abs)]) {
         str verb_name = challenge_verbs_abs[i].verb;
         str verb_specification = challenge_verbs_abs[i].specification;
-        str verb_direction = (challenge_verbs_abs[i].direction != "") ? challenge_verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
+        str verb_direction = (challenge_verbs_abs[i].direction != "_") ? challenge_verbs_abs[i].direction : generation_module_get_verb(\module, verb_name, verb_specification, "_").direction;
         str verb_modifier = challenge_verbs_abs[i].modifier;
 
         if (verb_modifier != "") exception_playtraces_challenge_non_specific_verb(verb_name, verb_modifier);

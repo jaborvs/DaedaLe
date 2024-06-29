@@ -13,13 +13,25 @@ PATTERNS
 (--- Entry/Exit Patterns ----------------------------------------------------)
 (----------------------------------------------------------------------------)
 
-Player_Entry_Start
+PlayerEnter_Horizontal
 .
 
-Player_Idle
+PlayerEnter_Vertical
+.   
+
+PlayerIdle
 P
 
-Player_Exit_End
+PlayerIdle_Horizontal
+P
+
+PlayerIdle_Vertical
+P
+
+PlayerExit_Horizontal
+.
+
+PlayerExit_Vertical
 .
 
 (----------------------------------------------------------------------------)
@@ -70,6 +82,9 @@ PlayerEat_Default_Up_End
 P
 X
 
+PlayerEat_End_Start
+P
+
 PlayerEat_End_End
 F
 
@@ -84,7 +99,7 @@ Module1
 [PlayerEat_Default_Down_Start]  -> [PlayerEat_Default_Down_End]     (-- verb Eat(default, down,  1) )
 [PlayerEat_First_Up_Start]      -> [PlayerEat_First_Up_End]         (-- verb Eat(first,   up,    1, <none, Eat(default, up)   >) )
 [PlayerEat_Default_Up_Start]    -> [PlayerEat_Default_Up_End]       (-- verb Eat(default, up,    1) )
-[Player_Idle]                   -> [PlayerEat_End_End]              (-- verb Eat(default, end,   0, <Eat,  none               >) )
+[PlayerEat_End_Start]           -> [PlayerEat_End_End]              (-- verb Eat(default, end,   0, <Eat,  none               >) )
 
 ============
 LEVEL DRAFTS
