@@ -10,6 +10,7 @@ module Generation::Engine
 // --- General modules imports -------------------------------------------------
 import util::Eval;
 import util::Math;
+import util::Benchmark;
 import List;
 import IO;
 
@@ -44,7 +45,11 @@ import Utils;
  */
 void generate(GenerationEngine engine) {
     list[Level] levels_generated = [];
+    real start_time = toReal(realTime());
+
+    println("Generation started...");
     levels_generated = generate_levels(engine);
+    println("Generation completed...\t\t\t(<(realTime()-start_time)/1000>s)");
 
     for (Level lvl <- levels_generated) level_print(lvl, |project://daedale/src/Interface/bin/levels.out|);
     return;
@@ -75,6 +80,8 @@ list[Level] generate_levels(GenerationEngine engine) {
 Level generate_level(GenerationEngine engine, str level_name, GenerationLevel level_abs) {
     Level level_generated = level_init(level_name, <engine.config["chunk_size"].width, engine.config["chunk_size"].height>);
 
+    real start_time = toReal(realTime());
+
     Coords chunk_coords= <0,0>;
     Coords player_entry = <0, toInt(engine.config["chunk_size"].height/2)>;
     tuple[Chunk chunk_generated, Coords player_exit] res = <chunk_empty(), <-1,-1>>;
@@ -100,6 +107,8 @@ Level generate_level(GenerationEngine engine, str level_name, GenerationLevel le
             if (chunk_coords.y < level_generated.abs_size.y_min)level_generated.abs_size.y_min -= 1;
         }
     }
+
+    println("    <string_capitalize(level_name)> generated...\t\t\t(<(realTime()-start_time)/1000>s)");
 
     return level_generated;
 }
@@ -183,8 +192,8 @@ Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, 
     verbs = insertAt(verbs, 0, verb_enter);
 
     if      (check_exited_up(player_exit))              verb_exit = Annotation::ADT::Verb::exit_up_verb;
-    else if (check_exited_down(engine, player_exit))    verb_exit = Annotation::ADT::Verb::exit_right_verb;
-    else if (check_exited_right(engine, player_exit))   verb_exit = Annotation::ADT::Verb::exit_down_verb;
+    else if (check_exited_down(engine, player_exit))    verb_exit = Annotation::ADT::Verb::exit_down_verb;
+    else if (check_exited_right(engine, player_exit))   verb_exit = Annotation::ADT::Verb::exit_right_verb;
     if (!verb_exit is verb_annotation_empty) verbs += [verb_exit];
 
     for (VerbAnnotation verb <- verbs[0..(size(verbs))]) {
@@ -213,9 +222,9 @@ Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, Generat
     if(result(Chunk chunk_rewritten) := eval(program)) {
         chunk = chunk_rewritten;
     }
-    println(verb_annotation_to_string(verb));
-    println(chunk_to_string(chunk));
-    println();
+    // println(verb_annotation_to_string(verb));
+    // println(chunk_to_string(chunk));
+    // println();
 
     return chunk;
 }

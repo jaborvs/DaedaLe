@@ -164,7 +164,7 @@ tuple[list[VerbAnnotation],int] translate_loop_seq(GenerationModule \module, tup
 tuple[list[VerbAnnotation],int] translate_loop_ind(tuple[list[VerbAnnotation] verbs_translated, int subchunk_size] res, VerbAnnotation verb, bool verb_before_exists) {
     int subchunk_size_partial = (verb_before_exists) ? res.subchunk_size-1 : res.subchunk_size;
 
-    if (subchunk_size_partial % verb.size != 0) exception_verbs_translation_size_mismatch(verb, res.subchunk_size);
+    // if (subchunk_size_partial % verb.size != 0) exception_verbs_translation_size_mismatch(verb, res.subchunk_size);
 
     while (subchunk_size_partial > 0) {
         res.verbs_translated += [verb];

@@ -13,25 +13,31 @@ PATTERNS
 (--- Entry/Exit Patterns ----------------------------------------------------)
 (----------------------------------------------------------------------------)
 
-PlayerEnter_Horizontal
+PlayerEnter_Rigth
 .
 
-PlayerEnter_Vertical
+PlayerEnter_Up
 .   
 
-PlayerIdle
+PlayerEnter_Down
+.   
+
+PlayerIdle_Right
 P
 
-PlayerIdle_Horizontal
+PlayerIdle_Up
 P
 
-PlayerIdle_Vertical
+PlayerIdle_Down
 P
 
-PlayerExit_Horizontal
+PlayerExit_Right
 .
 
-PlayerExit_Vertical
+PlayerExit_Up
+.
+
+PlayerExit_Down
 .
 
 (----------------------------------------------------------------------------)
@@ -106,7 +112,9 @@ LEVEL DRAFTS
 ============
 
 Level1
-W:[Eat(_, right)+, Eat(_, up)+, Eat(_, right)+, Eat(default, end)]   C:[Eat(_,right)+, Eat(_,down), Eat(default, end)]                    (-- chunk Chunk1(Module1) )
+W:[Eat(_, up)+,    Eat(_, right)+]                      (-- chunk Chunk1(Module1) )
+W:[Eat(_, right)+, Eat(_, down)+, Eat(_, right)+]       (-- chunk Chunk1(Module1) )
+W:[Eat(_, right)+, Eat(_, up)+, Eat(default, end)]      (-- chunk Chunk1(Module1) )
 
 
 

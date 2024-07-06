@@ -1,9 +1,9 @@
-module Experiments::Rewrite
+module Experiments::RewriteRules::Rewrite
 
 import IO;
 import List;
 import String;
-import Experiments::AST;
+import Experiments::RewriteRules::AST;
 import util::Math;
 
 void main() {

@@ -1,4 +1,4 @@
-module Experiments::AST
+module Experiments::RewriteRules::AST
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
