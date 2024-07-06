@@ -177,12 +177,14 @@ Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, 
     VerbAnnotation verb_enter = verb_annotation_empty();
     VerbAnnotation verb_exit  = verb_annotation_empty(); 
 
-    if      (check_entered_vertical(engine, player_entry))   verb_enter = Annotation::ADT::Verb::enter_vertical_verb;
-    else if (check_entered_horizontal(engine, player_entry)) verb_enter = Annotation::ADT::Verb::enter_horizontal_verb;
+    if      (check_entered_above(player_entry))         verb_enter = Annotation::ADT::Verb::enter_down_verb;
+    else if (check_entered_below(engine, player_entry)) verb_enter = Annotation::ADT::Verb::enter_up_verb;
+    else if (check_entered_left(player_entry))          verb_enter = Annotation::ADT::Verb::enter_right_verb;
     verbs = insertAt(verbs, 0, verb_enter);
 
-    if      (check_exited_vertical(engine, player_exit))    verb_exit = Annotation::ADT::Verb::exit_vertical_verb;
-    else if (check_exited_horizontal(engine, player_exit)) verb_exit = Annotation::ADT::Verb::exit_horizontal_verb;
+    if      (check_exited_up(player_exit))              verb_exit = Annotation::ADT::Verb::exit_up_verb;
+    else if (check_exited_down(engine, player_exit))    verb_exit = Annotation::ADT::Verb::exit_right_verb;
+    else if (check_exited_right(engine, player_exit))   verb_exit = Annotation::ADT::Verb::exit_down_verb;
     if (!verb_exit is verb_annotation_empty) verbs += [verb_exit];
 
     for (VerbAnnotation verb <- verbs[0..(size(verbs))]) {

@@ -37,10 +37,12 @@ data VerbAnnotation
 /******************************************************************************/
 // --- Global implicit verb defines --------------------------------------------
 
-VerbAnnotation enter_horizontal_verb = verb_annotation("enter", "default", "horizontal", 0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
-VerbAnnotation enter_vertical_verb   = verb_annotation("enter", "default", "vertical",   0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
-VerbAnnotation exit_horizontal_verb  = verb_annotation("exit",  "default", "horizontal", 0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
-VerbAnnotation exit_vertical_verb    = verb_annotation("exit",  "default", "vertical",   0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation enter_right_verb = verb_annotation("enter", "default", "right", 0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation enter_up_verb    = verb_annotation("enter", "default", "up",    0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation enter_down_verb  = verb_annotation("enter", "default", "down",  0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation exit_right_verb  = verb_annotation("exit",  "default", "right", 0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation exit_up_verb     = verb_annotation("exit",  "default", "up",    0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation exit_down_verb   = verb_annotation("exit",  "default", "down",    0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
 
 /******************************************************************************/
 // --- Public function defines -------------------------------------------------

@@ -216,10 +216,12 @@ map[str, GenerationModule] papyrus_compile_modules(list[ModuleData] modules) {
     for(ModuleData m <- modules) {
         tuple[str name, GenerationModule \module] m_c = papyrus_compile_module(m);
         
-        m_c.\module.generation_rules[Annotation::ADT::Verb::enter_horizontal_verb] = Generation::ADT::Rule::enter_horizontal_generation_rule;
-        m_c.\module.generation_rules[Annotation::ADT::Verb::enter_vertical_verb]   = Generation::ADT::Rule::enter_vertical_generation_rule;
-        m_c.\module.generation_rules[Annotation::ADT::Verb::exit_horizontal_verb]  = Generation::ADT::Rule::exit_horizontal_generation_rule;
-        m_c.\module.generation_rules[Annotation::ADT::Verb::exit_vertical_verb]  = Generation::ADT::Rule::exit_vertical_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::enter_right_verb] = Generation::ADT::Rule::enter_right_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::enter_up_verb]    = Generation::ADT::Rule::enter_up_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::enter_down_verb]  = Generation::ADT::Rule::enter_down_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::exit_right_verb]  = Generation::ADT::Rule::exit_right_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::exit_up_verb]     = Generation::ADT::Rule::exit_up_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::exit_down_verb]   = Generation::ADT::Rule::exit_down_generation_rule;
 
         if (m_c.name in modules_compiled.names) exception_modules_duplicated_module(m_c.name);
         else  modules_compiled[m_c.name] = m_c.\module;

@@ -10,33 +10,41 @@ PATTERNS
 ========
 
 (------------------------------------------------------------------------------)
-(--- Player Patterns ----------------------------------------------------------)
+(--- Enter/Exit Patterns ------------------------------------------------------)
 (------------------------------------------------------------------------------)
 
-PlayerEnter_Horizontal
+PlayerEnter_Right
 .
 .
 
-PlayerEnter_Vertical
-.   
+PlayerEnter_Up
+.
 
-PlayerIdle_Horizontal
+PlayerEnter_Down
+.
+
+PlayerIdle_Right
 PH1
 #
 
-PlayerIdle_Vertical
-P
+PlayerIdle_Up
+PH1 
 
-PlayerExit_Horizontal
+PlayerIdle_Down
+PH1
+
+PlayerExit_Right
 .
 #
 
-PlayerExit_Vertical
+PlayerExit_Up
 .
 
+PlayerExit_Down
+.
 
 (------------------------------------------------------------------------------)
-(--- Crawling Patterns --------------------------------------------------------)
+(--- Crawl Patterns -----------------------------------------------------------)
 (------------------------------------------------------------------------------)
 PlayerCrawl__Start
 PH1 . 
@@ -225,9 +233,15 @@ Module1
 [PlayerFall__Solid__Start]                -> [PlayerFall__Solid__End]                       (-- verb Fall (default,                 down,  1) )
 [PlayerCrawl__BeforeFall__End]            -> [PlayerFall__Solid__AfterCrawlBeforeFall__End] (-- verb Fall (after_crawl_before_fall, down,  1, <Crawl(before_fall), none         >) )
 [PlayerCrawl__Start]                      -> [PlayerEat__End]                               (-- verb Eat  (after_crawl,             end,   0, <Crawl(_),           none         >) )
-[PlayerStuck_AfterCrawl_Start]         -> [PlayerStuck_AfterCrawl_End]                (-- verb Stuck(after_crawl,             end,   0, <Crawl(_),           none         >) )
+[PlayerStuck_AfterCrawl_Start]            -> [PlayerStuck_AfterCrawl_End]                   (-- verb Stuck(after_crawl,             end,   0, <Crawl(_),           none         >) )
 
 Module2
+[PlayerEnter_Right]                       -> [PlayerIdle_Right]                             (-- verb Enter(default,                 right, 0) )
+[PlayerEnter_Up]                          -> [PlayerIdle_Up]                                (-- verb Enter(default,                 up,    0) )
+[PlayerEnter_Down]                        -> [PlayerIdle_Down]                              (-- verb Enter(default,                 down,  0) )
+[PlayerIdle_Right]                        -> [PlayerExit_Right]                             (-- verb Exit (default,                 right, 0) )
+[PlayerIdle_Up]                           -> [PlayerExit_Up]                                (-- verb Exit (default,                 up,    0) )
+[PlayerIdle_Down]                         -> [PlayerExit_Down]                              (-- verb Exit (default,                 down,  0) )
 [PlayerCrawl__Start]                      -> [PlayerCrawl__End]                             (-- verb Crawl(default,                 right, 1) )
 [PlayerClimb__Floating__Low__End]         -> [PlayerCrawl__AfterClimb__End]                 (-- verb Crawl(after_climb_low,         right, 1, <Climb(low),         none         >) )
 [PlayerClimb__Floating__Medium__End]      -> [PlayerCrawl__AfterClimb__End]                 (-- verb Crawl(after_climb_medium,      right, 1, <Climb(medium),      none         >) )
@@ -239,16 +253,26 @@ Module2
 [PlayerClimb__Floating__Large__Start]     -> [PlayerClimb__Floating__Large__End]            (-- verb Climb(large,                   up,    1, <Climb(medium),      none         >) )
 [PlayerClimb__Floating__Coil__Start]      -> [PlayerClimb__Floating__Coil__End]             (-- verb Climb(coil,                    up,    2) )
 [PlayerFall__Floating__Start]             -> [PlayerFall__Floating__End]                    (-- verb Fall (default,                 down,  1) )
-[PlayerIdle]                              -> [PlayerEat__End]                               (-- verb Eat  (after_crawl,             end,   0, <Crawl(_),           none         >) )
+[PlayerCrawl__Start]                      -> [PlayerEat__End]                               (-- verb Eat  (after_crawl,             end,   0, <Crawl(_),           none         >) )
 [PlayerStuck_AfterCrawl_Start]            -> [PlayerStuck_AfterCrawl_End]                   (-- verb Stuck(after_crawl,             end,   0, <Crawl(_),           none         >) )
     
 ============
 LEVEL DRAFTS
 ============
-Level0
-W:[Crawl+, Eat] (-- chunk Chunk1(module1) )
 
 Level1
-W:[Crawl+, Climb, Climb+, Crawl+]       C:[Crawl+, Crawl, Stuck]                            (-- chunk Chunk1(Module1) )
-W:[Crawl+, Eat]                                                                             (-- chunk Chunk2(Module1) )
+W:[Crawl+, Climb, Climb, Crawl+]                        (-- chunk Chunk1(Module1) )
+W:[Crawl+, Fall+, Crawl+]                               (-- chunk Chunk2(Module1) )
+W:[Crawl+, Climb, Climb, Crawl+, Climb, Climb, Crawl+]  (-- chunk Chunk3(Module1) )
+W:[Crawl+, Fall+, Crawl+]                               (-- chunk Chunk4(Module1) )
+W:[Crawl+, Eat]                                         (-- chunk Chunk5(Module1) )
 
+Level2
+W:[Crawl+, Fall+, Crawl+]                               (-- chunk Chunk1(Module2) )
+W:[Crawl+, Climb, Climb, Climb+, Crawl+]                (-- chunk Chunk2(Module2) )
+W:[Crawl+, Climb, Climb, Climb+, Crawl+, Eat]           (-- chunk Chunk3(Module2) )
+
+Level4
+W:[Crawl+, Climb+]                                      (-- chunk Chunk1(Module2) )
+W:[Climb+, Crawl+]                                      (-- chunk Chunk2(Module2) )
+W:[Crawl+, Eat]                                         (-- chunk Chunk3(Module2) )
