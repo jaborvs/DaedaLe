@@ -2,7 +2,7 @@
 CONFIGURATION
 =============
 
-chunk_size = 15x15
+chunk_size = 15x30
 objects_permanent = # and E
 
 ========
@@ -273,6 +273,5 @@ W:[Crawl+, Climb, Climb, Climb+, Crawl+]                (-- chunk Chunk2(Module2
 W:[Crawl+, Climb, Climb, Climb+, Crawl+, Eat]           (-- chunk Chunk3(Module2) )
 
 Level4
-W:[Crawl+, Climb+]                                      (-- chunk Chunk1(Module2) )
-W:[Climb+, Crawl+]                                      (-- chunk Chunk2(Module2) )
+W:[Crawl+, Climb+, Crawl+]                                      (-- chunk Chunk1(Module2) )
 W:[Crawl+, Eat]                                         (-- chunk Chunk3(Module2) )
