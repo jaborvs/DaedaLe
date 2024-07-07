@@ -13,28 +13,38 @@ PATTERNS
 (--- Entry/Exit Patterns ------------------------------------------------------)
 (------------------------------------------------------------------------------)
 
-PlayerEnter_Horizontal
+PlayerEnter_Right
 .
 .
 .
 
-PlayerEnter_Vertical
+PlayerEnter_Up
 .   .   .
 
-PlayerIdle_Horizontal
+PlayerEnter_Down
+.   .   .
+
+PlayerIdle_Right
 #
 P
 #
 
-PlayerIdle_Vertical
+PlayerIdle_Up
 #   P   #
 
-PlayerExit_Horizontal
+PlayerIdle_Down
+#   P   #
+
+
+PlayerExit_Right
 #
 .
 #
 
-PlayerExit_Vertical
+PlayerExit_Up
+#   .   #
+
+PlayerExit_Down
 #   .   #
 
 (------------------------------------------------------------------------------)
@@ -140,15 +150,31 @@ PlayerWalk_BeforeRight_Down_End
 (--- Walk Down Patterns -------------------------------------------------------)
 (------------------------------------------------------------------------------)
 
-PlayerWalk_End_Start
+PlayerWalk_End_Right_Start
 #   .
 p   .
 #   .
 
-PlayerWalk_End_End
+PlayerWalk_End_Right_End
 #   #
 E   #
 #   #
+
+PlayerWalk_End_Down_Start
+#   P   #
+.   .   .
+
+PlayerWalk_End_Down_End
+#   E   #
+#   #   #
+
+PlayerWalk_End_Up_Start
+.   .   .
+#   P   #
+
+PlayerWalk_End_Up_End
+#   #   #
+#   E   #
 
 =======
 MODULES
@@ -156,29 +182,29 @@ MODULES
 
 Module1
 [PlayerWalk_Default_Up_Start]       -> [PlayerWalk_Default_Up_End]          (-- verb Walk(default,      up,    1) )
-[PlayerWalk_BeforeUp_Right_End]     -> [PlayerWalk_AfterRight_Up_End]       (-- verb Walk(after_right,  up,    1, <Walk(_,right), none          >) )
-[PlayerWalk_BeforeRight_Up_Start]   -> [PlayerWalk_BeforeRight_Up_End]      (-- verb Walk(before_right, up,    1, <none,          Walk(_, right)>) )
+[PlayerWalk_BeforeUp_Right_End]     -> [PlayerWalk_AfterRight_Up_End]       (-- verb Walk(after_right,  up,    1, <Walk(_, right), none          >) )
+[PlayerWalk_BeforeRight_Up_Start]   -> [PlayerWalk_BeforeRight_Up_End]      (-- verb Walk(before_right, up,    1, <none,           Walk(_, right)>) )
 [PlayerWalk_Default_Right_Start]    -> [PlayerWalk_Default_Right_End]       (-- verb Walk(default,      right, 1) )
-[PlayerWalk_BeforeRight_Up_End]     -> [PlayerWalk_AfterUp_Right_End]       (-- verb Walk(after_up,     right, 1, <Walk(_, up),   none          >) )
-[PlayerWalk_BeforeUp_Right_Start]   -> [PlayerWalk_BeforeUp_Right_End]      (-- verb Walk(before_up,    right, 1, <none,          Walk(_, up)   >) )
-[PlayerWalk_BeforeRight_Down_End]   -> [PlayerWalk_AfterDown_Right_End]     (-- verb Walk(after_down,   right, 1, <Walk(_, down), none          >) )
-[PlayerWalk_BeforeDown_Right_Start] -> [PlayerWalk_BeforeDown_Right_End]    (-- verb Walk(before_down,  right, 1, <none,          Walk(_, down) >) )
+[PlayerWalk_BeforeRight_Up_End]     -> [PlayerWalk_AfterUp_Right_End]       (-- verb Walk(after_up,     right, 1, <Walk(_, up),    none          >) )
+[PlayerWalk_BeforeUp_Right_Start]   -> [PlayerWalk_BeforeUp_Right_End]      (-- verb Walk(before_up,    right, 1, <none,           Walk(_, up)   >) )
+[PlayerWalk_BeforeRight_Down_End]   -> [PlayerWalk_AfterDown_Right_End]     (-- verb Walk(after_down,   right, 1, <Walk(_, down),  none          >) )
+[PlayerWalk_BeforeDown_Right_Start] -> [PlayerWalk_BeforeDown_Right_End]    (-- verb Walk(before_down,  right, 1, <none,           Walk(_, down) >) )
 [PlayerWalk_Default_Down_Start]     -> [PlayerWalk_Default_Down_End]        (-- verb Walk(default,      down,  1) )
-[PlayerWalk_BeforeDown_Right_End]   -> [PlayerWalk_AfterRight_Down_End]     (-- verb Walk(after_right,  down, 1, <Walk(_, right), none          >) )
-[PlayerWalk_BeforeRight_Down_Start] -> [PlayerWalk_BeforeRight_Down_End]    (-- verb Walk(before_right, down, 1, <none,           Walk(_, right)>) )
-[PlayerWalk_End_Start]             -> [PlayerWalk_End_End]                 (-- verb Walk(after_right,  end,   0, <Walk, none>) )
+[PlayerWalk_BeforeDown_Right_End]   -> [PlayerWalk_AfterRight_Down_End]     (-- verb Walk(after_right,  down,  1, <Walk(_, right), none          >) )
+[PlayerWalk_BeforeRight_Down_Start] -> [PlayerWalk_BeforeRight_Down_End]    (-- verb Walk(before_right, down,  1, <none,           Walk(_, right)>) )
+[PlayerWalk_End_Right_Start]        -> [PlayerWalk_End_Right_End]           (-- verb Walk(after_right,  end,   0, <Walk(_, right), none>) )
+[PlayerWalk_End_Down_Start]         -> [PlayerWalk_End_Down_End]            (-- verb Walk(after_down,   end,   0, <Walk(_, down),  none>) )
+[PlayerWalk_End_Up_Start]           -> [PlayerWalk_End_Up_End]              (-- verb Walk(after_up,     end,   0, <Walk(_, up),    none>) )
 
 ============
 LEVEL DRAFTS
 ============
 
 Level1
-W:[Walk(_, right) +, Walk(_, up)+]                              (-- chunk Chunk1(Module1) )
-W:[Walk(_, up)    +]                                            (-- chunk Chunk1(Module1) )
-W:[Walk(_, up)    +, Walk(_, right) +]                          (-- chunk Chunk1(Module1) )
-W:[Walk(_, right) +, Walk(_, down)  +]                          (-- chunk Chunk1(Module1) )
-W:[Walk(_, down)  +]                                            (-- chunk Chunk1(Module1) )
-W:[Walk(_, down)  +, Walk(_, right) +, Walk(after_right, end)]  (-- chunk Chunk1(Module1) )
+W:[Walk(_, right)+, Walk(after_right,end)]                                  (-- chunk Chunk1(Module1) )
+
+Level2
+W:[Walk(_, right)+, Walk(_, down), Walk(after_down, end)] C:[Walk(_, right)+, Walk(_, up), Walk(after_up, end)]  (-- chunk Chunk1(Module1) )
 
    
 

@@ -222,9 +222,9 @@ Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, Generat
     if(result(Chunk chunk_rewritten) := eval(program)) {
         chunk = chunk_rewritten;
     }
-    // println(verb_annotation_to_string(verb));
-    // println(chunk_to_string(chunk));
-    // println();
+    println(verb_annotation_to_string(verb));
+    println(chunk_to_string(chunk));
+    println();
 
     return chunk;
 }
@@ -263,9 +263,13 @@ Chunk apply_merge(str name, Chunk win_chunk_generated, Chunk challenge_chunk_gen
     if (challenge_chunk_generated is chunk_empty) return win_chunk_generated;
 
     for (int i <- [0..size(win_chunk_generated.objects)]) {
-        if      (win_chunk_generated.objects[i] != "." && challenge_chunk_generated.objects[i] == ".") objects_merged += [win_chunk_generated.objects[i]];
-        else if (win_chunk_generated.objects[i] == "." && challenge_chunk_generated.objects[i] != ".") objects_merged += [challenge_chunk_generated.objects[i]];
-        else if (win_chunk_generated.objects[i] != "." && challenge_chunk_generated.objects[i] != ".") objects_merged += [challenge_chunk_generated.objects[i]];
+        if      (win_chunk_generated.objects[i] != "." && challenge_chunk_generated.objects[i] == ".")     objects_merged += [win_chunk_generated.objects[i]];
+        else if (win_chunk_generated.objects[i] == "." && challenge_chunk_generated.objects[i] != ".")     objects_merged += [challenge_chunk_generated.objects[i]];
+        else if (win_chunk_generated.objects[i] != "." && challenge_chunk_generated.objects[i] != ".") {
+            if      (win_chunk_generated.objects[i] != "#" && challenge_chunk_generated.objects[i] == "#") objects_merged += [win_chunk_generated.objects[i]];
+            else if (win_chunk_generated.objects[i] == "#" && challenge_chunk_generated.objects[i] != "#") objects_merged += [challenge_chunk_generated.objects[i]];
+            else                                                                                      objects_merged += [win_chunk_generated.objects[i]];
+        }
         else                                                                                      objects_merged += [win_chunk_generated.objects[i]];
     }
 

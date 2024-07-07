@@ -105,12 +105,12 @@ data CurrentLine = currentline(
  */ 
 App[Model] main() {
     // game_loc = |project://daedale/src/PuzzleScript/demo/limerick.ps|;
-    // game_loc = |project://daedale/src/PuzzleScript/demo/mazecrawler.ps|;
-    game_loc = |project://daedale/src/PuzzleScript/demo/nekopuzzle.ps|;
+    game_loc = |project://daedale/src/PuzzleScript/demo/mazecrawler.ps|;
+    // game_loc = |project://daedale/src/PuzzleScript/demo/nekopuzzle.ps|;
 
     // pprs_loc = |project://daedale/src/Generation/demo/limerick.pprs|;
-    // pprs_loc = |project://daedale/src/Generation/demo/mazecrawler.pprs|;
-    pprs_loc = |project://daedale/src/Generation/demo/nekopuzzle.pprs|;
+    pprs_loc = |project://daedale/src/Generation/demo/mazecrawler.pprs|;
+    // pprs_loc = |project://daedale/src/Generation/demo/nekopuzzle.pprs|;
 
     // We load and compile the game
     GameData game = ps_load(game_loc);
