@@ -429,8 +429,10 @@ tuple[list[list[GenerationVerbConcretized]], map[int, Coords]] concretize_challe
  * @Ret:    Tuple with list of challenge verbs concretized and position current updated
  */
 tuple[list[list[GenerationVerbConcretized]], map[int, Coords]] concretize_challenge_newplaytrace(GenerationModule \module, list[GenerationVerbExpression] challenge_verbs_abs, list[list[GenerationVerbConcretized]] challenge_verbs_concretized, map[int, Coords] challenge_position_current, int newpt_index) {
-    for (int i <- [newpt_index..(size(challenge_verbs_abs)+newpt_index)]) {
-        challenge_position_current[i] = challenge_position_current[newpt_index-1];
+    if (newpt_index-1 != -1) {
+        for (int i <- [newpt_index..(size(challenge_verbs_abs)+newpt_index)]) {
+            challenge_position_current[i] = challenge_position_current[newpt_index-1];
+        }
     }
 
     for (int i <- [0..size(challenge_verbs_abs)]) {
