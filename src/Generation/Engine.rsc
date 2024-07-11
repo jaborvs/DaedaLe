@@ -222,9 +222,9 @@ Chunk apply_generation_rule(VerbAnnotation verb, GenerationPattern left, Generat
     if(result(Chunk chunk_rewritten) := eval(program)) {
         chunk = chunk_rewritten;
     }
-    println(verb_annotation_to_string(verb));
-    println(chunk_to_string(chunk));
-    println();
+    // println(verb_annotation_to_string(verb));
+    // println(chunk_to_string(chunk));
+    // println();
 
     return chunk;
 }

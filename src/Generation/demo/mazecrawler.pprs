@@ -2,8 +2,8 @@
 CONFIGURATION
 =============
 
-chunk_size = 15x15
-objects_permanent = # and E
+chunk_size = 20x20
+objects_permanent = # and E and M
 
 ========
 PATTERNS
@@ -147,7 +147,7 @@ PlayerWalk_BeforeRight_Down_End
 #   #   .
 
 (------------------------------------------------------------------------------)
-(--- Walk Down Patterns -------------------------------------------------------)
+(--- Walk End Patterns --------------------------------------------------------)
 (------------------------------------------------------------------------------)
 
 PlayerWalk_End_Right_Start
@@ -176,6 +176,36 @@ PlayerWalk_End_Up_End
 #   #   #
 #   E   #
 
+(------------------------------------------------------------------------------)
+(--- Die Patterns -------------------------------------------------------------)
+(------------------------------------------------------------------------------)
+
+PlayerDie_End_Right_Start
+#   .
+p   .
+#   .
+
+PlayerDie_End_Right_End
+#   #
+M   #
+#   #
+
+PlayerDie_End_Down_Start
+#   P   #
+.   .   .
+
+PlayerDie_End_Down_End
+#   M   #
+#   #   #
+
+PlayerDie_End_Up_Start
+.   .   .
+#   P   #
+
+PlayerDie_End_Up_End
+#   #   #
+#   M   #
+
 =======
 MODULES
 =======
@@ -192,19 +222,22 @@ Module1
 [PlayerWalk_Default_Down_Start]     -> [PlayerWalk_Default_Down_End]        (-- verb Walk(default,      down,  1) )
 [PlayerWalk_BeforeDown_Right_End]   -> [PlayerWalk_AfterRight_Down_End]     (-- verb Walk(after_right,  down,  1, <Walk(_, right), none          >) )
 [PlayerWalk_BeforeRight_Down_Start] -> [PlayerWalk_BeforeRight_Down_End]    (-- verb Walk(before_right, down,  1, <none,           Walk(_, right)>) )
-[PlayerWalk_End_Right_Start]        -> [PlayerWalk_End_Right_End]           (-- verb Walk(after_right,  end,   0, <Walk(_, right), none>) )
-[PlayerWalk_End_Down_Start]         -> [PlayerWalk_End_Down_End]            (-- verb Walk(after_down,   end,   0, <Walk(_, down),  none>) )
-[PlayerWalk_End_Up_Start]           -> [PlayerWalk_End_Up_End]              (-- verb Walk(after_up,     end,   0, <Walk(_, up),    none>) )
+[PlayerWalk_End_Right_Start]        -> [PlayerWalk_End_Right_End]           (-- verb Exit(after_right,  end,   0, <Walk(_, right), none>) )
+[PlayerWalk_End_Down_Start]         -> [PlayerWalk_End_Down_End]            (-- verb Exit(after_down,   end,   0, <Walk(_, down),  none>) )
+[PlayerWalk_End_Up_Start]           -> [PlayerWalk_End_Up_End]              (-- verb Exit(after_up,     end,   0, <Walk(_, up),    none>) )
+[PlayerDie_End_Right_Start]         -> [PlayerDie_End_Right_End]            (-- verb Die(after_right,   end,   0, <Walk(_, right), none>) )
+[PlayerDie_End_Down_Start]          -> [PlayerDie_End_Down_End]             (-- verb Die(after_down,    end,   0, <Walk(_, down),  none>) )
+[PlayerDie_End_Up_Start]            -> [PlayerDie_End_Up_End]               (-- verb Die(after_up,      end,   0, <Walk(_, up),    none>) )
 
 ============
 LEVEL DRAFTS
 ============
 
 Level1
-W:[Walk(_, right)+, Walk(after_right,end)]                                  (-- chunk Chunk1(Module1) )
+W:[Walk(_, right)+, Exit(after_right,end)]                                  (-- chunk Chunk1(Module1) )
 
 Level2
-W:[Walk(_, right)+, Walk(_, down), Walk(after_down, end)] C:[Walk(_, right)+, Walk(_, up), Walk(after_up, end)]  (-- chunk Chunk1(Module1) )
+W:[Walk(_, right)+, Walk(_, down), Exit(after_down, end)] C:[Walk(_, right)+, Walk(_, up), Die(after_up, end)]  (-- chunk Chunk1(Module1) )
 
    
 

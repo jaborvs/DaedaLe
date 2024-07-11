@@ -300,7 +300,7 @@ Model update_run(Model model) {
  */
 Model update_generate(Model model) {
     generate(model.generation_engine);
-    return update_console(model, "generate levels", "Succesful genearation, levels generated in |project://daedale/src/Interface/bin/levels.out|");
+    return update_console(model, "generate levels", "Succesful generation, levels saved in |project://daedale/src/Interface/bin/levels.out|");
 }
 
 /*
