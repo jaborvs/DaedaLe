@@ -2,7 +2,7 @@
 CONFIGURATION
 =============
 
-chunk_size = 20x20
+chunk_size = 15x15
 objects_permanent = # and E
 
 ========
@@ -261,16 +261,5 @@ LEVEL DRAFTS
 ============
 
 Level1
-W:[Crawl+, Climb(low), Climb(medium), Crawl+]                                               (-- chunk Chunk1(Module1) )
-W:[Crawl+, Fall+, Crawl+]                                                                   (-- chunk Chunk2(Module1) )
-W:[Crawl+, Climb(low), Climb(medium), Crawl, Crawl+, Climb(low), Climb(medium), Crawl+]     (-- chunk Chunk3(Module1) )
-W:[Crawl+, Fall+, Crawl +]                                                                  (-- chunk Chunk4(Module1) )
-W:[Crawl+, Eat]                                                                             (-- chunk Chunk5(Module1) )
-
-Level2
-W:[Crawl+, Fall+,  Crawl+]                                                                  (-- chunk Chunk1(Module2) )
-W:[Crawl+, Climb(coil), Climb+, Crawl+, Climb(coil), Climb+, Crawl+, Eat]                   (-- chunk Chunk2(Module2) )
-
-Level4
-W:[Crawl+, Climb(coil)+, Climb+, Crawl+]                                                    (-- chunk Chunk1(Module2) )
-W:[Crawl+, Eat]                                                                             (-- chunk Chunk2(Module2) )
+W:[Crawl+, Climb+, Crawl+] C:[Crawl+, Crawl, Stuck]  (-- chunk Chunk2(Module1) )
+W:[Crawl+, Eat]                                      (-- chunk Chunk2(Module1) )
