@@ -10,7 +10,7 @@ module Generation::Syntax
 /******************************************************************************/
 // --- Layout ------------------------------------------------------------------
 
-layout LAYOUTLIST = LAYOUT* !>> [\t\ \r(];
+layout LAYOUTLIST = LAYOUT* !>> [\t\ \r] !>> "(--";
 lexical LAYOUT
     = [\t\ \r]
     | COMMENT
@@ -40,7 +40,7 @@ keyword ModifierKeyword
 
 lexical DELIMITER = [=]+;
 lexical NEWLINE = [\n];
-lexical COMMENT = @category="Comment" "(" (![()]|COMMENT)* ")";
+lexical COMMENT = @category="Comment" "(--" ![\n]* ")";
 
 lexical STRING = ![\n]+ >> [\n];
 lexical INT = [0-9]+ val;
@@ -113,17 +113,21 @@ syntax LevelDraftData
     ;
 
 syntax ChunkData
-    = chunk_data: WinPlaytraceData FailPlaytraceData? NEWLINE
+    = chunk_data: WinPlaytraceData ChallengePlaytraceData? NEWLINE
     ;
 
 syntax WinPlaytraceData
     = win_playtrace_data: 'W:[' {VerbExpressionData ','}+ ']'
     ;
 
-syntax FailPlaytraceData
-    = fail_playtrace_data:  'F:[' {VerbExpressionData ','}+ ']'
+syntax ChallengePlaytraceData
+    = challenge_playtrace_data:  'C:[' {VerbExpressionData ','}+ ']'
     ;
 
 syntax VerbExpressionData
-    = verb_expression_data: ID ModifierKeyword?
+    = verb_expression_data: ID ('(' {ArgumentData ','}+ ')')? ModifierKeyword?
+    ;
+
+syntax ArgumentData
+    = argument_data: ID
     ;

@@ -15704,7 +15704,7 @@ module.exports = '1.0.5';
      */
     function parseInt(string, radix, guard) {
       // Firefox < 21 and Opera < 15 follow ES3 for `parseInt`.
-      // Chrome fails to trim leading <BOM> whitespace characters.
+      // Chrome challenges to trim leading <BOM> whitespace characters.
       // See https://code.google.com/p/v8/issues/detail?id=3109 for more details.
       if (guard ? isIterateeCall(string, radix, guard) : radix == null) {
         radix = 0;

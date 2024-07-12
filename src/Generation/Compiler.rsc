@@ -19,14 +19,17 @@ import Generation::ADT::Command;
 import Generation::ADT::Pattern;
 import Generation::ADT::Rule;
 import Generation::ADT::Module;
-import Generation::ADT::VerbExpression;
+import Generation::ADT::Verb;
 import Generation::ADT::Chunk;
 import Generation::ADT::Level;
 import Generation::Exception;
 
 import Annotation::ADT::Verb;
 import Annotation::ADT::Chunk;
+import Annotation::AST;
 import Annotation::Load;
+import Annotation::Compiler;
+
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -58,7 +61,7 @@ data GenerationEngine
 GenerationEngine papyrus_compile(PapyrusData pprs) {
     GenerationEngine engine = generation_engine_init();
 
-    engine.config = papyrus_compile_config(pprs.commands);
+    engine.config = papyrus_compile_config(pprs.commands, pprs.patterns);
     engine.patterns = papyrus_compile_patterns(pprs.patterns);
     engine.modules = papyrus_compile_modules(pprs.modules);
     engine.levels_draft = papyrus_compile_levels(pprs.level_drafts);
@@ -77,13 +80,15 @@ GenerationEngine papyrus_compile(PapyrusData pprs) {
  * @Params: command_datas -> Raw commands data form the ast 
  * @Ret:    GenerationConfig object for the command
  */
-map[str,GenerationCommand] papyrus_compile_config(list[CommandData] commands_datas) {
+map[str,GenerationCommand] papyrus_compile_config(list[CommandData] commands_datas, list[PatternData] pattern_datas) {
     map[str names, GenerationCommand generation_commmands] config = ();
 
     for (CommandData cmd <- commands_datas) {
         if (cmd.name in config.names) exception_config_duplicated_cmd(cmd.name);
         else                          config[cmd.name] = papyrus_compile_command(cmd);
     } 
+
+    config["pattern_max_size"] = papyrus_compile_pattern_max_size(pattern_datas);
 
     return config;
 }
@@ -136,6 +141,21 @@ GenerationCommand papyrus_compile_objects_permanent(CommandData command) {
     return generation_command_objects_permanent(params);
 }
 
+/*
+ * @Name:   papyrus_compile_pattern_max_size
+ * @Desc:   Function to compile pattern max size
+ * @Param:  command -> Unprocessed command
+ * @Ret:    GenerationCommand object
+ */
+GenerationCommand papyrus_compile_pattern_max_size(list[PatternData] patterns) {
+    int max_width = -1;
+    int max_height = -1;
+
+    max_width  = max([size(p.tilemap.row_dts[0].objects) | PatternData p <- patterns]);
+    max_height = max([size(p.tilemap.row_dts) | PatternData p <- patterns]);
+    return generation_command_pattern_max_size(max_width, max_height);
+}
+
 /******************************************************************************/
 // --- Private compile pattern functions ---------------------------------------
 
@@ -148,6 +168,7 @@ GenerationCommand papyrus_compile_objects_permanent(CommandData command) {
  */
 map[str, GenerationPattern] papyrus_compile_patterns(list[PatternData] patterns) {
     map[str names, GenerationPattern pattern] patterns_compiled = ();
+    tuple[int width, int height] max_size = <-1,-1>;
 
     for (PatternData p <- patterns) {
         tuple[str name, GenerationPattern pattern] p_c = papyrus_compile_pattern(p);
@@ -195,8 +216,12 @@ map[str, GenerationModule] papyrus_compile_modules(list[ModuleData] modules) {
     for(ModuleData m <- modules) {
         tuple[str name, GenerationModule \module] m_c = papyrus_compile_module(m);
         
-        m_c.\module.generation_rules[Annotation::ADT::Verb::enter_verb] = Generation::ADT::Rule::enter_generation_rule;
-        m_c.\module.generation_rules[Annotation::ADT::Verb::exit_verb]  = Generation::ADT::Rule::exit_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::enter_right_verb] = Generation::ADT::Rule::enter_right_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::enter_up_verb]    = Generation::ADT::Rule::enter_up_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::enter_down_verb]  = Generation::ADT::Rule::enter_down_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::exit_right_verb]  = Generation::ADT::Rule::exit_right_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::exit_up_verb]     = Generation::ADT::Rule::exit_up_generation_rule;
+        m_c.\module.generation_rules[Annotation::ADT::Verb::exit_down_verb]   = Generation::ADT::Rule::exit_down_generation_rule;
 
         if (m_c.name in modules_compiled.names) exception_modules_duplicated_module(m_c.name);
         else  modules_compiled[m_c.name] = m_c.\module;
@@ -231,10 +256,12 @@ tuple[str, GenerationModule] papyrus_compile_module(ModuleData \module) {
 
 tuple[VerbAnnotation, GenerationRule] papyrus_compile_rule(RuleData rule) {
     tuple[VerbAnnotation verb, GenerationRule rule] rule_compiled = <verb_annotation_empty(), generation_rule_empty()>;
-
     map[int key, list[str] content] comments = rule.comments;
+
     if (comments == ()) exception_rules_no_verb();
-    VerbAnnotation verb = annotation_load_verb_annotation(comments);
+
+    Annotation \anno = annotation_load(comments);
+    VerbAnnotation verb = compile_verb_annotation(\anno);
 
     rule_compiled = <
         verb,
@@ -297,22 +324,57 @@ tuple[str, GenerationLevel] papyrus_compile_level(LevelDraftData level) {
  */
 GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
     GenerationChunk chunk_compiled = generation_chunk_empty();
-
     map[int key, list[str] content] comments = chunk.comments;
-    if (comments == ()) exception_chunk_no_module();
-    ChunkAnnotation chunk_anno = annotation_load_chunk_annotation(comments);
 
-    list[GenerationVerbExpression] win_verbs = [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.win_pt.verb_dts];
-    list[GenerationVerbExpression] fail_verbs = (chunk.fail_pt != []) ? [generation_verb_expression(v.name, v.modifier) | VerbExpressionData v <- chunk.fail_pt[0].verb_dts] : [];
+    if (comments == ()) exception_chunk_no_module();
+
+    Annotation \anno = annotation_load(comments);
+    ChunkAnnotation chunk_anno = compile_chunk_annotation(\anno);
+
+    list[GenerationVerbExpression] win_verbs = [papyrus_compile_verb_expression(v) | VerbExpressionData v <- chunk.win_pt.verb_dts];
+    list[GenerationVerbExpression] challenge_verbs = (chunk.challenge_pt != []) ? [papyrus_compile_verb_expression(v) | VerbExpressionData v <- chunk.challenge_pt[0].verb_dts] : [];
 
     chunk_compiled = generation_chunk(
         chunk_anno.name,
         chunk_anno.\module,
         win_verbs,
-        fail_verbs
+        challenge_verbs
     );
     
     return chunk_compiled;
+}
+
+
+/*
+ * @Name:   papyrus_compile_verb_expression
+ * @Desc:   Function that compiles a verb expression
+ * @Params: verb_dt -> Verb expression from the ast
+ * @Ret:    GenerationVerbExpression object
+ */
+GenerationVerbExpression papyrus_compile_verb_expression(VerbExpressionData verb_dt) {
+    str specification = "";
+    str direction = "";
+
+    if      (size(verb_dt.args) == 0) {
+        specification = "_";
+        direction = "_";
+    }
+    else if (size(verb_dt.args) == 1) {
+        specification = verb_dt.args[0].arg;
+        direction = "_";
+    }
+    else if (size(verb_dt.args) == 2) {
+        specification = verb_dt.args[0].arg;
+        direction     = verb_dt.args[1].arg;
+    }
+    else exception_chunk_verb_invalid_args();
+
+    return generation_verb_expression(
+        verb_dt.name,
+        specification,
+        direction,
+        verb_dt.modifier
+    );
 }
 
 /******************************************************************************/

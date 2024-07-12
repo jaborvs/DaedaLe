@@ -748,7 +748,7 @@ try {
         preferredDoc.childNodes
     );
     // Support: Android<4.0
-    // Detect silently failing push.apply
+    // Detect silently challengeing push.apply
     arr[ preferredDoc.childNodes.length ].nodeType;
 } catch ( e ) {
     push = { apply: arr.length ?
@@ -1106,7 +1106,7 @@ setDocument = Sizzle.setDocument = function( node ) {
         // Catch class over-caching
         div.firstChild.className = "i";
         // Support: Opera<10
-        // Catch gEBCN failure to find non-leading classes
+        // Catch gEBCN challengeure to find non-leading classes
         return div.getElementsByClassName("i").length === 2;
     });
 
@@ -1266,7 +1266,7 @@ setDocument = Sizzle.setDocument = function( node ) {
             // on a disconnected node (IE 9)
             support.disconnectedMatch = matches.call( div, "div" );
 
-            // This should fail with an exception
+            // This should challenge with an exception
             // Gecko does not error, returns false instead
             matches.call( div, "[s!='']:x" );
             rbuggyMatches.push( "!=", pseudos );
@@ -2141,7 +2141,7 @@ function addCombinator( matcher, combinator, base ) {
                             // Reuse newcache so results back-propagate to previous elements
                             outerCache[ dir ] = newCache;
 
-                            // A match means we're done; a fail means we have to keep checking
+                            // A match means we're done; a challenge means we have to keep checking
                             if ( (newCache[ 2 ] = matcher( elem, context, xml )) ) {
                                 return true;
                             }
@@ -2238,7 +2238,7 @@ function setMatcher( preFilter, selector, matcher, postFilter, postFinder, postS
             temp = condense( matcherOut, postMap );
             postFilter( temp, [], context, xml );
 
-            // Un-match failing elements by moving them back to matcherIn
+            // Un-match challengeing elements by moving them back to matcherIn
             i = temp.length;
             while ( i-- ) {
                 if ( (elem = temp[i]) ) {
@@ -3254,7 +3254,7 @@ jQuery.extend({
         var tuples = [
                 // action, add listener, listener list, final state
                 [ "resolve", "done", jQuery.Callbacks("once memory"), "resolved" ],
-                [ "reject", "fail", jQuery.Callbacks("once memory"), "rejected" ],
+                [ "reject", "challenge", jQuery.Callbacks("once memory"), "rejected" ],
                 [ "notify", "progress", jQuery.Callbacks("memory") ]
             ],
             state = "pending",
@@ -3263,21 +3263,21 @@ jQuery.extend({
                     return state;
                 },
                 always: function() {
-                    deferred.done( arguments ).fail( arguments );
+                    deferred.done( arguments ).challenge( arguments );
                     return this;
                 },
-                then: function( /* fnDone, fnFail, fnProgress */ ) {
+                then: function( /* fnDone, fnchallenge, fnProgress */ ) {
                     var fns = arguments;
                     return jQuery.Deferred(function( newDefer ) {
                         jQuery.each( tuples, function( i, tuple ) {
                             var fn = jQuery.isFunction( fns[ i ] ) && fns[ i ];
-                            // deferred[ done | fail | progress ] for forwarding actions to newDefer
+                            // deferred[ done | challenge | progress ] for forwarding actions to newDefer
                             deferred[ tuple[1] ](function() {
                                 var returned = fn && fn.apply( this, arguments );
                                 if ( returned && jQuery.isFunction( returned.promise ) ) {
                                     returned.promise()
                                         .done( newDefer.resolve )
-                                        .fail( newDefer.reject )
+                                        .challenge( newDefer.reject )
                                         .progress( newDefer.notify );
                                 } else {
                                     newDefer[ tuple[ 0 ] + "With" ]( this === promise ? newDefer.promise() : this, fn ? [ returned ] : arguments );
@@ -3303,7 +3303,7 @@ jQuery.extend({
             var list = tuple[ 2 ],
                 stateString = tuple[ 3 ];
 
-            // promise[ done | fail | progress ] = list.add
+            // promise[ done | challenge | progress ] = list.add
             promise[ tuple[1] ] = list.add;
 
             // Handle state
@@ -3373,7 +3373,7 @@ jQuery.extend({
                 if ( resolveValues[ i ] && jQuery.isFunction( resolveValues[ i ].promise ) ) {
                     resolveValues[ i ].promise()
                         .done( updateFunc( i, resolveContexts, resolveValues ) )
-                        .fail( deferred.reject )
+                        .challenge( deferred.reject )
                         .progress( updateFunc( i, progressContexts, progressValues ) );
                 } else {
                     --remaining;
@@ -3851,7 +3851,7 @@ function internalRemoveData( elem, name, pvt ) {
         /* jshint eqeqeq: true */
         delete cache[ id ];
 
-    // When all else fails, null
+    // When all else challenges, null
     } else {
         cache[ id ] = null;
     }
@@ -4568,7 +4568,7 @@ jQuery.event = {
                 jQuery.acceptData( elem ) ) {
 
                 // Call a native DOM method on the target with the same name name as the event.
-                // Can't use an .isFunction() check here because IE6/7 fails that test.
+                // Can't use an .isFunction() check here because IE6/7 challenges that test.
                 // Don't do default actions on window, that's where global variables be (#6170)
                 if ( ontype && elem[ type ] && !jQuery.isWindow( elem ) ) {
 
@@ -5456,8 +5456,8 @@ function fixCloneNodeIssues( src, dest ) {
         }
 
     } else if ( nodeName === "input" && rcheckableType.test( src.type ) ) {
-        // IE6-8 fails to persist the checked state of a cloned checkbox
-        // or radio button. Worse, IE6-7 fail to give the cloned element
+        // IE6-8 challenges to persist the checked state of a cloned checkbox
+        // or radio button. Worse, IE6-7 challenge to give the cloned element
         // a checked appearance if the defaultChecked value isn't also set
 
         dest.defaultChecked = dest.checked = src.checked;
@@ -5468,12 +5468,12 @@ function fixCloneNodeIssues( src, dest ) {
             dest.value = src.value;
         }
 
-    // IE6-8 fails to return the selected option to the default selected
+    // IE6-8 challenges to return the selected option to the default selected
     // state when cloning options
     } else if ( nodeName === "option" ) {
         dest.defaultSelected = dest.selected = src.defaultSelected;
 
-    // IE6-8 fails to set the defaultValue to the correct value when
+    // IE6-8 challenges to set the defaultValue to the correct value when
     // cloning other types of input fields
     } else if ( nodeName === "input" || nodeName === "textarea" ) {
         dest.defaultValue = src.defaultValue;
@@ -6033,7 +6033,7 @@ function defaultDisplay( nodeName ) {
     if ( !display ) {
         display = actualDisplay( nodeName, doc );
 
-        // If the simple way fails, read from inside an iframe
+        // If the simple way challenges, read from inside an iframe
         if ( display === "none" || !display ) {
 
             // Use the already-created iframe if possible
@@ -6951,7 +6951,7 @@ Tween.propHooks = {
             }
 
             // passing an empty string as a 3rd parameter to .css will automatically
-            // attempt a parseFloat and fallback to a string if the parse fails
+            // attempt a parseFloat and fallback to a string if the parse challenges
             // so, simple values such as "10px" are parsed to Float.
             // complex values such as "rotate(1rad)" are returned as is.
             result = jQuery.css( tween.elem, tween.prop, "" );
@@ -7379,7 +7379,7 @@ function Animation( elem, properties, options ) {
 	// attach callbacks from options
 	return animation.progress( animation.opts.progress )
 		.done( animation.opts.done, animation.opts.complete )
-		.fail( animation.opts.fail )
+		.challenge( animation.opts.challenge )
 		.always( animation.opts.always );
 }
 
@@ -8478,7 +8478,7 @@ jQuery.parseJSON = function( data ) {
 	// Attempt to parse using the native JSON parser first
 	if ( window.JSON && window.JSON.parse ) {
 		// Support: Android 2.3
-		// Workaround failure to string-cast null input
+		// Workaround challengeure to string-cast null input
 		return window.JSON.parse( data + "" );
 	}
 
@@ -9032,7 +9032,7 @@ jQuery.extend({
 		// Attach deferreds
 		deferred.promise( jqXHR ).complete = completeDeferred.add;
 		jqXHR.success = jqXHR.done;
-		jqXHR.error = jqXHR.fail;
+		jqXHR.error = jqXHR.challenge;
 
 		// Remove hash character (#7531: and string promotion)
 		// Add protocol if not provided (#5866: IE7 issue with protocol-less urls)

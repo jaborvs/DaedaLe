@@ -15,5 +15,6 @@ module Generation::ADT::Command
 data GenerationCommand
     = generation_command_chunk_size(int width, int height)
     | generation_command_objects_permanent(list[str] objects)
+    | generation_command_pattern_max_size(int width, int height)
     | generation_command_empty()
     ;

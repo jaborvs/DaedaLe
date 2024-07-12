@@ -114,7 +114,7 @@ data LevelDraftData
 data ChunkData
     = chunk_data(
         WinPlaytraceData win_pt, 
-        list[FailPlaytraceData] fail_pt, 
+        list[ChallengePlaytraceData] challenge_pt, 
         str, 
         loc src = |unknown:///|, 
         map[int,list[str]] comments = ()
@@ -130,11 +130,11 @@ data WinPlaytraceData
     ;
 
 /*
- * @Name:   FailPlaytraceData
- * @Desc:   Data structure that models a failure playtrace
+ * @Name:   ChallengePlaytraceData
+ * @Desc:   Data structure that models a challengeure playtrace
  */
-data FailPlaytraceData
-    = fail_playtrace_data(list[VerbExpressionData] verb_dts)
+data ChallengePlaytraceData
+    = challenge_playtrace_data(list[VerbExpressionData] verb_dts)
     ;
 
 /*
@@ -142,5 +142,13 @@ data FailPlaytraceData
  * @Desc:   Data structure that models a verb for generation
  */
 data VerbExpressionData
-    = verb_expression_data(str name, str modifier)                     // Name, modifier
+    = verb_expression_data(str name, list[ArgumentData] args, str modifier)                     // Name, modifier
+    ;
+
+/*
+ * @Name:   ArgumentDat
+ * @Desc:   Data structure that models an argument of a verb
+ */
+data ArgumentData
+    = argument_data(str arg)
     ;

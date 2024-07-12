@@ -1,0 +1,245 @@
+=============
+CONFIGURATION
+=============
+
+chunk_size = 20x20
+objects_permanent = # and E and M
+
+========
+PATTERNS
+========
+
+(------------------------------------------------------------------------------)
+(--- Entry/Exit Patterns ------------------------------------------------------)
+(------------------------------------------------------------------------------)
+
+PlayerEnter_Right
+.
+.
+.
+
+PlayerEnter_Up
+.   .   .
+
+PlayerEnter_Down
+.   .   .
+
+PlayerIdle_Right
+#
+P
+#
+
+PlayerIdle_Up
+#   P   #
+
+PlayerIdle_Down
+#   P   #
+
+
+PlayerExit_Right
+#
+.
+#
+
+PlayerExit_Up
+#   .   #
+
+PlayerExit_Down
+#   .   #
+
+(------------------------------------------------------------------------------)
+(--- Walk Right Patterns ------------------------------------------------------)
+(------------------------------------------------------------------------------)
+
+PlayerWalk_Default_Right_Start
+#   .
+P   .
+#   .
+
+PlayerWalk_Default_Right_End
+#   #
+.   P
+#   #
+
+PlayerWalk_AfterUp_Right_End
+#   #   #
+#   .   P
+#   .   #
+
+PlayerWalk_BeforeUp_Right_Start
+#   .   .
+P   .   .
+#   .   .
+
+PlayerWalk_BeforeUp_Right_End
+#   .   .
+.   P   #
+#   #   #
+
+
+PlayerWalk_AfterDown_Right_End
+#   .   #
+#   .   P
+#   #   #
+
+PlayerWalk_BeforeDown_Right_Start
+#   .   .
+P   .   .
+#   .   .
+
+PlayerWalk_BeforeDown_Right_End
+#   #   #
+.   P   #
+#   .   .
+
+(------------------------------------------------------------------------------)
+(--- Walk Up Patterns ---------------------------------------------------------)
+(------------------------------------------------------------------------------)
+
+PlayerWalk_Default_Up_Start
+.   .   .
+#   P   #
+
+PlayerWalk_Default_Up_End
+#   P   #
+#   .   #
+
+PlayerWalk_AfterRight_Up_End
+#   P   #
+.   .   #
+#   #   #
+
+PlayerWalk_BeforeRight_Up_Start
+.   .   .
+.   .   .
+#   P   #
+
+PlayerWalk_BeforeRight_Up_End
+#   #   .
+#   P   .
+#   .   #
+
+(------------------------------------------------------------------------------)
+(--- Walk Down Patterns -------------------------------------------------------)
+(------------------------------------------------------------------------------)
+
+PlayerWalk_Default_Down_Start
+#   P   #
+.   .   .
+
+PlayerWalk_Default_Down_End
+#   .   #
+#   P   #
+
+PlayerWalk_AfterRight_Down_End
+#   #   #
+.   .   #
+#   P   #
+
+PlayerWalk_BeforeRight_Down_Start
+#   P   #
+.   .   .
+.   .   .
+
+PlayerWalk_BeforeRight_Down_End
+#   .   #
+#   P   .
+#   #   .
+
+(------------------------------------------------------------------------------)
+(--- Walk End Patterns --------------------------------------------------------)
+(------------------------------------------------------------------------------)
+
+PlayerWalk_End_Right_Start
+#   .
+p   .
+#   .
+
+PlayerWalk_End_Right_End
+#   #
+E   #
+#   #
+
+PlayerWalk_End_Down_Start
+#   P   #
+.   .   .
+
+PlayerWalk_End_Down_End
+#   E   #
+#   #   #
+
+PlayerWalk_End_Up_Start
+.   .   .
+#   P   #
+
+PlayerWalk_End_Up_End
+#   #   #
+#   E   #
+
+(------------------------------------------------------------------------------)
+(--- Die Patterns -------------------------------------------------------------)
+(------------------------------------------------------------------------------)
+
+PlayerDie_End_Right_Start
+#   .
+p   .
+#   .
+
+PlayerDie_End_Right_End
+#   #
+M   #
+#   #
+
+PlayerDie_End_Down_Start
+#   P   #
+.   .   .
+
+PlayerDie_End_Down_End
+#   M   #
+#   #   #
+
+PlayerDie_End_Up_Start
+.   .   .
+#   P   #
+
+PlayerDie_End_Up_End
+#   #   #
+#   M   #
+
+=======
+MODULES
+=======
+
+Module1
+[PlayerWalk_Default_Up_Start]       -> [PlayerWalk_Default_Up_End]          (-- verb Walk(default,      up,    1) )
+[PlayerWalk_BeforeUp_Right_End]     -> [PlayerWalk_AfterRight_Up_End]       (-- verb Walk(after_right,  up,    1, <Walk(_, right), none          >) )
+[PlayerWalk_BeforeRight_Up_Start]   -> [PlayerWalk_BeforeRight_Up_End]      (-- verb Walk(before_right, up,    1, <none,           Walk(_, right)>) )
+[PlayerWalk_Default_Right_Start]    -> [PlayerWalk_Default_Right_End]       (-- verb Walk(default,      right, 1) )
+[PlayerWalk_BeforeRight_Up_End]     -> [PlayerWalk_AfterUp_Right_End]       (-- verb Walk(after_up,     right, 1, <Walk(_, up),    none          >) )
+[PlayerWalk_BeforeUp_Right_Start]   -> [PlayerWalk_BeforeUp_Right_End]      (-- verb Walk(before_up,    right, 1, <none,           Walk(_, up)   >) )
+[PlayerWalk_BeforeRight_Down_End]   -> [PlayerWalk_AfterDown_Right_End]     (-- verb Walk(after_down,   right, 1, <Walk(_, down),  none          >) )
+[PlayerWalk_BeforeDown_Right_Start] -> [PlayerWalk_BeforeDown_Right_End]    (-- verb Walk(before_down,  right, 1, <none,           Walk(_, down) >) )
+[PlayerWalk_Default_Down_Start]     -> [PlayerWalk_Default_Down_End]        (-- verb Walk(default,      down,  1) )
+[PlayerWalk_BeforeDown_Right_End]   -> [PlayerWalk_AfterRight_Down_End]     (-- verb Walk(after_right,  down,  1, <Walk(_, right), none          >) )
+[PlayerWalk_BeforeRight_Down_Start] -> [PlayerWalk_BeforeRight_Down_End]    (-- verb Walk(before_right, down,  1, <none,           Walk(_, right)>) )
+[PlayerWalk_End_Right_Start]        -> [PlayerWalk_End_Right_End]           (-- verb Exit(after_right,  end,   0, <Walk(_, right), none>) )
+[PlayerWalk_End_Down_Start]         -> [PlayerWalk_End_Down_End]            (-- verb Exit(after_down,   end,   0, <Walk(_, down),  none>) )
+[PlayerWalk_End_Up_Start]           -> [PlayerWalk_End_Up_End]              (-- verb Exit(after_up,     end,   0, <Walk(_, up),    none>) )
+[PlayerDie_End_Right_Start]         -> [PlayerDie_End_Right_End]            (-- verb Die(after_right,   end,   0, <Walk(_, right), none>) )
+[PlayerDie_End_Down_Start]          -> [PlayerDie_End_Down_End]             (-- verb Die(after_down,    end,   0, <Walk(_, down),  none>) )
+[PlayerDie_End_Up_Start]            -> [PlayerDie_End_Up_End]               (-- verb Die(after_up,      end,   0, <Walk(_, up),    none>) )
+
+============
+LEVEL DRAFTS
+============
+
+Level1
+W:[Walk(_, right)+, Exit(after_right,end)]                                  (-- chunk Chunk1(Module1) )
+
+Level2
+W:[Walk(_, right)+, Walk(_, down), Exit(after_down, end)] C:[Walk(_, right)+, Walk(_, up), Die(after_up, end)]  (-- chunk Chunk1(Module1) )
+
+   
+
+
+

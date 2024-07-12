@@ -32,7 +32,7 @@ lexical ID = [a-z0-9.A-Z_]+ !>> [a-z0-9.A-Z_] \ AnnotationKeyword;
 // --- Syntax ------------------------------------------------------------------
 
 start syntax Annotation 
-    = annotation: '(' AnnotationKeyword ID ('(' {Argument ','}+ ')')? ')'
+    = annotation: '(--' AnnotationKeyword ID ('(' {Argument ','}+ ')')? ')'
     ;
 
 syntax Argument
@@ -41,6 +41,5 @@ syntax Argument
     ;
 
 syntax Reference
-    = reference_none: ID
-    | reference_verb: ID '(' ID ')'
+    = reference: ID ('(' {ID ','}+ ')')?
     ;

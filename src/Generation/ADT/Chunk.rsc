@@ -11,7 +11,7 @@ import IO;
 
 /******************************************************************************/
 // --- Own modules imports -----------------------------------------------------
-import Generation::ADT::VerbExpression;
+import Generation::ADT::Verb;
 
 /******************************************************************************/
 // --- Data structure defines --------------------------------------------------
@@ -25,7 +25,7 @@ data GenerationChunk
         str name, 
         str \module, 
         list[GenerationVerbExpression] win_verbs, 
-        list[GenerationVerbExpression] fail_verbs
+        list[GenerationVerbExpression] challenge_verbs
         )
     | generation_chunk_empty()
     ;

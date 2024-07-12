@@ -20,5 +20,9 @@ data GenerationRule
 /******************************************************************************/
 // --- Global implicit generation rule defines ---------------------------------
 
-GenerationRule enter_generation_rule = generation_rule("player_entry_start", "player_idle");
-GenerationRule exit_generation_rule = generation_rule("player_idle", "player_exit_end");
+GenerationRule enter_right_generation_rule = generation_rule("playerenter_right", "playeridle_right");
+GenerationRule enter_up_generation_rule    = generation_rule("playerenter_up",    "playeridle_up");
+GenerationRule enter_down_generation_rule  = generation_rule("playerenter_down",  "playeridle_down");
+GenerationRule exit_right_generation_rule  = generation_rule("playeridle_right",  "playerexit_right");
+GenerationRule exit_up_generation_rule     = generation_rule("playeridle_up",     "playerexit_up");
+GenerationRule exit_down_generation_rule   = generation_rule("playeridle_down",   "playerexit_down");

@@ -6,6 +6,14 @@
 module Annotation::ADT::Verb
 
 /******************************************************************************/
+// --- General modules imports -------------------------------------------------
+import String;
+
+/******************************************************************************/
+// --- Own modules imports -----------------------------------------------------
+import Utils;
+
+/******************************************************************************/
 // --- Data structure defines --------------------------------------------------
 
 /*
@@ -18,7 +26,10 @@ data VerbAnnotation
         str specification, 
         str direction, 
         int size, 
-        tuple[tuple[str name, str specification] prev, tuple[str name, str specification] next] dependencies
+        tuple[
+            tuple[str name, str specification, str direction] prev, 
+            tuple[str name, str specification, str direction] next
+            ] dependencies
         )
     | verb_annotation_empty()
     ;
@@ -26,11 +37,36 @@ data VerbAnnotation
 /******************************************************************************/
 // --- Global implicit verb defines --------------------------------------------
 
-VerbAnnotation enter_verb = verb_annotation("enter", "default", "none", 0, <<"none", "">,<"none", "">>);
-VerbAnnotation exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"none", "">,<"none", "">>);
+VerbAnnotation enter_right_verb = verb_annotation("enter", "default", "right", 0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation enter_up_verb    = verb_annotation("enter", "default", "up",    0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation enter_down_verb  = verb_annotation("enter", "default", "down",  0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation exit_right_verb  = verb_annotation("exit",  "default", "right", 0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation exit_up_verb     = verb_annotation("exit",  "default", "up",    0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
+VerbAnnotation exit_down_verb   = verb_annotation("exit",  "default", "down",    0, <<"none", "undefined", "undefined">,<"none", "undefined", "undefined">>);
 
 /******************************************************************************/
 // --- Public function defines -------------------------------------------------
+
+/*
+ * @Name:   verb_is_enter
+ * @Desc:   Function that checks if a verb is an enter verb
+ * @Param:  verb -> VerbAnnotationto be checked
+ * @Ret:    Boolean
+ */
+bool verb_is_enter(VerbAnnotation verb) {
+    return startsWith(verb.name, "enter");
+}
+
+/*
+ * @Name:   verb_is_end
+ * @Desc:   Function that checks if a verb is an end verb 
+ * @Param:  verb -> VerbAnnotationto be checked
+ * @Ret:    Boolean
+ */
+bool verb_is_end(VerbAnnotation verb) {
+    return (verb.direction == "end");
+}
+
 
 /*
  * @Name:   verb_annotation_is_before
@@ -43,7 +79,9 @@ VerbAnnotation exit_verb  = verb_annotation("exit",  "default", "none", 0, <<"no
  */
 bool verb_annotation_is_after(VerbAnnotation verb) {
     return verb.dependencies.prev.name != "none" 
-           && verb.dependencies.prev.name != verb.name;
+           && (verb.dependencies.prev.name != verb.name
+               || (verb.dependencies.prev.direction != verb.direction
+                   && verb.dependencies.prev.direction != "_"));
 }
 
 /*
@@ -57,7 +95,9 @@ bool verb_annotation_is_after(VerbAnnotation verb) {
  */
 bool verb_annotation_is_before(VerbAnnotation verb) {
     return verb.dependencies.next.name != "none" 
-           && verb.dependencies.next.name != verb.name;
+           && (verb.dependencies.next.name != verb.name
+               || (verb.dependencies.next.direction != verb.direction
+                   && verb.dependencies.next.direction != "_"));
 }
 
 /*
@@ -91,14 +131,4 @@ bool verb_annotation_is_inductive(VerbAnnotation verb) {
  * @Ret:    Stringified verb
  */
 str verb_annotation_to_string(VerbAnnotation verb)
-    = verb_annotation_to_string(verb.name, verb.specification);
-
-/*
- * @Name:   verb_annotation_to_string
- * @Desc:   Function that converts a verb to a string
- * @Param:  name          -> Name of the verb
- *          specification -> Specification of the verb
- * @Ret:    Stringified verb
- */
-str verb_annotation_to_string(str name, str specification)
-    = "<name>(<specification>)";
+    = "<string_capitalize(verb.name)>(<verb.specification>, <verb.direction>)";

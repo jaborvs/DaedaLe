@@ -16,64 +16,9 @@ import Set;
 // --- Own modules imports -----------------------------------------------------
 import Annotation::Syntax;
 import Annotation::AST;
-import Annotation::ADT::Verb;
-import Annotation::ADT::Chunk;
 
 /******************************************************************************/
 // --- Public load functions --------------------------------------------------
-
-/*
- * @Name:   annotation_load_verb_annotation
- * @Desc:   Function that reads a comment and parses the verb
- * @Param:  src -> String with the comment
- * @Ret:    VerbAnnotationobject
- */
-VerbAnnotation annotation_load_verb_annotation(map[int key, list[str] content] comments) {
-    Annotation \anno = annotation_load(comments);
-
-    // Specification
-    if (size(\anno.args) == 2) \anno.args = insertAt(\anno.args, 0, argument_single("default"));
-    
-    // Dependency
-    if (size(\anno.args) == 3) \anno.args += [argument_tuple(
-            reference_none("none"),
-            reference_none("none")
-        )];                  
-
-    tuple[
-        tuple[str name, str specification] prev, 
-        tuple[str name, str specification] next
-        ] dependencies = <<"","">,<"","">>;
-    if (\anno.args[3].prev is reference_none) dependencies.prev = <\anno.args[3].prev.val,"_">;
-    else                                    dependencies.prev = <\anno.args[3].prev.verb_name, \anno.args[3].prev.verb_specification>;
-    if (\anno.args[3].next is reference_none) dependencies.next = <\anno.args[3].next.val,"_">;
-    else                                    dependencies.next = <\anno.args[3].next.verb_name, \anno.args[3].next.verb_specification>;
-
-    VerbAnnotation v = verb_annotation(
-        toLowerCase(\anno.name),
-        toLowerCase(\anno.args[0].val),   // Specification: low, medium, large
-        toLowerCase(\anno.args[1].val),   // Direction: up, down, right
-        toInt(\anno.args[2].val),         // Size
-        dependencies                    // Dependencies: <previous_verb, next_verb>
-        );
-    return v;
-}
-
-/*
- * @Name:   annotation_load_chunk_annotation
- * @Desc:   Function that reads a comment and parses the module
- * @Param:  src -> String with the comment
- * @Ret:    Module object
- */
-ChunkAnnotation annotation_load_chunk_annotation(map[int key, list[str] content] comments) {
-    Annotation \anno = annotation_load(comments);
-    ChunkAnnotation v = chunk_annotation(
-        \anno.name,
-        \anno.args[0].val
-        );
-    return v;
-}
-
 
 /*
  * @Name:   annotation_load
@@ -126,7 +71,19 @@ Annotation annotation_implode(start[Annotation] parse_tree) {
 /******************************************************************************/
 // --- Processing functions ----------------------------------------------------
 
+/*
+ * @Name:   annotation_implode
+ * @Desc:   Function that processes an annotation
+ * @Param:  tree -> Parse tree
+ * @Ret:    Annotation object
+ */
 Annotation annotation_process(Annotation \anno) {
+    if (size(\anno.args) == 2) \anno.args = insertAt(\anno.args, 0, argument_single("default"));
+    if (size(\anno.args) == 3) \anno.args += [argument_tuple(
+            reference("none", []),
+            reference("none", [])
+        )];
+
     return visit(\anno) {
         case str s => toLowerCase(s)
     };

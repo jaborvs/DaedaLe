@@ -1,10 +1,10 @@
-module Experiments::GenerateRewrite
+module Experiments::RewriteRules::GenerateRewrite
 
 import IO;
 import String;
 import List;
 import util::Eval;
-import Experiments::AST;
+import Experiments::RewriteRules::AST;
 
 void main() {
     Pattern left = pattern([
