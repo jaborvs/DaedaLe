@@ -323,9 +323,9 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ext
            || (verb_modifier == "?" && size(verbs_concretized[i])== 1)) continue; 
 
         if (i < subchunk_last_compulsory
-            && (concretize_check_future_position_exited(position_current, i, verb_direction, chunk_size)
-                || !concretize_check_future_pattern_fit(position_current, i, pattern_max_size, verb_direction, chunk_size))) continue;
-                
+            && concretize_check_future_position_exited(position_current, i, verb_direction, chunk_size)) continue;
+        // || !concretize_check_future_pattern_fit(position_current, i, pattern_max_size, verb_direction, chunk_size)
+
         position_current = concretize_update_position_current(position_current, i, verb_direction);
         exited = concretize_check_position_current_exited(position_current, i, chunk_size);
         if (!exited) {
@@ -333,7 +333,7 @@ tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] concretize_win_ext
             verbs_concretized[i] += [verb_concretized];
         }
 
-        if (subchunk_contains_end) exited = (arbInt(2) == 1);
+        if (subchunk_contains_end) exited = (arbInt(10) == 1);
     }
 
     tuple[list[list[GenerationVerbConcretized]], map[int,Coords]] res = <verbs_concretized, position_current>;

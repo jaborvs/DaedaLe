@@ -203,6 +203,9 @@ Chunk apply_generation_rules(GenerationEngine engine, GenerationModule \module, 
         chunk = apply_generation_rule(verb, left, right, chunk, player_entry);
     }
 
+    println(chunk_to_string(chunk));
+    println();
+
     return chunk;
 }
 
@@ -292,7 +295,7 @@ bool check_exited_horizontal(GenerationEngine engine, Coords player_exit) {
 }
 
 bool check_exited_up(Coords player_exit) {
-    return player_exit.y == -1;
+    return player_exit.y == -1 && player_exit.x != -1;
 }
 
 bool check_exited_right(GenerationEngine engine, Coords player_exit) {

@@ -18,30 +18,30 @@ PlayerEnter_Right
 .
 
 PlayerEnter_Up
-.
+.   .
 
 PlayerEnter_Down
-.
+.   .
 
 PlayerIdle_Right
 PH1
 #
 
 PlayerIdle_Up
-PH1 
+PH1 .
 
 PlayerIdle_Down
-PH1
+#   PH1
 
 PlayerExit_Right
 .
 #
 
 PlayerExit_Up
-.
+.   #
 
 PlayerExit_Down
-.
+#   .
 
 (------------------------------------------------------------------------------)
 (--- Crawl Patterns -----------------------------------------------------------)
@@ -214,6 +214,15 @@ PlayerStuck_AfterCrawl_End
 PH1 #
 #   #
 
+PlayerStuck_AfterFall_Start
+#   PH1 .
+.   .   .
+
+
+PlayerStuck_AfterFall_End
+#   PH1 #
+#   #   #
+
 =======
 MODULES
 =======
@@ -255,22 +264,41 @@ Module2
 [PlayerFall__Floating__Start]             -> [PlayerFall__Floating__End]                    (-- verb Fall (default,                 down,  1) )
 [PlayerCrawl__Start]                      -> [PlayerEat__End]                               (-- verb Eat  (after_crawl,             end,   0, <Crawl(_),           none         >) )
 [PlayerStuck_AfterCrawl_Start]            -> [PlayerStuck_AfterCrawl_End]                   (-- verb Stuck(after_crawl,             end,   0, <Crawl(_),           none         >) )
-    
+[PlayerStuck_AfterFall_Start]             -> [PlayerStuck_AfterFall_End]                    (-- verb Stuck(after_fall,              end,   0, <Fall(_),            none         >) )
+
 ============
 LEVEL DRAFTS
 ============
 
-Level1
+OriginalLevel1
 W:[Crawl+, Climb(low), Climb(medium), Crawl+]                                               (-- chunk Chunk1(Module1) )
 W:[Crawl+, Fall+, Crawl+]                                                                   (-- chunk Chunk2(Module1) )
 W:[Crawl+, Climb(low), Climb(medium), Crawl, Crawl+, Climb(low), Climb(medium), Crawl+]     (-- chunk Chunk3(Module1) )
 W:[Crawl+, Fall+, Crawl +]                                                                  (-- chunk Chunk4(Module1) )
 W:[Crawl+, Eat]                                                                             (-- chunk Chunk5(Module1) )
 
-Level2
+ModifiedLevel1
+W:[Crawl+, Climb, Climb+, Crawl, Crawl, Crawl+, Fall*, Crawl*]   C:[Crawl+, Crawl, Stuck]   (-- chunk Chunk1(Module1) )
+W:[Crawl, Fall+,  Crawl+, Climb*, Crawl+]                                                   (-- chunk Chunk2(Module1) )
+W:[Crawl+, Climb*, Crawl+, Climb+, Crawl+]                                                  (-- chunk Chunk3(Module1) )
+W:[Crawl+, Fall+]                                                                           (-- chunk Chunk4(Module1) )
+W:[Fall+]                                                                                   (-- chunk Chunk5(Module1) )
+W:[Fall+, Crawl+]                                                                           (-- chunk Chunk6(Module1) )
+W:[Crawl+, Climb*, Crawl+, Eat]                                                             (-- chunk Chunk7(Module1) )
+
+OriginalLevel2
 W:[Crawl+, Fall+,  Crawl+]                                                                  (-- chunk Chunk1(Module2) )
 W:[Crawl+, Climb(coil), Climb+, Crawl+, Climb(coil), Climb+, Crawl+, Eat]                   (-- chunk Chunk2(Module2) )
 
-Level4
-W:[Crawl+, Climb(coil)+, Climb+, Crawl+]                                                    (-- chunk Chunk1(Module2) )
-W:[Crawl+, Eat]                                                                             (-- chunk Chunk2(Module2) )
+ModifiedLevel2
+W:[Crawl+, Fall+]                                               (-- chunk Chunk1(Module2) )
+W:[Fall+]                                                       (-- chunk Chunk2(Module2) )
+W:[Fall+, Fall*, Crawl+]                                        (-- chunk Chunk3(Module2) )
+W:[Crawl+, Climb+]  C:[Crawl+, Crawl,  Stuck]                   (-- chunk Chunk4(Module2) )
+W:[Climb+, Crawl+]                                              (-- chunk Chunk5(Module2) )
+W:[Crawl+, Climb+, Crawl+]  C:[Crawl+, Crawl, Fall, Stuck]      (-- chunk Chunk6(Module2) )
+W:[Crawl+, Eat]                                                 (-- chunk Chunk7(Module2) )
+
+OriginalLevel4
+W:[Crawl+, Climb+]                                              (-- chunk Chunk1(Module2) )
+W:[Climb+, Crawl+, Eat]                                         (-- chunk Chunk2(Module2) )

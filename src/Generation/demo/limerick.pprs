@@ -2,7 +2,7 @@
 CONFIGURATION
 =============
 
-chunk_size = 15x15
+chunk_size = 20x20
 objects_permanent = # and E
 
 ========
@@ -18,30 +18,30 @@ PlayerEnter_Right
 .
 
 PlayerEnter_Up
-.
+.   .
 
 PlayerEnter_Down
-.
+.   .
 
 PlayerIdle_Right
 PH1
 #
 
 PlayerIdle_Up
-PH1 
+PH1 .
 
 PlayerIdle_Down
-PH1
+.   PH1
 
 PlayerExit_Right
 .
 #
 
 PlayerExit_Up
-.
+.   #
 
 PlayerExit_Down
-.
+.   .
 
 (------------------------------------------------------------------------------)
 (--- Crawl Patterns -----------------------------------------------------------)
@@ -214,6 +214,15 @@ PlayerStuck_AfterCrawl_End
 PH1 #
 #   #
 
+PlayerStuck_AfterFall_Start
+#   PH1 .
+.   .   .
+
+
+PlayerStuck_AfterFall_End
+#   PH1 #
+#   #   #
+
 =======
 MODULES
 =======
@@ -255,11 +264,12 @@ Module2
 [PlayerFall__Floating__Start]             -> [PlayerFall__Floating__End]                    (-- verb Fall (default,                 down,  1) )
 [PlayerCrawl__Start]                      -> [PlayerEat__End]                               (-- verb Eat  (after_crawl,             end,   0, <Crawl(_),           none         >) )
 [PlayerStuck_AfterCrawl_Start]            -> [PlayerStuck_AfterCrawl_End]                   (-- verb Stuck(after_crawl,             end,   0, <Crawl(_),           none         >) )
-    
+[PlayerStuck_AfterFall_Start]             -> [PlayerStuck_AfterFall_End]                    (-- verb Stuck(after_fall,              end,   0, <Fall(_),            none         >) )
+
 ============
 LEVEL DRAFTS
 ============
 
-Level1
-W:[Crawl+, Climb+, Crawl+] C:[Crawl+, Crawl, Stuck]  (-- chunk Chunk2(Module1) )
-W:[Crawl+, Eat]                                      (-- chunk Chunk2(Module1) )
+OriginalLevel4
+W:[Crawl+, Climb+]                                              (-- chunk Chunk1(Module2) )
+W:[Climb+, Crawl+, Eat]                                         (-- chunk Chunk2(Module2) )

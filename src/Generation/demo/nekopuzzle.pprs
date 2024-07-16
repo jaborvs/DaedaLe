@@ -111,19 +111,8 @@ Module1
 LEVEL DRAFTS
 ============
 
-Level1
-W:[Eat(_, up)+,    Eat(_, right)+]                      (-- chunk Chunk1(Module1) )
-W:[Eat(_, right)+, Eat(_, down)+, Eat(_, right)+]       (-- chunk Chunk1(Module1) )
-W:[Eat(_, right)+, Eat(_, up)+, Eat(default, end)]      (-- chunk Chunk1(Module1) )
+OriginalLevel1
+W:[Eat(_, up)+, Eat(_, right)+, Eat(_, down)+, Eat(_, right)+, Eat(_, up)+, Eat(default, end)]      (-- chunk Chunk1(Module1) )
 
-Level2
-W:[Eat(_, down)+,  Eat(_, right)+]  C:[Eat(_, up), Eat(default, end)]   (-- chunk Chunk1(Module1) )
-W:[Eat(_, right)+, Eat(_, up)+]                                         (-- chunk Chunk1(Module1) )
-W:[Eat(_, up)+]                                                         (-- chunk Chunk1(Module1) )
-W:[Eat(_, up)+,    Eat(_, right)+]                                      (-- chunk Chunk1(Module1) )
-W:[Eat(_, right)+, Eat(_, down)+]                                       (-- chunk Chunk1(Module1) )
-
-
-
-
-
+OriginalLevel2
+W:[Eat(_, down)+,  Eat(_, right)+, Eat(_, up)+, Eat(_, right)+, Eat(_, down)+, Eat(default, end)]  C:[Eat(_, up), Eat(default, end)]   (-- chunk Chunk1(Module1) )
