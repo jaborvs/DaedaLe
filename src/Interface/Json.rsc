@@ -31,10 +31,12 @@ import PuzzleScript::Compiler;
  *  @Ret:   Tuple containing the coordinates in json, the level size in json 
  *          and the index in json
  */
-tuple[str,str,str] level_to_json(Engine engine, int index) {
+str level_to_json(Engine engine, int index) {
     tuple[int width, int height] level_size = engine.level_checkers[engine.current_level.original].size;
-    str json = "[";
-    tmp = 0;
+    str json = "";
+    str data_json = "\"data\": [";
+    str size_json = "\"size\": {\"width\": <level_size.width>, \"height\": <level_size.height>}";
+    str index_json = "\"index\": <index>";
 
     for (int i <- [0..level_size.height]) {
         for (int j <- [0..level_size.width]) {
@@ -42,19 +44,20 @@ tuple[str,str,str] level_to_json(Engine engine, int index) {
                 || isEmpty(engine.current_level.objects[<i,j>])) continue;
 
             for (Object object <- engine.current_level.objects[<i,j>]) {
-                json += object_to_json(engine.objects[object.current_name], i, j);                
+                data_json += object_to_json(engine.objects[object.current_name], i, j);                
             }
         }
     }
+    data_json = data_json[0..size(data_json) - 1];
+    data_json += "]";
 
-    json = json[0..size(json) - 1];
-    json += "]";
+    json = "{" + data_json + ", " + size_json + ", " + index_json + "}";
 
-    return <json, "{\"width\": <level_size.width>, \"height\": <level_size.height>}", "{\"index\": <index>}">;
+    return json;
 }
 
 /*
- *  @Name:  level_to_json
+ *  @Name:  object_to_json
  *  @Desc:  Converts a pixel to JSON format for the level GUI representation
  *  @Param: engine -> Engine of the application
  *          index  -> Index of the model

@@ -28,9 +28,10 @@ import PuzzleScript::Compiler;
  * @Ret:    void
  */
 void draw(Engine engine, int index) {
-    data_loc = |project://daedale/src/Interface/bin/data.dat|;
+    level_json_loc = |project://daedale/src/Interface/bin/level.json|;
 
-    tuple[str, str, str] json_data = level_to_json(engine, index);
-    writeFile(data_loc, json_data[0]);
-    tmp = execWithCode("python3", workingDir=|project://daedale/src/Interface/py|, args = ["ImageGenerator.py", resolveLocation(data_loc).path, json_data[1], json_data[2], "1"]);
+    level_json = level_to_json(engine, index);
+    writeFile(level_json_loc, level_json);
+    tmp = execWithCode("python", workingDir=|project://daedale/src/Interface/py/|, args = ["ImageGenerator.py", resolveLocation(level_json_loc).path, "1"]);
+    println(tmp);
 }
