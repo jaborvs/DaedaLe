@@ -38,7 +38,7 @@ import Annotation::Compiler;
  * @Name:   GenerationEngine
  * @Desc:   Data structure that models the generation engine
  */
-data GenerationEngine 
+data GenerationEngine
     = generation_engine(
         map[str names, GenerationCommand generation_commands] config,
         map[str names, GenerationPattern generation_patterns] patterns,
@@ -56,7 +56,7 @@ data GenerationEngine
  * @Name:   papyrus_compile
  * @Desc:   Function that compiles a PapyrusData object
  * @Params: pprs -> PapyrusData object to be compiled
- * @Ret:    GenerationEngine 
+ * @Ret:    GenerationEngine
  */
 GenerationEngine papyrus_compile(PapyrusData pprs) {
     GenerationEngine engine = generation_engine_init();
@@ -75,9 +75,9 @@ GenerationEngine papyrus_compile(PapyrusData pprs) {
 /*
  * @Name:   papyrus_compile_config
  * @Desc:   Function to compile the generation configuration commands. For now,
- *          the only allowed command is 'chunk_size', but it is somewhat ready 
+ *          the only allowed command is 'chunk_size', but it is somewhat ready
  *          to add more commands in the future if needed
- * @Params: command_datas -> Raw commands data form the ast 
+ * @Params: command_datas -> Raw commands data form the ast
  * @Ret:    GenerationConfig object for the command
  */
 map[str,GenerationCommand] papyrus_compile_config(list[CommandData] commands_datas, list[PatternData] pattern_datas) {
@@ -86,7 +86,7 @@ map[str,GenerationCommand] papyrus_compile_config(list[CommandData] commands_dat
     for (CommandData cmd <- commands_datas) {
         if (cmd.name in config.names) exception_config_duplicated_cmd(cmd.name);
         else                          config[cmd.name] = papyrus_compile_command(cmd);
-    } 
+    }
 
     config["pattern_max_size"] = papyrus_compile_pattern_max_size(pattern_datas);
 
@@ -124,7 +124,7 @@ GenerationCommand papyrus_compile_chunk_size(CommandData command) {
     try {
         width = toInt(params[0]);
         height = toInt(params[1]);
-    } 
+    }
     catch IllegalArgument(value v, _): exception_config_chunk_size_illegal_arg(v);
 
     return generation_command_chunk_size(width, height);
@@ -175,13 +175,13 @@ map[str, GenerationPattern] papyrus_compile_patterns(list[PatternData] patterns)
         if (p_c.name in patterns_compiled.names) exception_patterns_duplicated_pattern(p_c.name);
         else patterns_compiled[p_c.name] = p_c.pattern;
     }
-    
+
     return patterns_compiled;
 }
 
 /*
  * @Name:   papyrus_compile_pattern
- * @Desc:   Function to compile a pattern 
+ * @Desc:   Function to compile a pattern
  * @Param:  pattern -> PatternData object fromm the ast
  * @Ret:    Tuple with name and generation pattern object
  */
@@ -215,7 +215,7 @@ map[str, GenerationModule] papyrus_compile_modules(list[ModuleData] modules) {
 
     for(ModuleData m <- modules) {
         tuple[str name, GenerationModule \module] m_c = papyrus_compile_module(m);
-        
+
         m_c.\module.generation_rules[Annotation::ADT::Verb::enter_right_verb] = Generation::ADT::Rule::enter_right_generation_rule;
         m_c.\module.generation_rules[Annotation::ADT::Verb::enter_up_verb]    = Generation::ADT::Rule::enter_up_generation_rule;
         m_c.\module.generation_rules[Annotation::ADT::Verb::enter_down_verb]  = Generation::ADT::Rule::enter_down_generation_rule;
@@ -340,7 +340,7 @@ GenerationChunk papyrus_compile_chunk(ChunkData chunk) {
         win_verbs,
         challenge_verbs
     );
-    
+
     return chunk_compiled;
 }
 

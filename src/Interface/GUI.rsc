@@ -46,7 +46,7 @@ import Generation::Engine;
  *  @Name:  Model
  *  @Desc:  Aplication Model data structure
  */
-alias Model = tuple[ 
+alias Model = tuple[
     int index,                                      // Turn of the game
     Engine engine,                                  // Engine
     str puzzlescript_code,                          // PuzzleScript code
@@ -61,7 +61,7 @@ alias Model = tuple[
  *  @Name:  Msg
  *  @Desc:  Message function
  */
-data Msg 
+data Msg
     = restart()
     | movement(int direction)
     | clear()
@@ -77,8 +77,8 @@ data Msg
  */
 data JsonData
     = alldata(
-        CurrentLine \start,                                     // Start position 
-        str action,                                             // Action 
+        CurrentLine \start,                                     // Start position
+        str action,                                             // Action
         list[str] lines,                                        // Lines
         CurrentLine end,                                        // End position
         int id                                                  // Identifier
@@ -102,7 +102,7 @@ data CurrentLine = currentline(
  *  @Name:  main()
  *  @Desc:  Runs the application
  *  @Ret:   Application run
- */ 
+ */
 App[Model] main() {
     game_loc = |project://daedale/src/PuzzleScript/demo/limerick.ps|;
     // game_loc = |project://daedale/src/PuzzleScript/demo/mazecrawler.ps|;
@@ -125,12 +125,12 @@ App[Model] main() {
 
     // We start our GUI model
     Model init() = <
-        0, 
-        engine, 
-        readFile(game_loc), 
-        generation_engine, 
-        readFile(pprs_loc), 
-        "Interface/bin/output_image0.png", 
+        0,
+        engine,
+        readFile(game_loc),
+        generation_engine,
+        readFile(pprs_loc),
+        "Interface/bin/output_image0.png",
         [],
         ""
         >;
@@ -155,16 +155,16 @@ Model update(Msg cmd, Model model){
     if (!(model.engine.current_level is game_level)) return model;
 
     switch(cmd){
-        case movement(int direction): model = update_movement(model, direction); 
+        case movement(int direction): model = update_movement(model, direction);
         case restart(): model = update_restart(model);
         case clear(): model = update_clear(model);
         case change_code_puzzlescript(map[str,value] delta): model = update_change_code(model, delta, "puzzlescript");
         case papyrvs_code_change(map[str,value] delta): model = update_change_code(model, delta, "papyrus");
-        case run(): model = update_run(model); 
-        case generate(): model = update_generate(model); 
+        case run(): model = update_run(model);
+        case generate(): model = update_generate(model);
         default: return model;
     }
-        
+
     if (movement(int direction) := cmd) {
         model.index += 1;
         model.engine = execute_move(model.engine, model.input, 0);
@@ -190,7 +190,7 @@ Model update(Msg cmd, Model model){
  *          direction -> Direction of the movement
  * @Ret:    Updated model
  */
-Model update_movement(Model model, int direction) {       
+Model update_movement(Model model, int direction) {
     switch(direction) {
         case 37: model.input = "left";
         case 38: model.input = "up";
@@ -198,7 +198,7 @@ Model update_movement(Model model, int direction) {
         case 40: model.input = "down";
     }
 
-    return model; 
+    return model;
 }
 
 /*
@@ -259,7 +259,7 @@ Model update_change_code(Model model, map[str,value] delta, str lang) {
     }
     code_lines[json_change.\start.row] = code_new_line;
     code = intercalate("\n", code_lines);
-    
+
     if (lang == "puzzlescript") model.puzzlescript_code = code;
     else                        model.papyrus_code = code;
 
@@ -277,14 +277,14 @@ Model update_run(Model model) {
     model.index += 1;
 
     draw(model.engine, model.index);
- 
+
     model = <
-        0, 
-        ps_compile(ps_load(model.puzzlescript_code)), 
-        model.puzzlescript_code, 
+        0,
+        ps_compile(ps_load(model.puzzlescript_code)),
+        model.puzzlescript_code,
         papyrus_compile(papyrus_load(model.papyrus_code)),
-        model.papyrus_code, 
-        "Interface/bin/output_image<model.index>.png", 
+        model.papyrus_code,
+        "Interface/bin/output_image<model.index>.png",
         model.console,
         ""
     >;

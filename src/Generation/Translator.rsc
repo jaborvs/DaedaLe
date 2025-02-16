@@ -271,4 +271,3 @@ GenerationVerbConcretized translate_get_verb_next(list[list[GenerationVerbConcre
 GenerationVerbConcretized translate_get_verb_current(list[GenerationVerbConcretized] subchunk) {
     return subchunk[0];
 }
- 

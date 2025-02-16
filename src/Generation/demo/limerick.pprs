@@ -47,7 +47,7 @@ PlayerExit_Down
 (--- Crawl Patterns -----------------------------------------------------------)
 (------------------------------------------------------------------------------)
 PlayerCrawl__Start
-PH1 . 
+PH1 .
 #   .
 
 PlayerCrawl__End
@@ -123,7 +123,7 @@ PlayerClimb__Solid__Coil__Start
 PBH PH1 .
 
 PlayerClimb__Solid__Coil__End
-PBH PH1 . 
+PBH PH1 .
 PBV PBH #
 PBH PBV #
 
@@ -160,7 +160,7 @@ PlayerClimb__Floating__Coil__Start
 PBH PH1
 
 PlayerClimb__Floating__Coil__End
-PBH PH1 
+PBH PH1
 PBV PBH
 PBH PBV
 

@@ -147,4 +147,3 @@ void chart(str id, str chartType, value vals...) {
     });
 } 
 
-  

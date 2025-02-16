@@ -239,7 +239,7 @@ W:[Walk(_, right)+, Exit(after_right,end)]                                  (-- 
 Level2
 W:[Walk(_, right)+, Walk(_, down), Exit(after_down, end)] C:[Walk(_, right)+, Walk(_, up), Die(after_up, end)]  (-- chunk Chunk1(Module1) )
 
-   
+
 
 
 
